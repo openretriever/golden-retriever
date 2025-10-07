@@ -1,0 +1,5 @@
+assets: /mnt/arc/yygx/paper_codebases/RA-L_25/BOSS/libero/libero/./assets
+bddl_files: /mnt/arc/yygx/paper_codebases/RA-L_25/BOSS/libero/libero/./bddl_files
+benchmark_root: /mnt/arc/yygx/paper_codebases/RA-L_25/BOSS/libero/libero
+datasets: /mnt/arc/yygx/paper_codebases/RA-L_25/BOSS/libero/libero/../datasets
+init_states: /mnt/arc/yygx/paper_codebases/RA-L_25/BOSS/libero/libero/./init_files
