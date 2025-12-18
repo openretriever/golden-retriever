@@ -22,13 +22,15 @@ import threading
 import argparse
 from dataclasses import dataclass
 
-# Ensure the project root is in sys.path so we can import 'retriever' and local modules
+# Ensure the project root and src/ are in sys.path so we can import 'retriever'
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
+src_root = os.path.join(project_root, "src")
+for path in [src_root, project_root]:
+    if path not in sys.path:
+        sys.path.insert(0, path)
 
 # -- Imports --
-from retriever.core.flow import (
+from retriever.flow import (
     Pipeline, Rate, Hybrid,
     Flow, flow_io, 
     Events
