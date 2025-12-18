@@ -26,7 +26,7 @@ from PIL import Image
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Any
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import StreamingResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -167,9 +167,9 @@ class VisionDetectorFlow(Flow[DetectorInput, DetectionResult]):
         self.current_prompt = self.initial_prompt
 
     def run(self, input: DetectorInput):
-        if input.image is None:
+        if input is None: 
             return None
-            
+
         # Update prompt state if provided
         if input.prompt is not None:
              # Basic cleaning
@@ -177,6 +177,9 @@ class VisionDetectorFlow(Flow[DetectorInput, DetectionResult]):
              if p:
                  self.current_prompt = p
                  print(f"[Detector] Prompt updated: {self.current_prompt}")
+
+        if input.image is None:
+            return None
         
         # Guard against no prompt ever
         if not self.current_prompt:
@@ -279,10 +282,14 @@ class WebInteractiveNode(Flow[DetectionResult, DetectorInput]):
             with self._frame_lock:
                 lat = self.latest_data.get("latency_ms")
                 if lat is None: lat = 0.0
+                
+                dets = self.latest_data.get("detections")
+                if dets is None: dets = []
+                
                 return {
                     "latency_ms": round(lat, 1),
                     "prompt": self.latest_data.get("prompt", ""),
-                    "detections": len(self.latest_data.get("detections", []))
+                    "detections": len(dets)
                 }
 
     def gen_frames(self):
