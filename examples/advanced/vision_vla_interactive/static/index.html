@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retriever Vision-VLA Interactive</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121e;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --text: #f8fafc;
+            --text-dim: #94a3b8;
+            --accent: #10b981;
+            --glass: rgba(18, 18, 30, 0.7);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .header {
+            width: 100%;
+            padding: 2rem 0;
+            text-align: center;
+            background: linear-gradient(to bottom, #1e1b4b, transparent);
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.5rem;
+            margin: 0;
+            letter-spacing: -0.02em;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h1 span {
+            font-weight: 300;
+            color: var(--text-dim);
+            -webkit-text-fill-color: var(--text-dim);
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+
+        .video-wrapper {
+            position: relative;
+            background: #000;
+            border-radius: 1.5rem;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            aspect-ratio: 16/9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .video-feed {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .overlay-stats {
+            position: absolute;
+            top: 1.5rem;
+            left: 1.5rem;
+            padding: 1rem;
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border-radius: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.875rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 2rem;
+        }
+
+        .stat-label { color: var(--text-dim); }
+        .stat-value { font-weight: 600; font-family: monospace; color: var(--accent); }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        textarea {
+            background: #0a0a0f;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            color: var(--text);
+            font-family: inherit;
+            resize: none;
+            height: 100px;
+            transition: border-color 0.2s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 10px var(--accent);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Retriever <span>Vision-VLA</span></h1>
+    </div>
+
+    <div class="container">
+        <div class="video-wrapper">
+            <div class="overlay-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Model:</span>
+                    <span class="stat-value">OWL-ViT</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Latency:</span>
+                    <span id="latency" class="stat-value">0ms</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Detections:</span>
+                    <span id="detection-count" class="stat-value">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Status:</span>
+                    <span class="stat-value"><div class="status-dot"></div> Live</span>
+                </div>
+            </div>
+            <img class="video-feed" src="/video_feed" alt="Video Stream">
+        </div>
+
+        <div class="controls">
+            <div class="card">
+                <div class="card-title">Detection Prompt</div>
+                <p style="color: var(--text-dim); font-size: 0.875rem; margin-bottom: 1.5rem;">
+                    Describe what you want the VLA to detect. Use commas for multiple objects.
+                </p>
+                <div class="input-group">
+                    <textarea id="prompt-input" placeholder="e.g. coffee mug, cell phone, a person smiling"></textarea>
+                    <button id="update-btn" class="btn">Update Targets</button>
+                </div>
+            </div>
+
+            <div class="card" style="padding: 1.5rem;">
+                <div class="card-title" style="font-size: 1rem;">Instruction Log</div>
+                <div id="log" style="font-size: 0.875rem; color: var(--text-dim); display: flex; flex-direction: column; gap: 0.5rem;">
+                    <div style="border-left: 2px solid var(--primary); padding-left: 0.5rem;">System initialized. Waiting for prompt...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const promptInput = document.getElementById('prompt-input');
+        const updateBtn = document.getElementById('update-btn');
+        const latencyVal = document.getElementById('latency');
+        const countVal = document.getElementById('detection-count');
+        const log = document.getElementById('log');
+
+        async function updatePrompt() {
+            const prompt = promptInput.value;
+            if (!prompt) return;
+
+            updateBtn.disabled = true;
+            updateBtn.textContent = 'Updating...';
+
+            try {
+                const response = await fetch('/update_prompt', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt })
+                });
+                
+                if (response.ok) {
+                    const div = document.createElement('div');
+                    div.style.borderLeft = '2px solid var(--accent)';
+                    div.style.paddingLeft = '0.5rem';
+                    div.textContent = `Updated: "${prompt}"`;
+                    log.prepend(div);
+                }
+            } catch (err) {
+                console.error(err);
+            } finally {
+                updateBtn.disabled = false;
+                updateBtn.textContent = 'Update Targets';
+            }
+        }
+
+        updateBtn.addEventListener('click', updatePrompt);
+
+        // Fetch stats periodically
+        setInterval(async () => {
+            try {
+                const response = await fetch('/stats');
+                const data = await response.json();
+                latencyVal.textContent = data.latency_ms + 'ms';
+                countVal.textContent = data.detections;
+            } catch (err) {}
+        }, 500);
+    </script>
+</body>
+</html>
