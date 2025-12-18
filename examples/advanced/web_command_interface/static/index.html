@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Retriever | VLA Command Center</title>
+    <style>
+      :root {
+        --primary: #ff8008;
+        --secondary: #ffc837;
+        --bg: #0f0f12;
+        --card-bg: #1a1a20;
+        --text: #e0e0e0;
+        --accent: #e65c00;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+          Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--bg);
+        color: var(--text);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .container {
+        width: 90%;
+        max-width: 600px;
+        height: 80vh;
+        background: var(--card-bg);
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        display: flex;
+        flex-direction: column;
+        border: 1px solid #333;
+        position: relative;
+      }
+
+      header {
+        padding: 20px;
+        border-bottom: 1px solid #333;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+
+      .logo {
+        font-size: 24px;
+      }
+
+      .title h1 {
+        font-size: 1.2rem;
+        background: linear-gradient(45deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 800;
+      }
+
+      .status {
+        font-size: 0.75rem;
+        color: #888;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        background: #4caf50;
+        border-radius: 50%;
+        box-shadow: 0 0 5px #4caf50;
+      }
+
+      #chat-window {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        mask-image: linear-gradient(
+          to bottom,
+          transparent,
+          black 5%,
+          black 95%,
+          transparent
+        );
+      }
+
+      .message {
+        max-width: 80%;
+        padding: 12px 16px;
+        border-radius: 15px;
+        font-size: 0.95rem;
+        line-height: 1.4;
+        animation: fadeIn 0.3s ease-out;
+      }
+
+      .user-message {
+        align-self: flex-end;
+        background: linear-gradient(135deg, var(--primary), var(--accent));
+        color: white;
+        border-bottom-right-radius: 2px;
+      }
+
+      .bot-message {
+        align-self: flex-start;
+        background: #2a2a35;
+        color: #eee;
+        border-bottom-left-radius: 2px;
+        border: 1px solid #3a3a45;
+      }
+
+      .input-area {
+        padding: 20px;
+        display: flex;
+        gap: 10px;
+        background: #14141a;
+        border-bottom-left-radius: 20px;
+        border-bottom-right-radius: 20px;
+      }
+
+      input {
+        flex: 1;
+        background: #25252d;
+        border: 1px solid #3a3a45;
+        border-radius: 10px;
+        padding: 12px 15px;
+        color: white;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+
+      input:focus {
+        border-color: var(--primary);
+      }
+
+      button {
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 0 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.1s, background 0.2s;
+      }
+
+      button:hover {
+        background: var(--accent);
+      }
+
+      button:active {
+        transform: scale(0.95);
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Scrollbar */
+      #chat-window::-webkit-scrollbar {
+        width: 5px;
+      }
+      #chat-window::-webkit-scrollbar-thumb {
+        background: #333;
+        border-radius: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="logo">🐕</div>
+        <div class="title">
+          <h1>Retriever VLA</h1>
+          <div class="status">
+            <div class="status-dot"></div>
+            Runtime Active
+          </div>
+        </div>
+      </header>
+
+      <div id="chat-window">
+        <div class="message bot-message">
+          Hello! I am the Retriever VLA controller. Send me a command to inject
+          it into the pipeline.
+        </div>
+      </div>
+
+      <div class="input-area">
+        <input
+          type="text"
+          id="command-input"
+          placeholder="Type a command (e.g. pick up the block)..."
+          autofocus
+        />
+        <button id="send-btn">Send</button>
+      </div>
+    </div>
+
+    <script>
+      const chatWindow = document.getElementById("chat-window");
+      const commandInput = document.getElementById("command-input");
+      const sendBtn = document.getElementById("send-btn");
+
+      function addMessage(text, isUser = true) {
+        const msg = document.createElement("div");
+        msg.className = `message ${isUser ? "user-message" : "bot-message"}`;
+        msg.textContent = text;
+        chatWindow.appendChild(msg);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+      }
+
+      async function sendCommand() {
+        const cmd = commandInput.value.trim();
+        if (!cmd) return;
+
+        addMessage(cmd, true);
+        commandInput.value = "";
+
+        try {
+          const response = await fetch("/command", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ command: cmd }),
+          });
+
+          if (response.ok) {
+            // addMessage("Command injected successfully.", false);
+          } else {
+            addMessage("Error: Could not inject command.", false);
+          }
+        } catch (err) {
+          addMessage("Network error: Is the Retriever flow running?", false);
+        }
+      }
+
+      sendBtn.addEventListener("click", sendCommand);
+      commandInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") sendCommand();
+      });
+    </script>
+  </body>
+</html>
