@@ -131,11 +131,20 @@ class WebcamFlow(Flow[None, FrameMsg]):
         self.cap = None
         
     def init(self):
-        self.cap = cv2.VideoCapture(self.camera_id)
-        if not self.cap.isOpened():
-            raise RuntimeError(f"Could not open webcam {self.camera_id}")
+        try:
+            self.cap = cv2.VideoCapture(self.camera_id)
+            if not self.cap.isOpened():
+                print(f"[WebcamFlow] Warning: Could not open webcam {self.camera_id}. Frame stream will be empty.")
+                self.cap = None
+        except Exception as e:
+            print(f"[WebcamFlow] Error initializing camera: {e}")
+            self.cap = None
         
     def run(self, _):
+        if self.cap is None:
+            time.sleep(1.0) # Prevent busy loop if camera failed
+            return None
+            
         ret, frame = self.cap.read()
         if not ret:
             return None
@@ -195,38 +204,35 @@ class VisionDetectorFlow(Flow[DetectorInput, DetectionResult]):
         return {"threshold": self.threshold, "initial_prompt": self.initial_prompt}
 
 
-class WebInteractiveNode(Flow[DetectionResult, PromptMsg]):
+class WebInteractiveNode(Flow[DetectionResult, DetectorInput]):
     """
     Node that hosts FastAPI:
     - SINK for DetectionResult (updates video stream)
-    - SOURCE for PromptMsg (emits when user types)
+    - SOURCE for DetectorInput (emits user frames OR prompt updates)
     """
     def __init__(self, host="0.0.0.0", port=8000):
         self.host = host
         self.port = port
         
-        # Runtime attributes (initialized in init)
+        # Runtime attributes
         self.latest_frame = None
         self.latest_data = {}
         self._frame_lock = None
-        self._prompt_queue = None
+        self._input_queue = None
         self.app = None
         self.server_thread = None
         
     def init(self):
         self._frame_lock = threading.Lock()
-        self._prompt_queue = queue.Queue()
+        self._input_queue = queue.Queue()
         
-        # FastAPI setup
         self.app = FastAPI(title="Retriever Vision Detection Demo")
         self.setup_routes()
         
-        # Start server in thread
         self.server_thread = threading.Thread(target=self._run_server, daemon=True)
         self.server_thread.start()
 
     def setup_routes(self):
-        # Statics & Templates
         static_dir = os.path.join(os.path.dirname(__file__), "static")
         self.app.mount("/static", StaticFiles(directory=static_dir), name="static")
         self.templates = Jinja2Templates(directory=static_dir)
@@ -234,6 +240,24 @@ class WebInteractiveNode(Flow[DetectionResult, PromptMsg]):
         @self.app.get("/", response_class=HTMLResponse)
         async def index(request: Request):
             return self.templates.TemplateResponse("index.html", {"request": request})
+
+        @self.app.websocket("/ws/camera")
+        async def websocket_camera(websocket: WebSocket):
+            await websocket.accept()
+            try:
+                while True:
+                    data = await websocket.receive_bytes()
+                    # Decode JPEG to numpy
+                    nparr = np.frombuffer(data, np.uint8)
+                    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+                    
+                    if img is not None and self._input_queue:
+                         # Prioritize image input
+                         self._input_queue.put(DetectorInput(image=img))
+            except WebSocketDisconnect:
+                print("[WebInteractiveNode] Client camera disconnected")
+            except Exception as e:
+                print(f"[WebInteractiveNode] WS Error: {e}")
 
         @self.app.get("/video_feed")
         async def video_feed():
@@ -245,17 +269,18 @@ class WebInteractiveNode(Flow[DetectionResult, PromptMsg]):
         @self.app.post("/update_prompt")
         async def update_prompt(data: Dict[str, str]):
             prompt = data.get("prompt", "")
-            # Put in thread-safe local queue
-            if self._prompt_queue:
-                self._prompt_queue.put(prompt)
+            if self._input_queue:
+                self._input_queue.put(DetectorInput(prompt=prompt))
             return {"status": "success", "new_prompt": prompt}
 
         @self.app.get("/stats")
         async def get_stats():
             if self._frame_lock is None: return {}
             with self._frame_lock:
+                lat = self.latest_data.get("latency_ms")
+                if lat is None: lat = 0.0
                 return {
-                    "latency_ms": round(self.latest_data.get("latency_ms", 0), 1),
+                    "latency_ms": round(lat, 1),
                     "prompt": self.latest_data.get("prompt", ""),
                     "detections": len(self.latest_data.get("detections", []))
                 }
@@ -294,8 +319,8 @@ class WebInteractiveNode(Flow[DetectionResult, PromptMsg]):
         # Disable uvicorn's default logging config to avoid interference with multiprocessing
         uvicorn.run(self.app, host=self.host, port=self.port, log_config=None)
 
-    def run(self, input: DetectionResult):
-        # 1. Update internal state (Sink behavior)
+    def run(self, input: DetectionResult) -> DetectorInput:
+        # 1. Sink: Update internal state
         if self._frame_lock:
             with self._frame_lock:
                 self.latest_frame = input.image
@@ -305,11 +330,10 @@ class WebInteractiveNode(Flow[DetectionResult, PromptMsg]):
                     "prompt": input.prompt
                 }
         
-        # 2. Check for new outgoing prompts (Source behavior)
+        # 2. Source: Check for new inputs (frames OR prompts)
         try:
-            if self._prompt_queue:
-                new_prompt = self._prompt_queue.get_nowait()
-                return PromptMsg(text=new_prompt)
+            if self._input_queue:
+                return self._input_queue.get_nowait()
         except queue.Empty:
             pass
             
@@ -326,6 +350,8 @@ def main():
     parser = argparse.ArgumentParser(description="Interactive Vision Detection Demo")
     parser.add_argument("--backend", type=str, default="dora", 
                         choices=["multiprocessing", "dora"], help="Runtime backend")
+    parser.add_argument("--client-camera", action="store_true", 
+                        help="Use client (browser) camera instead of server webcam")
     args = parser.parse_args()
 
     print("\n" + "="*60)
@@ -338,28 +364,40 @@ def main():
     with p:
         # Configuration
         # Reduced rate (2Hz) to ensure CPU inference (OWL-ViT) can keep up without filling queues.
-        camera = WebcamFlow() @ Rate(hz=2)
-        
-        # Detector runs at same rate
         detector = VisionDetectorFlow() @ Rate(hz=2)
         
         # Web Node runs faster to keep UI responsive
         web_node = WebInteractiveNode() @ Rate(hz=30) 
-        
-        # Connections
-        # 1. Camera -> Detector
-        # qsize=1 ensures we always process the latest frame and drop if falling behind
-        p.connect(camera, detector, map={"image": "image"}, qsize=1)
-        
-        # 2. Detector -> WebNode (Data Visualization)
-        p.connect(detector, web_node, qsize=1)
-        
-        # 3. WebNode -> Detector (Control Feedback)
-        # WebNode emits PromptMsg(text). Detector expects DetectorInput(prompt).
-        p.connect(web_node, detector, map={"text": "prompt"}, qsize=10)
+
+        if args.client_camera:
+            print(">> Mode: Client Camera (Browser -> Server -> Detection)")
+            # WebNode is the Source of images (via WS)
+            # WebNode outputs DetectorInput -> Detector
+            p.connect(web_node, detector, qsize=10)
+            
+            # Detector -> WebNode (Sink)
+            p.connect(detector, web_node, qsize=1)
+            
+        else:
+            print(">> Mode: Server Webcam")
+            camera = WebcamFlow() @ Rate(hz=2)
+            
+            # Camera -> Detector
+            p.connect(camera, detector, map={"image": "image"}, qsize=1)
+            
+            # Detector -> WebNode (Sink)
+            p.connect(detector, web_node, qsize=1)
+            
+            # WebNode (Prompt) -> Detector
+            # Note: WebNode now outputs DetectorInput, so we don't need 'map' if fields match, 
+            # but DetectorInput contains optional image/prompt. 
+            # VisionDetectorFlow expects DetectorInput. Compatible!
+            p.connect(web_node, detector, qsize=10)
         
     print(f"Starting execution ({args.backend} backend)...")
-    print("Open your browser at: http://localhost:8000")
+    print(f"Open your browser at: http://localhost:8000")
+    if args.client_camera:
+        print("Enable 'Use Browser Camera' in the UI to stream video.")
     print("Press Ctrl+C to stop.\n")
 
     p.run(backend=args.backend)

@@ -206,58 +206,102 @@
         <h1>Retriever <span>Vision Detection</span></h1>
     </div>
 
-    <div class="container">
-        <div class="video-wrapper">
-            <div class="overlay-stats">
-                <div class="stat-item">
-                    <span class="stat-label">Model:</span>
-                    <span class="stat-value">OWL-ViT</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">Latency:</span>
-                    <span id="latency" class="stat-value">0ms</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">Detections:</span>
-                    <span id="detection-count" class="stat-value">0</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">Status:</span>
-                    <span class="stat-value"><div class="status-dot"></div> Live</span>
-                </div>
-            </div>
-            <img class="video-feed" src="/video_feed" alt="Video Stream">
+    <div class="card" style="margin-bottom: 2rem;">
+        <div class="card-title">Camera Source</div>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <label class="switch" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" id="client-cam-toggle">
+                <span style="color: var(--text);">Use Browser Camera (Remote Mode)</span>
+            </label>
         </div>
+        <p style="color: var(--text-dim); font-size: 0.8rem; margin-top: 0.5rem;">
+            Enable this if running server remotely without a webcam.
+        </p>
+    </div>
 
+    <!-- Hidden video element for capture -->
+    <video id="hidden-video" style="display:none;" autoplay playsinline></video>
+    <canvas id="hidden-canvas" style="display:none;"></canvas>
+
+    <div class="container">
+        <!-- ... existing container content ... -->
+        <div class="video-wrapper">
+             <!-- ... -->
+        </div>
+        
         <div class="controls">
-            <div class="card">
-                <div class="card-title">Detection Prompt</div>
-                <p style="color: var(--text-dim); font-size: 0.875rem; margin-bottom: 1.5rem;">
-                    Describe what you want the VLA to detect. Use commas for multiple objects.
-                </p>
-                <div class="input-group">
-                    <textarea id="prompt-input" placeholder="e.g. coffee mug, cell phone, a person smiling"></textarea>
-                    <button id="update-btn" class="btn">Update Targets</button>
-                </div>
-            </div>
-
-            <div class="card" style="padding: 1.5rem;">
-                <div class="card-title" style="font-size: 1rem;">Instruction Log</div>
-                <div id="log" style="font-size: 0.875rem; color: var(--text-dim); display: flex; flex-direction: column; gap: 0.5rem;">
-                    <div style="border-left: 2px solid var(--primary); padding-left: 0.5rem;">System initialized. Waiting for prompt...</div>
-                </div>
-            </div>
+             <!-- ... existing controls ... -->
         </div>
     </div>
 
     <script>
+        // ... existing vars ...
         const promptInput = document.getElementById('prompt-input');
         const updateBtn = document.getElementById('update-btn');
         const latencyVal = document.getElementById('latency');
         const countVal = document.getElementById('detection-count');
         const log = document.getElementById('log');
+        
+        // Client Camera Logic
+        const camToggle = document.getElementById('client-cam-toggle');
+        const hiddenVideo = document.getElementById('hidden-video');
+        const hiddenCanvas = document.getElementById('hidden-canvas');
+        const ctx = hiddenCanvas.getContext('2d');
+        let ws = null;
+        let stream = null;
+        let frameInterval = null;
+
+        camToggle.addEventListener('change', async (e) => {
+            if (e.target.checked) {
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+                    hiddenVideo.srcObject = stream;
+                    
+                    // Init WebSocket
+                    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                    ws = new WebSocket(`${protocol}//${window.location.host}/ws/camera`);
+                    
+                    ws.onopen = () => {
+                        console.log("WS Connected");
+                        startStreaming();
+                    };
+                    
+                    ws.onclose = () => console.log("WS Closed");
+                    
+                } catch (err) {
+                    console.error("Camera usage error:", err);
+                    e.target.checked = false;
+                    alert("Could not access camera: " + err.message);
+                }
+            } else {
+                stopStreaming();
+            }
+        });
+
+        function startStreaming() {
+            hiddenCanvas.width = 640;
+            hiddenCanvas.height = 480;
+            
+            frameInterval = setInterval(() => {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ctx.drawImage(hiddenVideo, 0, 0, 640, 480);
+                    hiddenCanvas.toBlob((blob) => {
+                        if (blob) ws.send(blob);
+                    }, 'image/jpeg', 0.8);
+                }
+            }, 200); // 5 FPS upload to server
+        }
+
+        function stopStreaming() {
+            if (frameInterval) clearInterval(frameInterval);
+            if (stream) stream.getTracks().forEach(t => t.stop());
+            if (ws) ws.close();
+            stream = null;
+            ws = null;
+        }
 
         async function updatePrompt() {
+            // ... existing updatePrompt logic ...
             const prompt = promptInput.value;
             if (!prompt) return;
 
