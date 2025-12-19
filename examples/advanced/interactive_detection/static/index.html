@@ -285,6 +285,16 @@
 
         camToggle.addEventListener('change', async (e) => {
             if (e.target.checked) {
+                // Check if browser supports media devices (requires HTTPS or localhost)
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    alert("Camera access blocked by browser security.\n\n" +
+                          "Browsers require HTTPS for camera access on remote IP addresses.\n\n" +
+                          "Workaround: Use an SSH tunnel to access via localhost:\n" +
+                          "ssh -L 8000:localhost:8000 user@remote-ip");
+                    e.target.checked = false;
+                    return;
+                }
+
                 try {
                     stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
                     hiddenVideo.srcObject = stream;
