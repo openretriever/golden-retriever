@@ -213,9 +213,11 @@ class WebInteractiveNode(Flow[DetectionResult, DetectorInput]):
     - SINK for DetectionResult (updates video stream)
     - SOURCE for DetectorInput (emits user frames OR prompt updates)
     """
-    def __init__(self, host="0.0.0.0", port=8000):
+    def __init__(self, host="0.0.0.0", port=8000, ssl_keyfile=None, ssl_certfile=None):
         self.host = host
         self.port = port
+        self.ssl_keyfile = ssl_keyfile
+        self.ssl_certfile = ssl_certfile
         
         # Runtime attributes
         self.latest_frame = None
@@ -324,7 +326,14 @@ class WebInteractiveNode(Flow[DetectionResult, DetectorInput]):
 
     def _run_server(self):
         # Disable uvicorn's default logging config to avoid interference with multiprocessing
-        uvicorn.run(self.app, host=self.host, port=self.port, log_config=None)
+        # Use SSL if configured
+        if self.ssl_keyfile and self.ssl_certfile:
+            print(f"[WebInteractiveNode] Starting secure server at https://{self.host}:{self.port}")
+            uvicorn.run(self.app, host=self.host, port=self.port, log_config=None,
+                        ssl_keyfile=self.ssl_keyfile, ssl_certfile=self.ssl_certfile)
+        else:
+            print(f"[WebInteractiveNode] Starting server at http://{self.host}:{self.port}")
+            uvicorn.run(self.app, host=self.host, port=self.port, log_config=None)
 
     def run(self, input: DetectionResult) -> DetectorInput:
         # 1. Sink: Update internal state
@@ -347,7 +356,61 @@ class WebInteractiveNode(Flow[DetectionResult, DetectorInput]):
         return None
 
     def init_config(self):
-        return {"host": self.host, "port": self.port}
+        return {
+            "host": self.host, 
+            "port": self.port,
+            "ssl_keyfile": self.ssl_keyfile,
+            "ssl_certfile": self.ssl_certfile
+        }
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        # Remove unpicklable runtime objects
+        for key in ["app", "server_thread", "_frame_lock", "_input_queue", "templates"]:
+            state.pop(key, None)
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        # Restore defaults for runtime objects
+        self.app = None
+        self.server_thread = None
+        self._frame_lock = None
+        self._input_queue = None
+        self.templates = None
+
+def generate_self_signed_cert(cert_dir="_ssl"):
+    """
+    Generate a self-signed certificate using OpenSSL via subprocess (assumed available on macOS/Linux).
+    Used for creating a temporary secure context for the browser to allow camera access.
+    """
+    import subprocess
+    
+    if not os.path.exists(cert_dir):
+        os.makedirs(cert_dir)
+        
+    key_path = os.path.join(cert_dir, "key.pem")
+    cert_path = os.path.join(cert_dir, "cert.pem")
+    
+    if os.path.exists(key_path) and os.path.exists(cert_path):
+        return key_path, cert_path
+        
+    print("[SSL] Generating self-signed certificate for HTTPS...")
+    try:
+        # Generate private key and certificate in one go
+        cmd = [
+            "openssl", "req", "-x509", "-newkey", "rsa:4096",
+            "-keyout", key_path, "-out", cert_path,
+            "-days", "365", "-nodes",
+            "-subj", "/CN=localhost"
+        ]
+        subprocess.check_call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        print(f"[SSL] Certificate generated at {cert_dir}")
+        return key_path, cert_path
+    except Exception as e:
+        print(f"[SSL] Error generating certificate: {e}")
+        print("[SSL] Please ensure 'openssl' is installed and in your PATH.")
+        return None, None
 
 # =============================================================================
 # 4. Main Execution
@@ -359,11 +422,20 @@ def main():
                         choices=["multiprocessing", "dora"], help="Runtime backend")
     parser.add_argument("--client-camera", action="store_true", 
                         help="Use client (browser) camera instead of server webcam")
+    parser.add_argument("--ssl", action="store_true",
+                        help="Enable HTTPS with self-signed certificate (for remote client camera)")
     args = parser.parse_args()
 
     print("\n" + "="*60)
     print("Retriever Advanced Example: Interactive Vision Detection")
     print("="*60 + "\n")
+    
+    ssl_key = None
+    ssl_cert = None
+    if args.ssl:
+        ssl_key, ssl_cert = generate_self_signed_cert()
+        if not ssl_key or not ssl_cert:
+            print("[Error] Failed to enable SSL. Falling back to HTTP.")
 
     # Build Pipeline
     p = Pipeline("vision_vla_interactive")
@@ -374,8 +446,8 @@ def main():
         detector = VisionDetectorFlow() @ Rate(hz=2)
         
         # Web Node runs faster to keep UI responsive
-        web_node = WebInteractiveNode() @ Rate(hz=30) 
-
+        web_node = WebInteractiveNode(ssl_keyfile=ssl_key, ssl_certfile=ssl_cert) @ Rate(hz=30) 
+        
         if args.client_camera:
             print(">> Mode: Client Camera (Browser -> Server -> Detection)")
             # WebNode is the Source of images (via WS)
@@ -402,9 +474,15 @@ def main():
             p.connect(web_node, detector, qsize=10)
         
     print(f"Starting execution ({args.backend} backend)...")
-    print(f"Open your browser at: http://localhost:8000")
+    
+    protocol = "https" if (args.ssl and ssl_key) else "http"
+    print(f"Open your browser at: {protocol}://localhost:8000")
+    
     if args.client_camera:
         print("Enable 'Use Browser Camera' in the UI to stream video.")
+        if protocol == "https":
+             print("NOTE: You will see a 'Not Secure' warning. Pass through it to allow camera access.")
+             
     print("Press Ctrl+C to stop.\n")
 
     p.run(backend=args.backend)
