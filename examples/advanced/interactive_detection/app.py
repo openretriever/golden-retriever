@@ -224,29 +224,32 @@ class WebInteractiveNode(Flow[DetectionResult, DetectorInput]):
         self.latest_data = {}
         self._frame_lock = None
         self._input_queue = None
-        self.app = None
-        self.server_thread = None
         
     def init(self):
         self._frame_lock = threading.Lock()
         self._input_queue = queue.Queue()
         
-        self.app = FastAPI(title="Retriever Vision Detection Demo")
-        self.setup_routes()
+        app = FastAPI(title="Retriever Vision Detection Demo")
+        self.setup_routes(app)
         
-        self.server_thread = threading.Thread(target=self._run_server, daemon=True)
-        self.server_thread.start()
+        # Pass app to server thread instead of storing on self
+        server_thread = threading.Thread(
+            target=self._run_server, 
+            args=(app,),
+            daemon=True
+        )
+        server_thread.start()
 
-    def setup_routes(self):
+    def setup_routes(self, app):
         static_dir = os.path.join(os.path.dirname(__file__), "static")
-        self.app.mount("/static", StaticFiles(directory=static_dir), name="static")
-        self.templates = Jinja2Templates(directory=static_dir)
+        app.mount("/static", StaticFiles(directory=static_dir), name="static")
+        templates = Jinja2Templates(directory=static_dir)
 
-        @self.app.get("/", response_class=HTMLResponse)
+        @app.get("/", response_class=HTMLResponse)
         async def index(request: Request):
-            return self.templates.TemplateResponse("index.html", {"request": request})
+            return templates.TemplateResponse("index.html", {"request": request})
 
-        @self.app.websocket("/ws/camera")
+        @app.websocket("/ws/camera")
         async def websocket_camera(websocket: WebSocket):
             await websocket.accept()
             try:
@@ -264,21 +267,21 @@ class WebInteractiveNode(Flow[DetectionResult, DetectorInput]):
             except Exception as e:
                 print(f"[WebInteractiveNode] WS Error: {e}")
 
-        @self.app.get("/video_feed")
+        @app.get("/video_feed")
         async def video_feed():
             return StreamingResponse(
                 self.gen_frames(),
                 media_type="multipart/x-mixed-replace; boundary=frame"
             )
 
-        @self.app.post("/update_prompt")
+        @app.post("/update_prompt")
         async def update_prompt(data: Dict[str, str]):
             prompt = data.get("prompt", "")
             if self._input_queue:
                 self._input_queue.put(DetectorInput(prompt=prompt))
             return {"status": "success", "new_prompt": prompt}
 
-        @self.app.get("/stats")
+        @app.get("/stats")
         async def get_stats():
             if self._frame_lock is None: return {}
             with self._frame_lock:
@@ -324,16 +327,16 @@ class WebInteractiveNode(Flow[DetectionResult, DetectorInput]):
                    b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
             time.sleep(0.03) # ~30 FPS UI refresh
 
-    def _run_server(self):
+    def _run_server(self, app):
         # Disable uvicorn's default logging config to avoid interference with multiprocessing
         # Use SSL if configured
         if self.ssl_keyfile and self.ssl_certfile:
             print(f"[WebInteractiveNode] Starting secure server at https://{self.host}:{self.port}")
-            uvicorn.run(self.app, host=self.host, port=self.port, log_config=None,
+            uvicorn.run(app, host=self.host, port=self.port, log_config=None,
                         ssl_keyfile=self.ssl_keyfile, ssl_certfile=self.ssl_certfile)
         else:
             print(f"[WebInteractiveNode] Starting server at http://{self.host}:{self.port}")
-            uvicorn.run(self.app, host=self.host, port=self.port, log_config=None)
+            uvicorn.run(app, host=self.host, port=self.port, log_config=None)
 
     def run(self, input: DetectionResult) -> DetectorInput:
         # 1. Sink: Update internal state
@@ -366,7 +369,7 @@ class WebInteractiveNode(Flow[DetectionResult, DetectorInput]):
     def __getstate__(self):
         state = self.__dict__.copy()
         # Remove unpicklable runtime objects
-        for key in ["app", "server_thread", "_frame_lock", "_input_queue", "templates"]:
+        for key in ["_frame_lock", "_input_queue"]:
             state.pop(key, None)
         return state
 
