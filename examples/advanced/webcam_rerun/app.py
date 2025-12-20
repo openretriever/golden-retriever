@@ -205,7 +205,7 @@ class OwlSamModel:
             masks=masks_np
         )
 
-class PerceptionFlow(Flow[ImageMsg, PerceptionResult]):
+class ObjectDetectionAndSegmentationFlow(Flow[ImageMsg, PerceptionResult]):
     def __init__(self, queries: List[str]):
         super().__init__()
         self.queries = queries
@@ -227,7 +227,28 @@ class PerceptionFlow(Flow[ImageMsg, PerceptionResult]):
     def init_config(self):
         return {"queries": self.queries}
 
-class RerunLogFlow(Flow[PerceptionResult, None]):
+class RerunRawImageLogger(Flow[ImageMsg, None]):
+    """Logs raw webcam images at high framerate for smooth replay"""
+    def __init__(self):
+        super().__init__()
+        pass
+    
+    def init(self):
+        rr.init("retriever_perception_demo")
+        rr.connect()
+
+    def run(self, img: ImageMsg):
+        if img is None or img.frame is None or img.frame.size == 0:
+            return
+        
+        # Log raw image
+        img_rgb = cv2.cvtColor(img.frame, cv2.COLOR_BGR2RGB)
+        rr.set_time_seconds("stable_time", img.timestamp)
+        rr.log("camera/raw", rr.Image(img_rgb))
+
+
+class RerunPerceptionResultsLogger(Flow[PerceptionResult, None]):
+    """Logs perception results (detections + segmentation) at inference rate"""
     def __init__(self):
         super().__init__()
         pass
@@ -240,24 +261,21 @@ class RerunLogFlow(Flow[PerceptionResult, None]):
         if res is None: 
             return
         
-        # Debug
-        # print(f"[Rerun] Received res: {type(res)}")
         if res.image is None or res.image.size == 0:
             if not getattr(self, "_warned_empty", False):
                 print("[Rerun] Warning: Received empty image in result (waiting for model init...)")
                 self._warned_empty = True
             return
         
-        # Log Image
-        # Rerun expects RGB
+        # Log perception results on top of the image
         img_rgb = cv2.cvtColor(res.image, cv2.COLOR_BGR2RGB)
         rr.set_time_seconds("stable_time", res.timestamp)
         
-        rr.log("camera/image", rr.Image(img_rgb))
+        rr.log("camera/perception/image", rr.Image(img_rgb))
         
         if res.boxes:
             rr.log(
-                "camera/image/detections",
+                "camera/perception/detections",
                 rr.Boxes2D(
                     array=res.boxes,
                     array_format=rr.Box2DFormat.XYXY,
@@ -266,19 +284,34 @@ class RerunLogFlow(Flow[PerceptionResult, None]):
             )
             
         if res.masks is not None:
-             # Overlay masks
-             # We can log them as Annotations or just generic masks
-             # Creating a single segmentation image or multiple?
-             # Rerun supports mask logging. 
-             # Let's combine them into a single segmentation image for simplicity?
-             # Or log each as a separate entity? "camera/image/mask/{i}"
-             
              # Combined mask
              combined_mask = np.zeros(res.image.shape[:2], dtype=np.uint8)
              for i, mask in enumerate(res.masks):
                  combined_mask[mask] = i + 1
              
-             rr.log("camera/image/segmentation", rr.SegmentationImage(combined_mask))
+             rr.log("camera/perception/segmentation", rr.SegmentationImage(combined_mask))
+
+
+class ConsoleResultsLogger(Flow[PerceptionResult, None]):
+    """Prints detection results to console when new results arrive"""
+    def __init__(self):
+        super().__init__()
+        self.frame_count = 0
+    
+    def run(self, res: PerceptionResult):
+        if res is None or res.image is None or res.image.size == 0:
+            return
+        
+        self.frame_count += 1
+        
+        if res.boxes:
+            print(f"\n[Frame {self.frame_count}] Detected {len(res.boxes)} object(s):")
+            for label, score, box in zip(res.labels, res.scores, res.boxes):
+                print(f"  • {label}: {score:.2f} confidence at [{box[0]:.0f}, {box[1]:.0f}, {box[2]:.0f}, {box[3]:.0f}]")
+            if res.masks is not None:
+                print(f"  → Generated {len(res.masks)} segmentation mask(s)")
+        else:
+            print(f"[Frame {self.frame_count}] No objects detected")
 
 
 # ==============================================================================
@@ -286,20 +319,40 @@ class RerunLogFlow(Flow[PerceptionResult, None]):
 # ==============================================================================
 
 def cleanup_checkpoints():
-    print("[Cleanup] Cleaning up model checkpoints...")
+    """Clean up both model checkpoints and Rerun recording cache for this example"""
+    import platform
+    
+    print("[Cleanup] Cleaning up model checkpoints and Rerun cache...")
+    
+    # Clean up Hugging Face model cache
     cache_dir = Path(os.path.expanduser("~/.cache/huggingface/hub"))
-    if not cache_dir.exists():
-        return
-
-    targets = [
-        "models--google--owlv2-base-patch16-ensemble",
-        "models--facebook--sam-vit-base"
-    ]
-
-    for item in cache_dir.iterdir():
-        if item.is_dir() and any(t in item.name for t in targets):
-            print(f"[Cleanup] Removing {item}")
-            shutil.rmtree(item)
+    if cache_dir.exists():
+        targets = [
+            "models--google--owlv2-base-patch16-ensemble",
+            "models--facebook--sam-vit-base"
+        ]
+        for item in cache_dir.iterdir():
+            if item.is_dir() and any(t in item.name for t in targets):
+                print(f"[Cleanup] Removing {item}")
+                shutil.rmtree(item)
+    
+    # Clean up Rerun data (platform-specific)
+    system = platform.system()
+    if system == "Darwin":  # macOS
+        rerun_path = Path(os.path.expanduser("~/Library/Application Support/rerun"))
+    else:  # Linux and others
+        rerun_path = Path(os.path.expanduser("~/.cache/rerun"))
+    
+    if rerun_path.exists():
+        print(f"[Cleanup] Clearing Rerun data at {rerun_path}")
+        # Remove all contents but keep the directory
+        for item in rerun_path.iterdir():
+            if item.is_dir():
+                shutil.rmtree(item)
+            else:
+                item.unlink()
+        print(f"[Cleanup] Cleared {rerun_path}")
+    
     print("[Cleanup] Done.")
 
 def main():
@@ -319,10 +372,14 @@ def main():
     
     with p:
         cam = WebcamSource() @ Rate(hz=10)
-        perc = PerceptionFlow(queries=queries) @ Rate(hz=5)
-        logger = RerunLogFlow() @ Rate(hz=10)
+        detector = ObjectDetectionAndSegmentationFlow(queries=queries) @ Rate(hz=5)
+        raw_logger = RerunRawImageLogger() @ Rate(hz=10)
+        results_logger = RerunPerceptionResultsLogger() @ Rate(hz=10)
+        console_logger = ConsoleResultsLogger() @ Rate(hz=5)
         
-        cam >> perc >> logger
+        cam >> raw_logger  # Log raw images at camera framerate
+        cam >> detector >> results_logger  # Log perception to Rerun at inference rate
+        detector >> console_logger  # Print results to console
 
     if args.cleanup:
         import atexit
