@@ -1,0 +1,30 @@
+VL_MAP:
+  BATCH_SIZE: 1
+  SIZE: 1500
+  RESOLUTION: 5
+  VISION_RANGE: 1000
+  OBSTACLE_HEIGHT:
+    MIN: 25
+    MAX: 150
+  agent_cfg:
+    vision_range: 80
+    height_min: 25
+    height_max: 150
+  CAMERA:
+    HEIGHT: 125.0
+    TILT_ANGLE: 0.0
+    FRAME_WIDTH: 256
+    FRAME_HEIGHT: 256
+    FOV: 90.0
+    PC_SCALE: 2
+VLM_MODEL:
+  DEVICE: "cuda:0"
+  CLIP:
+    FEAT_DIM: 512
+    USE_TEXT_ENC: True
+  TRANSFORM:
+    INPUT_MEAN: [0.5, 0.5, 0.5]
+    INPUT_STD: [0.5, 0.5, 0.5]
+    PADDING: [0.0, 0.0, 0.0]
+  MODEL_DIR: "/home/xcg/research_projects/vln-ce-vlmap/lseg/checkpoints/demo_e200.ckpt"
+  OBJ_LABELS: ["other","wall","floor","chair","door","table","dining table","picture","cabinet","cushion","window","couch","sofa","bed","curtain","chest of drawers","plant","sink","stairs","ceiling","toilet","stool","towel","mirror","microwave","oven","tv_monitor","shower","column","bathtub","counter","refrigerator","fireplace","lighting","beam","railing","shelving","blinds","gym_equipment","seating","board_panel","furniture","appliances","clothes"]

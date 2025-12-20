@@ -1,0 +1,52 @@
+Here is a one example of ground truth observation without visual inputs:
+
+action: go to sidetable 2
+observation: You arrive at sidetable 2. On the dresser 1, you see a remotecontrol 1, and a keychain 1. On the sidetable 2, you see a watch 1. The drawer 1 is closed.
+
+action: go to drawer 4
+observation: You arrive at drawer 4. On the armchair 1, you see a book 1, and a creditcard 1. On the dresser 1, you see a vase 2, a vase 1, and a watch 2. The drawer 3 is closed. The drawer 4 is closed.
+
+action: open drawer 4
+observation: You open drawer 4, in it, you see nothing. You are not holding anything. On the armchair 1, you see a book 1, and a creditcard 1. On the dresser 1, you see a vase 2, a vase 1, and a watch 2. The drawer 3 is closed.
+
+action: close drawer 4
+observation: You close drawer 4. On the armchair 1, you see a book 1, and a creditcard 1. On the dresser 1, you see a vase 2, a vase 1, and a watch 2. The drawer 3 is closed. The drawer 4 is closed.
+
+action: go to drawer 3
+observation: You arrive at drawer 3. On the armchair 1, you see a book 1, and a creditcard 1. On the dresser 1, you see a vase 2, a vase 1, and a watch 2. The drawer 3 is closed. The drawer 4 is closed.
+
+action: open drawer 3
+observation: You open drawer 3, in it, you see nothing. You are not holding anything. On the armchair 1, you see a book 1, and a creditcard 1. On the dresser 1, you see a vase 2, a vase 1, and a watch 2.
+
+action: close drawer 3
+observation: You close drawer 3. On the armchair 1, you see a book 1, and a creditcard 1. On the dresser 1, you see a vase 2, a vase 1, and a watch 2. The drawer 3 is closed. The drawer 4 is closed.
+
+action: go to drawer 2
+observation: You arrive at drawer 2. On the dresser 1, you see a keychain 1. The drawer 1 is closed. The drawer 2 is closed.
+
+action: open drawer 2
+observation: You open drawer 2, in it, you see nothing. On the dresser 1, you see a keychain 1. The drawer 2 is open. The drawer 1 is closed.
+
+action: close drawer 2
+observation: You close drawer 2. On the dresser 1, you see a keychain 1. The drawer 1 is closed. The drawer 2 is closed.
+
+action: go to drawer 1
+observation: You arrive at drawer 1. On the dresser 1, you see a vase 1, a vase 3, a watch 2, a remotecontrol 1, and a keychain 1. The drawer 1 is closed. The drawer 3 is closed.
+
+action: open drawer 1
+observation: You open drawer 1, in it, you see nothing. On the dresser 1, you see a vase 1, a vase 3, a watch 2, a remotecontrol 1, and a keychain 1. The drawer 1 is open. The drawer 3 is closed.
+
+action: close drawer 1
+observation: You close drawer 1. On the dresser 1, you see a vase 1, a vase 3, a watch 2, a remotecontrol 1, and a keychain 1. The drawer 3 is closed.
+
+action: go to dresser 1
+observation: You arrive at dresser 1. On the dresser 1, you see a vase 1, a vase 3, a watch 2, a remotecontrol 1, and a keychain 1. The drawer 1 is closed. The drawer 3 is closed.
+
+action: take remotecontrol 1 from dresser 1
+observation: You take remotecontrol 1 from dresser 1. On the dresser 1, you see a vase 1, a vase 3, a watch 2, and a keychain 1. The drawer 1 is closed. The drawer 3 is closed.
+
+action: go to coffeetable 1
+observation: You arrive at coffeetable 1. On the coffeetable 1, you see a laptop 1, a statue 1, a newspaper 1, and a vase 4.
+
+action: put remotecontrol 1 in/on coffeetable 1
+observation: You put remotecontrol 1 in/on coffeetable 1. On the coffeetable 1, you see a laptop 1, a statue 1, a newspaper 1, a vase 4, and a remotecontrol 1.

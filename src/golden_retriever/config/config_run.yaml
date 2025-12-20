@@ -1,0 +1,9 @@
+#defaults:
+#  - /actor/arm_robot_actor
+
+
+ray:
+  address: auto
+  namespace: retriever-run
+  num_cpus: 8
+  num_gpus: 0

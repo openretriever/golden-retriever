@@ -1,0 +1,44 @@
+[
+    {
+        "image_path": "./src/envs/alf_world/prompt/vlm_planning/examine/images/traj_1/0.png",
+        "previous_action": "go to armchair 1",
+        "object_binding": "1--sofa 1\n",
+        "textual_observation": "-= Welcome to TextWorld, ALFRED! =-\n\nYou are in the middle of a room. Looking quickly around you, you see a armchair 1, a coffeetable 1, a sofa 1, a coffeetable 2, a garbagecan 1, a ottoman 1, a dresser 1, a drawer 1, a drawer 2, a drawer 3, a drawer 4, a dresser 2, a drawer 5, a drawer 6, a drawer 7, and a drawer 8.\n\nYour task is to: examine the newspaper with the desklamp"
+    },
+    {
+        "image_path": "./src/envs/alf_world/prompt/vlm_planning/examine/images/traj_1/1.png",
+        "previous_action": "go to coffeetable 1",
+        "object_binding": "1--armchair 1\n5--coffeetable 1\n8--sofa 1\n12--coffeetable 2\n",
+        "textual_observation": "You arrive at loc 0. On the armchair 1, you see nothing."
+    },
+    {
+        "image_path": "./src/envs/alf_world/prompt/vlm_planning/examine/images/traj_1/2.png",
+        "previous_action": "go to coffeetable 2",
+        "object_binding": "1--sofa 1\n4--armchair 1\n6--coffeetable 1\n7--garbagecan 1\n8--ottoman 1\n11--statue 1\n16--dresser 1\n",
+        "textual_observation": "You arrive at loc 1. On the coffeetable 1, you see a statue 1."
+    },
+    {
+        "image_path": "./src/envs/alf_world/prompt/vlm_planning/examine/images/traj_1/3.png",
+        "previous_action": "go to sofa 1",
+        "object_binding": "4--desklamp 1\n5--coffeetable 2\n",
+        "textual_observation": "You arrive at loc 3. On the coffeetable 2, you see a desklamp 1."
+    },
+    {
+        "image_path": "./src/envs/alf_world/prompt/vlm_planning/examine/images/traj_1/4.png",
+        "previous_action": "take newspaper 1 from sofa 1",
+        "object_binding": "1--sofa 1\n4--laptop 1\n5--pillow 1\n6--remotecontrol 1\n7--newspaper 1\n",
+        "textual_observation": "You arrive at loc 2. On the sofa 1, you see a laptop 1, a pillow 1, a remotecontrol 1, and a newspaper 1."
+    },
+    {
+        "image_path": "./src/envs/alf_world/prompt/vlm_planning/examine/images/traj_1/5.png",
+        "previous_action": "go to coffeetable 2",
+        "object_binding": "2--sofa 1\n3--newspaper 1\n4--laptop 1\n5--pillow 1\n7--remotecontrol 1\n",
+        "textual_observation": "You pick up the newspaper 1 from the sofa 1."
+    },
+    {
+        "image_path": "./src/envs/alf_world/prompt/vlm_planning/examine/images/traj_1/6.png",
+        "previous_action": "use desklamp 1",
+        "object_binding": "2--newspaper 1\n3--desklamp 1\n6--coffeetable 2\n",
+        "textual_observation": "You arrive at loc 3. On the coffeetable 2, you see a desklamp 1."
+    }
+]

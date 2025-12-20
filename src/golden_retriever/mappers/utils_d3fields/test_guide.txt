@@ -1,0 +1,3 @@
+download pretrained models
+bash src/models/mapping/utils_d3fields/scripts/download_ckpts.sh
+bash src/models/mapping/utils_d3fields/scripts/download_data.sh

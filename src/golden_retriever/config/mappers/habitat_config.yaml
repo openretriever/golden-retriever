@@ -1,0 +1,20 @@
+scene_cfg:
+  scene_file: ""
+  random_seed: 1234
+  allow_sliding: True
+  max_episode_length: 500
+  goal_reach_eps: 0.25
+sensor_cfg:
+  use_sensors: [ "color_depth_sensor" ]
+  sensor_height: 1.25
+  obs_width: 256
+  obs_height: 256
+map_cfg:
+  top_down_type: "boundary"
+  show_agent: True
+  show_goal: True
+agent_cfg:
+  move_forward: 0.25
+  turn_left: 15
+  turn_right: 15
+

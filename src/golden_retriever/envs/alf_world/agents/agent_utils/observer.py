@@ -1,0 +1,305 @@
+"""
+This script contains different observer for agents in ALFWorld.
+"""
+import base64
+import logging
+import os
+from io import BytesIO
+
+from agents.agent_utils.inference_engine import engine_factory
+from agents.agent_utils.prompts import generate_prompts_for_observer
+
+# define perception type, can only choose from "bbox" or "seg"
+PERCEPTION_TYPE = ["bbox", "segs"]
+
+
+def encode_PIL_image(image):
+    """
+    Encode a PIL Image into base64 string.
+
+    Args:
+        image (PIL.Image): Input PIL Image object
+
+    Returns:
+        str: Base64 encoded string of the image
+    """
+    buffered = BytesIO()
+    image.save(buffered, format="PNG")
+    img_str = base64.b64encode(buffered.getvalue()).decode()
+    return img_str
+
+
+# Observer for agent
+class BaseObserver:
+    def __init__(self, vlm_model, perception_type):
+        self.vlm_model = vlm_model
+        self.perception_type = perception_type
+        assert (
+            self.perception_type in PERCEPTION_TYPE
+        ), f"Invalid perception type: {self.perception_type}"
+        self.engine = engine_factory(vlm_model)
+        self.observation_history = []  # Store observation history
+        self.action_history = []  # Store action history
+        self.action_response_history = (
+            []
+        )  # List of dicts containing timestep, action, and observation
+        self.current_timestep = 0  # Track current timestep
+        self.prompt = {}
+        self.task_info = None
+        self.init_prompts()
+        self.name = ""
+
+    def add_task_info(self, task_info):
+        """Add task information"""
+        self.task_info = task_info
+
+    def init_prompts(self):
+        """Initialize prompts for the observer"""
+        raise NotImplementedError("Subclasses must implement init_prompts()")
+
+    def observe(self, obs):
+        """Add observation to history"""
+        self.observation_history.append(
+            {
+                "image": obs["image"],
+                "object_bindings": obs["object_bindings"],
+                "inventory": obs["inventory"],
+            }
+        )
+
+    def add_action(self, action):
+        """Add action to history"""
+        self.action_history.append(action)
+        self.action_response_history.append(
+            {
+                "timestep": self.current_timestep,
+                "action": action,
+                "observation": None,  # Will be filled by observation later
+            }
+        )
+
+    def set_logger(self, traj_dir):
+        # set up a File logger
+        logger_name = f"{self.name}_logger"
+        self.logger = logging.getLogger(logger_name)
+        self.logger.setLevel(logging.INFO)
+        file_handler = logging.FileHandler(os.path.join(traj_dir, f"{self.name}.log"))
+        file_handler.setLevel(logging.INFO)
+        formatter = logging.Formatter("%(message)s")
+        file_handler.setFormatter(formatter)
+        self.logger.addHandler(file_handler)
+
+    def info(self, message):
+        """Log an info message"""
+        self.logger.info(message)
+
+    def close_logger(self):
+        """Close the logger"""
+        for handler in self.logger.handlers:
+            handler.close()
+            self.logger.removeHandler(handler)
+
+    def get_observation_text(self):
+        """Generate textual observation based on history"""
+        raise NotImplementedError("Subclasses must implement get_observation_text()")
+
+    def reset(self):
+        """Reset observation and action history"""
+        self.observation_history = []
+        self.action_history = []
+        self.action_response_history = []
+        self.current_timestep = 0
+        self.task_info = None
+        self.close_logger()
+
+
+class SingleImageObserver(BaseObserver):
+    def __init__(self, vlm_model, perception_type):
+        super().__init__(vlm_model, perception_type)
+        self.name = f"single_{self.perception_type}_observer"
+
+    def init_prompts(self):
+        self.prompt["system_prompt"] = generate_prompts_for_observer(
+            self.perception_type, is_double_image=False
+        )
+
+    def get_observation_text(self):
+        """Generate textual observation based on history"""
+        assert len(self.observation_history) > 0, "No observation history found"
+        cur_obs = self.observation_history[-1]
+
+        # Format action history for the prompt
+        history_text = ""
+        for entry in self.action_response_history:
+            if entry["action"]:
+                history_text += f"Action: {entry['action']}\n"
+            if entry["observation"]:
+                history_text += f"{entry['observation']}\n"
+        vlm_query = [
+            {"role": "system", "content": self.prompt["system_prompt"]},
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "Here is the history of actions of the agent and textual observations of the environment generated by you:\n"
+                        + history_text,
+                    }
+                ],
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/png;base64,{encode_PIL_image(cur_obs['image'])}"
+                        },
+                    },
+                    {
+                        "type": "text",
+                        "text": cur_obs["object_bindings"]
+                        + "\nInventory:"
+                        + cur_obs["inventory"],
+                    },
+                    {
+                        "type": "text",
+                        "text": "Above is the first-person image along with object bindings information and inventory, think step by step and generate your response carefully according to the guidance above.\n\n",
+                    },
+                ],
+            },
+        ]
+        textual_obs = self.engine.generate(conversation=vlm_query)
+        # if textual_obs ends with \n, remove it
+        if textual_obs.endswith("\n"):
+            textual_obs = textual_obs[:-1]
+        self.action_response_history[-1]["observation"] = textual_obs
+        self.current_timestep += 1
+        return textual_obs
+
+
+class TwoImageObserver(BaseObserver):
+    def __init__(self, vlm_model, perception_type):
+        super().__init__(vlm_model, perception_type)
+        self.name = f"two_{self.perception_type}_observer"
+
+    def init_prompts(self):
+        self.prompt["system_prompt"] = generate_prompts_for_observer(
+            self.perception_type, is_double_image=True
+        )
+
+    def get_observation_text(self):
+        # the observer will be provide with two images, one from previous time step and one from current time step.
+        assert len(self.observation_history) > 0, "No observation history found"
+        cur_obs = self.observation_history[-1]
+        if len(self.observation_history) >= 2:
+            prev_obs = self.observation_history[-2]
+        else:
+            prev_obs = None
+
+        # if prev_obs is None, generate observation based on the first image
+        if prev_obs is None:
+            history_text = ""
+            for entry in self.action_response_history:
+                if entry["action"]:
+                    history_text += f"Action: {entry['action']}\n"
+                if entry["observation"]:
+                    history_text += f"{entry['observation']}\n"
+
+            vlm_query = [
+                {"role": "system", "content": self.prompt["system_prompt"]},
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Here is the history of actions of the agent and textual observations of the environment generated by you:\n"
+                            + history_text,
+                        }
+                    ],
+                },
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/png;base64,{encode_PIL_image(cur_obs['image'])}"
+                            },
+                        },
+                        {
+                            "type": "text",
+                            "text": cur_obs["object_bindings"]
+                            + "\nInventory:"
+                            + cur_obs["inventory"],
+                        },
+                        {
+                            "type": "text",
+                            "text": "Above is the first-person image along with object bindings information and inventory, think step by step and generate your response carefully according to the guidance above.\n\n",
+                        },
+                    ],
+                },
+            ]
+        else:
+            history_text = ""
+
+            for entry in self.action_response_history[:-2]:
+                if entry["action"]:
+                    history_text += f"Action: {entry['action']}\n"
+                if entry["observation"]:
+                    history_text += f"{entry['observation']}\n"
+            history_text += f"Action: {self.action_response_history[-2]['action']}\n"
+
+            vlm_query = [
+                {"role": "system", "content": self.prompt["system_prompt"]},
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Here is the history of actions of the agent and textual observations of the environment generated by you:\n"
+                            + history_text,
+                        },
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/png;base64,{encode_PIL_image(prev_obs['image'])}"
+                            },
+                        },
+                        {
+                            "type": "text",
+                            "text": prev_obs["object_bindings"]
+                            + "\nInventory:"
+                            + prev_obs["inventory"],
+                        },
+                        {
+                            "type": "text",
+                            "text": f"{self.action_response_history[-2]['observation']}\n"
+                            + f"Action: {self.action_response_history[-1]['action']}\n",
+                        },
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/png;base64,{encode_PIL_image(cur_obs['image'])}"
+                            },
+                        },
+                        {
+                            "type": "text",
+                            "text": cur_obs["object_bindings"]
+                            + "\nInventory:"
+                            + cur_obs["inventory"],
+                        },
+                        {
+                            "type": "text",
+                            "text": "Above is the first-person image along with object bindings information and inventory, think step by step and generate your response carefully according to the guidance above.\n\n",
+                        },
+                    ],
+                },
+            ]
+        textual_obs = self.engine.generate(conversation=vlm_query)
+        # if textual_obs ends with \n, remove it
+        if textual_obs.endswith("\n"):
+            textual_obs = textual_obs[:-1]
+        self.action_response_history[-1]["observation"] = textual_obs
+        self.current_timestep += 1
+        return textual_obs

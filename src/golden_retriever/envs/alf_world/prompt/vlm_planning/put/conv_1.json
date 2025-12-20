@@ -1,0 +1,210 @@
+[
+    {
+        "role": "user",
+        "content": [
+            {
+                "type": "text",
+                "text": "Here is an example.\nYou are in the middle of a room. Looking quickly around you, you see a bathtub 1, a bathtubbasin 1, a countertop 1, a cabinet 1, a cabinet 2, a cabinet 3, a sink 1, a sinkbasin 1, a sink 2, a sinkbasin 2, a garbagecan 1, a cabinet 4, a toilet 1, and a toiletpaperhanger 1.\n\nYour task is to: put some cloth on bathtubbasin"
+            }
+        ]
+    },
+    {
+        "role": "assistant",
+        "content": [
+            {
+                "type": "text",
+                "text": "Observation: I see a bathtub 1, a bathtubbasin 1, a countertop 1, a cabinet 1, a cabinet 2, a cabinet 3, a sink 1, a sinkbasin 1, a sink 2, a sinkbasin 2, a garbagecan 1, a cabinet 4, a toilet 1, and a toiletpaperhanger 1.\n\nThink: The task is to put some cloth on bathtubbasin. First, I need to find and take some cloth, then go to bathtubbasin 1 and put it there. Cloth is more likely to be in cabinets (1-4). I can check the cabinets one by one, starting with cabinet 1. \n\nAction: go to cabinet 1\n"
+            }
+        ]
+    },
+    {
+        "role": "user",
+        "content": [
+            {"type": "image"},
+            {
+                "type": "text",
+                "text": "Object Bindings: 2--countertop 1\n4--cabinet 1\n5--cabinet 2\n6--cabinet 3\n7--sink 1\n8--sinkbasin 1\n10--sink 2\n13--sinkbasin 2\n14--garbagecan 1\n19--cabinet 4\n"
+            }
+        ]
+    },
+    {
+        "role": "assistant",
+        "content": [
+            {
+                "type": "text",
+                "text": "Observation: cabinet 1 is in front of me. From the visual observation, cabinet 1 is closed and I don't hold anything in my hand. \n\nThink: I need to check if there is cloth inside cabinet 1. To do that, I need to open cabinet 1.\n\nAction: open cabinet 1\n"
+            }
+        ]
+    },
+    {
+        "role": "user",
+        "content": [
+            {"type": "image"},
+            {
+                "type": "text",
+                "text": "Object Bindings: 2--countertop 1\n4--cabinet 2\n5--cabinet 3\n7--sink 1\n8--sinkbasin 1\n10--sink 2\n13--cabinet 1\n14--sinkbasin 2\n16--soapbottle 1\n17--soapbottle 2\n18--soapbottle 3\n20--cabinet 4\n"
+            }
+        ]
+    },
+    {
+        "role": "assistant",
+        "content": [
+            {
+                "type": "text",
+                "text": "Observation: cabinet 1 is open. Inside, I don't see any cloth and I don't hold anything in my hand based on visual observation.\n\nThink: There is no cloth in cabinet 1. I should close cabinet 1 and proceed to cabinet 2 to continue my search.\n\nAction: close cabinet 1\n"
+            }
+        ]
+    },
+    {
+        "role": "user",
+        "content": [
+            {"type": "image"},
+            {
+                "type": "text",
+                "text": "Object Bindings: 2--countertop 1\n4--cabinet 1\n5--cabinet 2\n6--cabinet 3\n7--sink 1\n8--sinkbasin 1\n10--sink 2\n13--sinkbasin 2\n14--garbagecan 1\n19--cabinet 4\n"
+            }
+        ]
+    },
+    {
+        "role": "assistant",
+        "content": [
+            {
+                "type": "text",
+                "text": "Observation: cabinet 1 is closed and I don't hold anything in my hand based on visual observation.\n\nThink: Now, I need to go to cabinet 2 to check for the cloth.\n\nAction: go to cabinet 2\n"
+            }
+        ]
+    },
+    {
+        "role": "user",
+        "content": [
+            {"type": "image"},
+            {
+                "type": "text",
+                "text": "Object Bindings: 2--countertop 1\n4--cabinet 1\n5--cabinet 2\n6--cabinet 3\n7--sink 1\n8--sinkbasin 1\n10--sink 2\n13--sinkbasin 2\n14--garbagecan 1\n19--cabinet 4\n"
+            }
+        ]
+    },
+    {
+        "role": "assistant",
+        "content": [
+            {
+                "type": "text",
+                "text": "Observation: cabinet 2 is in front of me. It is closed and I don't hold anything in my hand based on visual observation.\n\nThink: I need to open cabinet 2 to see if the cloth is inside.\n\nAction: open cabinet 2\n"
+            }
+        ]
+    },
+    {
+        "role": "user",
+        "content": [
+            {"type": "image"},
+            {
+                "type": "text",
+                "text": "Object Bindings: 2--countertop 1\n5--cabinet 1\n6--cabinet 3\n7--sink 1\n8--sinkbasin 1\n10--sink 2\n12--cabinet 2\n14--sinkbasin 2\n15--garbagecan 1\n19--cabinet 4\n"
+            }
+        ]
+    },
+    {
+        "role": "assistant",
+        "content": [
+            {
+                "type": "text",
+                "text": "Observation: cabinet 2 is open and find it empty and I don't hold anything in my hand based on visual observation.\n\nThink: Since cabinet 2 doesn't contain the cloth, I should close it and proceed to cabinet 3.\n\nAction: close cabinet 2\n"
+            }
+        ]
+    },
+    {
+        "role": "user",
+        "content": [
+            {"type": "image"},
+            {
+                "type": "text",
+                "text": "Object Bindings: 2--countertop 1\n4--cabinet 1\n5--cabinet 2\n6--cabinet 3\n7--sink 1\n8--sinkbasin 1\n10--sink 2\n13--sinkbasin 2\n14--garbagecan 1\n19--cabinet 4\n"
+            }
+        ]
+    },
+    {
+        "role": "assistant",
+        "content": [
+            {
+                "type": "text",
+                "text": "Observation: cabinet 2 is closed and I don't hold anything in my hand based on visual observation.\n\nThink: Next, I need to check cabinet 3 for the cloth.\n\nAction: go to cabinet 3\n"
+            }
+        ]
+    },
+    {
+        "role": "user",
+        "content": [
+            {"type": "image"},
+            {
+                "type": "text",
+                "text": "Object Bindings: 2--countertop 1\n4--cabinet 3\n5--cabinet 2\n6--cabinet 4\n7--sink 2\n8--sinkbasin 2\n9--sink 1\n11--sinkbasin 1\n13--cabinet 1\n"
+            }
+        ]
+    },
+    {
+        "role": "assistant",
+        "content": [
+            {
+                "type": "text",
+                "text": "Observation: cabinet 3 is in front of me. It is closed and I don't hold anything in my hand based on visual observation.\n\nThink: I need to open cabinet 3 to look for the cloth.\n\nAction: open cabinet 3\n"
+            }
+        ]
+    },
+    {
+        "role": "user",
+        "content": [
+            {"type": "image"},
+            {
+                "type": "text",
+                "text": "Object Bindings: 2--countertop 1\n5--cabinet 4\n6--cabinet 2\n7--sink 2\n8--sinkbasin 2\n9--sink 1\n11--sinkbasin 1\n12--cabinet 3\n14--cabinet 1\n16--cloth 1\n"
+            }
+        ]
+    },
+    {
+        "role": "assistant",
+        "content": [
+            {
+                "type": "text",
+                "text": "Observation: cabinet 3 is open and see cloth 1 inside and I don't hold anything in my hand based on visual observation.\n\nThink: I need to take cloth 1 from cabinet 3.\n\nAction: take cloth 1 from cabinet 3\n"
+            }
+        ]
+    },
+    {
+        "role": "user",
+        "content": [
+            {"type": "image"},
+            {
+                "type": "text",
+                "text": "Object Bindings: 2--cloth 1\n3--countertop 1\n5--cabinet 4\n6--cabinet 2\n7--sink 2\n8--sinkbasin 2\n9--sink 1\n11--sinkbasin 1\n13--cabinet 1\n16--cabinet 3\n"
+            }
+        ]
+    },
+    {
+        "role": "assistant",
+        "content": [
+            {
+                "type": "text",
+                "text": "Observation: I have picked up cloth 1. It is now appearing in the bottom center of my view.\n\nThink: Now that I have the cloth, I need to go to bathtubbasin 1 to place it there.\n\nAction: go to bathtubbasin 1\n"
+            }
+        ]
+    },
+    {
+        "role": "user",
+        "content": [
+            {"type": "image"},
+            {
+                "type": "text",
+                "text": "Object Bindings: 2--bathtub 1\n5--cloth 1\n7--bathtubbasin 1\n8--faucet 1\n"
+            }
+        ]
+    },
+    {
+        "role": "assistant",
+        "content": [
+            {
+                "type": "text",
+                "text": "Observation: bathtubbasin 1 is in front of me and I am holding cloth 1 since it is appearing in the bottom center of my view. \n\nThink: I need to put cloth 1 on bathtubbasin 1.\n\nAction: put cloth 1 in/on bathtubbasin 1\n"
+            }
+        ]
+    }
+]

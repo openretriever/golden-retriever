@@ -1,0 +1,80 @@
+# Training
+
+defaults:
+  - config
+
+hydra:
+  run:
+    dir: ${train.log_dir}
+
+dataset:
+  type: 'single' # 'single' or 'multi'
+  images: True
+  cache: True # load episodes to memory instead of reading from disk
+  augment:
+    theta_sigma: 60 # rotation sigma in degrees; N(mu = 0, sigma = theta_sigma).
+  clip_type: normal
+  use_image_goal: True
+  topdown: False
+  image_text_ratio: 0.2
+
+task: ${train.task}
+
+train:
+  # folders
+  exp_folder: exps
+  log_root: ${root_dir}
+  log_dir: ${train.log_root}/${train.exp_folder}/${train.task}-n-train${train.n_demos}/${train.agent}-${lepp.model_name}-${lepp.logit_out_channel}-${lepp.pick_kernel_name}-${lepp.place_kernel_name}-Par${lepp.enable_parse}-Topdown${dataset.topdown}-Crop${dataset.use_image_goal}-Ratio${dataset.image_text_ratio}
+  train_dir: ${root_dir}/${train.exp_folder}/${train.task}-n-train${train.n_demos}/${train.agent}-${lepp.model_name}-${lepp.logit_out_channel}-${lepp.pick_kernel_name}-${lepp.place_kernel_name}-Par${lepp.enable_parse}-Topdown${dataset.topdown}-Crop${dataset.use_image_goal}-Ratio${dataset.image_text_ratio}
+  data_root: ${root_dir}
+  data_dir: ${train.data_root}/data  # where to store dataset
+
+
+  # task configs
+  task: packing-boxes-pairs-seen-colors
+  agent: two_stream_full_clip_lingunet_lat_transporter
+  n_demos: 1000
+  n_steps: 201000 # use 601000 for multi-task models
+  save_freq_step: 1000
+
+  # hyper params
+  n_rotations: 72
+  batchnorm: False # important: False because batch_size=1
+  lr: 1e-4
+
+  attn_stream_fusion_type: 'add'
+  trans_stream_fusion_type: 'conv'
+  lang_fusion_type: 'mult'
+
+  # script configs
+  gpu: [0] # -1 for all
+  log: False # log metrics and stats to wandb
+  n_val: 100
+  val_repeats: 1
+  save_steps: [1000, 2000, 3000, 4000, 5000, 7000, 10000, 20000, 40000, 80000, 120000, 160000, 200000, 300000, 400000, 500000, 600000, 800000, 1000000, 1200000]
+  load_from_last_ckpt: True
+
+wandb:
+  enable: True
+  name: ${train.task}-n${train.n_demos}-${train.agent}-${lepp.model_name}-${lepp.logit_out_channel}-${lepp.pick_kernel_name}-${lepp.place_kernel_name}-Par${lepp.enable_parse}-Topdown${dataset.topdown}-Crop${dataset.use_image_goal}-Ratio${dataset.image_text_ratio}-train
+  run_name: 'cliport0'
+  logger:
+    entity: cliport
+    project: cliport
+    tags: []
+    group: train
+    offline: False
+  saver:
+    upload: False
+    monitor: 'val_loss'
+
+lepp:
+  model_name: 'unetl'
+  pick_kernel_name: 'none'
+  place_kernel_name: 'none'
+  logit_out_channel: 3
+  vlm_name: 'clip'
+  enable_parse: True
+  enable_steer: True
+  seed: 0
+  linear_fuser: False # only work for transporter agent

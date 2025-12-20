@@ -1,0 +1,197 @@
+[
+    {
+        "role" : "user",
+        "content": [
+            {"type": "text", "text":
+            "Here is an **example**.\n\nYou are in the middle of a room. Looking quickly around you, you see a cabinet 1, a fridge 1, a cabinet 2, a cabinet 3, a countertop 1, a cabinet 4, a cabinet 5, a cabinet 6, a countertop 2, a coffeemachine 1, a cabinet 7, a cabinet 8, a drawer 1, a sink 1, a sinkbasin 1, a drawer 2, a cabinet 9, a drawer 3, a cabinet 10, a cabinet 11, a cabinet 12, a cabinet 13, a drawer 4, a drawer 5, a drawer 6, a drawer 7, a stoveburner 1, a countertop 3, a countertop 4, a microwave 1, a stoveburner 2, a drawer 8, a drawer 9, a drawer 10, a drawer 11, a stoveburner 3, a stoveburner 4, a garbagecan 1, a drawer 12, a drawer 13, a drawer 14, a drawer 15, a toaster 1, a drawer 16, a drawer 17, a drawer 18, a drawer 19, a drawer 20, a drawer 21, a drawer 22, a drawer 23, a drawer 24, a drawer 25, a drawer 26, and a drawer 27.\n\nYour task is to: put a hot apple in fridge"
+        }
+        ]
+    },
+
+    {
+        "role": "assistant",
+        "content": [
+        {"type": "text", "text": "Observation: you see a cabinet 1, a fridge 1, a cabinet 2, a cabinet 3, a countertop 1, a cabinet 4, a cabinet 5, a cabinet 6, a countertop 2, a coffeemachine 1, a cabinet 7, a cabinet 8, a drawer 1, a sink 1, a sinkbasin 1, a drawer 2, a cabinet 9, a drawer 3, a cabinet 10, a cabinet 11, a cabinet 12, a cabinet 13, a drawer 4, a drawer 5, a drawer 6, a drawer 7, a stoveburner 1, a countertop 3, a countertop 4, a microwave 1, a stoveburner 2, a drawer 8, a drawer 9, a drawer 10, a drawer 11, a stoveburner 3, a stoveburner 4, a garbagecan 1, a drawer 12, a drawer 13, a drawer 14, a drawer 15, a toaster 1, a drawer 16, a drawer 17, a drawer 18, a drawer 19, a drawer 20, a drawer 21, a drawer 22, a drawer 23, a drawer 24, a drawer 25, a drawer 26, and a drawer 27. Think: the task is to put a hot apple in fridge, first I need to find and take an apple, then heat it with microwave, then put it in/on fridge. I need to find an apple, an apple is more likely to appear in fridge (1), countertop (1-4), cabinet (1-13). I can check one by one, starting with fridge 1. Action: go to fridge 1\n"}
+        ]
+    },
+    {
+        "role" : "user",
+        "content": [
+            {"type": "image"},
+            {"type": "text", "text":
+            "Object Bindings: 1--fridge 1\n5--countertop 1\n6--drawer 5\n7--drawer 8\n8--drawer 4\n9--drawer 9\n11--cabinet 1\n"
+            }
+            ]
+    },
+    {
+        "role": "assistant",
+        "content": [
+        {"type": "text", "text": "Observation: fridge 1 is in front of me, from the visual observation, fridge 1 is closed and I don't hold anything on my hand. Think: I need to check if there is apples in/on fridge 1. I need to open fridge 1 and see what are in/on it. Action: open fridge 1\n"}
+        ]
+    },
+    {
+        "role" : "user",
+        "content": [
+            {"type": "image"},
+            {"type": "text", "text":
+            "Object Bindings: 1--fridge 1\n3--countertop 1\n4--drawer 5\n5--drawer 8\n6--drawer 4\n7--drawer 9\n9--lettuce 1\n10--egg 1\n11--tomato 1\n12--cabinet 1\n"
+            }
+            ]
+    },
+    {
+        "role": "assistant",
+        "content": [
+        {"type": "text", "text": "Observation: fridge 1 is open, from the visual observation, there is no apple and I don't hold anything on my hand. Think: I need to close fridge an go to countertop 1 to see if there are apples. Action: close fridge 1\n"}
+        ]
+    },
+    {
+        "role" : "user",
+        "content": [
+            {"type": "image"},
+            {"type": "text", "text":
+            "Object Bindings: 1--fridge 1\n5--countertop 1\n6--drawer 5\n7--drawer 8\n8--drawer 4\n9--drawer 9\n11--cabinet 1\n"
+            }
+            ]
+    },
+    {
+        "role": "assistant",
+        "content": [
+        {"type": "text", "text": "Observation: fridge 1 is closed and I don't hold anything on my hand. Think: I need to go to countertop 1 to see if there are apples. Action: go to countertop 1\n"}
+        ]
+    },
+    {
+        "role" : "user",
+        "content": [
+            {"type": "image"},
+            {"type": "text", "text":
+            "Object Bindings: 2--countertop 1\n3--cabinet 1\n4--cabinet 10\n6--drawer 4\n7--fridge 1\n8--drawer 5\n9--pan 1\n10--glassbottle 1\n11--drawer 6\n13--tomato 2\n17--drawer 7\n18--peppershaker 1\n20--stoveburner 1\n"
+            }
+            ]
+    },
+    {
+        "role": "assistant",
+        "content": [
+        {"type": "text", "text": "Observation: countertop 1 is in front of me, on countertop 1, I don't see apples and I don't hold anything on my hand. Think: I now have checked countertop 1. I need to go to countertop 2 to see if there are apples. Action: go to countertop 2\n"}
+        ]
+    },
+    {
+        "role" : "user",
+        "content": [
+            {"type": "image"},
+            {"type": "text", "text":
+            "Object Bindings: 1--countertop 2\n4--cabinet 6\n5--bread 1\n7--houseplant 1\n9--sinkbasin 1\n12--sink 1\n13--cup 1\n14--faucet 1\n15--mug 1\n16--knife 1\n18--cellphone 1\n"
+            }
+            ]
+    },
+    {
+        "role": "assistant",
+        "content": [
+        {"type": "text", "text": "Observation: countertop 2 is in front of me, on countertop 2, I don't see apples and I don't hold anything on my hand. Think: I now have checked countertop (1-2). I need to go to countertop 3 to see if there are apples. Action: go to countertop 3\n"}
+        ]
+    },
+    {
+        "role" : "user",
+        "content": [
+            {"type": "image"},
+            {"type": "text", "text":
+            "Object Bindings: 1--countertop 3\n3--pot 1\n4--bowl 1\n5--plate 1\n6--bowl 2\n8--soapbottle 1\n"
+            }
+            ]
+    },
+    {
+        "role": "assistant",
+        "content": [
+        {"type": "text", "text": "Observation: countertop 3 is in front of me, on countertop 3, I don't see apples and I don't hold anything on my hand. Think: I now have checked countertop (1-3). I need to go to countertop 4 to see if there are apples. Action: go to countertop 4\n"}
+        ]
+    },
+    {
+        "role" : "user",
+        "content": [
+            {"type": "image"},
+            {"type": "text", "text":
+            "Object Bindings: 1--countertop 4\n5--glassbottle 2\n6--apple 1\n7--microwave 1\n8--butterknife 1\n"
+            }
+            ]
+    },
+    {
+        "role": "assistant",
+        "content": [
+        {"type": "text", "text": "Observation: countertop 4 is in front of me, on countertop 4, I see apple 1. Think: now I find apple 1 and I need to take apple 1 from countertop 4 and then go to microwave 1 to heat 1. Action: take apple 1 from countertop 4\n"}
+        ]
+    },
+    {
+        "role" : "user",
+        "content": [
+            {"type": "image"},
+            {"type": "text", "text":
+            "Object Bindings: 2--countertop 4\n5--apple 1\n6--glassbottle 2\n7--microwave 1\n8--butterknife 1\n"
+            }
+            ]
+    },
+    {
+        "role": "assistant",
+        "content": [
+        {"type": "text", "text": "Observation: I have successfully picked up apple 1, since based on the visual observation, apple 1 is no longer in the original place and is appear in the bottom center of my observation. Think: now I have taken apple 1, the next step is go to microwave 1 and heat apple 1. Action: go to microwave 1\n"}
+        ]
+    },
+    {
+        "role" : "user",
+        "content": [
+            {"type": "image"},
+            {"type": "text", "text":
+            "Object Bindings: 2--microwave 1\n3--countertop 4\n5--apple 1\n"
+            }
+            ]
+    },
+    {
+        "role": "assistant",
+        "content": [
+        {"type": "text", "text": "Observation: microwave 1 is in front of me. The microwave 1 is closed. I have apple 1 in my hand based on visual observation since it is appearing in the bottom center of my current view. Think: I need to heat apple 1 with microwave 1. Action: heat apple 1 with microwave 1\n"}
+        ]
+    },
+    {
+        "role" : "user",
+        "content": [
+            {"type": "image"},
+            {"type": "text", "text":
+            "Object Bindings: 2--microwave 1\n3--countertop 4\n5--apple 1\n"
+            }
+            ]
+    },
+    {
+        "role": "assistant",
+        "content": [
+        {"type": "text", "text": "Observation: I have apple 1 in my hand based on visual observation since it is appearing in the bottom center of my current view. Think: apple 1 is hot now, then I need to go to fridge 1 and put apple 1 in/on fridge 1. Action: go to fridge 1\n"}
+        ]
+    },
+    {
+        "role" : "user",
+        "content": [
+            {"type": "image"},
+            {"type": "text", "text":
+            "Object Bindings: 1--fridge 1\n3--apple 1\n6--countertop 1\n7--drawer 5\n8--drawer 8\n9--drawer 4\n10--drawer 9\n12--cabinet 1\n13--pan 1\n"
+            }
+            ]
+    },
+    {
+        "role": "assistant",
+        "content": [
+        {"type": "text", "text": "Observation: fridge 1 is ahead of me, fridge 1 is closed. I have apple 1 in my hand based on visual observation since it is appearing in the bottom center of my current view. Think: fridge 1 is closed, then I need to open fridge 1 and put apple 1 in/on fridge 1. Action: open fridge 1\n"}
+        ]
+    },
+    {
+        "role" : "user",
+        "content": [
+            {"type": "image"},
+            {"type": "text", "text":
+            "Object Bindings: 1--fridge 1\n3--apple 1\n4--countertop 1\n5--drawer 5\n6--drawer 8\n7--drawer 4\n8--drawer 9\n10--lettuce 1\n11--egg 1\n12--tomato 1\n13--cabinet 1\n14--pan 1\n"
+            }
+            ]
+    },
+    {
+        "role": "assistant",
+        "content": [
+        {"type": "text", "text": "Observation: fridge 1 is open, I have apple 1 in my hand based on visual observation since it is appearing in the bottom center of my current view. Think: fridge 1 is open, now I can put apple 1 in/on fridge 1. Action: put apple 1 in/on fridge 1\n"}
+        ]
+    }
+]

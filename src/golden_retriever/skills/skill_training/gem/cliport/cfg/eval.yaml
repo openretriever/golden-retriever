@@ -1,0 +1,70 @@
+# Evaluation
+
+defaults:
+  - config
+
+hydra:
+  run:
+    dir: ${log_root}
+
+mode: val # 'val' or 'test'
+
+# eval settings
+agent: cliport
+n_demos: 100 # number of val instances
+train_demos: 1000 # training demos used to train model
+n_repeats: 1 # number of repeats
+gpu: [0]
+save_results: True # write results to json
+update_results: False # overwrite existing json results?
+checkpoint_type: 'val_missing'
+val_on_heldout: True
+
+disp: False
+shared_memory: False
+eval_task: packing-boxes-pairs-seen-colors # task to evaluate the model on
+model_task: ${eval_task} # task the model was trained on (e.g. multi-language-conditioned or packing-boxes-pairs-seen-colors)
+type: single # 'single' or 'multi'
+
+# paths
+log_root: ${root_dir}
+model_dir: ${root_dir}
+exp_folder: exps
+data_root: ${root_dir}
+data_dir: ${data_root}/data  # where to store dataset
+assets_root: ${root_dir}/cliport/environments/assets/
+
+model_path: ${log_root}/${exp_folder}/${model_task}-n-train${train_demos}/${agent}-${lepp.model_name}-${lepp.logit_out_channel}-${lepp.pick_kernel_name}-${lepp.place_kernel_name}-Par${lepp.enable_parse}-Topdown${dataset.topdown}-Crop${dataset.use_image_goal}-Ratio${dataset.image_text_ratio}/checkpoints/ # path to pre-trained models
+train_config: ${log_root}/${exp_folder}/${model_task}-n-train${train_demos}/${agent}-${lepp.model_name}-${lepp.logit_out_channel}-${lepp.pick_kernel_name}-${lepp.place_kernel_name}-Par${lepp.enable_parse}-Topdown${dataset.topdown}-Crop${dataset.use_image_goal}-Ratio${dataset.image_text_ratio}/.hydra/config.yaml # path to train config
+save_path: ${log_root}/${exp_folder}/${eval_task}-n-train${train_demos}/${agent}-${lepp.model_name}-${lepp.logit_out_channel}-${lepp.pick_kernel_name}-${lepp.place_kernel_name}-Par${lepp.enable_parse}-Topdown${dataset.topdown}-Crop${dataset.use_image_goal}-Ratio${dataset.image_text_ratio}/checkpoints/ # path to save results
+results_path: ${log_root}/${exp_folder}/${eval_task}-n-train${train_demos}/${agent}-${lepp.model_name}-${lepp.logit_out_channel}-${lepp.pick_kernel_name}-${lepp.place_kernel_name}-Par${lepp.enable_parse}-Topdown${dataset.topdown}-Crop${dataset.use_image_goal}-Ratio${dataset.image_text_ratio}/checkpoints/ # path to existing results
+
+dataset:
+  clip_type: normal
+  use_image_goal: True
+  topdown: False
+  image_text_ratio: 0.2
+
+# record videos (super slow)
+record:
+  save_video: False
+  save_video_path: ${log_root}/${exp_folder}/${eval_task}-n-train${train_demos}/${agent}-${lepp.model_name}-${lepp.logit_out_channel}-${lepp.pick_kernel_name}-${lepp.place_kernel_name}-Par${lepp.enable_parse}-Topdown${dataset.topdown}-Crop${dataset.use_image_goal}-Ratio${dataset.image_text_ratio}/videos/
+  add_text: True
+  fps: 20
+  video_height: 640
+  video_width: 720
+
+lepp:
+  model_name: 'unetl'
+  pick_kernel_name: 'none'
+  place_kernel_name: 'none'
+  logit_out_channel: 3
+  vlm_name: 'clip'
+  enable_parse: True
+  enable_steer: True
+  name: ${eval_task}-n${train_demos}-${agent}-${lepp.model_name}-${lepp.pick_kernel_name}--${lepp.place_kernel_name}-Par${lepp.enable_parse}-Topdown${dataset.topdown}-Crop${dataset.use_image_goal}-Ratio${dataset.image_text_ratio}-val
+  seed: 0
+  linear_fuser: False # only work for transporter agent
+
+wandb:
+  enable: True

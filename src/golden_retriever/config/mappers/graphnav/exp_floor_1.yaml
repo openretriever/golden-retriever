@@ -1,0 +1,46 @@
+annotations:
+  "101_home": 
+    id: "cloggy-marmot-6tqa0THCODU5tJPLJd.vxw=="
+    type: waypoint
+  "101_home_2": 
+    id: "frugal-weevil-NrhFruP3yUak93SCJFeP2g=="
+    type: waypoint
+  "101_door_2_outside": 
+    id: "pimply-deer-2tuBe3LmFdmex+Tr2TFLLQ=="
+    type: waypoint
+  "101_door_2_inside": 
+    id: "rainy-koala-zwwDWOsBTtZ0zZbpHMOZbg=="
+    type: waypoint
+  "101_door_1_inside": 
+    id: "mangy-zebra-TpX6lwXaLC2uYWkfuyfmCg=="
+    type: waypoint
+  "101_door_1_outside": 
+    id: "fizzy-platypus-c.tvS0Nt+eDmdFgXTQd.lQ=="
+    type: waypoint
+  "120_home": 
+    id: "swingy-botfly-AEG3a3xXaGBU6NqocmEiQA=="
+    type: waypoint
+  "120_door_2_outside": 
+    id: "yonder-fish-m1UCVFNCL5pMPa7CT3l.Cg=="
+    type: waypoint
+  "120_door_2_inside": 
+    coordinates:
+      x: 6.7781
+      y: -47.1148
+      yaw: 160
+    type: seed_coordinate
+  "120_door_1_inside": 
+    id: "squab-canary-hVEqVwkjMh+fX4Srhm4PIA=="
+    type: waypoint
+  "120_door_1_outside": 
+    id: "grubby-simian-CheMrNZ9zhVefzL.IPeakA=="
+    type: waypoint
+  "service_elevator": 
+    id: "ovoid-locust-00XsIsqoXIMxGb.LwnYEvA=="
+    type: waypoint
+  "main_elevator": 
+    id: "iffy-beef-roJ5+RGyU4wcpJ9hkJDJyw=="
+    type: waypoint
+  "lobby": 
+    id: "four-emu-HQkoa4hSQxH3s.+jbCoQWw=="
+    type: waypoint
