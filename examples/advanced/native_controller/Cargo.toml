@@ -1,0 +1,9 @@
+[package]
+name = "rust-controller"
+version = "0.1.0"
+edition = "2021"
+description = "Rust controller node for Retriever dataflow"
+
+[dependencies]
+dora-node-api = "0.3.4"
+eyre = "0.6"
