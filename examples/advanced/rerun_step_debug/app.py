@@ -5,9 +5,9 @@ This example demonstrates how to use retriever's Rerun integration
 to visualize and debug pipeline execution step-by-step.
 
 Features:
-- Record pipeline execution to .rrd file
-- Visualize inputs/outputs at each step
-- Auto-open Rerun viewer for replay
+- Record pipeline execution to MCAP file
+- Live stream to Rerun viewer during recording
+- View recorded MCAP files in Rerun
 
 Run:
     pixi run python examples/advanced/rerun_step_debug/app.py
@@ -144,7 +144,7 @@ def main():
     print("=" * 60)
     print()
     print("This example demonstrates step-by-step pipeline debugging.")
-    print("A recording will be saved and opened in Rerun viewer.")
+    print("Recording to MCAP + live streaming to Rerun viewer.")
     print()
 
     # Reset default pipeline for clean state
@@ -158,23 +158,27 @@ def main():
 
         generator >> detector >> reward
 
-    print("Running 50 steps with Rerun recording...")
+    print("Running 50 steps with MCAP recording + Rerun streaming...")
     print()
 
-    # Use simplified API: pipe.record_rerun()
-    # Similar to pipe.record_to() but for Rerun visualization
+    # Use record() with visualize=True for live Rerun visualization
     try:
-        p.record_rerun(path="step_debug_session.rrd", steps=50, dt=0.1)
+        p.record(
+            generator,
+            "step_debug_session.mcap",
+            steps=50,
+            dt=0.1,
+            visualize=True,  # Live Rerun visualization
+        )
     finally:
         p.close_stepper()
 
     print()
-    print("Done! Rerun viewer should open with the recording.")
+    print("Done! Recording saved to step_debug_session.mcap")
     print()
-    print("API Options:")
-    print("  pipe.record_rerun(...)     - Visual debugging in Rerun")
-    print("  pipe.record_to(handle,...) - Code-level replay (.pkl.gz)")
-    print("  retriever.step()           - Interactive debugging")
+    print("To view later:")
+    print("  import retriever")
+    print("  retriever.view('step_debug_session.mcap')")
 
 
 if __name__ == "__main__":
