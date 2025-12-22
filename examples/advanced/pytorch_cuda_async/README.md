@@ -25,7 +25,9 @@ The application splits a neural network into two parts hosted on separate logica
 
 **1. Run the Application:**
 ```bash
-pixi run python -m examples.advanced.pytorch_cuda_async.app --backend dora
+pixi run -e torch demo-pytorch-async
+# Or manually:
+# pixi run -e torch python examples/advanced/pytorch_cuda_async/app.py --backend dora
 ```
 
 **2. Run Benchmarks:**

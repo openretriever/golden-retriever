@@ -18,7 +18,7 @@ This example requires the `rerun-sdk`, `scipy`, and `transformers` packages, whi
 Run the example using the defined `pixi` task:
 
 ```bash
-pixi run demo-webcam-rerun
+pixi run -e torch demo-webcam-rerun
 ```
 
 This will:
@@ -35,7 +35,7 @@ You can pass arguments to the script explicitly if running via python (or editin
 
 Example with arguments:
 ```bash
-pixi run python examples/advanced/webcam_rerun/app.py --queries "cup,keyboard" --cleanup
+pixi run -e torch python examples/advanced/webcam_rerun/app.py --queries "cup,keyboard" --cleanup
 ```
 
 ## Troubleshooting
@@ -49,17 +49,17 @@ This folder also includes `record_replay.py` which demonstrates the MCAP recordi
 
 ```bash
 # Record 50 steps to MCAP
-pixi run python examples/advanced/webcam_rerun/record_replay.py record --steps 50
+pixi run -e torch python examples/advanced/webcam_rerun/record_replay.py record --steps 50
 
 # View in Rerun
-pixi run python examples/advanced/webcam_rerun/record_replay.py view
+pixi run -e torch python examples/advanced/webcam_rerun/record_replay.py view
 # Or: retriever.view("webcam_session.mcap")
 
 # Record with LIVE Rerun visualization
-pixi run python examples/advanced/webcam_rerun/record_replay.py record --stream
+pixi run -e torch python examples/advanced/webcam_rerun/record_replay.py record --stream
 
 # Replay from MCAP (code-level replay)
-pixi run python examples/advanced/webcam_rerun/record_replay.py replay
+pixi run -e torch python examples/advanced/webcam_rerun/record_replay.py replay
 ```
 
 ### API
