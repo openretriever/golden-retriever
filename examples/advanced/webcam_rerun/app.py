@@ -235,7 +235,7 @@ class RerunRawImageLogger(Flow[ImageMsg, None]):
     
     def init(self):
         rr.init("retriever_perception_demo")
-        rr.connect()
+        rr.spawn()  # Rerun 0.23+ API
 
     def run(self, img: ImageMsg):
         if img is None or img.frame is None or img.frame.size == 0:
@@ -255,7 +255,7 @@ class RerunPerceptionResultsLogger(Flow[PerceptionResult, None]):
     
     def init(self):
         rr.init("retriever_perception_demo")
-        rr.connect()
+        rr.spawn()  # Rerun 0.23+ API
 
     def run(self, res: PerceptionResult):
         if res is None: 

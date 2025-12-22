@@ -21,7 +21,7 @@ import numpy as np
 
 import retriever
 from retriever.flow import Flow, Rate, flow_io
-from retriever.lib.rerun import record_session, rerun_loggable
+from retriever.lib.rerun import rerun_loggable
 
 # =============================================================================
 # Define Loggable Types with @rerun_loggable decorator
@@ -164,7 +164,6 @@ def main():
     # Use record() with visualize=True for live Rerun visualization
     try:
         p.record(
-            generator,
             "step_debug_session.mcap",
             steps=50,
             dt=0.1,

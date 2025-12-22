@@ -66,8 +66,8 @@ pixi run python examples/advanced/webcam_rerun/record_replay.py replay
 
 ```python
 # In code
-pipe.record(camera, "session.mcap", steps=50)           # Save only
-pipe.record(camera, "session.mcap", steps=50, visualize=True)  # Save + Rerun
+pipe.record("session.mcap", steps=50)           # Save only
+pipe.record("session.mcap", steps=50, visualize=True)  # Save + Rerun
 pipe.view("session.mcap")                               # View in Rerun
 retriever.view("session.mcap")                          # Global version
 ```
