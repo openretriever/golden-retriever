@@ -178,7 +178,6 @@ def cmd_record(args: argparse.Namespace) -> None:
 
     try:
         pipe.record(
-            camera,
             args.output,
             steps=args.steps,
             dt=args.dt,
