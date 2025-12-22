@@ -29,7 +29,7 @@ def run_benchmark(backend: str, duration: int, rate: float) -> Optional[float]:
     """
     Runs the app with the specified backend and rate, returns the measured Hz.
     """
-    print(f"\n" + "="*60)
+    print("\n" + "="*60)
     print(f"Benchmarking {backend.upper()} backend at {rate} Hz for {duration} seconds...")
     print("="*60)
     
@@ -67,7 +67,7 @@ def run_benchmark(backend: str, duration: int, rate: float) -> Optional[float]:
                     print(f"--> Failed to parse Hz from line: {line} ({e})")
                     # Keep trying other lines (e.g. if we have multiple logs)
                     
-        print(f"--> No stats found in output.")
+        print("--> No stats found in output.")
         # Debug: print last few lines of stderr
         print(f"Last stderr lines:\n{result.stderr[-500:]}")
         return 0.0
