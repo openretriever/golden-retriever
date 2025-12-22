@@ -55,5 +55,5 @@ In our tests (running `python -m examples.advanced.vla_inference_optim.app`), we
 ## Usage
 Run the demo:
 ```bash
-pixi run python -m examples.advanced.vla_inference_optim.app
+pixi run -e torch demo-vla
 ```
