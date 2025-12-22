@@ -24,21 +24,21 @@ Requires `pixi` for environment management.
 ### 1. Python Implementation (Baseline)
 Pure Python. Good for prototyping.
 ```bash
-pixi run -e native native-controller-python
+pixi run binding-controller-python
 ```
 
 ### 2. Rust Implementation
 Uses `dora-node-api`. compiled via `cargo`.
 ```bash
 # Build & Run using pixi task
-pixi run -e native native-controller-rust
+pixi run -e rust binding-controller-rust
 ```
 
 ### 3. C++ Implementation
 Uses C++ dataflow API. compiled via `cmake`.
 ```bash
 # Build & Run using pixi task
-pixi run -e native native-controller-cpp
+pixi run -e cpp binding-controller-cpp
 ```
 
 ## How It Works
