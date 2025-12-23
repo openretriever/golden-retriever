@@ -7,9 +7,9 @@ import warnings
 import numpy as np
 from torch.utils.data import Dataset
 
-from retriever.envs.ravens import tasks
-from retriever.envs.ravens.tasks import cameras
-from retriever.utils.cliport import utils
+from golden_retriever.envs.ravens import tasks
+from golden_retriever.envs.ravens.tasks import cameras
+from golden_retriever.utils.cliport import utils
 
 # See transporter.py, regression.py, dummy.py, task.py, etc.
 PIXEL_SIZE = 0.003125

@@ -3,7 +3,7 @@
 import numpy as np
 import pybullet as p
 
-from retriever.utils.cliport import utils
+from golden_retriever.utils.cliport import utils
 
 from .task import Task
 

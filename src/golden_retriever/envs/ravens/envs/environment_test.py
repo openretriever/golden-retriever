@@ -2,8 +2,8 @@
 
 from absl.testing import absltest
 
-from retriever.envs.ravens import tasks
-from retriever.envs.ravens.envs import environment
+from golden_retriever.envs.ravens import tasks
+from golden_retriever.envs.ravens.envs import environment
 
 ASSETS_PATH = "assets"
 

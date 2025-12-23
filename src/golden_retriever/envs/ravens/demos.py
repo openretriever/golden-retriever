@@ -7,9 +7,9 @@ import random
 import hydra
 import numpy as np
 
-from retriever.envs.ravens import tasks
-from retriever.envs.ravens.dataset import RavensDataset
-from retriever.envs.ravens.envs.environment import Environment
+from golden_retriever.envs.ravens import tasks
+from golden_retriever.envs.ravens.dataset import RavensDataset
+from golden_retriever.envs.ravens.envs.environment import Environment
 
 root = pathlib.Path.cwd()
 ASSETS_PATH = root / "src" / "skills" / "cliport" / "cfg"

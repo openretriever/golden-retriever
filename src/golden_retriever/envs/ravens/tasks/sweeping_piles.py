@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from retriever.utils.cliport import utils
+from golden_retriever.utils.cliport import utils
 
 from .grippers import Spatula
 from .task import Task, primitives

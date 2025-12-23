@@ -5,7 +5,7 @@ import os
 import numpy as np
 import pybullet as p
 
-from retriever.utils.cliport import pybullet_utils
+from golden_retriever.utils.cliport import pybullet_utils
 
 SPATULA_BASE_URDF = "ur5/spatula/spatula-base.urdf"
 SUCTION_BASE_URDF = "ur5/suction/suction-base.urdf"

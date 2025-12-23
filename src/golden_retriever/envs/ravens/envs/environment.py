@@ -5,13 +5,13 @@ import tempfile
 import time
 
 import cv2
-import gym
+import gymnasium as gym
 import imageio
 import numpy as np
 import pybullet as p
 
-from retriever.envs.ravens.tasks import cameras
-from retriever.utils.cliport import pybullet_utils, utils
+from golden_retriever.envs.ravens.tasks import cameras
+from golden_retriever.utils.cliport import pybullet_utils, utils
 
 PLACE_STEP = 0.0003
 PLACE_DELTA_THRESHOLD = 0.005

@@ -10,7 +10,7 @@ import cv2
 import numpy as np
 import pybullet as p
 
-from retriever.utils.cliport import utils
+from golden_retriever.utils.cliport import utils
 
 from . import cameras, primitives
 from .grippers import Suction
