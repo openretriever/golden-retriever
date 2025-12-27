@@ -43,4 +43,7 @@ Unlike PyTorch's `nn.Module`, Flax modules are **stateless**. The parameters are
 In `train.py`, we demonstrate how to handle gradients in a functional way:
 
 1.  **Compute Node**: Uses `jax.value_and_grad` to compute gradients with respect to the *input* (hidden state) and *its own parameters* (if any).
-2.  **Source Node**: Receives the gradient for the hidden state, and uses it to update its own parameters via `optax`.
+
+## Design Notes
+For more details on the internal implementation of `JaxFlow` and zero-copy transfer, see:
+- [JAX Integration Details](../../../../docs/temp_notes/2025-12-22_jax_integration_details.md)

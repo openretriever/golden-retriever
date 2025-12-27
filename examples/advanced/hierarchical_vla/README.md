@@ -47,4 +47,7 @@ pixi run -e torch demo-hierarchical-vla --duration 30
 ## Notes on Backends
 
 -   **Dora**: The default and recommended backend. It runs nodes in separate processes, simulating a real distributed robot OS. We use a top-level factory function for the pipeline to ensure it can be pickled and sent to the worker process.
--   **Python (Async)**: Also supported, runs everything in a single process event loop.
+
+## Design Notes
+For the architectural decisions behind this example, see:
+- [Future Robotics Examples](../../../../docs/temp_notes/2025-12-21_future_robotics_examples.md#4-hierarchical-vla-vision-language-action-implemented)

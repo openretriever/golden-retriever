@@ -147,3 +147,7 @@ vlm_gridworld/
 - **Rerun Timeline Empty?**: Switch Rerun viewer timeline to `log_time` or `recording_time`. The `ReasoningLoggerFlow` logs events based on wall-clock time, which may not align with the `step` timeline if steps are sparse.
 - **Empty Reasoning?**: The VLM may occasionally fail to output JSON. Check console logs for `[VLMAgent] Raw Gemini Response` to diagnose.
 - **Backend**: Defaults to `dora`. If issues arise, try `--backend multiprocessing`.
+
+## Design Notes
+For more context on LLM/VLM integration prototypes, see:
+- [LLM & VLM Prototypes](../../../../docs/temp_notes/2025-12-22_llm_vlm_prototypes.md)
