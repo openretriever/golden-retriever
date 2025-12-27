@@ -1,0 +1,10 @@
+
+{
+  "mcpServers": {
+    "memory": {
+      "command": "uv",
+      "args": ["run", "examples/advanced/mcp_examples/server.py"],
+      "env": {}
+    }
+  }
+}
