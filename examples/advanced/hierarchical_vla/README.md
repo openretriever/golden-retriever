@@ -50,4 +50,4 @@ pixi run -e torch demo-hierarchical-vla --duration 30
 
 ## Design Notes
 For the architectural decisions behind this example, see:
-- [Future Robotics Examples](../../../../docs/temp_notes/2025-12-21_future_robotics_examples.md#4-hierarchical-vla-vision-language-action-implemented)
+- [Design Notes](DESIGN.md)

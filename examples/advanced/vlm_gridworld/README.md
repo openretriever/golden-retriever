@@ -150,4 +150,4 @@ vlm_gridworld/
 
 ## Design Notes
 For more context on LLM/VLM integration prototypes, see:
-- [LLM & VLM Prototypes](../../../../docs/temp_notes/2025-12-22_llm_vlm_prototypes.md)
+- [Design Notes](DESIGN.md)

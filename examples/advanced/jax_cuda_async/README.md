@@ -46,4 +46,5 @@ In `train.py`, we demonstrate how to handle gradients in a functional way:
 
 ## Design Notes
 For more details on the internal implementation of `JaxFlow` and zero-copy transfer, see:
-- [JAX Integration Details](../../../../docs/temp_notes/2025-12-22_jax_integration_details.md)
+
+- [Design Notes](DESIGN.md)
