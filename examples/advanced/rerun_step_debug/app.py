@@ -148,7 +148,8 @@ def main():
     print()
 
     # Reset default pipeline for clean state
-    p = retriever.reset_default_pipeline()
+    from retriever.flow.pipeline import reset_default_pipeline
+    p = reset_default_pipeline()
 
     # Build pipeline using >> operator
     with p:
