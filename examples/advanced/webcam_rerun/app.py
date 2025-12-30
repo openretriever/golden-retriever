@@ -243,7 +243,7 @@ class RerunRawImageLogger(Flow[ImageMsg, None]):
         
         # Log raw image
         img_rgb = cv2.cvtColor(img.frame, cv2.COLOR_BGR2RGB)
-        rr.set_time_seconds("stable_time", img.timestamp)
+        rr.set_time("stable_time", timestamp=img.timestamp)
         rr.log("camera/raw", rr.Image(img_rgb))
 
 
@@ -269,7 +269,9 @@ class RerunPerceptionResultsLogger(Flow[PerceptionResult, None]):
         
         # Log perception results on top of the image
         img_rgb = cv2.cvtColor(res.image, cv2.COLOR_BGR2RGB)
-        rr.set_time_seconds("stable_time", res.timestamp)
+        # Log perception results on top of the image
+        img_rgb = cv2.cvtColor(res.image, cv2.COLOR_BGR2RGB)
+        rr.set_time("stable_time", timestamp=res.timestamp)
         
         rr.log("camera/perception/image", rr.Image(img_rgb))
         
