@@ -67,7 +67,7 @@ class RavensEnvFlow(Flow[EnvAction, EnvObservation]):
         obs, reward, done, info = self.env.step(action)
         return not done  # Return success (True if not timed out)
 
-    def step(self, action: EnvAction) -> EnvObservation:
+    def run(self, action: EnvAction) -> EnvObservation:
         """
         Map generic EnvAction to RAVENS primitive actions or just step simulation.
         And return simplified EnvObservation.
