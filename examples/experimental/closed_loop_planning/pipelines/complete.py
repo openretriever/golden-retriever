@@ -15,6 +15,7 @@ from retriever.types.symbolic import GroundAtom, Object
 from ..flows.belief_updater import BeliefUpdaterFlow
 
 # --- Flows ---
+from ..flows.env_rise import RiseEnvironmentFlow
 from ..flows.monitor_execution import ExecutionMonitorFlow
 from ..flows.perception import PerceptionFlow
 from ..flows.planner_astar import TaskPlannerFlow
@@ -90,7 +91,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     pipe = build_complete_pipeline()
-    save_interactive_html(pipe.build_ir(), "closed_loop_pipeline_complete_demo_viz.html")
+    save_interactive_html(pipe.build_ir(), "viz-complete-pipeline.html")
 
     pipe.run(
         duration=args.duration,

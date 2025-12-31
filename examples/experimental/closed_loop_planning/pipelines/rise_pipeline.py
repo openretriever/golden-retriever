@@ -102,7 +102,7 @@ def main():
     pipeline = build_rise_pipeline()
 
     # Save visualization
-    save_interactive_html(pipeline.build_ir(), "rise_pipeline_viz.html")
+    save_interactive_html(pipeline.build_ir(), "viz-rise-pipeline.html")
 
     import os
     gemini_key = os.environ.get("GEMINI_API_KEY", "")
