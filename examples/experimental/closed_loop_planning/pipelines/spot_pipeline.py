@@ -16,6 +16,7 @@ from ..flows.monitor_execution import ExecutionMonitorFlow
 from ..flows.perception import PerceptionFlow
 from ..flows.planner_astar import TaskPlannerFlow
 from ..flows.skill_executor import SkillExecutorFlow
+from retriever.ir.viz import save_interactive_html
 
 
 def build_spot_pipeline() -> Pipeline:
@@ -78,6 +79,7 @@ if __name__ == "__main__":
 
     print("Starting Spot Pipeline (Real Robot)...")
     pipe = build_spot_pipeline()
+    save_interactive_html(pipe.build_ir(), "viz-spot-pipeline.html")
 
     # Run with Dora backend
     # Note: Requires BOSDYN env vars to be set
