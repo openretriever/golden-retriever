@@ -327,3 +327,35 @@ class ActionArbiter(Flow[ArbiterInput, ActionSignal]):
              
         # No action
         return None
+
+
+# =============================================================================
+# FAN-IN VARIANTS (Simpler!)
+# =============================================================================
+
+@flow_io
+@dataclass
+class ArbiterInputFanIn:
+    """
+    Inputs for Fan-in Arbiter.
+    With Fan-in, multiple skills write to this SAME 'packet' port.
+    No need for 'approach_packet', 'manipulate_packet', etc.
+    """
+    packet: Optional[RobotAction] = None
+
+
+class ActionArbiterFanIn(Flow[ArbiterInputFanIn, ActionSignal]):
+    """
+    Selects the active action (Fan-in Version).
+    """
+
+    def run(self, input: ArbiterInputFanIn) -> Optional[ActionSignal]:
+        # Fan-in automatically delivers the latest packet from ANY skill.
+        # We just filter for idle/None.
+        
+        if input.packet is not None and input.packet.skill_name != "idle":
+             print(f"[Arbiter] Selected {input.packet.skill_name.upper()}: {input.packet}")
+             return ActionSignal(packet=input.packet)
+        
+        # No action or idle
+        return None
