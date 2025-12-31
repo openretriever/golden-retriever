@@ -1,6 +1,15 @@
 # Skill Switching with Retriever
 
-This example demonstrates an advanced **"Router-Arbiter" architecture** for robotics behaviors using `retriever`. It solves the common problem of switching between mutually exclusive skills (e.g., "Navigation" vs. "Manipulation") while maintaining a clean, reactive dataflow.
+This folder contains **two implementations** of the same skill-switching logic:
+
+1.  **Classic (Default)**: Uses explicit manual wiring (`approach_packet`, `manipulate_packet`).
+    ```bash
+    pixi run demo-skill-switching
+    ```
+2.  **Fan-in (`--fan-in`)**: Uses the new **Fan-in** feature (single `packet` port) to simplify the Arbiter and wiring.
+    ```bash
+    pixi run demo-skill-switching-fanin
+    ```
 
 ## 🎯 Objective
 
