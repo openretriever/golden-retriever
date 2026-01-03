@@ -1,3 +1,4 @@
+# Run: pixi run demo-simple-grid
 # Closed Loop Planning Pipeline (Simple/Heuristic)
 #
 # Environment → Perception → BeliefUpdater → Planner → Executor → Environment
@@ -5,25 +6,21 @@
 import argparse
 
 from retriever.flow import Latest, Pipeline, Rate, Trigger
-from retriever.types.options import Task
-from retriever.types.symbolic import GroundAtom, Object, State
+from retriever.ir.viz import save_interactive_html
+
 
 from ..flows.belief_updater import BeliefUpdaterFlow
 
 # Import Flows
 from ..flows.env_simple_grid import GridEnvironmentFlow
-from ..flows.planner_heuristic import PlannerFlow
 from ..flows.monitor_execution import ExecutionMonitorFlow
 from ..flows.perception import PerceptionFlow
+from ..flows.planner_heuristic import PlannerFlow
 from ..flows.skill_executor import SkillExecutorFlow
-from ..types.domain import IsOpen, door_type
-from retriever.ir.viz import save_interactive_html
 
 
 def build_simple_pipeline() -> Pipeline:
     """Build the closed-loop planning pipeline."""
-    door_obj = Object("door", door_type)
-    goal_atom = GroundAtom(IsOpen, [door_obj])
     # task = Task(init=State({}), goal={goal_atom}) # Task is initialized inside PlannerFlow if None
 
     pipe = Pipeline("closed_loop_simple")
@@ -32,15 +29,10 @@ def build_simple_pipeline() -> Pipeline:
 
     # Instantiate Flows with Decorators
     env = GridEnvironmentFlow() @ Rate(10.0)
-
     perception = PerceptionFlow() @ Trigger("data")
-
     belief = BeliefUpdaterFlow() @ Trigger("observation")
-
     planner = PlannerFlow(name="PlannerFlow") @ Trigger("replan_config")
-
     executor = SkillExecutorFlow("skill_executor") @ Trigger("state")
-
     monitor = ExecutionMonitorFlow() @ Trigger("executor_status")
 
     # Wiring
@@ -60,7 +52,11 @@ def build_simple_pipeline() -> Pipeline:
     pipe.connect(belief, monitor, map={"belief": "state"}, sync=Latest())
 
     # Planner -> Executor
+    # Planner -> Executor
     pipe.connect(planner, executor, map={"plan": "plan"}, sync=Latest())
+
+    # Planner -> Belief (New)
+    pipe.connect(planner, belief, map={"plan": "plan"}, sync=Latest())
 
     # Executor -> Monitor
     pipe.connect(executor, monitor, map={"status": "executor_status"}, sync=Latest())

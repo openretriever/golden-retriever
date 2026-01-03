@@ -1,3 +1,4 @@
+# Run: pixi run demo-rise-sim
 from retriever.flow import Latest, Pipeline, Rate, Trigger
 
 from ..flows.belief_updater import BeliefUpdaterFlow
@@ -71,8 +72,12 @@ def build_rise_pipeline() -> Pipeline:
     p.connect(belief_updater, planner, map={"belief": "state"}, sync=Latest())
 
     # Planner -> Executor
-    # PlannerOutput.plan -> ExecutorInput.plan
     p.connect(planner, executor, map={"plan": "plan"}, sync=Latest())
+
+    # Planner -> Belief (New)
+    p.connect(planner, belief_updater, map={"plan": "plan"}, sync=Latest())
+
+    # Executor -> Monitor, executor, map={"plan": "plan"}, sync=Latest())
 
     # Belief -> Executor (Grounding context)
     p.connect(belief_updater, executor, map={"belief": "state"}, sync=Latest())
@@ -106,7 +111,7 @@ def main():
 
     import os
     gemini_key = os.environ.get("GEMINI_API_KEY", "")
-    
+
     print(f"Starting RISE Pipeline... (Key present: {bool(gemini_key)})")
     pipeline.run(
         backend="dora",
