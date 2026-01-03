@@ -28,32 +28,46 @@ To find the correct action index $k$ to execute at the current wall-clock time (
     - **If $0 \le k < H$**: Valid execution. Execute action $a_k$.
     - **If $k \ge H$**: Chunk Expired. Stop or hold.
 
-### 2. Architecture Components
+## Implementation Variations
 
-#### A. Mock VLA Node (`mock_vla_node.py`)
-Simulates the real-world behavior of a VLA model:
-- **Latency Simulation**: Sleeps for 100-200ms (with jitter) to mimic `pi0` inference.
-- **Output**: Generates a **32-step trajectory** (Horizon $H=32$, $dt=0.1s$).
-- **Timestamping**: Crucially, it tags the output with the **Observation Timestamp ($t_{obs}$)**, not the completion time.
+We provide two reference implementations to demonstrate different architectural choices:
 
-#### B. Action Buffer (`app.py`)
-Acts as the "Smart Cache" between VLA and Robot:
-- Runs at **50Hz** (high frequency).
-- Holds the **latest available** action chunk.
-- On every tick, it performs the **Fast-Forward** calculation:
-  ```python
-  delta_t = now - chunk_start_time
-  k = int(round(delta_t / dt))
-  action = queue[k] # Skips indices 0..k-1
-  ```
+### 1. Adapter Pattern (`demo_buffer_adapter.py`)
+-   **Concept**: Uses a custom **Adapter** (`ActionChunk`) to encapsulate the buffering and interpolation logic.
+-   **Graph**: `VLA --(ActionChunk)--> Sink`
+-   **Pros**: Cleaner graph topology; composable logic.
 
-## Verification
-In our tests (running `python -m examples.advanced.vla_inference_optim.app`), we observe:
-- **Inference Latency**: ~140ms
-- **Buffer Behavior**: Automatically skips indices 0-3 (past actions) and executes index **4** ($0.4s$ mark), ensuring the robot tracks the trajectory in real-time without delay accumulation.
+### 2. Explicit Flow Pattern (`demo_buffer_flow.py`)
+-   **Concept**: Uses a dedicated **Flow Node** (`ActionBuffer`) to manage the state.
+-   **Graph**: `VLA --(Latest)--> Buffer --(Latest)--> Sink`
+-   **Pros**: Easier to debug state; explicit backpressure handling.
 
-## Usage
-Run the demo:
+## Verification & Visualization
+
+### Running the Demos
+Both demos are configured to run with the `multiprocessing` backend.
+
+**Adapter Version:**
 ```bash
-pixi run -e torch demo-vla
+pixi run python -m examples.advanced.vla_inference_optim.demo_buffer_adapter
+```
+
+**Explicit Buffer Version:**
+```bash
+pixi run python -m examples.advanced.vla_inference_optim.demo_buffer_flow
+```
+
+### Visualizing the Pipeline
+Both scripts generate an **Interactive HTML Graph** upon startup:
+-   `vla_pipeline_adapter.html`
+-   `vla_pipeline_manual.html`
+
+Open these files in a web browser to inspect the node topology, clock domains (Rates), and data connections.
+
+### Expected Output
+You should see logs indicating the "Fast-Forward" behavior, where the Sink executes actions with positive indices even immediately after a chunk arrives (compensating for latency).
+```
+[Sink] Executed 50 steps. Last: 0.583
+...
+MockVLA Rate: 6.6 Hz (Actual: 151.7ms) ...
 ```
