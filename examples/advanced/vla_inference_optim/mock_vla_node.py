@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
 import numpy as np
+from datetime import datetime
 
 
 from retriever.flow import Flow, flow_io
@@ -34,7 +35,6 @@ class VLAAction:
     action: np.ndarray # (7,) or (H, 7)
     latency: float     # Inference latency in seconds
     timestamp: float   # Generation timestamp (Observation time)
-    dt: float = 0.1    # Time step between actions
     dt: float = 0.1    # Time step between actions
 
 class MockVLAFlow(Flow[VLAInput, VLAAction]):
@@ -118,7 +118,7 @@ class MockVLAFlow(Flow[VLAInput, VLAAction]):
         # Calculate effective rate
         effective_hz = 1.0 / (time.time() - start_time)
         if hasattr(self, '_last_log_time') and (time.time() - self._last_log_time > 1.0):
-             logger.info(f"MockVLA Rate: {effective_hz:.1f} Hz (Actual: {latency*1000:.1f}ms, Est: {self._last_inference_latency*1000:.1f}ms) ts={time.time()}")
+             logger.info(f"MockVLA Rate: {effective_hz:.1f} Hz (Actual: {latency*1000:.1f}ms, Est: {self._last_inference_latency*1000:.1f}ms) ts={datetime.fromtimestamp(time.time()).strftime('%H:%M:%S.%f')[:-3]}")
              self._last_log_time = time.time()
         elif not hasattr(self, '_last_log_time'):
              self._last_log_time = time.time()
