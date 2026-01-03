@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Set
 
 from retriever.flow import flow_io
-from retriever.types.options import Action
+from retriever.types.options import Action, Option
 from retriever.types.symbolic import GroundAtom, State
 
 from .vlm import EpistemicState, EpistemicValue, VisualGroundAtom
@@ -77,7 +77,7 @@ class BeliefUpdateInput:
     visible_atoms: Set[GroundAtom] = field(default_factory=set)
     prev_belief: Optional[BeliefState] = None
     action: Optional[Action] = None
-    camera_images: Optional[Any] = None
+    plan: Optional[List[Option]] = None
 
 
 @flow_io
