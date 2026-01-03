@@ -1,0 +1,1 @@
+export RAY_CONNECT=${RAY_CONNECT:-auto}
