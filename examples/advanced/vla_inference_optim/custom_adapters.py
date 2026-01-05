@@ -5,7 +5,7 @@ import numpy as np
 
 from retriever.flow.adapter import Adapter, Chunking, register_adapter
 from retriever.flow import flow_io
-from retriever.flow.frp import EventBuffer
+from retriever.flow.types import EventBuffer
 try:
     from .mock_vla_node import VLAAction, VLAInput
 except ImportError:

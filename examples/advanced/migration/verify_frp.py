@@ -8,8 +8,8 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src')))
 
 import time
-from retriever.flow.frp import constant_behavior, switch_behavior, Behavior
-from retriever.rt.frp import EventStream
+from retriever.flow.types import constant_behavior, switch_behavior, Behavior
+from retriever.flow.types import EventStream
 
 def main():
     print("🚀 Verification: FRP Combinators")
