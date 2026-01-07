@@ -7,28 +7,28 @@ This builds a pipeline in a single expression.
 from dataclasses import dataclass
 from retriever.flow import Flow, Rate
 from retriever import run
-from retriever.flow.io import flow_io
+from retriever.flow.io import io
 
 # -----------------------------------------------------------------------------
 # I/O Types
 # -----------------------------------------------------------------------------
-@flow_io
+@io
 @dataclass
 class NumberOut:
     value: int
 
-@flow_io
+@io
 @dataclass  
 class NumberIn:
     value: int
 
-@flow_io
+@io
 @dataclass
 class ProcessedOut:
     result: int
     tag: str
 
-@flow_io
+@io
 @dataclass
 class ProcessedIn:
     result: int
@@ -55,6 +55,8 @@ class Doubler(Flow[NumberIn, ProcessedOut]):
         return {}
     
     def run(self, input: NumberIn) -> ProcessedOut:
+        if input is None or input.value is None:
+            return None
         result = input.value * 2
         print(f"Doubler: {input.value} -> {result}")
         return ProcessedOut(result=result, tag="doubled")
@@ -65,6 +67,9 @@ class Logger(Flow[ProcessedIn, None]):
         return {}
     
     def run(self, input: ProcessedIn) -> None:
+        if input is None:
+            print("Logger: received None")
+            return None
         print(f"Logger: received {input.result} ({input.tag})")
         return None
 
