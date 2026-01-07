@@ -40,30 +40,30 @@ for path in [src_root, project_root]:
         sys.path.insert(0, path)
 
 from retriever.flow import (
-    Pipeline, Rate, Flow, flow_io
+    Pipeline, Rate, Flow, io, Latest
 )
 
 # =============================================================================
 # 1. Message Types (Flow IO)
 # =============================================================================
 
-@flow_io
+@io
 @dataclass
 class FrameMsg:
     image: np.ndarray
 
-@flow_io
+@io
 @dataclass
 class PromptMsg:
     text: str
 
-@flow_io
+@io
 @dataclass
 class DetectorInput:
     image: Optional[np.ndarray] = None
     prompt: Optional[str] = None
 
-@flow_io
+@io
 @dataclass
 class DetectionResult:
     image: np.ndarray
@@ -455,26 +455,26 @@ def main():
             print(">> Mode: Client Camera (Browser -> Server -> Detection)")
             # WebNode is the Source of images (via WS)
             # WebNode outputs DetectorInput -> Detector
-            p.connect(web_node, detector, qsize=10)
+            p.connect(web_node, detector, sync=Latest())
             
             # Detector -> WebNode (Sink)
-            p.connect(detector, web_node, qsize=1)
+            p.connect(detector, web_node, sync=Latest())
             
         else:
             print(">> Mode: Server Webcam")
             camera = WebcamFlow() @ Rate(hz=2)
             
             # Camera -> Detector
-            p.connect(camera, detector, map={"image": "image"}, qsize=1)
+            p.connect(camera, detector, map={"image": "image"}, sync=Latest())
             
             # Detector -> WebNode (Sink)
-            p.connect(detector, web_node, qsize=1)
+            p.connect(detector, web_node, sync=Latest())
             
             # WebNode (Prompt) -> Detector
             # Note: WebNode now outputs DetectorInput, so we don't need 'map' if fields match, 
             # but DetectorInput contains optional image/prompt. 
             # VisionDetectorFlow expects DetectorInput. Compatible!
-            p.connect(web_node, detector, qsize=10)
+            p.connect(web_node, detector, sync=Latest())
         
     print(f"Starting execution ({args.backend} backend)...")
     

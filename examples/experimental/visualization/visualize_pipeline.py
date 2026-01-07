@@ -3,7 +3,7 @@ from typing import Dict, Any
 from dataclasses import dataclass
 
 from retriever.flow import Pipeline, Flow, Rate, Trigger, flow_io
-from retriever.ir.struct import IRStruct
+from retriever.ir import IR
 from retriever.ir.viz import generate_ascii_graph, save_interactive_html
 
 
@@ -46,7 +46,7 @@ def main():
         pipe.connect(executor, env, map={"data": "data"})
     
     # Build IR once
-    ir: IRStruct = pipe.build_ir()
+    ir: IR = pipe.build_ir()
     
     # 2. Render ASCII
     print("\n--- Text Visualization (from IR) ---\n")

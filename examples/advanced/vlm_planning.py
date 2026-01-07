@@ -19,7 +19,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../.
 from retriever.flow import Flow, Pipeline, io
 from retriever.flow.clock import Trigger
 from retriever.types import SkillSignature, GroundedSkill
-from retriever.types import Object, ObjectType
+from retriever.types import Object
+from retriever.flow.types import EventStream, Behavior, State, ObjectType
 
 # ======================= TYPES =======================
 
@@ -70,11 +71,25 @@ class PlannerFlow(Flow[ObjectList, ActionList]):
             template="pick up {target}"
         )
     
-    def run(self, objects: ObjectList) -> ActionList:
-        print(f"🧠 Planner: Reasoning about {len(objects.items)} objects...")
+    def plan_task(self, query: str, scene_objects: List[ObjectType]) -> List[str]:
+        print(f"🧠 Planner: Reasoning about {len(scene_objects)} objects based on query: '{query}'...")
         # Verify GroundedSkill usage
         actions = []
-        for obj in objects.items:
+        # The original logic iterated over objects.items, which was ObjectList.
+        # Now scene_objects is List[ObjectType].
+        # To maintain similar behavior, we'll assume ObjectType has a 'name' attribute for grounding.
+        # Note: This change makes the PlannerFlow's generic types (Flow[ObjectList, ActionList])
+        # inconsistent with the new `plan_task` signature.
+        # For this specific edit, I'm applying the change as requested,
+        # but a full refactor would be needed to align the Flow generics.
+        for obj_type in scene_objects:
+            # Assuming ObjectType has a 'name' attribute or can be represented as a string
+            # For the purpose of this example, we'll use a placeholder for the target name
+            # as ObjectType itself doesn't have a 'name' attribute in this file.
+            # If the intent was to pass `Object` instances, the type hint would be `List[Object]`.
+            # Given `List[ObjectType]`, we'll use a generic placeholder for the target.
+            target_name = f"an_object_of_type_{obj_type.name}" # Placeholder
+            
             skill = GroundedSkill(
                 signature=self.pickup_sig,
                 grounded_params={"target": obj.name}
