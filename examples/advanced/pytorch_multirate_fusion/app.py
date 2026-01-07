@@ -58,10 +58,9 @@ class RobotAction:
 @io
 @dataclass
 class PolicyInput:
-    joint_pos: Any 
-    joint_vel: Any
-    visual_features: Any
+    visual_features: torch.Tensor
     visual_timestamp: Optional[float] = None
+    target_command: str = "move_forward"
 
 # ============================================================================
 # MOCK MODELS
@@ -144,6 +143,9 @@ class FusionPolicyFlow(Flow[PolicyInput, RobotAction]):
     def run(self, inp: PolicyInput) -> Optional[RobotAction]:
         if inp.joint_pos is None: return None
         
+        # Simulate policy inference (fusion of vision + state)
+        # We can access metadata from the inputs if needed
+        latency = time.time() - (inp.visual_timestamp or time.time())
         # 1. Handle Vision (Stateful Async Memory)
         if inp.visual_features is not None:
             self.last_vision = inp.visual_features.to(self.device)
@@ -192,10 +194,17 @@ def main():
     # Fusion: Robot -> Policy
     retriever.connect(robot, policy, sync=Latest())
     
-    # Fusion: Vision -> Policy (Latest strategy on edge)
-    # Allows Policy to skip old frames if buffer fills, but Logic handles "holding"
-    retriever.connect(vision, policy, map={"features": "visual_features", "timestamp": "visual_timestamp"}, sync=Latest())
-    
+    # Fusion: Vision    # Connect components with @Rate and @Trigger
+    # Strategy: Policy runs on new vision frames (Trigger), fetching latest state
+    retriever.connect(
+        vision,
+        policy,
+        # Map output 'features' -> input 'visual_features'
+        # Map output 'timestamp' -> input 'visual_timestamp'
+        map={"features": "visual_features", "timestamp": "visual_timestamp"},
+        # Trigger policy execution when vision emits
+        sync=Latest()
+    )
     print("Starting Multi-Rate Async Fusion...")
     try:
         retriever.run(backend=args.backend, duration=args.duration)
