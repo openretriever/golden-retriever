@@ -16,10 +16,10 @@ from dataclasses import dataclass
 # Explicitly add source root
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src')))
 
-from retriever.flow import Flow, Pipeline, flow_io
+from retriever.flow import Flow, Pipeline, io
 from retriever.flow.clock import Trigger
 from retriever.types import SkillSignature, GroundedSkill
-from retriever.types import Object, Type
+from retriever.types import Object, ObjectType
 
 # ======================= TYPES =======================
 
@@ -32,23 +32,23 @@ class Action:
     name: str
     target: str
 
-@flow_io
+@io
 @dataclass
 class ObjectList:
     items: List[Object]
 
-@flow_io
+@io
 @dataclass
 class ActionList:
     items: List[Action]
 
-@flow_io
+@io
 @dataclass
 class Result:
     status: str
 
 # Use the migrated symbolic types
-ObjectT = Type("Entity", ["x", "y", "z"])
+ObjectT = ObjectType("Entity", ["x", "y", "z"])
 
 # ======================= FLOWS =======================
 
@@ -108,9 +108,9 @@ def main():
     # This automatically registers handles and connections
     with Pipeline("vlm_plan") as pipeline:
         # Create handles bound to clocks
-        p_handle = perception_flow @ Trigger(on="tick")
-        pl_handle = planner_flow @ Trigger(on="perception")
-        ex_handle = executor_flow @ Trigger(on="planner")
+        p_handle = perception_flow @ Trigger("tick")
+        pl_handle = planner_flow @ Trigger("perception")
+        ex_handle = executor_flow @ Trigger("planner")
         
         # Connect them using experimental operator support or .then()
         p_handle >> pl_handle >> ex_handle

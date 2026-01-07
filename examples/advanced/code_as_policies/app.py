@@ -3,7 +3,7 @@ Main Application for Code as Policies Example.
 """
 
 from retriever import Pipeline
-from retriever.flow import flow_io
+from retriever.flow import io
 from .flows import TabletopEnvFlow, CodePolicyFlow, EnvAction, EnvObservation
 from .ravens_wrapper import RavensEnvFlow
 from .executor import ExecutionRequest

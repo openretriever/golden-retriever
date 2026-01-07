@@ -16,7 +16,7 @@ if src_root not in sys.path:
     sys.path.insert(0, src_root)
 
 import retriever
-from retriever.flow import flow_io, Flow, Rate
+from retriever.flow import io, Flow, Rate
 from retriever.flow.adapter import Latest
 
 logging.basicConfig(level=logging.INFO)
@@ -26,7 +26,7 @@ logger = logging.getLogger("FusionUnified")
 # DATA TYPES (FLOW IO)
 # ============================================================================
 
-@flow_io
+@io
 @dataclass
 class RobotState:
     """Fast proprioceptive state (100Hz)"""
@@ -34,33 +34,34 @@ class RobotState:
     joint_vel: Any # torch.Tensor (7,)
     timestamp: float
 
-@flow_io
+@io
 @dataclass
 class CameraImage:
     """Raw camera image (10Hz)"""
     data: Any # torch.Tensor (3, 224, 224)
     timestamp: float
 
-@flow_io
+@io
 @dataclass
 class VisualContext:
     """Heavy visual features (10Hz)"""
     features: Any # torch.Tensor (2048,)
     timestamp: float
 
-@flow_io
+@io
 @dataclass
 class RobotAction:
     """Control output (100Hz)"""
     joint_torques: Any # torch.Tensor (7,)
     timestamp: float
     
-@flow_io
+@io
 @dataclass
 class PolicyInput:
     joint_pos: Any 
     joint_vel: Any
     visual_features: Any
+    visual_timestamp: Optional[float] = None
 
 # ============================================================================
 # MOCK MODELS
@@ -146,7 +147,8 @@ class FusionPolicyFlow(Flow[PolicyInput, RobotAction]):
         # 1. Handle Vision (Stateful Async Memory)
         if inp.visual_features is not None:
             self.last_vision = inp.visual_features.to(self.device)
-            self.last_vision_ts = inp.visual_features.timestamp
+            if inp.visual_timestamp is not None:
+                self.last_vision_ts = inp.visual_timestamp
             
         vision_feat = self.last_vision if self.last_vision is not None else torch.zeros(2048, device=self.device)
             
@@ -185,14 +187,14 @@ def main():
     
     print("Connecting graph (Global DSL)...")
     # Camera -> Vision
-    retriever.connect(camera, vision)
+    retriever.connect(camera, vision, sync=Latest())
     
     # Fusion: Robot -> Policy
-    retriever.connect(robot, policy)
+    retriever.connect(robot, policy, sync=Latest())
     
     # Fusion: Vision -> Policy (Latest strategy on edge)
     # Allows Policy to skip old frames if buffer fills, but Logic handles "holding"
-    retriever.connect(vision, policy, map={"features": "visual_features"}, sync=Latest())
+    retriever.connect(vision, policy, map={"features": "visual_features", "timestamp": "visual_timestamp"}, sync=Latest())
     
     print("Starting Multi-Rate Async Fusion...")
     try:
