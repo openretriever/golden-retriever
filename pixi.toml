@@ -1,0 +1,178 @@
+# =============================================================================
+# Pixi Configuration (Golden / System Stack) — TEMPLATE
+# =============================================================================
+#
+# This manifest is a companion to `pyproject-golden.toml`.
+#
+# Purpose
+# - The repo root `pixi.toml` is intentionally **runtime-only** (fast, minimal).
+# - This `pixi-golden.toml` captures the **full system** environment (models/robots/etc.)
+#   that will move to a separate golden repo.
+#
+# Important
+# - Pixi writes a `pixi.lock` next to the manifest. If you run Pixi with
+#   `--manifest-path pixi-golden.toml` in this repo, it will update `pixi.lock`.
+# - Recommended workflow today: copy this file into the future golden repo (or a
+#   separate working directory) before running `pixi install`.
+#
+# =============================================================================
+
+[workspace]
+channels = ["https://prefix.dev/conda-forge"]
+platforms = ["osx-arm64", "linux-64"]
+
+[dependencies]
+python = "3.11.*"
+# Required for HEIF bindings (pyheif / pillow-heif) when using the legacy stack.
+libheif = "*"
+
+[pypi-dependencies]
+# Temporary: install this monorepo editable, but keep core extras only.
+# In the split, this becomes the `retriever-golden` package in the golden repo.
+retriever = { path = ".", editable = true, extras = ["dora", "demo"] }
+
+# Keep test tooling lightweight.
+pygments = "*"
+typing-extensions = "*"
+
+# -----------------------------------------------------------------------------
+# Base system feature (the "golden" stack)
+# -----------------------------------------------------------------------------
+[feature.golden.pypi-dependencies]
+transformers = "*"
+openai = "*"
+accelerate = "*"
+google-generativeai = "*"
+pillow-heif = "*"
+pyheif = "*"
+ray = { version = "*", extras = ["all"] }
+langchain = "*"
+langchain_openai = "*"
+supervision = "*"
+ultralytics = "==8.3.40"
+ultralytics-thop = "==2.0.12"
+einops = "*"
+pycocotools = "*"
+sam2 = "*"
+hydra-core = "*"
+omegaconf = "*"
+click = "*"
+rich = "*"
+ftfy = "*"
+regex = "*"
+tqdm = "*"
+spatialmath-python = "*"
+pydantic = ">=2.0.0"
+fastapi = ">=0.100.0"
+uvicorn = { version = "*", extras = ["standard"] }
+httpx = "*"
+pymongo = "*"
+pytorch_lightning = "*"
+pddlgym = { git = "https://github.com/linfeng-z/pddlgym.git" }
+protobuf = "==3.20.*"
+packaging = "*"
+Pillow = "*"
+scipy = "*"
+pandas = "*"
+seaborn = ">=0.13.2"
+py-cpuinfo = ">=9.0.0"
+rerun = "*"
+wandb = "*"
+bitsandbytes = "*"
+gym = "*"
+dspy-ai = ">=2.4.0"
+python-dotenv = "*"
+
+# -----------------------------------------------------------------------------
+# Optional: Training stack
+# -----------------------------------------------------------------------------
+[feature.training.pypi-dependencies]
+absl-py = "*"
+aiohttp = "*"
+aiosignal = "*"
+async-timeout = "*"
+attrs = "*"
+charset-normalizer = "*"
+cmake = "*"
+datasets = "*"
+deepspeed = "*"
+evaluate = "*"
+frozenlist = "*"
+fsspec = "*"
+huggingface-hub = "*"
+idna = "*"
+multidict = "*"
+ninja = "*"
+psutil = "*"
+responses = "*"
+safetensors = "*"
+sentencepiece = "*"
+tokenizers = "*"
+torch = "*"
+triton = "*"
+xxhash = "*"
+yarl = "*"
+
+# -----------------------------------------------------------------------------
+# Optional: Mapper stack
+# -----------------------------------------------------------------------------
+[feature.mapper.pypi-dependencies]
+dgl = "*"
+open3d = "*"
+lxml = "*"
+PyMCubes = "*"
+trimesh = "*"
+pyglet = "==1.5.27"
+
+# -----------------------------------------------------------------------------
+# Optional: Spot SDK stack
+# -----------------------------------------------------------------------------
+[feature.spot.pypi-dependencies]
+bosdyn-client = "*"
+bosdyn-core = "*"
+bosdyn-api = "*"
+bosdyn-mission = "*"
+bosdyn-choreography-client = "*"
+
+# -----------------------------------------------------------------------------
+# Optional: VLM planning stack
+# -----------------------------------------------------------------------------
+[feature.vlm_planning.pypi-dependencies]
+alfworld = { git = "https://github.com/XiaofengLin7/alfworld_vlm.git" }
+litellm = "*"
+gymnasium = "*"
+typing = "*"
+
+# -----------------------------------------------------------------------------
+# Optional: PyTorch environments (CPU/GPU)
+# -----------------------------------------------------------------------------
+[feature.gpu]
+platforms = ["linux-64"]
+system-requirements = { cuda = "12.0" }
+
+[feature.gpu.pypi-dependencies]
+torch = { version = ">=2.5.1", index = "https://download.pytorch.org/whl/cu124" }
+torchvision = { version = ">=0.20.1", index = "https://download.pytorch.org/whl/cu124" }
+
+[feature.cpu.pypi-dependencies]
+torch = { version = ">=2.5.1", index = "https://download.pytorch.org/whl/cpu" }
+torchvision = { version = ">=0.20.1", index = "https://download.pytorch.org/whl/cpu" }
+
+# -----------------------------------------------------------------------------
+# Environments
+# -----------------------------------------------------------------------------
+[environments]
+default = { features = ["golden"] }
+training = { features = ["golden", "training"] }
+mapper = { features = ["golden", "mapper"] }
+spot = { features = ["golden", "spot"] }
+vlm = { features = ["golden", "vlm_planning"] }
+cpu = { features = ["golden", "cpu"] }
+gpu = { features = ["golden", "gpu"] }
+
+# -----------------------------------------------------------------------------
+# Tasks
+# -----------------------------------------------------------------------------
+[tasks]
+demo-dora = "python -m examples.tutorial.009_dora_perception --backend dora"
+demo-request-dora = "python -m examples.tutorial.010_request_response"
