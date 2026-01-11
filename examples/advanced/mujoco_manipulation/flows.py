@@ -131,8 +131,8 @@ class RerunLoggerFlow(Flow[State, None]):
         rr.set_time_sequence("sim_step", sim_step)
         
         if inp.qpos is not None:
-             rr.log("state/joint1", rr.Scalar(inp.qpos[0]))
-             rr.log("state/joint2", rr.Scalar(inp.qpos[1]))
+             rr.log("state/joint1", rr.Scalars([float(inp.qpos[0])]))
+             rr.log("state/joint2", rr.Scalars([float(inp.qpos[1])]))
              
         if inp.image is not None:
             rr.log("camera/render", rr.Image(inp.image))
