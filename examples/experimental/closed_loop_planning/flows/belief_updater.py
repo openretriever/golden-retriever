@@ -50,7 +50,7 @@ class BeliefUpdaterFlow(Flow[BeliefUpdateInput, BeliefUpdateOutput]):
             visual_atoms={},
             epistemic=epistemic,
             action_history=[],
-            camera_images=inp.camera_images,
+            raw_observation=inp.raw_observation,
         )
 
         # Carry forward from previous belief
