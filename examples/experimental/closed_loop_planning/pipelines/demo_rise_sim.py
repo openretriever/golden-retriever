@@ -95,36 +95,39 @@ def build_rise_pipeline() -> Pipeline:
 
     return p
 
+
 def main():
     import argparse
+    import os
 
-    from retriever.ir.viz import save_interactive_html
+    import retriever
 
-    parser = argparse.ArgumentParser()
+
+    parser = argparse.ArgumentParser(description="RISE Simulation Pipeline")
     parser.add_argument("--duration", type=float, default=10.0)
     args = parser.parse_args()
+
+    gemini_key = os.environ.get("GEMINI_API_KEY", "")
+
+    # Initialize retriever with global config
+    retriever.init(
+        backend="dora",
+        backend_config={
+            "dora_timeout": 10,
+            "rerun_config": {"spawn": True, "connect_addr": "127.0.0.1:9876"},
+            "env_overrides": {"GEMINI_API_KEY": gemini_key}
+        }
+    )
 
     pipeline = build_rise_pipeline()
 
     # Save visualization
-    save_interactive_html(pipeline.build_ir(), "viz-rise-pipeline.html")
-
-    import os
-    gemini_key = os.environ.get("GEMINI_API_KEY", "")
+    pipeline.visualize("viz-rise-pipeline.html")
 
     print(f"Starting RISE Pipeline... (Key present: {bool(gemini_key)})")
-    pipeline.run(
-        backend="dora",
-        duration=args.duration,
-        backend_config={
-            "dora_timeout": 10,
-            "rerun_config": {"spawn": True, "connect_addr": "127.0.0.1:9876"},
-            "env_overrides": {
-                "GEMINI_API_KEY": gemini_key
-            }
-        }
-    )
+    pipeline.run(duration=args.duration)
     print("RISE Pipeline Finished.")
+
 
 if __name__ == "__main__":
     main()
