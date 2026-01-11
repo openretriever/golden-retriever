@@ -1,0 +1,176 @@
+# Template `pyproject.toml` for the future Golden Retriever system repository.
+#
+# This repo is being refocused on the **Retriever runtime/core**. Heavy system deps
+# (models, robots/sim, training, Ray, etc.) will move into a separate repo:
+#   - Runtime: `retriever-rt` (imports as `retriever`)
+#   - System:  `retriever-golden`
+#
+# This file is intentionally **not used** by packaging in this repo. It exists so we
+# can copy it into the future golden repo and iterate without mixing system deps into
+# the runtime `pyproject.toml`.
+#
+# When splitting repos:
+#   1) Create `golden-retriever/` repo
+#   2) Copy this file to `golden-retriever/pyproject.toml`
+#   3) Adjust versions/entry-points/scripts as needed
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[project]
+name = "retriever-golden"
+version = "0.0.0"
+description = "Golden Retriever: reference system built on Retriever runtime"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Proprietary" }
+authors = [
+    { name = "Retriever Team" }
+]
+
+# In the split, Golden depends on the runtime distribution name (planned: retriever-rt).
+# The import name remains `retriever`.
+dependencies = [
+    "retriever-rt>=0.0.0",
+]
+
+[project.optional-dependencies]
+# Legacy/system stack (carried over from the current monorepo; expect to refine).
+golden = [
+    # Core ML & Framework
+    "transformers",
+    "openai",
+    "accelerate",
+    "google-generativeai",
+    "pillow-heif",
+    "pyheif",
+
+    # Core Services & Utils
+    "ray[all]",
+    "langchain",
+    "langchain_openai",
+
+    # Core Model Deployment Packages
+    "supervision",
+    "ultralytics==8.3.40",
+    "ultralytics-thop==2.0.12",
+    "einops",
+    "pycocotools",
+    "sam2",
+
+    # Configuration
+    "hydra-core",
+    "omegaconf",
+
+    # Utilities
+    "click",
+    "rich",
+    "ftfy",
+    "regex",
+    "tqdm",
+    "spatialmath-python",
+    "pydantic>=2.0.0",
+    "fastapi>=0.100.0",
+    "uvicorn[standard]",
+    "httpx",
+    "pymongo",
+    "pytorch_lightning",
+
+    # Planning
+    "pddlgym @ git+https://github.com/linfeng-z/pddlgym.git",
+
+    # Data Processing & Utils
+    "protobuf==3.20.*",  # For wandb compatibility
+    "packaging",
+    "Pillow",
+    "numpy<2.0.0",
+    "scipy",
+    "pandas",
+    "seaborn>=0.13.2",
+    "py-cpuinfo>=9.0.0",
+
+    # Other
+    "rerun",
+    "wandb",
+    "bitsandbytes",
+    "gym",
+
+    # New dependencies
+    "dspy-ai>=2.4.0",
+    "python-dotenv",
+]
+
+# Refer to requirements-training.txt (legacy).
+training = [
+    "absl-py",
+    "accelerate",
+    "aiohttp",
+    "aiosignal",
+    "async-timeout",
+    "attrs",
+    "bitsandbytes",
+    "charset-normalizer",
+    "cmake",
+    "datasets",
+    "deepspeed",
+    "einops",
+    "evaluate",
+    "frozenlist",
+    "fsspec",
+    "huggingface-hub",
+    "idna",
+    "multidict",
+    "ninja",
+    "psutil",
+    "responses",
+    "safetensors",
+    "sentencepiece",
+    "tokenizers",
+    "torch",
+    "tqdm",
+    "transformers",
+    "triton",
+    "xxhash",
+    "yarl",
+]
+
+mapper = [
+    "dgl",
+    "open3d",
+    "lxml",
+    "PyMCubes",
+    "trimesh",
+    "pyglet==1.5.27",
+]
+
+spot = [
+    "bosdyn-client",
+    "bosdyn-core",
+    "bosdyn-api",
+    "bosdyn-mission",
+    "bosdyn-choreography-client",
+]
+
+# Refer to src/envs/alf_world/README.md (legacy).
+vlm_planning = [
+    "alfworld @ git+https://github.com/XiaofengLin7/alfworld_vlm.git",
+    "litellm",
+    "torch",
+    "gymnasium",
+    "typing",
+]
+
+dev = [
+    "black",
+    "ruff",
+    "mypy",
+    "pytest>=7.2.2",
+    "pytest-asyncio",
+    "pre-commit",
+    "pytest-cov",
+]
+
