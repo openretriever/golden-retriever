@@ -23,7 +23,7 @@ class BeliefState(State):
         visual_atoms: Visual ground atoms with epistemic values
         epistemic: Tracks Known/Unknown with regression prevention
         action_history: Past actions for temporal reasoning
-        camera_images: Optional image data from perception
+        raw_observation: Optional raw observation data (images, point clouds, etc.)
     """
 
     # Visual predicate evaluations
@@ -35,8 +35,8 @@ class BeliefState(State):
     # History for temporal reasoning
     action_history: List[Action] = field(default_factory=list)
 
-    # Perception data
-    camera_images: Optional[Any] = None
+    # Perception data (generic - can be images, point clouds, etc.)
+    raw_observation: Optional[Any] = None
     timestamp: Optional[float] = None
 
     def get_epistemic_value(self, atom: GroundAtom) -> EpistemicValue:
@@ -77,7 +77,8 @@ class BeliefUpdateInput:
     visible_atoms: Set[GroundAtom] = field(default_factory=set)
     prev_belief: Optional[BeliefState] = None
     action: Optional[Action] = None
-    plan: Optional[List[Option]] = None
+    plan: List[Option] = field(default_factory=list)  # Changed from Optional
+    raw_observation: Optional[Any] = None  # Raw observation data (images, etc.)
 
 
 @flow_io
