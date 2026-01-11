@@ -6,7 +6,6 @@
 import argparse
 
 from retriever.flow import Latest, Pipeline, Rate, Trigger
-from retriever.ir.viz import save_interactive_html
 
 
 from ..flows.belief_updater import BeliefUpdaterFlow
@@ -25,7 +24,7 @@ def build_simple_pipeline() -> Pipeline:
 
     pipe = Pipeline("closed_loop_simple")
 
-    save_interactive_html(pipe.build_ir(), "viz-simple-pipeline.html")
+
 
     # Instantiate Flows with Decorators
     env = GridEnvironmentFlow() @ Rate(10.0)
@@ -69,17 +68,28 @@ def build_simple_pipeline() -> Pipeline:
 
     return pipe
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+
+def main():
+    import retriever
+
+    parser = argparse.ArgumentParser(description="Simple Grid Pipeline")
     parser.add_argument("--duration", type=float, default=5.0)
     args = parser.parse_args()
 
-    pipe = build_simple_pipeline()
-    pipe.run(
-        duration=args.duration,
+    # Initialize retriever with global config
+    retriever.init(
         backend="dora",
         backend_config={
             "dora_timeout": 10,
             "rerun_config": {"spawn": True, "connect_addr": "127.0.0.1:9876"}
         }
     )
+
+    pipe = build_simple_pipeline()
+    pipe.visualize("viz-simple-pipeline.html")
+
+    pipe.run(duration=args.duration)
+
+
+if __name__ == "__main__":
+    main()
