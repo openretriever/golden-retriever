@@ -14,13 +14,13 @@ from retriever.lib.rerun import rerun_loggable
 @flow_io
 @dataclass
 class MotionOutput:
-    action_mimic: Any  # np.array(35)
+    action_mimic: Optional[Any]  # np.array(35)
 
 
 @flow_io
 @dataclass
 class PolicyOutput:
-    policy_action: Any  # np.array(29)
+    policy_action: Optional[Any]  # np.array(29)
 
 
 @rerun_loggable({"dof_pos": "Scalars", "target": "Scalars"})
@@ -37,8 +37,8 @@ class VisState:
 @flow_io
 @dataclass
 class EnvOutput:
-    proprio: Any  # np.array(92)
-    vis: VisState
+    proprio: Optional[Any]  # np.array(92)
+    vis: Optional[VisState]
 
 
 @flow_io
@@ -452,15 +452,13 @@ class Twist2PolicyFlow(Flow[Twist2PolicyInput, PolicyOutput]):
         if len(self.obs_history) > self.history_len:
             self.obs_history.pop(0)
 
-
-
         # 3. Construct Network Input (1432 dims)
         # TWIST2 structure: [obs, priv, history]
         # 127 + 35 + 1270 = 1432
-        
+
         hist_arr = np.array(self.obs_history)
         hist_flat = hist_arr.flatten()
-        
+
         obs_buf = np.concatenate([obs_full, action_mimic, hist_flat])
 
         if obs_buf.shape[0] != self.total_obs_size:
@@ -616,6 +614,7 @@ class Twist2VisFlow(Flow[VisInput, None]):
             self.data.qvel[:] = vis_state.qvel
 
         import mujoco
+
         mujoco.mj_forward(self.model, self.data)
 
         # Sync viewer
