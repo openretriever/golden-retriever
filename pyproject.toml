@@ -28,15 +28,13 @@ description = "Golden Retriever: reference system built on Retriever runtime"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Proprietary" }
-authors = [
-    { name = "Retriever Team" }
-]
+authors = [{ name = "Retriever Team" }]
 
 # In the split, Golden depends on the runtime distribution name (planned: retriever-rt).
 # The import name remains `retriever`.
-dependencies = [
-    "retriever-rt>=0.0.0",
-]
+# dependencies = [
+#     "retriever-rt>=0.0.0",
+# ]
 
 [project.optional-dependencies]
 # Legacy/system stack (carried over from the current monorepo; expect to refine).
@@ -138,14 +136,7 @@ training = [
     "yarl",
 ]
 
-mapper = [
-    "dgl",
-    "open3d",
-    "lxml",
-    "PyMCubes",
-    "trimesh",
-    "pyglet==1.5.27",
-]
+mapper = ["dgl", "open3d", "lxml", "PyMCubes", "trimesh", "pyglet==1.5.27"]
 
 spot = [
     "bosdyn-client",
@@ -173,4 +164,3 @@ dev = [
     "pre-commit",
     "pytest-cov",
 ]
-

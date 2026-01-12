@@ -29,7 +29,10 @@ libheif = "*"
 [pypi-dependencies]
 # Temporary: install this monorepo editable, but keep core extras only.
 # In the split, this becomes the `retriever-golden` package in the golden repo.
-retriever = { path = ".", editable = true, extras = ["dora", "demo"] }
+retriever = { path = "../retriever-mirror", editable = true, extras = [
+    "dora",
+    "demo",
+] }
 
 # Keep test tooling lightweight.
 pygments = "*"
@@ -76,7 +79,7 @@ scipy = "*"
 pandas = "*"
 seaborn = ">=0.13.2"
 py-cpuinfo = ">=9.0.0"
-rerun = "*"
+rerun-sdk = "*"
 wandb = "*"
 bitsandbytes = "*"
 gym = "*"
@@ -109,7 +112,7 @@ safetensors = "*"
 sentencepiece = "*"
 tokenizers = "*"
 torch = "*"
-triton = "*"
+# triton = "*"
 xxhash = "*"
 yarl = "*"
 
@@ -133,6 +136,19 @@ bosdyn-core = "*"
 bosdyn-api = "*"
 bosdyn-mission = "*"
 bosdyn-choreography-client = "*"
+
+# -----------------------------------------------------------------------------
+# Optional: Twist2 stack
+# -----------------------------------------------------------------------------
+[feature.twist2.pypi-dependencies]
+dora-rs = "<0.4.0"
+dora-rs-cli = "<0.4.0"
+onnxruntime = "*"
+mujoco = "*"
+
+[feature.twist2.tasks]
+demo-twist2 = { cmd = "mjpython examples/advanced/twist2_simulation/app.py", env = { PYTHONPATH = "." } }
+demo-twist2-rerun = { cmd = "python examples/advanced/twist2_simulation/app.py --no-viewer", env = { PYTHONPATH = "." } }
 
 # -----------------------------------------------------------------------------
 # Optional: VLM planning stack
@@ -167,6 +183,7 @@ training = { features = ["golden", "training"] }
 mapper = { features = ["golden", "mapper"] }
 spot = { features = ["golden", "spot"] }
 vlm = { features = ["golden", "vlm_planning"] }
+twist2 = { features = ["golden", "twist2"] }
 cpu = { features = ["golden", "cpu"] }
 gpu = { features = ["golden", "gpu"] }
 
