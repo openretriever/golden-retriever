@@ -1,0 +1,29 @@
+[workspace]
+name = "behavior-1k-experiment"
+version = "0.1.0"
+description = "BEHAVIOR-1K simulation experiment"
+authors = ["team"]
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+[dependencies]
+python = "3.11.*"
+pip = "*"
+uv = "*"
+
+[pypi-dependencies]
+# PyTorch with CUDA 12.4 for Linux
+torch = { version = ">=2.0.0", index = "https://download.pytorch.org/whl/cu124" }
+torchvision = { version = "*", index = "https://download.pytorch.org/whl/cu124" }
+# Intra-worspace dependency to import 'retriever' and 'shared' using a relative path or git
+# Since we are inside the repo, we can install the root in editable mode or just rely on PYTHONPATH.
+# For simplicity and isolation, we install dependencies but assume code access via PYTHONPATH.
+retriever = { git = "ssh://git@gitlab-local.tail44e147.ts.net/rnd/retriever-mirror.git", branch = "dev/202512-fix-and-integrate", extras = [
+    "dora",
+] }
+
+[tasks]
+# One-time setup
+install-simulation = "uv pip install omnigibson git+https://github.com/StanfordVL/BEHAVIOR-1K.git@main -e ../../references/openpi-comet -e ../../references/openpi-comet/packages/openpi-client"
+# Run the experiment
+run-comet = { cmd = "python solutions/comet.py", env = { PYTHONPATH = "../../" } }
