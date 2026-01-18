@@ -86,6 +86,7 @@ _instruction_queue = queue.Queue()
 _web_app = FastAPI() if FastAPI else None
 
 if _web_app:
+
     class InstructionRequest(BaseModel):
         instruction: str
 
@@ -200,7 +201,9 @@ class WebcamSourceFlow(Flow[None, CameraOutput]):
             return CameraOutput(data={}, frame=None)
 
         if not self._warned_black_frame and frame is not None and frame.max() == 0:
-            print(f"[{self.name}] Frame appears black; check camera permissions or device index.")
+            print(
+                f"[{self.name}] Frame appears black; check camera permissions or device index."
+            )
             self._warned_black_frame = True
 
         # Encode as JPEG
@@ -233,10 +236,9 @@ def build_modular_pipeline(model: str, initial_task: str, device: int) -> Pipeli
         # Planner: Generates plan (Triggered by belief update)
         # Note: We rate limit this inside the flow, or we could use Rate() here
         # but Trigger(\"state\") ensures we plan on fresh data.
-        planner = (
-            VLMTaskPlannerFlow(name="VLMPlanner", model=model, initial_task=initial_task)
-            @ Trigger("state")
-        )
+        planner = VLMTaskPlannerFlow(
+            name="VLMPlanner", model=model, initial_task=initial_task
+        ) @ Trigger("state")
 
         # Monitor: Checks execution (Triggered by webcam frame for visual check)
         # We trigger on 'frame' so we check frequently.
@@ -389,15 +391,10 @@ def main():
             rerun_port = new_port
             rerun_running = False
     else:
+        # Default: connect to existing viewer if running, otherwise spawn
         spawn_viewer = not rerun_running
-        if rerun_running and not rerun_port_explicit:
-            new_port = _find_free_port(rerun_host)
-            print(
-                f"[Rerun] Port {rerun_port} is in use; using {new_port} to avoid version conflicts."
-            )
-            rerun_port = new_port
-            spawn_viewer = True
-            rerun_running = False
+        if rerun_running:
+            print(f"[Rerun] Connecting to existing viewer at {rerun_host}:{rerun_port}")
 
     retriever.init(
         backend="dora",
@@ -419,7 +416,9 @@ def main():
     print("Open browser: http://localhost:8000")
     print(f"View Rerun: pixi run -e llm rerun --port {rerun_port}")
     if not args.task:
-        print("Planner task: (none) — use the web UI or pass --task to trigger VLM planning")
+        print(
+            "Planner task: (none) — use the web UI or pass --task to trigger VLM planning"
+        )
     print("=" * 60)
 
     pipe.visualize(open_browser=args.open_browser)
