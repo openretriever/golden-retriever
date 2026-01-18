@@ -45,7 +45,7 @@ typing-extensions = "*"
 transformers = "*"
 openai = "*"
 accelerate = "*"
-google-generativeai = "*"
+google-genai = "*"
 pillow-heif = "*"
 pyheif = "*"
 ray = { version = "*", extras = ["all"] }
@@ -141,8 +141,10 @@ bosdyn-choreography-client = "*"
 # Optional: Twist2 stack
 # -----------------------------------------------------------------------------
 [feature.twist2.pypi-dependencies]
-dora-rs = "<0.4.0"
-dora-rs-cli = "<0.4.0"
+dora-rs = "==0.3.13"
+dora-rs-cli = "==0.3.13"
+# dora-rs = "<0.4.0"
+# dora-rs-cli = "<0.4.0"
 onnxruntime = "*"
 mujoco = "*"
 
@@ -153,6 +155,9 @@ demo-twist2-rerun = { cmd = "python examples/advanced/twist2_simulation/app.py -
 # -----------------------------------------------------------------------------
 # Optional: VLM planning stack
 # -----------------------------------------------------------------------------
+[feature.vlm_planning]
+system-requirements = { libc = "2.31" }
+
 [feature.vlm_planning.pypi-dependencies]
 alfworld = { git = "https://github.com/XiaofengLin7/alfworld_vlm.git" }
 litellm = "*"
@@ -183,9 +188,14 @@ training = { features = ["golden", "training"] }
 mapper = { features = ["golden", "mapper"] }
 spot = { features = ["golden", "spot"] }
 vlm = { features = ["golden", "vlm_planning"] }
+llm = { features = ["golden", "vlm_planning"] }
 twist2 = { features = ["golden", "twist2"] }
 cpu = { features = ["golden", "cpu"] }
 gpu = { features = ["golden", "gpu"] }
+
+[feature.vlm_planning.tasks]
+# demo-highlevel-planning = { cmd = "python examples/experimental/closed_loop_planning/pipelines/demo_highlevel_planning.py" }
+demo-highlevel-planning = { cmd = "python examples/experimental/closed_loop_planning/pipelines/demo_highlevel_planning.py", env = { RUST_LOG = "error" } }
 
 # -----------------------------------------------------------------------------
 # Tasks
