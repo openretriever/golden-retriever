@@ -18,7 +18,7 @@
 # =============================================================================
 
 [workspace]
-channels = ["https://prefix.dev/conda-forge"]
+channels = ["https://prefix.dev/conda-forge", "https://repo.prefix.dev/open-planning-testing"]
 platforms = ["osx-arm64", "linux-64"]
 
 [dependencies]
@@ -180,6 +180,22 @@ torch = { version = ">=2.5.1", index = "https://download.pytorch.org/whl/cpu" }
 torchvision = { version = ">=0.20.1", index = "https://download.pytorch.org/whl/cpu" }
 
 # -----------------------------------------------------------------------------
+# Optional: RoboPlab motion planning environments
+# -----------------------------------------------------------------------------
+[feature.roboplan]
+platforms = ["linux-64"]
+
+[feature.roboplan.dependencies]
+roboplan-python = "*"
+pinocchio = ">=3.9.0"
+
+[feature.roboplan.pypi-dependencies]
+xacro = "*"
+tyro = "*"
+viser = "*"
+matplotlib = "*"
+
+# -----------------------------------------------------------------------------
 # Environments
 # -----------------------------------------------------------------------------
 [environments]
@@ -192,6 +208,7 @@ llm = { features = ["golden", "vlm_planning"] }
 twist2 = { features = ["golden", "twist2"] }
 cpu = { features = ["golden", "cpu"] }
 gpu = { features = ["golden", "gpu"] }
+roboplan = { features = ["golden", "roboplan"] }
 
 [feature.vlm_planning.tasks]
 # demo-highlevel-planning = { cmd = "python examples/experimental/closed_loop_planning/pipelines/demo_highlevel_planning.py" }
