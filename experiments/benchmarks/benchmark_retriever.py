@@ -85,7 +85,7 @@ class SinkFlow(Flow[RandomSequence, None]):
         csv_file = f"experiments/benchmarks/results/retriever_{backend}_benchmark_results.csv"
         append = os.path.isfile(csv_file)
         log_header = ["name", "platform", "size", "latency_ns"]
-        log_row = [NAME, PLATFORM, current_size, avg_latency]
+        log_row = [f"{NAME} {backend}", PLATFORM, current_size, avg_latency]
         if append:
             with open(csv_file, "a", encoding="utf-8") as f:
                 w = csv.writer(f, lineterminator="\n")
