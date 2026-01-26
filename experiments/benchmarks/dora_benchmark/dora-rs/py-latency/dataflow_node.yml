@@ -1,0 +1,9 @@
+nodes:
+  - id: node_1
+    path: node_1.py
+    outputs:
+      - latency
+  - id: node_2
+    path: node_2.py
+    inputs:
+      latency: node_1/latency
