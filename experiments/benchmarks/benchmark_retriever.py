@@ -6,13 +6,14 @@ Backends are configurable with the --backend command-line argument.
 
 import argparse
 from dataclasses import dataclass
+import sys
 import time
 import os
 
 import csv
 import numpy as np
 
-from retriever.flow import Flow, flow_io, Rate, Trigger, Pipeline, Latest
+from retriever.flow import Flow, flow_io, Rate, Trigger, Pipeline
 
 SIZES = [
     8,
@@ -59,6 +60,9 @@ class SourceFlow(Flow[None, RandomSequence]):
         if self.j == NUM_POINTS_PER_SIZE:
             self.i += 1
             self.j = 0
+            if self.i >= len(SIZES):
+                print("Benchmarking data collection complete!")
+                sys.exit(0)
         else:
             self.j += 1
 

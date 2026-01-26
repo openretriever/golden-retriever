@@ -47,6 +47,10 @@ class MinimalPublisher(Node):
         if self.j == NUM_POINTS_PER_SIZE:
             self.i += 1
             self.j = 0
+            if self.i >= len(SIZES):
+                self.get_logger().info("Benchmarking data collection complete!")
+                self.timer.cancel()
+                self.destroy_node()
         else:
             self.j += 1
 
@@ -56,13 +60,13 @@ def main(args=None):
 
     minimal_publisher = MinimalPublisher()
 
-    rclpy.spin(minimal_publisher)
-
-    # Destroy the node explicitly
-    # (optional - otherwise it will be done automatically
-    # when the garbage collector destroys the node object)
-    minimal_publisher.destroy_node()
-    rclpy.shutdown()
+    try:
+        rclpy.spin(minimal_publisher)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        minimal_publisher.destroy_node()
+        rclpy.shutdown()
 
 
 if __name__ == "__main__":
