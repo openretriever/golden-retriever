@@ -39,11 +39,12 @@ for file in csv_files:
 
 ax = plt.gca()
 plt.xscale("log")
-exponents = [6, 8, 12, 16, 20, 24]
+# exponents = [6, 8, 12, 16, 20, 24]
+exponents = [6, 8, 10, 12, 14, 16, 18, 20, 22]
 ticks = 2 ** np.array(exponents)
 ax.set_xticks(ticks)
 ax.set_xticklabels([fr"$2^{{{e}}}$" for e in exponents])
-plt.yscale("log")
+# plt.yscale("log")
 
 plt.xlabel("Message Size (bytes)")
 plt.ylabel("Latency (ms)")
@@ -51,3 +52,5 @@ plt.title(f"Latency vs Message Size ({lower_percentile}-{upper_percentile} perce
 plt.legend(legends)
 plt.grid(True, which="both")
 plt.show()
+
+plt.savefig("latency_vs_message_size.pdf")
