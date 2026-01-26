@@ -18,18 +18,13 @@
 # =============================================================================
 
 [workspace]
-channels = ["https://prefix.dev/conda-forge"]
+channels = ["https://prefix.dev/conda-forge", "robostack-kilted"]
 platforms = ["osx-arm64", "linux-64"]
-
-[dependencies]
-python = "3.11.*"
-# Required for HEIF bindings (pyheif / pillow-heif) when using the legacy stack.
-libheif = "*"
 
 [pypi-dependencies]
 # Temporary: install this monorepo editable, but keep core extras only.
 # In the split, this becomes the `retriever-golden` package in the golden repo.
-retriever = { path = "../retriever-mirror", editable = true, extras = [
+retriever = { path = "/home/sebastian/Downloads/retriever/install/retriever-0.0.0-py3-none-any.whl", editable = false, extras = [    "dora",
     "dora",
     "demo",
 ] }
@@ -41,6 +36,11 @@ typing-extensions = "*"
 # -----------------------------------------------------------------------------
 # Base system feature (the "golden" stack)
 # -----------------------------------------------------------------------------
+[feature.golden.dependencies]
+python = "3.11.*"
+# Required for HEIF bindings (pyheif / pillow-heif) when using the legacy stack.
+libheif = "*"
+
 [feature.golden.pypi-dependencies]
 transformers = "*"
 openai = "*"
@@ -180,6 +180,26 @@ torch = { version = ">=2.5.1", index = "https://download.pytorch.org/whl/cpu" }
 torchvision = { version = ">=0.20.1", index = "https://download.pytorch.org/whl/cpu" }
 
 # -----------------------------------------------------------------------------
+# Optional: ROS 2 benchmarks
+# -----------------------------------------------------------------------------
+[feature.ros]
+platforms = ["linux-64"]
+
+[feature.ros.dependencies]
+ros-kilted-ros-core = ">=0.12.0,<0.13"
+ros-kilted-rmw-cyclonedds-cpp = ">=4.0.2,<5"
+
+[feature.ros.activation]
+scripts = ["/opt/ros/kilted/setup.bash", "experiments/benchmarks/ros/install/setup.bash"]
+
+[feature.ros.activation.env]
+RMW_IMPLEMENTATION = "rmw_cyclonedds_cpp"
+
+[feature.ros.tasks]
+build = { cmd = "colcon build", cwd = "./experiments/benchmarks/ros" }
+benchmark_python = "ros2 run benchmark_python publisher & ros2 run benchmark_python subscriber"
+
+# -----------------------------------------------------------------------------
 # Environments
 # -----------------------------------------------------------------------------
 [environments]
@@ -192,6 +212,7 @@ llm = { features = ["golden", "vlm_planning"] }
 twist2 = { features = ["golden", "twist2"] }
 cpu = { features = ["golden", "cpu"] }
 gpu = { features = ["golden", "gpu"] }
+ros = { features = ["ros"] }
 
 [feature.vlm_planning.tasks]
 # demo-highlevel-planning = { cmd = "python examples/experimental/closed_loop_planning/pipelines/demo_highlevel_planning.py" }
