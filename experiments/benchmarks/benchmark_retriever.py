@@ -14,6 +14,7 @@ import csv
 import numpy as np
 
 from retriever.flow import Flow, flow_io, Rate, Trigger, Pipeline
+from retriever.flow.adapter import Latest
 
 SIZES = [
     8,
@@ -35,7 +36,7 @@ LATENCY = True
 p = argparse.ArgumentParser(
     description="Perception demo (camera -> detection -> display)"
 )
-p.add_argument("--backend", default="dora", choices=["dora", "multiprocessing"])
+p.add_argument("--backend", default="dora", choices=["dora", "multiprocessing", "in-process"])
 p.add_argument("--duration", type=float, default=120.0)
 args = p.parse_args()
 
@@ -111,6 +112,7 @@ def main():
         source = SourceFlow() @ Rate(hz=1.0 / DATA_RATE_S)
         sink = SinkFlow() @ Trigger("data")
         source >> sink  # TODO: Why does this go back to using dora backend?
+        # pipe.connect(source, sink, sync=Latest(), qsize=1)
 
     pipe.run(backend=args.backend, duration=args.duration, blocking=True)
 
