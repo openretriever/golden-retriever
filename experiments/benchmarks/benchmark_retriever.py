@@ -31,6 +31,13 @@ NAME = "Retriever"
 PLATFORM = "COMPUTER_PERF"
 LATENCY = True
 
+p = argparse.ArgumentParser(
+    description="Perception demo (camera -> detection -> display)"
+)
+p.add_argument("--backend", default="dora", choices=["dora", "multiprocessing"])
+p.add_argument("--duration", type=float, default=120.0)
+args = p.parse_args()
+
 
 @flow_io
 @dataclass
@@ -59,9 +66,8 @@ class SourceFlow(Flow[None, RandomSequence]):
 
 
 class SinkFlow(Flow[RandomSequence, None]):
-    def __init__(self, backend: str = "dora"):
+    def __init__(self):
         super().__init__()
-        self.backend = backend
         self.latencies = []
         self.current_size = 0
         self.n = 0
@@ -71,7 +77,7 @@ class SinkFlow(Flow[RandomSequence, None]):
         length = len(input.data) * 8  # As it is Uint64
         if length != self.current_size:
             if self.n > 0:
-                self.record_results([], self.current_size, self.latencies, LATENCY, self.backend)
+                self.record_results([], self.current_size, self.latencies, LATENCY)
             self.current_size = length
             self.n = 0
             self.latencies = []
@@ -79,13 +85,11 @@ class SinkFlow(Flow[RandomSequence, None]):
         self.latencies.append((t_received - t_send) / 1000.0)
         self.n += 1
 
-    def record_results(self, start, current_size, latencies, latency, backend):
-        avg_latency = np.array(latencies).mean()
-
-        csv_file = f"experiments/benchmarks/results/retriever_{backend}_benchmark_results.csv"
+    def record_results(self, start, current_size, latencies, latency):
+        csv_file = f"experiments/benchmarks/results/retriever_{args.backend}_benchmark_results.csv"
         append = os.path.isfile(csv_file)
         log_header = ["name", "platform", "size", "latency_ns"]
-        log_row = [f"{NAME} {backend}", PLATFORM, current_size, avg_latency]
+        log_row = [f"{NAME} {args.backend}", PLATFORM, current_size, latencies]
         if append:
             with open(csv_file, "a", encoding="utf-8") as f:
                 w = csv.writer(f, lineterminator="\n")
@@ -98,17 +102,10 @@ class SinkFlow(Flow[RandomSequence, None]):
 
 
 def main():
-    p = argparse.ArgumentParser(
-        description="Perception demo (camera -> detection -> display)"
-    )
-    p.add_argument("--backend", default="dora", choices=["dora", "multiprocessing"])
-    p.add_argument("--duration", type=float, default=120.0)
-    args = p.parse_args()
-
     pipe = Pipeline("retriever_benchmarking_dora")
     with pipe:
         source = SourceFlow() @ Rate(hz=1.0 / DATA_RATE_S)
-        sink = SinkFlow(backend=args.backend) @ Trigger("data")
+        sink = SinkFlow() @ Trigger("data")
         source >> sink  # TODO: Why does this go back to using dora backend?
 
     pipe.run(backend=args.backend, duration=args.duration, blocking=True)
