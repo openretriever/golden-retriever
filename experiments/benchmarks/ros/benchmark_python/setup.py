@@ -13,8 +13,7 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    description='TODO: Package description',
-    license='TODO: License declaration',
+    description='ROS Python benchmarking for Retriever',
     entry_points={
         'console_scripts': [
             'publisher = benchmark_python.publisher:main',

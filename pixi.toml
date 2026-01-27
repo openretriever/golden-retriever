@@ -24,7 +24,7 @@ platforms = ["osx-arm64", "linux-64"]
 [pypi-dependencies]
 # Temporary: install this monorepo editable, but keep core extras only.
 # In the split, this becomes the `retriever-golden` package in the golden repo.
-retriever = { path = "dist/retriever_dist/install/retriever-0.0.0-py3-none-any.whl", editable = false, extras = [
+retriever = { path = "/home/sebastian/Downloads/retriever/install/retriever-0.0.0-py3-none-any.whl", editable = false, extras = [
     "dora",
     "demo",
 ] }
@@ -204,6 +204,7 @@ RMW_IMPLEMENTATION = "rmw_cyclonedds_cpp"
 [feature.ros.tasks]
 build = { cmd = "colcon build", cwd = "./experiments/benchmarks/ros" }
 benchmark_python = "ros2 run benchmark_python publisher & ros2 run benchmark_python subscriber"
+benchmark_cpp = "ros2 run benchmark_cpp publisher & ros2 run benchmark_cpp subscriber"
 
 # -----------------------------------------------------------------------------
 # Environments

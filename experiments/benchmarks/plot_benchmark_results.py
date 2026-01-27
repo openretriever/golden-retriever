@@ -28,8 +28,8 @@ for file in csv_files:
     latency_ns_arrays = df["latency_ns"].apply(ast.literal_eval)
     max_len = max(len(a) for a in latency_ns_arrays)
     latency_ms = np.array(
-        [np.pad(a, (0, max_len - len(a)), constant_values=np.nan) for a in latency_ns_arrays]
-    ) / 1000.0
+        [np.pad(np.array(a, dtype=np.float64), (0, max_len - len(a)), constant_values=np.nan) for a in latency_ns_arrays]
+    ) / 1.0e6
 
     median = np.nanpercentile(latency_ms, 50, axis=1)
     lower = np.nanpercentile(latency_ms, lower_percentile, axis=1)
