@@ -23,6 +23,10 @@ from flows import (
     DoublePendulumVizFlow,
     NBodySim,
     NBodyVizFlow,
+    NCoupledPendulumSim,
+    NCoupledPendulumVizFlow,
+    NCoupledSpringSim,
+    NCoupledSpringVizFlow,
     PipelineVizFlow,
 )
 
@@ -59,9 +63,51 @@ def add_three_body(pipe: Pipeline, args: argparse.Namespace):
     return clock
 
 
+def add_n_coupled_pendulum(pipe: Pipeline, args: argparse.Namespace):
+    dt = 1.0 / args.n_coupled_hz
+    clock = SimClock(dt=dt, use_wall=args.wall_clock) @ Rate(hz=args.n_coupled_hz, on_lag=args.on_lag)
+    sim = NCoupledPendulumSim(
+        n=args.n_pendulums,
+        spring_k=args.spring_k,
+        damping=args.damping,
+        init_mode=args.init_mode,
+    ) @ Trigger("t")
+    viz = NCoupledPendulumVizFlow(
+        trail_len=args.n_coupled_trail_len,
+        print_every=args.print_every,
+        log_rerun=not args.no_rerun,
+        namespace="physics/n_coupled_pendulum",
+    ) @ Trigger("t")
+
+    clock.then(sim)
+    sim.then(viz)
+    return clock
+
+
+def add_n_coupled_spring(pipe: Pipeline, args: argparse.Namespace):
+    dt = 1.0 / args.n_spring_hz
+    clock = SimClock(dt=dt, use_wall=args.wall_clock) @ Rate(hz=args.n_spring_hz, on_lag=args.on_lag)
+    sim = NCoupledSpringSim(
+        n=args.n_masses,
+        spring_k=args.spring_spring_k,
+        damping=args.damping,
+        init_mode=args.spring_init_mode,
+    ) @ Trigger("t")
+    viz = NCoupledSpringVizFlow(
+        trail_len=args.n_spring_trail_len,
+        print_every=args.print_every,
+        log_rerun=not args.no_rerun,
+        namespace="physics/n_coupled_spring",
+    ) @ Trigger("t")
+
+    clock.then(sim)
+    sim.then(viz)
+    return clock
+
+
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Hierarchical physics demo (double pendulum + three-body).")
-    p.add_argument("--demo", default="three_body", choices=["double_pendulum", "three_body", "both"])
+    p = argparse.ArgumentParser(description="Hierarchical physics demo (double pendulum + three-body + n-coupled pendulum + n-coupled spring).")
+    p.add_argument("--demo", default="three_body", choices=["double_pendulum", "three_body", "n_coupled_pendulum", "n_coupled_spring", "both"])
     p.add_argument("--backend", default="dora", choices=["multiprocessing", "dora", "in-process"])
     p.add_argument("--duration", type=float, default=8.0)
     p.add_argument("--print-every", type=int, default=50, help="Print every N steps (0 disables).")
@@ -78,6 +124,28 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--three-body-hz", type=float, default=200.0)
     p.add_argument("--three-body-trail-len", type=int, default=400)
     p.add_argument("--gravity", type=float, default=1.0)
+
+    p.add_argument("--n-coupled-hz", type=float, default=120.0)
+    p.add_argument("--n-coupled-trail-len", type=int, default=200)
+    p.add_argument("--n-pendulums", type=int, default=5, help="Number of coupled pendulums")
+    p.add_argument("--spring-k", type=float, default=10.0, help="Spring constant for n-coupled pendulum")
+    p.add_argument(
+        "--init-mode",
+        default="wave",
+        choices=["wave", "impulse", "random"],
+        help="Initial condition mode for n-coupled pendulum",
+    )
+
+    p.add_argument("--n-spring-hz", type=float, default=120.0)
+    p.add_argument("--n-spring-trail-len", type=int, default=200)
+    p.add_argument("--n-masses", type=int, default=5, help="Number of coupled masses")
+    p.add_argument("--spring-spring-k", type=float, default=10.0, help="Spring constant for n-coupled spring")
+    p.add_argument(
+        "--spring-init-mode",
+        default="wave",
+        choices=["wave", "impulse", "compress", "random"],
+        help="Initial condition mode for n-coupled spring",
+    )
     return p.parse_args()
 
 
@@ -98,6 +166,10 @@ def main() -> None:
             clock_handle = add_double_pendulum(pipe, args)
         if args.demo in {"three_body", "both"}:
             clock_handle = clock_handle or add_three_body(pipe, args)
+        if args.demo == "n_coupled_pendulum":
+            clock_handle = clock_handle or add_n_coupled_pendulum(pipe, args)
+        if args.demo == "n_coupled_spring":
+            clock_handle = clock_handle or add_n_coupled_spring(pipe, args)
 
         if (not args.no_rerun) and want_viz_html and viz_html_path is not None and clock_handle is not None:
             html = PipelineVizFlow(

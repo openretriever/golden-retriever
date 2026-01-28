@@ -57,6 +57,46 @@ class NBodyViz:
     t: Optional[float] = None
 
 
+@io
+class NCoupledPendulumState:
+    t: Optional[float] = None
+    n: Optional[int] = None
+    thetas: Optional[list[float]] = None
+    omegas: Optional[list[float]] = None
+    energy: Optional[float] = None
+    positions: Optional[list[list[float]]] = None
+    pivot_positions: Optional[list[list[float]]] = None
+
+
+@io
+class NCoupledPendulumViz:
+    pivot_points: Optional[list[list[float]]] = None
+    bob_points: Optional[list[list[float]]] = None
+    rod_segments: Optional[list[list[list[float]]]] = None
+    spring_segments: Optional[list[list[list[float]]]] = None
+    trails: Optional[list[list[list[float]]]] = None
+    energy: Optional[float] = None
+    t: Optional[float] = None
+
+
+@io
+class NCoupledSpringState:
+    t: Optional[float] = None
+    n: Optional[int] = None
+    positions: Optional[list[list[float]]] = None
+    velocities: Optional[list[list[float]]] = None
+    energy: Optional[float] = None
+
+
+@io
+class NCoupledSpringViz:
+    mass_points: Optional[list[list[float]]] = None
+    spring_segments: Optional[list[list[list[float]]]] = None
+    trails: Optional[list[list[list[float]]]] = None
+    energy: Optional[float] = None
+    t: Optional[float] = None
+
+
 class PipelineVizFlow(Flow[SimTime, None]):
     def __init__(
         self,
@@ -495,5 +535,548 @@ class NBodyVizFlow(Flow[NBodyState, NBodyViz]):
             for idx, trail in enumerate(viz.trails):
                 if trail:
                     rr.log(f"{self.namespace}/trail/{idx}", rr.LineStrips2D([trail]))
+        if viz.energy is not None:
+            rr.log(f"{self.namespace}/energy", Scalars(viz.energy))
+
+
+class NCoupledPendulumSim(Flow[SimTime, NCoupledPendulumState]):
+    def __init__(
+        self,
+        n: int = 5,
+        length: float = 1.0,
+        spacing: float = 0.5,
+        mass: float = 1.0,
+        spring_k: float = 10.0,
+        gravity: float = 9.81,
+        damping: float = 0.02,
+        init_mode: str = "wave",
+        init_amplitude: float = 0.5,
+    ):
+        super().__init__()
+        self.n = int(n)
+        self.length = float(length)
+        self.spacing = float(spacing)
+        self.mass = float(mass)
+        self.spring_k = float(spring_k)
+        self.gravity = float(gravity)
+        self.damping = float(damping)
+        self.init_mode = str(init_mode)
+        self.init_amplitude = float(init_amplitude)
+
+    def init_config(self) -> dict:
+        return {
+            "n": self.n,
+            "length": self.length,
+            "spacing": self.spacing,
+            "mass": self.mass,
+            "spring_k": self.spring_k,
+            "gravity": self.gravity,
+            "damping": self.damping,
+            "init_mode": self.init_mode,
+            "init_amplitude": self.init_amplitude,
+        }
+
+    def init(self) -> None:
+        self.thetas = [0.0] * self.n
+        self.omegas = [0.0] * self.n
+
+        if self.init_mode == "wave":
+            for i in range(self.n):
+                self.thetas[i] = self.init_amplitude * math.sin(2 * math.pi * i / self.n)
+        elif self.init_mode == "impulse":
+            self.thetas[0] = self.init_amplitude
+        elif self.init_mode == "random":
+            import random
+            for i in range(self.n):
+                self.thetas[i] = random.uniform(-0.1, 0.1)
+
+        self.pivot_positions = [[i * self.spacing, 0.0] for i in range(self.n)]
+
+    def step(self, input_data: SimTime) -> NCoupledPendulumState:
+        if input_data.t is None or input_data.dt is None:
+            return NCoupledPendulumState()
+
+        dt = float(input_data.dt)
+        t = float(input_data.t)
+
+        positions = []
+        for i in range(self.n):
+            x = self.pivot_positions[i][0] + self.length * math.sin(self.thetas[i])
+            y = self.pivot_positions[i][1] - self.length * math.cos(self.thetas[i])
+            positions.append([x, y])
+
+        alphas = []
+        for i in range(self.n):
+            gravity_torque = -(self.mass * self.gravity * self.length * math.sin(self.thetas[i]))
+
+            spring_torque = 0.0
+            if i > 0:
+                dx = positions[i - 1][0] - positions[i][0]
+                dy = positions[i - 1][1] - positions[i][1]
+                spring_length = math.sqrt(dx * dx + dy * dy)
+                rest_length = self.spacing
+                spring_force = self.spring_k * (spring_length - rest_length)
+
+                force_x = spring_force * dx / (spring_length + 1e-10)
+                force_y = spring_force * dy / (spring_length + 1e-10)
+
+                lever_x = positions[i][0] - self.pivot_positions[i][0]
+                lever_y = positions[i][1] - self.pivot_positions[i][1]
+
+                spring_torque += lever_x * force_y - lever_y * force_x
+
+            if i < self.n - 1:
+                dx = positions[i + 1][0] - positions[i][0]
+                dy = positions[i + 1][1] - positions[i][1]
+                spring_length = math.sqrt(dx * dx + dy * dy)
+                rest_length = self.spacing
+                spring_force = self.spring_k * (spring_length - rest_length)
+
+                force_x = spring_force * dx / (spring_length + 1e-10)
+                force_y = spring_force * dy / (spring_length + 1e-10)
+
+                lever_x = positions[i][0] - self.pivot_positions[i][0]
+                lever_y = positions[i][1] - self.pivot_positions[i][1]
+
+                spring_torque += lever_x * force_y - lever_y * force_x
+
+            total_torque = gravity_torque + spring_torque
+            moment_of_inertia = self.mass * self.length * self.length
+            alpha = total_torque / moment_of_inertia
+            alphas.append(alpha)
+
+        for i in range(self.n):
+            self.omegas[i] += alphas[i] * dt
+
+        if self.damping > 0.0:
+            damp = max(0.0, 1.0 - self.damping * dt)
+            for i in range(self.n):
+                self.omegas[i] *= damp
+
+        for i in range(self.n):
+            self.thetas[i] += self.omegas[i] * dt
+
+        kinetic = 0.0
+        for i in range(self.n):
+            v_sq = (self.length * self.omegas[i]) ** 2
+            kinetic += 0.5 * self.mass * v_sq
+
+        potential = 0.0
+        for i in range(self.n):
+            potential += self.mass * self.gravity * positions[i][1]
+
+        spring_potential = 0.0
+        for i in range(self.n - 1):
+            dx = positions[i + 1][0] - positions[i][0]
+            dy = positions[i + 1][1] - positions[i][1]
+            spring_length = math.sqrt(dx * dx + dy * dy)
+            rest_length = self.spacing
+            spring_potential += 0.5 * self.spring_k * (spring_length - rest_length) ** 2
+
+        energy = kinetic + potential + spring_potential
+
+        return NCoupledPendulumState(
+            t=t,
+            n=self.n,
+            thetas=list(self.thetas),
+            omegas=list(self.omegas),
+            energy=energy,
+            positions=[list(p) for p in positions],
+            pivot_positions=[list(p) for p in self.pivot_positions],
+        )
+
+
+class NCoupledPendulumVizFlow(Flow[NCoupledPendulumState, NCoupledPendulumViz]):
+    def __init__(self, trail_len: int, *, print_every: int, log_rerun: bool, namespace: str):
+        super().__init__()
+        self.trail_len = int(trail_len)
+        self.print_every = int(print_every)
+        self.log_rerun = bool(log_rerun)
+        self.namespace = str(namespace)
+
+    def init_config(self) -> dict:
+        return {
+            "trail_len": self.trail_len,
+            "print_every": self.print_every,
+            "log_rerun": self.log_rerun,
+            "namespace": self.namespace,
+        }
+
+    def init(self) -> None:
+        self.trails: list[list[list[float]]] = []
+        self.step_idx = 0
+
+    def step(self, input_data: NCoupledPendulumState) -> NCoupledPendulumViz:
+        if (
+            not input_data.positions
+            or not input_data.pivot_positions
+            or input_data.t is None
+            or input_data.n is None
+        ):
+            return NCoupledPendulumViz()
+
+        if not self.trails:
+            self.trails = [[] for _ in range(input_data.n)]
+
+        for idx, pos in enumerate(input_data.positions):
+            self.trails[idx].append([pos[0], pos[1]])
+            if len(self.trails[idx]) > self.trail_len:
+                self.trails[idx] = self.trails[idx][-self.trail_len :]
+
+        rod_segments = []
+        for i in range(input_data.n):
+            rod_segments.append([input_data.pivot_positions[i], input_data.positions[i]])
+
+        spring_segments = []
+        for i in range(input_data.n - 1):
+            spring_segments.append([input_data.positions[i], input_data.positions[i + 1]])
+
+        viz = NCoupledPendulumViz(
+            pivot_points=[list(p) for p in input_data.pivot_positions],
+            bob_points=[list(p) for p in input_data.positions],
+            rod_segments=rod_segments,
+            spring_segments=spring_segments,
+            trails=[list(t) for t in self.trails],
+            energy=input_data.energy,
+            t=input_data.t,
+        )
+
+        self.step_idx += 1
+        if self.print_every > 0 and self.step_idx % self.print_every == 0:
+            energy = input_data.energy if input_data.energy is not None else 0.0
+            theta0 = input_data.thetas[0] if input_data.thetas else 0.0
+            print(
+                f"[{self.namespace}] t={input_data.t:6.2f} "
+                f"theta0={theta0:6.3f} energy={energy:8.3f}",
+                flush=True,
+            )
+
+        if self.log_rerun:
+            self._log_rerun(viz, input_data.n)
+
+        return viz
+
+    def _log_rerun(self, viz: NCoupledPendulumViz, n: int) -> None:
+        try:
+            import rerun as rr
+            from rerun.archetypes import Scalars
+        except Exception:
+            return
+
+        if viz.t is not None:
+            if hasattr(rr, "set_time_seconds"):
+                rr.set_time_seconds("sim_time", viz.t)
+            else:
+                rr.set_time("sim_time", timestamp=viz.t)
+
+        if not viz.bob_points:
+            return
+
+        def hue_to_rgb(hue: float) -> list[int]:
+            h = hue / 60.0
+            x = 1.0 - abs((h % 2) - 1.0)
+            if h < 1:
+                r, g, b = 1.0, x, 0.0
+            elif h < 2:
+                r, g, b = x, 1.0, 0.0
+            elif h < 3:
+                r, g, b = 0.0, 1.0, x
+            elif h < 4:
+                r, g, b = 0.0, x, 1.0
+            elif h < 5:
+                r, g, b = x, 0.0, 1.0
+            else:
+                r, g, b = 1.0, 0.0, x
+            return [int(r * 255), int(g * 255), int(b * 255)]
+
+        colors = []
+        for i in range(n):
+            hue = 240.0 - (240.0 * i / max(n - 1, 1))
+            colors.append(hue_to_rgb(hue))
+
+        if viz.pivot_points:
+            rr.log(f"{self.namespace}/pivots", rr.Points2D(viz.pivot_points, radii=0.03))
+
+        if viz.rod_segments:
+            for i, segment in enumerate(viz.rod_segments):
+                rr.log(
+                    f"{self.namespace}/rod/{i}",
+                    rr.LineStrips2D([segment], colors=[colors[i]]),
+                )
+
+        if viz.bob_points:
+            for i, point in enumerate(viz.bob_points):
+                rr.log(
+                    f"{self.namespace}/bob/{i}",
+                    rr.Points2D([point], radii=0.06, colors=[colors[i]]),
+                )
+
+        if viz.spring_segments:
+            for i, segment in enumerate(viz.spring_segments):
+                rr.log(
+                    f"{self.namespace}/spring/{i}",
+                    rr.LineStrips2D([segment], colors=[[128, 128, 128]]),
+                )
+
+        if viz.trails:
+            for idx, trail in enumerate(viz.trails):
+                if trail:
+                    rr.log(
+                        f"{self.namespace}/trail/{idx}",
+                        rr.LineStrips2D([trail], colors=[colors[idx]]),
+                    )
+
+        if viz.energy is not None:
+            rr.log(f"{self.namespace}/energy", Scalars(viz.energy))
+
+
+class NCoupledSpringSim(Flow[SimTime, NCoupledSpringState]):
+    def __init__(
+        self,
+        n: int = 5,
+        mass: float = 1.0,
+        spring_k: float = 10.0,
+        rest_length: float = 1.0,
+        damping: float = 0.02,
+        gravity: float = 0.0,
+        init_mode: str = "wave",
+        init_amplitude: float = 0.5,
+    ):
+        super().__init__()
+        self.n = int(n)
+        self.mass = float(mass)
+        self.spring_k = float(spring_k)
+        self.rest_length = float(rest_length)
+        self.damping = float(damping)
+        self.gravity = float(gravity)
+        self.init_mode = str(init_mode)
+        self.init_amplitude = float(init_amplitude)
+
+    def init_config(self) -> dict:
+        return {
+            "n": self.n,
+            "mass": self.mass,
+            "spring_k": self.spring_k,
+            "rest_length": self.rest_length,
+            "damping": self.damping,
+            "gravity": self.gravity,
+            "init_mode": self.init_mode,
+            "init_amplitude": self.init_amplitude,
+        }
+
+    def init(self) -> None:
+        self.positions = [[i * self.rest_length, 0.0] for i in range(self.n)]
+        self.velocities = [[0.0, 0.0] for _ in range(self.n)]
+
+        if self.init_mode == "wave":
+            for i in range(self.n):
+                self.positions[i][0] += self.init_amplitude * math.sin(2 * math.pi * i / self.n)
+        elif self.init_mode == "impulse":
+            self.positions[0][0] += self.init_amplitude
+        elif self.init_mode == "compress":
+            for i in range(self.n):
+                self.positions[i][0] = i * (self.rest_length - self.init_amplitude / self.n)
+        elif self.init_mode == "random":
+            import random
+            for i in range(self.n):
+                self.positions[i][0] += random.uniform(-0.1, 0.1)
+
+    def step(self, input_data: SimTime) -> NCoupledSpringState:
+        if input_data.t is None or input_data.dt is None:
+            return NCoupledSpringState()
+
+        dt = float(input_data.dt)
+        t = float(input_data.t)
+
+        accelerations = [[0.0, 0.0] for _ in range(self.n)]
+
+        for i in range(self.n):
+            if i > 0:
+                dx = self.positions[i][0] - self.positions[i - 1][0]
+                dy = self.positions[i][1] - self.positions[i - 1][1]
+                dist = math.sqrt(dx * dx + dy * dy)
+                spring_force = self.spring_k * (dist - self.rest_length)
+
+                if dist > 1e-10:
+                    force_x = -spring_force * dx / dist
+                    force_y = -spring_force * dy / dist
+                    accelerations[i][0] += force_x / self.mass
+                    accelerations[i][1] += force_y / self.mass
+
+            if i < self.n - 1:
+                dx = self.positions[i][0] - self.positions[i + 1][0]
+                dy = self.positions[i][1] - self.positions[i + 1][1]
+                dist = math.sqrt(dx * dx + dy * dy)
+                spring_force = self.spring_k * (dist - self.rest_length)
+
+                if dist > 1e-10:
+                    force_x = -spring_force * dx / dist
+                    force_y = -spring_force * dy / dist
+                    accelerations[i][0] += force_x / self.mass
+                    accelerations[i][1] += force_y / self.mass
+
+            accelerations[i][1] -= self.gravity
+
+        for i in range(self.n):
+            self.velocities[i][0] += accelerations[i][0] * dt
+            self.velocities[i][1] += accelerations[i][1] * dt
+
+        if self.damping > 0.0:
+            damp = max(0.0, 1.0 - self.damping * dt)
+            for i in range(self.n):
+                self.velocities[i][0] *= damp
+                self.velocities[i][1] *= damp
+
+        for i in range(self.n):
+            self.positions[i][0] += self.velocities[i][0] * dt
+            self.positions[i][1] += self.velocities[i][1] * dt
+
+        kinetic = 0.0
+        for i in range(self.n):
+            v_sq = self.velocities[i][0] ** 2 + self.velocities[i][1] ** 2
+            kinetic += 0.5 * self.mass * v_sq
+
+        spring_potential = 0.0
+        for i in range(self.n - 1):
+            dx = self.positions[i + 1][0] - self.positions[i][0]
+            dy = self.positions[i + 1][1] - self.positions[i][1]
+            dist = math.sqrt(dx * dx + dy * dy)
+            spring_potential += 0.5 * self.spring_k * (dist - self.rest_length) ** 2
+
+        gravitational_potential = 0.0
+        if self.gravity > 0.0:
+            for i in range(self.n):
+                gravitational_potential += self.mass * self.gravity * self.positions[i][1]
+
+        energy = kinetic + spring_potential + gravitational_potential
+
+        return NCoupledSpringState(
+            t=t,
+            n=self.n,
+            positions=[list(p) for p in self.positions],
+            velocities=[list(v) for v in self.velocities],
+            energy=energy,
+        )
+
+
+class NCoupledSpringVizFlow(Flow[NCoupledSpringState, NCoupledSpringViz]):
+    def __init__(self, trail_len: int, *, print_every: int, log_rerun: bool, namespace: str):
+        super().__init__()
+        self.trail_len = int(trail_len)
+        self.print_every = int(print_every)
+        self.log_rerun = bool(log_rerun)
+        self.namespace = str(namespace)
+
+    def init_config(self) -> dict:
+        return {
+            "trail_len": self.trail_len,
+            "print_every": self.print_every,
+            "log_rerun": self.log_rerun,
+            "namespace": self.namespace,
+        }
+
+    def init(self) -> None:
+        self.trails: list[list[list[float]]] = []
+        self.step_idx = 0
+
+    def step(self, input_data: NCoupledSpringState) -> NCoupledSpringViz:
+        if not input_data.positions or input_data.t is None or input_data.n is None:
+            return NCoupledSpringViz()
+
+        if not self.trails:
+            self.trails = [[] for _ in range(input_data.n)]
+
+        for idx, pos in enumerate(input_data.positions):
+            self.trails[idx].append([pos[0], pos[1]])
+            if len(self.trails[idx]) > self.trail_len:
+                self.trails[idx] = self.trails[idx][-self.trail_len :]
+
+        spring_segments = []
+        for i in range(input_data.n - 1):
+            spring_segments.append([input_data.positions[i], input_data.positions[i + 1]])
+
+        viz = NCoupledSpringViz(
+            mass_points=[list(p) for p in input_data.positions],
+            spring_segments=spring_segments,
+            trails=[list(t) for t in self.trails],
+            energy=input_data.energy,
+            t=input_data.t,
+        )
+
+        self.step_idx += 1
+        if self.print_every > 0 and self.step_idx % self.print_every == 0:
+            energy = input_data.energy if input_data.energy is not None else 0.0
+            pos0 = input_data.positions[0]
+            print(
+                f"[{self.namespace}] t={input_data.t:6.2f} "
+                f"pos0=({pos0[0]:6.3f},{pos0[1]:6.3f}) energy={energy:8.3f}",
+                flush=True,
+            )
+
+        if self.log_rerun:
+            self._log_rerun(viz, input_data.n)
+
+        return viz
+
+    def _log_rerun(self, viz: NCoupledSpringViz, n: int) -> None:
+        try:
+            import rerun as rr
+            from rerun.archetypes import Scalars
+        except Exception:
+            return
+
+        if viz.t is not None:
+            if hasattr(rr, "set_time_seconds"):
+                rr.set_time_seconds("sim_time", viz.t)
+            else:
+                rr.set_time("sim_time", timestamp=viz.t)
+
+        if not viz.mass_points:
+            return
+
+        def hue_to_rgb(hue: float) -> list[int]:
+            h = hue / 60.0
+            x = 1.0 - abs((h % 2) - 1.0)
+            if h < 1:
+                r, g, b = 1.0, x, 0.0
+            elif h < 2:
+                r, g, b = x, 1.0, 0.0
+            elif h < 3:
+                r, g, b = 0.0, 1.0, x
+            elif h < 4:
+                r, g, b = 0.0, x, 1.0
+            elif h < 5:
+                r, g, b = x, 0.0, 1.0
+            else:
+                r, g, b = 1.0, 0.0, x
+            return [int(r * 255), int(g * 255), int(b * 255)]
+
+        colors = []
+        for i in range(n):
+            hue = 240.0 - (240.0 * i / max(n - 1, 1))
+            colors.append(hue_to_rgb(hue))
+
+        if viz.mass_points:
+            for i, point in enumerate(viz.mass_points):
+                rr.log(
+                    f"{self.namespace}/mass/{i}",
+                    rr.Points2D([point], radii=0.08, colors=[colors[i]]),
+                )
+
+        if viz.spring_segments:
+            for i, segment in enumerate(viz.spring_segments):
+                rr.log(
+                    f"{self.namespace}/spring/{i}",
+                    rr.LineStrips2D([segment], colors=[[128, 128, 128]]),
+                )
+
+        if viz.trails:
+            for idx, trail in enumerate(viz.trails):
+                if trail:
+                    rr.log(
+                        f"{self.namespace}/trail/{idx}",
+                        rr.LineStrips2D([trail], colors=[colors[idx]]),
+                    )
+
         if viz.energy is not None:
             rr.log(f"{self.namespace}/energy", Scalars(viz.energy))
