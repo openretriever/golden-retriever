@@ -14,7 +14,6 @@ import csv
 import numpy as np
 
 from retriever.flow import Flow, flow_io, Rate, Trigger, Pipeline
-from retriever.flow.adapter import Latest
 
 # NOTE: SIZES defines the number of uint64 elements in the payload.
 # Since each uint64 is 8 bytes, the actual payload size in bytes is: Element Count * 8.
@@ -70,7 +69,7 @@ class SourceFlow(Flow[None, RandomSequence]):
 class SinkFlow(Flow[RandomSequence, None]):
     def __init__(self):
         super().__init__()
-        self.latencies = []
+        self.latencies = []  # nanoseconds
         self.current_size = 0
         self.n = 0
 
@@ -84,7 +83,7 @@ class SinkFlow(Flow[RandomSequence, None]):
             self.n = 0
             self.latencies = []
         t_send = int(input.data[0])
-        self.latencies.append((t_received - t_send) / 1000.0)
+        self.latencies.append(t_received - t_send)
         self.n += 1
 
     def record_results(self, start, current_size, latencies, latency):

@@ -17,6 +17,7 @@ pixi run python experiments/benchmarks/benchmark_retriever.py --backend multipro
 ```bash
 pixi run -e ros build
 pixi run -e ros benchmark_python
+pixi run -e ros benchmark_cpp
 ```
 
 ## Plot results
