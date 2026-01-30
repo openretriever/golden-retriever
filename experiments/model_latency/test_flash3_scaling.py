@@ -8,7 +8,7 @@ import random
 sys.path.append(os.getcwd())
 
 from experiments.closed_loop_planning.pipelines.vlm_utils import VLMPlanner
-from experiments.closed_loop_planning.flows.planner_vlm import VLMTaskPlannerFlow
+from experiments.closed_loop_planning.flows_test.planner_vlm import VLMTaskPlannerFlow
 
 
 def create_dummy_image(size=(640, 480)):
