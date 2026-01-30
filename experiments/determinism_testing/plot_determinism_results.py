@@ -106,21 +106,21 @@ def plot_gradient_histogram(
     # Pub/Sub histogram with larger bins for better distribution
     ps_bins = min(ps_unique, 60)  # Use more bins to show distribution
     ax.hist(ps_grads, bins=ps_bins, color='#f97316', alpha=0.7, edgecolor='white',
-            label=f'Pub/Sub\nμ={ps_mean:.3f}, σ={ps_std:.3f}')
+            label=f'Pub/Sub: μ={ps_mean:.3f}, σ={ps_std:.3f}')
 
     # Pub/Sub mean line
     ax.axvline(ps_mean, color='#c2410c', linestyle='--', linewidth=2, alpha=0.8)
 
-    # Analytical/true gradient line
-    ax.axvline(true_grad, color='#15803d', linestyle=':', linewidth=3,
-               label=f'True\n{true_grad:.4f}', zorder=15, alpha=0.9)
+    # Analytical/true gradient line (red for visibility)
+    ax.axvline(true_grad, color='#dc2626', linestyle='--', linewidth=2.5,
+               label=f'True: {true_grad:.4f}', zorder=15, alpha=0.95)
 
     # Retriever: Solid line for deterministic value
     if ret_unique <= 2:
         # Draw a prominent vertical line for the single value
         y_max = ax.get_ylim()[1]
         ax.axvline(ret_mean, color='#2563eb', linestyle='-', linewidth=4,
-                   label=f'Retriever\nμ={ret_mean:.4f}, σ={ret_std:.1e}', zorder=10)
+                   label=f'Retriever: μ={ret_mean:.4f}, σ={ret_std:.1e}', zorder=10)
 
         # Add annotation showing all runs converged
         ax.annotate(f'{len(ret_grads)} runs\n(identical)',
@@ -132,9 +132,9 @@ def plot_gradient_histogram(
 
         # Show error from true gradient
         error = abs(ret_mean - true_grad)
-        ax.text(0.05, 0.88, f'Retriever error: {error:.2e}',
+        ax.text(0.05, 0.88, f'Error: {error:.1e}',
                 transform=ax.transAxes, fontsize=6.5,
-                bbox=dict(boxstyle='round', facecolor='#dcfce7', alpha=0.8, edgecolor='#15803d'))
+                bbox=dict(boxstyle='round', facecolor='#fee2e2', alpha=0.85, edgecolor='#dc2626'))
     else:
         # Use histogram if there are multiple unique values
         ax.hist(ret_grads, bins=min(ret_unique, 20), color='#2563eb', alpha=0.7, edgecolor='white',
