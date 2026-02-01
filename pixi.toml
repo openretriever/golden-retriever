@@ -18,7 +18,7 @@
 # =============================================================================
 
 [workspace]
-channels = ["https://prefix.dev/conda-forge", "https://repo.prefix.dev/open-planning-testing"]
+channels = ["https://prefix.dev/conda-forge"]
 platforms = ["osx-arm64", "linux-64"]
 
 [dependencies]
