@@ -1,10 +1,8 @@
 # TWIST2 MuJoCo Simulation (Retriever Port)
 
-> **Note**: This example requires the TWIST2 assets. Please clone them into the root of the repo:
-> ```bash
-> git clone https://github.com/unitreerobotics/TWIST2.git
-> ```
-> This folder is ignored by default to save space.
+> **Note**: This example auto-downloads TWIST2 assets into a local cache folder
+> (`assets/twist2`) on first run. You can still point to your own asset paths with
+> `--xml/--policy/--motion`.
 
 Port of the [TWIST2 Humanoid Controller](https://github.com/amazon-far/TWIST2) to **Retriever**, showcasing:
 
@@ -20,6 +18,9 @@ pixi run -e torch demo-twist2
 
 # Rerun only (headless, works everywhere)
 pixi run -e torch demo-twist2-rerun
+
+# Optional: disable auto-download and use only local files
+pixi run -e twist2 python examples/advanced/twist2_simulation/app.py --no-auto-download
 ```
 
 ## Architecture
