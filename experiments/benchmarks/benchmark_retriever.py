@@ -13,7 +13,7 @@ import os
 import csv
 import numpy as np
 
-from retriever.flow import Flow, flow_io, Rate, Trigger, Pipeline
+from retriever.flow import Flow, flow_io, Rate, Trigger, Pipeline, Latest
 
 # NOTE: SIZES defines the number of uint64 elements in the payload.
 # Since each uint64 is 8 bytes, the actual payload size in bytes is: Element Count * 8.
@@ -107,8 +107,7 @@ def main():
     with pipe:
         source = SourceFlow() @ Rate(hz=1.0 / DATA_RATE_S)
         sink = SinkFlow() @ Trigger("data")
-        source >> sink  # TODO: Why does this go back to using dora backend?
-        # pipe.connect(source, sink, sync=Latest(), qsize=1)
+        pipe.connect(source, sink, sync=Latest())
 
     pipe.run(backend=args.backend, duration=args.duration, blocking=True)
 
