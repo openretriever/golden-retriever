@@ -24,7 +24,7 @@ platforms = ["osx-arm64", "linux-64"]
 [pypi-dependencies]
 # Temporary: install this monorepo editable, but keep core extras only.
 # In the split, this becomes the `retriever-golden` package in the golden repo.
-retriever = { path = "/home/sebastian/Downloads/retriever/install/retriever-0.0.0-py3-none-any.whl", editable = false, extras = [
+retriever = { path = "dist/retriever_dist/install/retriever-0.0.0-py3-none-any.whl", editable = false, extras = [
     "dora",
     "demo",
 ] }
@@ -151,6 +151,7 @@ dora-rs-cli = "==0.3.13"
 # dora-rs-cli = "<0.4.0"
 onnxruntime = "*"
 mujoco = "*"
+rerun-sdk = "*"
 
 [feature.twist2.tasks]
 demo-twist2 = { cmd = "mjpython examples/advanced/twist2_simulation/app.py", env = { PYTHONPATH = "." } }
@@ -204,7 +205,6 @@ RMW_IMPLEMENTATION = "rmw_cyclonedds_cpp"
 [feature.ros.tasks]
 build = { cmd = "colcon build", cwd = "./experiments/benchmarks/ros" }
 benchmark_python = "ros2 run benchmark_python publisher & ros2 run benchmark_python subscriber"
-benchmark_cpp = "ros2 run benchmark_cpp publisher & ros2 run benchmark_cpp subscriber"
 
 # -----------------------------------------------------------------------------
 # Environments
@@ -220,7 +220,7 @@ twist2 = { features = ["py311", "twist2"] }
 cpu = { features = ["py311", "cpu"] }
 gpu = { features = ["py311", "gpu"] }
 ros = { features = ["ros"] }
-# golden = { features = ["py311", "golden"] }
+golden = { features = ["py311", "golden"] }
 
 [feature.vlm_planning.tasks]
 # demo-highlevel-planning = { cmd = "python examples/experimental/closed_loop_planning/pipelines/demo_highlevel_planning.py" }
@@ -234,7 +234,7 @@ demo-dora = "python -m examples.tutorial.009_dora_perception --backend dora"
 demo-request-dora = "python -m examples.tutorial.010_request_response"
 benchmark-dora-suite = { cmd = "dora up && dora start dataflow_node.yml --attach", cwd = "experiments/benchmarks/dora_benchmark/dora-rs/py-latency" }
 benchmark-ros-suite-build = { cmd = "colcon build", cwd = "./experiments/benchmarks/dora_benchmark/ros2/py_pubsub" }
-benchmark-retriever-dora = { cmd = "python experiments/benchmarks/benchmark_retriever.py --backend dora", env = { PYTHONPATH = "." } }
-benchmark-retriever-mp = { cmd = "python experiments/benchmarks/benchmark_retriever.py --backend multiprocessing", env = { PYTHONPATH = "." } }
-benchmark-retriever-in-process = { cmd = "python experiments/benchmarks/benchmark_retriever.py --backend in-process", env = { PYTHONPATH = "." } }
-benchmark-plot = { cmd = "python experiments/benchmarks/plot_benchmark_results.py", env = { PYTHONPATH = "." } }
+# benchmark-retriever-dora = { cmd = "python experiments/benchmarks/benchmark_retriever.py --backend dora", env = { PYTHONPATH = "." } }
+# benchmark-retriever-mp = { cmd = "python experiments/benchmarks/benchmark_retriever.py --backend multiprocessing", env = { PYTHONPATH = "." } }
+# benchmark-retriever-in-process = { cmd = "python experiments/benchmarks/benchmark_retriever.py --backend in-process", env = { PYTHONPATH = "." } }
+# benchmark-plot = { cmd = "python experiments/benchmarks/plot_benchmark_results.py", env = { PYTHONPATH = "." } }
