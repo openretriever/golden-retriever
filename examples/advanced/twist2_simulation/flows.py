@@ -573,7 +573,7 @@ class Twist2VisFlow(Flow[VisInput, None]):
 
     def __init__(
         self,
-        xml_path: str = "TWIST2/assets/g1/g1_sim2sim_29dof.xml",
+        xml_path: str = "assets/g1/g1_sim2sim_29dof.xml",
         max_fps: int = 60,
     ):
         super().__init__()
