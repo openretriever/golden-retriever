@@ -53,3 +53,7 @@ viz-*.html
 # ROS 2
 install/
 log/
+
+# Allow bundled retriever distribution (wheel + pixi config)
+!retriever_dist/
+!retriever_dist/**
