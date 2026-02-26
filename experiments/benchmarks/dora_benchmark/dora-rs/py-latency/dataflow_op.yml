@@ -1,0 +1,13 @@
+nodes:
+  - id: op_1
+    operator:
+      python: ./op_1.py
+      outputs:
+        - latency
+      inputs:
+        tick: dora/timer/millis/200
+  - id: op_2
+    operator:
+      python: ./op_2.py
+      inputs:
+        latency: op_1/latency

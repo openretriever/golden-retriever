@@ -49,3 +49,7 @@ compile_commands.json
 *.mcap
 TWIST2/
 viz-*.html
+
+# ROS 2
+install/
+log/
