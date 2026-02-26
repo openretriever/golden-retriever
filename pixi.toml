@@ -207,6 +207,22 @@ build = { cmd = "colcon build", cwd = "./experiments/benchmarks/ros" }
 benchmark_python = "ros2 run benchmark_python publisher & ros2 run benchmark_python subscriber"
 
 # -----------------------------------------------------------------------------
+# Optional: RoboPlan motion planning environments
+# -----------------------------------------------------------------------------
+[feature.roboplan]
+platforms = ["linux-64"]
+
+[feature.roboplan.dependencies]
+roboplan-python = "*"
+pinocchio = ">=3.9.0"
+
+[feature.roboplan.pypi-dependencies]
+xacro = "*"
+tyro = "*"
+viser = "*"
+matplotlib = "*"
+
+# -----------------------------------------------------------------------------
 # Environments
 # -----------------------------------------------------------------------------
 [environments]
@@ -220,6 +236,7 @@ twist2 = { features = ["py311", "twist2"] }
 cpu = { features = ["py311", "cpu"] }
 gpu = { features = ["py311", "gpu"] }
 ros = { features = ["ros"] }
+roboplan = { features = ["py311", "roboplan"] }
 golden = { features = ["py311", "golden"] }
 
 [feature.vlm_planning.tasks]
