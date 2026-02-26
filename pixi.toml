@@ -236,7 +236,7 @@ twist2 = { features = ["py311", "twist2"] }
 cpu = { features = ["py311", "cpu"] }
 gpu = { features = ["py311", "gpu"] }
 ros = { features = ["ros"] }
-roboplan = { features = ["py311", "roboplan"] }
+roboplan = { features = ["roboplan"] }
 golden = { features = ["py311", "golden"] }
 
 [feature.vlm_planning.tasks]
