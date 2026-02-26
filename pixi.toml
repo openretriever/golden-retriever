@@ -210,7 +210,7 @@ benchmark_python = "ros2 run benchmark_python publisher & ros2 run benchmark_pyt
 # Optional: RoboPlan motion planning environments
 # -----------------------------------------------------------------------------
 [feature.roboplan]
-platforms = ["linux-64"]
+platforms = ["linux-64", "osx-arm64"]
 
 [feature.roboplan.dependencies]
 roboplan-python = "*"
@@ -221,6 +221,10 @@ xacro = "*"
 tyro = "*"
 viser = "*"
 matplotlib = "*"
+
+[feature.roboplan.tasks]
+demo-ik           = { cmd = "python examples/advanced/motion_planning/ik_example.py", env = { PYTHONPATH = "." } }
+demo-motion-track = { cmd = "python examples/advanced/motion_planning/motion_tracking_example.py", env = { PYTHONPATH = "." } }
 
 # -----------------------------------------------------------------------------
 # Environments
