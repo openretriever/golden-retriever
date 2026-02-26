@@ -21,15 +21,10 @@
 channels = ["https://prefix.dev/conda-forge"]
 platforms = ["osx-arm64", "linux-64"]
 
-[dependencies]
-python = "3.11.*"
-# Required for HEIF bindings (pyheif / pillow-heif) when using the legacy stack.
-libheif = "*"
-
 [pypi-dependencies]
 # Temporary: install this monorepo editable, but keep core extras only.
 # In the split, this becomes the `retriever-golden` package in the golden repo.
-retriever = { path = "../retriever-mirror", editable = true, extras = [
+retriever = { path = "dist/retriever_dist/install/retriever-0.0.0-py3-none-any.whl", editable = false, extras = [
     "dora",
     "demo",
 ] }
@@ -41,6 +36,15 @@ typing-extensions = "*"
 # -----------------------------------------------------------------------------
 # Base system feature (the "golden" stack)
 # -----------------------------------------------------------------------------
+[dependencies]
+
+[feature.py311.dependencies]
+python = "3.11.*"
+
+[feature.golden.dependencies]
+# Required for HEIF bindings (pyheif / pillow-heif) when using the legacy stack.
+libheif = "*"
+
 [feature.golden.pypi-dependencies]
 transformers = "*"
 openai = "*"
@@ -147,6 +151,7 @@ dora-rs-cli = "==0.3.13"
 # dora-rs-cli = "<0.4.0"
 onnxruntime = "*"
 mujoco = "*"
+rerun-sdk = "*"
 
 [feature.twist2.tasks]
 demo-twist2 = { cmd = "mjpython examples/advanced/twist2_simulation/app.py", env = { PYTHONPATH = "." } }
@@ -180,7 +185,29 @@ torch = { version = ">=2.5.1", index = "https://download.pytorch.org/whl/cpu" }
 torchvision = { version = ">=0.20.1", index = "https://download.pytorch.org/whl/cpu" }
 
 # -----------------------------------------------------------------------------
-# Optional: RoboPlab motion planning environments
+# Optional: ROS 2 benchmarks
+# -----------------------------------------------------------------------------
+[feature.ros]
+platforms = ["linux-64"]
+channels = ["robostack-kilted", "https://prefix.dev/conda-forge"]
+
+[feature.ros.dependencies]
+ros-kilted-ros-core = ">=0.12.0,<0.13"
+ros-kilted-rmw-cyclonedds-cpp = ">=4.0.2,<5"
+colcon-common-extensions = "*"
+
+[feature.ros.activation]
+scripts = ["experiments/benchmarks/ros/install/setup.bash"]
+
+[feature.ros.activation.env]
+RMW_IMPLEMENTATION = "rmw_cyclonedds_cpp"
+
+[feature.ros.tasks]
+build = { cmd = "colcon build", cwd = "./experiments/benchmarks/ros" }
+benchmark_python = "ros2 run benchmark_python publisher & ros2 run benchmark_python subscriber"
+
+# -----------------------------------------------------------------------------
+# Optional: RoboPlan motion planning environments
 # -----------------------------------------------------------------------------
 [feature.roboplan]
 platforms = ["linux-64"]
@@ -199,16 +226,18 @@ matplotlib = "*"
 # Environments
 # -----------------------------------------------------------------------------
 [environments]
-default = { features = ["golden"] }
-training = { features = ["golden", "training"] }
-mapper = { features = ["golden", "mapper"] }
-spot = { features = ["golden", "spot"] }
-vlm = { features = ["golden", "vlm_planning"] }
-llm = { features = ["golden", "vlm_planning"] }
-twist2 = { features = ["golden", "twist2"] }
-cpu = { features = ["golden", "cpu"] }
-gpu = { features = ["golden", "gpu"] }
-roboplan = { features = ["golden", "roboplan"] }
+default = { features = ["py311"] }
+training = { features = ["py311", "training"] }
+mapper = { features = ["py311", "mapper"] }
+spot = { features = ["py311", "spot"] }
+vlm = { features = ["py311", "vlm_planning"] }
+llm = { features = ["py311", "vlm_planning"] }
+twist2 = { features = ["py311", "twist2"] }
+cpu = { features = ["py311", "cpu"] }
+gpu = { features = ["py311", "gpu"] }
+ros = { features = ["ros"] }
+roboplan = { features = ["py311", "roboplan"] }
+golden = { features = ["py311", "golden"] }
 
 [feature.vlm_planning.tasks]
 # demo-highlevel-planning = { cmd = "python examples/experimental/closed_loop_planning/pipelines/demo_highlevel_planning.py" }
@@ -220,3 +249,9 @@ demo-highlevel-planning = { cmd = "python examples/experimental/closed_loop_plan
 [tasks]
 demo-dora = "python -m examples.tutorial.009_dora_perception --backend dora"
 demo-request-dora = "python -m examples.tutorial.010_request_response"
+benchmark-dora-suite = { cmd = "dora up && dora start dataflow_node.yml --attach", cwd = "experiments/benchmarks/dora_benchmark/dora-rs/py-latency" }
+benchmark-ros-suite-build = { cmd = "colcon build", cwd = "./experiments/benchmarks/dora_benchmark/ros2/py_pubsub" }
+# benchmark-retriever-dora = { cmd = "python experiments/benchmarks/benchmark_retriever.py --backend dora", env = { PYTHONPATH = "." } }
+# benchmark-retriever-mp = { cmd = "python experiments/benchmarks/benchmark_retriever.py --backend multiprocessing", env = { PYTHONPATH = "." } }
+# benchmark-retriever-in-process = { cmd = "python experiments/benchmarks/benchmark_retriever.py --backend in-process", env = { PYTHONPATH = "." } }
+# benchmark-plot = { cmd = "python experiments/benchmarks/plot_benchmark_results.py", env = { PYTHONPATH = "." } }
