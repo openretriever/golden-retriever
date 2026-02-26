@@ -81,7 +81,7 @@ def plot_gradient_histogram(
     retriever_gradients: list[float],
     pubsub_gradients: list[float],
     output_path: str = None,
-    show: bool = True
+    show: bool = False
 ):
     """Plot single histogram comparing gradient distributions."""
     # Single column figure size for RSS paper (3.5 inches width is typical)
@@ -169,7 +169,7 @@ def plot_combined_figure(
     retriever_gradients: list[float],
     pubsub_gradients: list[float],
     output_path: str = None,
-    show: bool = True
+    show: bool = False
 ):
     """Create a single combined figure suitable for a paper."""
     fig, ax = plt.subplots(figsize=(8, 5))

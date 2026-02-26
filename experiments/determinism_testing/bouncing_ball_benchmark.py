@@ -712,7 +712,7 @@ def plot_gradient_histogram(
         plt.savefig(output_path, dpi=300, bbox_inches='tight')
         print(f"Saved histogram to: {output_path}")
 
-    plt.show()
+    plt.close()
 
 
 # =============================================================================
