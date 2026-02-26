@@ -15,7 +15,7 @@ Components:
 
 import numpy as np
 from retriever.types.symbolic import (
-    Type, Object, Variable, Predicate, State, GroundAtom, LiftedAtom
+    ObjectType as Type, Object, Variable, Predicate, State, GroundAtom, LiftedAtom
 )
 from retriever.types.skills import SkillSignature, GroundedSkill
 

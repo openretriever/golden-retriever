@@ -146,7 +146,7 @@ def build_pipeline() -> Pipeline:
         sensor.then(processor, map={'value': 'value', 'status': 'status'}, sync=Latest())
 
         print("  [2] Processor → Aggregator (Window 2s mean)")
-        processor.then(aggregator, map={'result': 'result'}, sync=Window(duration=2.0, agg='mean'))
+        processor.then(aggregator, map={'result': 'result'}, sync=Window(buffer_size=20, duration=2.0, agg='mean'))
 
         print("  [3] Aggregator → Feedback (Latest)")
         aggregator.then(feedback, map={'result': 'result'}, sync=Latest())

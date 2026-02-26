@@ -42,7 +42,7 @@ import time
 from dataclasses import dataclass
 from typing import Any, cast
 
-from retriever.flow import Flow, Pipeline, Rate, Trigger, flow_io
+from retriever.flow import Flow, Pipeline, Rate, Trigger, Latest, flow_io
 
 
 @flow_io
@@ -408,9 +408,9 @@ def build_pipeline(*, hz: float, env: str, on_lag: str = "warn") -> Pipeline:
     # Closed-loop wiring:
     #   env -> controller (observation)
     #   controller -> env (action)
-    pipe.connect(env_node, ctrl_node)  # obs -> obs
-    pipe.connect(ctrl_node, env_node)  # action -> action
-    pipe.connect(env_node, printer)  # obs -> obs
+    pipe.connect(env_node, ctrl_node, sync=Latest())  # obs -> obs
+    pipe.connect(ctrl_node, env_node, sync=Latest())  # action -> action
+    pipe.connect(env_node, printer, sync=Latest())    # obs -> obs
 
     return pipe
 
