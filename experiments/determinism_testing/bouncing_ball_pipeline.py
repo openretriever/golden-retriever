@@ -26,7 +26,7 @@ import argparse
 import os
 import sys
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
@@ -66,6 +66,23 @@ class BallState:
     x: Optional[float] = None
     v: Optional[float] = None
     contact: Optional[bool] = None
+
+
+@io
+class BallStateTensor:
+    """Ball state with raw torch.Tensor values (keeps autograd graph alive)."""
+    tick: Optional[int] = None
+    x: Optional[Any] = None      # torch.Tensor
+    v: Optional[Any] = None      # torch.Tensor
+    contact: Optional[bool] = None
+
+
+@io
+class TensorSinkState:
+    """Captures final tensor for loss computation."""
+    x: Optional[Any] = None      # torch.Tensor (final position)
+    v: Optional[Any] = None      # torch.Tensor (final velocity)
+    done: Optional[bool] = None
 
 
 # =============================================================================
@@ -148,6 +165,90 @@ class BouncingBallFlow(Flow[ClockTick, BallState]):
             v=self.v.item(),
             contact=contact
         )
+
+
+class BouncingBallTensorFlow(Flow[ClockTick, BallStateTensor]):
+    """
+    Bouncing ball that outputs raw torch.Tensor values.
+
+    Unlike BouncingBallFlow which calls .item(), this keeps tensors alive
+    so the PyTorch computation graph survives across Flow boundaries.
+    Used for graph-level backpropagation.
+    """
+
+    def __init__(self, g: float, e: float, x_init: float, theta: float, max_ticks: int):
+        super().__init__()
+        self.g = float(g)
+        self.e = float(e)
+        self.x_init = float(x_init)
+        self.theta_val = float(theta)
+        self.max_ticks = int(max_ticks)
+
+    def init_config(self) -> dict:
+        return {"g": self.g, "e": self.e, "x_init": self.x_init,
+                "theta": self.theta_val, "max_ticks": self.max_ticks}
+
+    def init(self) -> None:
+        self.theta = torch.tensor(self.theta_val, dtype=torch.float64, requires_grad=True)
+        self.x = torch.tensor(self.x_init, dtype=torch.float64)
+        self.v = self.theta.clone()
+
+    def step(self, inp: ClockTick) -> BallStateTensor:
+        if inp.tick is None or inp.dt is None:
+            return BallStateTensor()
+
+        dt = float(inp.dt)
+
+        # Semi-implicit Euler (differentiable)
+        v_pred = self.v - self.g * dt
+        x_pred = self.x + v_pred * dt
+
+        # Contact detection
+        contact = (x_pred.detach() < 0.0).item()
+
+        # Impact resolution (differentiable via torch.where)
+        ct = torch.tensor(float(contact), dtype=torch.float64)
+        self.x = torch.where(ct > 0.5, x_pred * 0.0, x_pred)
+        self.v = torch.where(ct > 0.5, -self.e * v_pred, v_pred)
+
+        return BallStateTensor(
+            tick=inp.tick,
+            x=self.x,       # raw tensor — grad graph alive
+            v=self.v,        # raw tensor
+            contact=contact
+        )
+
+
+class TensorSinkFlow(Flow[BallStateTensor, TensorSinkState]):
+    """
+    Captures the last tensor state for loss computation.
+
+    After the pipeline finishes stepping, access .last_x and .last_v
+    to compute loss and call .backward().
+    """
+
+    def __init__(self, max_ticks: int):
+        super().__init__()
+        self.max_ticks = int(max_ticks)
+
+    def init_config(self) -> dict:
+        return {"max_ticks": self.max_ticks}
+
+    def init(self) -> None:
+        self.last_x: Optional[torch.Tensor] = None
+        self.last_v: Optional[torch.Tensor] = None
+
+    def step(self, inp: BallStateTensor) -> TensorSinkState:
+        if inp.tick is None or inp.x is None:
+            return TensorSinkState()
+
+        self.last_x = inp.x
+        self.last_v = inp.v
+
+        if inp.tick >= self.max_ticks - 1:
+            return TensorSinkState(x=self.last_x, v=self.last_v, done=True)
+
+        return TensorSinkState()
 
 
 @io
@@ -317,6 +418,36 @@ def build_bouncing_ball_pipeline(config: PhysicsConfig, theta: float) -> Tuple[P
         clock_flow >> ball_flow >> collector_flow >> sink_flow
 
     return pipe, sink
+
+
+def build_tensor_pipeline(config: PhysicsConfig, theta: float) -> Tuple[Pipeline, BouncingBallTensorFlow, TensorSinkFlow]:
+    """
+    Build pipeline that keeps torch.Tensor values alive across Flows.
+
+    Instead of extracting .item() scalars, tensors flow through the pipeline
+    preserving the PyTorch computation graph. After stepping, call
+    loss.backward() on sink.last_x to backpropagate through the entire graph.
+
+    Returns:
+        (pipeline, ball_flow, tensor_sink)
+    """
+    pipe = Pipeline("bouncing_ball_tensor")
+
+    clock = TickClockFlow(dt=config.dt, max_ticks=config.T)
+    ball = BouncingBallTensorFlow(
+        g=config.g, e=config.e, x_init=config.x_init,
+        theta=theta, max_ticks=config.T
+    )
+    sink = TensorSinkFlow(max_ticks=config.T)
+
+    with pipe:
+        h_clock = clock @ Rate(hz=100)
+        h_ball = ball @ Trigger("tick")
+        h_sink = sink @ Trigger("x")
+
+        h_clock >> h_ball >> h_sink
+
+    return pipe, ball, sink
 
 
 # =============================================================================
