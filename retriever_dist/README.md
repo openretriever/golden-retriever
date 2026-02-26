@@ -1,51 +1,72 @@
 # Retriever Distribution
 
-## Installation
+Pre-built wheel + pixi environment for running Retriever experiments without a local source build.
 
-### Option 1: Using Pixi (Recommended)
+## Quick Start (Recommended: Pixi)
 
-This distribution contains a `pixi.toml` configured to install the included wheel and dependencies.
-
-1.  Install Pixi: `curl -fsSL https://pixi.sh/install.sh | bash`
-2.  Install environment:
-    ```bash
-    pixi install
-    ```
-3.  Run examples:
-    ```bash
-    pixi run python examples/tutorial/009_dora_perception.py
-    ```
-4.  Enter shell:
-    ```bash
-    pixi shell
-    ```
-
-5.  Interactive Python (IPython):
-    ```bash
-    pixi run ipython
-    # Then: import retriever
-    ```
-
-### Option 2: Standard Pip
-
-1.  Create a virtual environment (optional).
-2.  Install the wheel:
+1. Install Pixi if you don't have it:
    ```bash
-   pip install install/retriever-0.0.0-py3-none-any.whl
+   curl -fsSL https://pixi.sh/install.sh | bash
    ```
-3.  Install example dependencies manually (numpy, opencv-python, etc).
+
+2. Install the environment:
+   ```bash
+   cd retriever_dist
+   pixi install
+   ```
+
+3. Verify the install:
+   ```bash
+   pixi run python -m examples.tutorial.011_debug_stepper --steps 5
+   ```
+
+4. Enter an interactive shell:
+   ```bash
+   pixi shell
+   python -c "import retriever; print(retriever.__version__)"
+   ```
+
+## Alternative: pip
+
+```bash
+pip install install/retriever-0.0.0-py3-none-any.whl[dora,demo]
+```
+
+You will need to install additional deps (numpy, dora-rs, etc.) manually.
 
 ## Running Examples
 
-The `examples/` directory contains tutorial and advanced examples.
+All tutorial examples are in `examples/tutorial/`. Run them with:
 
 ```bash
-# Via Pixi
-pixi run python examples/tutorial/009_dora_perception.py
+# Stepper debugger (no external deps)
+pixi run python -m examples.tutorial.011_debug_stepper
 
-# Or
+# Dora-based perception demo (requires webcam)
 pixi run demo-webcam-detection
 
-# Via Pip environment
-python examples/tutorial/009_dora_perception.py
+# Request-response pattern
+pixi run python -m examples.tutorial.010_request_response
+
+# Closed-loop environment
+pixi run python -m examples.tutorial.016_closed_loop_env
 ```
+
+## Environment Features
+
+The default pixi environment includes:
+- `retriever[dora,demo,web,recording]` from the bundled wheel
+- `dora-rs` + `dora-rs-cli` for the dora backend
+- `rerun-sdk` for visualization
+- `google-genai` for VLM support
+
+Optional features (pass `--environment` to pixi):
+- `torch` — PyTorch + Transformers + OpenPI
+
+## Wheel Contents
+
+The wheel installs the `retriever` package with these extras available:
+- `dora` — Dora dataflow backend
+- `demo` — OpenCV, NumPy for perception demos
+- `web` — FastAPI + uvicorn for command interfaces
+- `recording` — MCAP recording support
