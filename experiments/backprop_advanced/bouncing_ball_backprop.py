@@ -26,7 +26,7 @@ import argparse
 import os
 import sys
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import torch
 import numpy as np
@@ -38,7 +38,7 @@ if project_root not in sys.path:
 
 # Local physics module
 sys.path.insert(0, os.path.dirname(__file__))
-from physics import PhysicsConfig, simulate_batch, batch_loss, finite_difference_gradient
+from physics import PhysicsConfig, step_batch, simulate_batch, batch_loss, finite_difference_gradient
 
 # Retriever imports
 from retriever.flow import Flow, Pipeline, Rate, Trigger, io
@@ -50,23 +50,23 @@ from retriever.flow import Flow, Pipeline, Rate, Trigger, io
 
 @io
 class ClockTick:
-    tick: Optional[int] = None
-    dt: Optional[float] = None
+    tick: int | None = None
+    dt: float | None = None
 
 
 @io
 class BallBatchState:
     """Batch ball state with raw torch.Tensor values [B]. Keeps autograd graph alive."""
-    tick: Optional[int] = None
-    x: Optional[Any] = None    # torch.Tensor [B]
-    v: Optional[Any] = None    # torch.Tensor [B]
+    tick: int | None = None
+    x: Any = None    # torch.Tensor [B]
+    v: Any = None    # torch.Tensor [B]
 
 
 @io
 class BatchSinkState:
     """Captures the final [B] tensor batch for loss computation."""
-    x: Optional[Any] = None    # torch.Tensor [B]
-    done: Optional[bool] = None
+    x: Any = None    # torch.Tensor [B]
+    done: bool | None = None
 
 
 # =============================================================================
@@ -85,7 +85,7 @@ class TickClockFlow(Flow[None, ClockTick]):
         return {"dt": self.dt, "max_ticks": self.max_ticks}
 
     def init(self) -> None:
-        self.tick = 0
+        self.tick: int = 0
 
     def step(self, _: None) -> ClockTick:
         if self.tick >= self.max_ticks:
@@ -104,7 +104,7 @@ class BouncingBallBatchFlow(Flow[ClockTick, BallBatchState]):
     Gradients accumulate in self.theta.grad after loss.backward().
     """
 
-    def __init__(self, theta_vals: List[float], cfg: PhysicsConfig):
+    def __init__(self, theta_vals: list[float], cfg: PhysicsConfig):
         super().__init__()
         self.theta_vals = list(theta_vals)
         self.cfg = cfg
@@ -122,18 +122,8 @@ class BouncingBallBatchFlow(Flow[ClockTick, BallBatchState]):
         if inp.tick is None or inp.dt is None:
             return BallBatchState()
 
-        dt = float(inp.dt)
-
-        # Vectorized semi-implicit Euler
-        v_pred = self.v - self.cfg.g * dt
-        x_pred = self.x + v_pred * dt
-
-        # Differentiable contact (torch.where keeps grad graph alive)
-        hit = (x_pred.detach() < 0.0).float()
-        self.x = torch.where(hit > 0.5, x_pred * 0.0, x_pred)
-        self.v = torch.where(hit > 0.5, -self.cfg.e * v_pred, v_pred)
-
-        # Return raw tensors — grad graph survives across Flow boundary (in-process)
+        # Delegate to shared physics — grad graph survives across Flow boundary (in-process)
+        self.x, self.v = step_batch(self.x, self.v, self.cfg)
         return BallBatchState(tick=inp.tick, x=self.x, v=self.v)
 
 
@@ -148,7 +138,7 @@ class BatchTensorSinkFlow(Flow[BallBatchState, BatchSinkState]):
         return {"max_ticks": self.max_ticks}
 
     def init(self) -> None:
-        self.last_x: Optional[torch.Tensor] = None
+        self.last_x: torch.Tensor | None = None
 
     def step(self, inp: BallBatchState) -> BatchSinkState:
         if inp.tick is None or inp.x is None:
@@ -164,9 +154,9 @@ class BatchTensorSinkFlow(Flow[BallBatchState, BatchSinkState]):
 # =============================================================================
 
 def build_batch_pipeline(
-    theta_vals: List[float],
+    theta_vals: list[float],
     cfg: PhysicsConfig,
-) -> Tuple[Pipeline, BouncingBallBatchFlow, BatchTensorSinkFlow]:
+) -> tuple[Pipeline, BouncingBallBatchFlow, BatchTensorSinkFlow]:
     """
     Build a 3-node pipeline:  Clock → BatchBall → BatchSink
 
@@ -193,9 +183,9 @@ def build_batch_pipeline(
 # =============================================================================
 
 def run_batch_pipeline(
-    theta_vals: List[float],
+    theta_vals: list[float],
     cfg: PhysicsConfig,
-) -> Tuple[torch.Tensor, torch.Tensor]:
+) -> tuple[torch.Tensor, torch.Tensor]:
     """
     Run B simulations through the Retriever pipeline, compute B gradients.
 
@@ -205,8 +195,8 @@ def run_batch_pipeline(
     """
     pipe, ball, sink = build_batch_pipeline(theta_vals, cfg)
 
-    # Forward pass via in-process stepper
-    for _ in range(cfg.T + 5):
+    # Each pipe.step() advances all three flows (Clock→Ball→Sink) by one step.
+    for _ in range(cfg.T):
         pipe.step(dt=cfg.dt)
 
     assert sink.last_x is not None, "Pipeline produced no output"
@@ -226,13 +216,17 @@ def run_batch_pipeline(
 # =============================================================================
 
 def verify_batch_gradients(
-    theta_vals: List[float],
+    theta_vals: list[float],
     cfg: PhysicsConfig,
     eps: float = 1e-6,
     tol: float = 1e-4,
 ) -> bool:
     """
     Compare batch autograd against finite differences for each θ_i.
+
+    Args:
+        eps: step size used for finite-difference approximation (numerical perturbation)
+        tol: maximum acceptable absolute error |autograd_grad − FD_grad| per element
 
     Returns True if all errors are below tol.
     """
@@ -271,12 +265,12 @@ def verify_batch_gradients(
 # =============================================================================
 
 def optimize_batch(
-    theta_init: List[float],
+    theta_init: list[float],
     cfg: PhysicsConfig,
     lr: float = 0.1,
     steps: int = 100,
     print_every: int = 10,
-) -> Dict:
+) -> dict:
     """
     Gradient descent on B initial velocities simultaneously.
 
@@ -332,10 +326,11 @@ def optimize_batch(
 # =============================================================================
 
 def compare_batch_vs_sequential(
-    batch_sizes: List[int],
+    batch_sizes: list[int],
     cfg: PhysicsConfig,
     theta_base: float = 3.0,
     theta_step: float = 0.5,
+    grad_tol: float = 1e-6,
 ) -> None:
     """
     Compare batch pipeline against B sequential scalar pipelines.
@@ -351,21 +346,21 @@ def compare_batch_vs_sequential(
         theta_vals = [theta_base + i * theta_step for i in range(B)]
 
         # Batch
-        t0 = time.perf_counter()
+        t0 = time.perf_counter_ns()
         grads_batch, losses_batch = run_batch_pipeline(theta_vals, cfg)
-        batch_ms = (time.perf_counter() - t0) * 1000
+        batch_ms = (time.perf_counter_ns() - t0) / 1e6
 
         # Sequential (B independent scalar pipelines)
-        t0 = time.perf_counter()
+        t0 = time.perf_counter_ns()
         grads_seq = []
         for th in theta_vals:
             g, _ = run_batch_pipeline([th], cfg)
             grads_seq.append(g[0].item())
-        seq_ms = (time.perf_counter() - t0) * 1000
+        seq_ms = (time.perf_counter_ns() - t0) / 1e6
 
         # Check gradients match
         match = all(
-            abs(grads_batch[i].item() - grads_seq[i]) < 1e-6
+            abs(grads_batch[i].item() - grads_seq[i]) < grad_tol
             for i in range(B)
         )
         speedup = seq_ms / batch_ms if batch_ms > 0 else float("inf")
@@ -400,14 +395,14 @@ def main():
                         x_target=0.5, x_init=1.0)
 
     B = args.batch_size
-    theta_init = [2.0 + i * 1.0 for i in range(B)]   # spread from 2.0 to 2+B
+    theta_init = list(np.linspace(2.0, 9.0, B))   # denser coverage of [2, 9] for larger B
 
     print("=" * 60)
     print("ADVANCED GRADIENT BACKPROPAGATION — BOUNCING BALL")
     print("=" * 60)
     print(f"  Batch size B: {B}")
     print(f"  Horizon T:    {args.horizon}")
-    print(f"  θ_init:       {[f'{t:.1f}' for t in theta_init]}")
+    print(f"  theta_init:   {[f'{t:.2f}' for t in theta_init]}")
     print(f"  lr:           {args.lr}")
     print(f"  steps:        {args.steps}")
 

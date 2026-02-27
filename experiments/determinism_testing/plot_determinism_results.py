@@ -28,7 +28,11 @@ except ImportError:
 
 
 def load_results(csv_path: str) -> tuple[list[float], list[float], list[float], list[float]]:
-    """Load results from CSV file."""
+    """Load results from CSV file.
+
+    Returns:
+        (retriever_gradients, retriever_losses, pubsub_gradients, pubsub_losses)
+    """
     retriever_gradients = []
     retriever_losses = []
     pubsub_gradients = []
