@@ -18,10 +18,12 @@ This folder defines the working typing standard for robotics-focused flows in th
   - Minimum metadata/profile for shareable flows.
 - `05_mirror_upstream_patch_plan.md`
   - Mirror-ready upstream carry-back patch map and dependency order.
+- `06_rollout_report_2026-02-27.md`
+  - Public rollout summary, validation results, and remaining follow-up.
 
 ## Canonical API
-- `golden_retriever.robotics_typing.v1` (authoritative type definitions)
-- `golden_retriever.robotics_typing` (re-export convenience package)
+- `golden_retriever.robotics_typing` (preferred import surface)
+- `golden_retriever.robotics_typing.v1` (pinned implementation/version path)
 - `golden_retriever.types` (dual-surface re-export + registry lookup)
 
 ## Scope
