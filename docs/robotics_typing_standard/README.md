@@ -16,6 +16,13 @@ This folder defines the working typing standard for robotics-focused flows in th
   - `Flow[(A, B), C]` routing and ambiguity behavior.
 - `03_hub_sharing_profile.md`
   - Minimum metadata/profile for shareable flows.
+- `05_mirror_upstream_patch_plan.md`
+  - Mirror-ready upstream carry-back patch map and dependency order.
+
+## Canonical API
+- `golden_retriever.robotics_typing.v1` (authoritative type definitions)
+- `golden_retriever.robotics_typing` (re-export convenience package)
+- `golden_retriever.types` (dual-surface re-export + registry lookup)
 
 ## Scope
 This is the design source of truth for now in `GoldenRetriever`. Runtime enforcement can be added incrementally.
