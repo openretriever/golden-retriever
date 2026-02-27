@@ -8,9 +8,16 @@ This repository contains the system-level implementations, robot integrations, a
 - **`src/golden_retriever`**: Core system logic, robot drivers, environment wrappers.
 - **`examples/advanced`**: Production-grade examples (VLA, MuJoCo, Real-Time Hybrid).
 - **`examples/experimental`**: Research prototypes (Closed-Loop Planning, VLM Agents).
+- **`docs/robotics_typing_standard`**: Robotics typing contract (`SE3`, `Twist`, `Wrench`, compositional I/O semantics).
 
 ## Setup
 ```bash
 pixi install
 pixi run app
+```
+
+## Robotics Typing Demos
+```bash
+pixi run demo-robotics-typing-catalog
+pixi run demo-robotics-typing-contract
 ```
