@@ -5,14 +5,13 @@ This module provides reusable detection flows for various object detection
 models and approaches.
 """
 
-import time
 from typing import List, Dict, Any, Optional
 import cv2
 import numpy as np
 
 from retriever.core.flow import Flow
-from retriever.core.types import ExecutionTimer
-from retriever.types.core_types import RGBImage, Detection, BoundingBox as BBox
+from golden_retriever.types import BoundingBox as BBox
+from golden_retriever.types import Detection, ExecutionTimer, RGBImage
 from retriever.core.frp import flow
 
 
@@ -67,7 +66,6 @@ class ObjectDetectionFlow(Flow[RGBImage, List[Detection]]):
                     label="red_object",
                     confidence=0.8,
                     bbox=BBox(x=x, y=y, width=w, height=h),
-                    timestamp=time.time()
                 )
                 detections.append(detection)
                 
@@ -112,8 +110,7 @@ class YOLOFlow(ObjectDetectionFlow):
                 y=center_y - box_h // 2,
                 width=box_w,
                 height=box_h
-            ),
-            timestamp=time.time()
+            )
         )
         detections.append(detection)
         
@@ -157,7 +154,6 @@ class GroundingDINOFlow(ObjectDetectionFlow):
                 label=class_name,
                 confidence=0.85 - i * 0.1,  # Decreasing confidence
                 bbox=BBox(x=x, y=y, width=100, height=100),
-                timestamp=time.time()
             )
             detections.append(detection)
             

@@ -16,10 +16,10 @@ from collections import deque
 
 if TYPE_CHECKING:
     # Import types for static type checking only
-    from retriever.types.core_types import RGBImage, Detection, BoundingBox
+    from golden_retriever.types import BoundingBox, Detection, RGBImage
 else:
     # Runtime imports via registry
-    from retriever import get_type
+    from golden_retriever.types import get_type
     RGBImage = get_type('RGBImage')
     Detection = get_type('Detection')
     BoundingBox = get_type('BoundingBox')
