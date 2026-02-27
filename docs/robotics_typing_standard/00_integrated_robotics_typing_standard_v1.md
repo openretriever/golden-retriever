@@ -39,6 +39,11 @@ Stamped wrappers carry:
 - frame id (`frame_id`),
 - source id (`source`).
 
+Canonical access surfaces:
+- direct import: `from golden_retriever.robotics_typing.v1 import PoseStamped`
+- convenience import: `from golden_retriever.types import PoseStamped`
+- registry lookup: `from golden_retriever.types import get_type`
+
 ## 4. Compositional Flow Typing Model
 
 Supported signature forms:

@@ -1,5 +1,13 @@
 # Type Catalog and Semantics (v1)
 
+Canonical module:
+- `golden_retriever.robotics_typing.v1`
+
+Compatibility/registry access:
+- `from golden_retriever.types import PoseStamped, SE3Pose`
+- `from golden_retriever.types import get_type`
+- `get_type("PoseStamped")`
+
 ## 1. Core Geometry Types
 
 ## `Vector3`

@@ -21,3 +21,7 @@ pixi run app
 pixi run demo-robotics-typing-catalog
 pixi run demo-robotics-typing-contract
 ```
+
+Canonical robotics typing API:
+- `golden_retriever.robotics_typing.v1`
+- `golden_retriever.types` (re-export + `get_type(...)`)
