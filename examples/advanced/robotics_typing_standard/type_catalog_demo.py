@@ -5,9 +5,10 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "src"))
 
-from types_v1 import (
+from golden_retriever.types import get_type
+from golden_retriever.robotics_typing.v1 import (
     Header,
     JointState,
     PoseStamped,
@@ -24,6 +25,10 @@ from types_v1 import (
 
 
 def main() -> None:
+    pose_type = get_type("PoseStamped")
+    se3_type = get_type("SE3Pose")
+    print(f"Registry lookup: PoseStamped={pose_type.__name__} SE3Pose={se3_type.__name__}")
+
     pose = PoseStamped(
         header=Header(stamp_ns=1_726_000_000_000_000_000, frame_id="map", source="sim"),
         pose=SE3Pose(

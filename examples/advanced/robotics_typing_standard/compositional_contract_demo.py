@@ -14,9 +14,9 @@ from typing import Any
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "src"))
 
-from types_v1 import (
+from golden_retriever.robotics_typing.v1 import (
     Header,
     JointState,
     PoseStamped,

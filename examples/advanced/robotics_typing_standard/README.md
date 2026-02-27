@@ -3,12 +3,12 @@
 These examples accompany `docs/robotics_typing_standard/`.
 
 ## Files
-- `types_v1.py`
-  - canonical robotics payload types and validators.
 - `type_catalog_demo.py`
   - quick runnable demo of stamped pose/twist/wrench + joint state.
 - `compositional_contract_demo.py`
   - runnable demonstration of composite I/O routing and ambiguity behavior.
+
+Canonical definitions live in `src/golden_retriever/robotics_typing/v1.py`.
 
 ## Run
 ```bash
