@@ -18,7 +18,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
-from typing import List, Tuple
+from pathlib import Path
 
 import numpy as np
 import matplotlib
@@ -29,9 +29,9 @@ import matplotlib.pyplot as plt
 sys.path.insert(0, os.path.dirname(__file__))
 from physics import PhysicsConfig, finite_difference_gradient
 
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
+project_root = Path(__file__).resolve().parent.parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
 
 from bouncing_ball_backprop import optimize_batch
 
@@ -40,7 +40,7 @@ from bouncing_ball_backprop import optimize_batch
 # Helpers
 # =============================================================================
 
-def simulate_trajectory(theta: float, cfg: PhysicsConfig) -> Tuple[List[float], List[float]]:
+def simulate_trajectory(theta: float, cfg: PhysicsConfig) -> tuple[list[float], list[float]]:
     """Return (time, height) arrays for a single θ."""
     x, v = cfg.x_init, theta
     times, positions = [0.0], [x]
@@ -270,7 +270,7 @@ def main():
     args = parser.parse_args()
 
     cfg = PhysicsConfig(g=9.81, e=0.8, dt=0.01, T=100, x_target=0.5, x_init=1.0)
-    theta_init = [2.0 + i * 1.0 for i in range(args.batch_size)]
+    theta_init = list(np.linspace(2.0, 9.0, args.batch_size))
 
     plot_optimization(cfg, theta_init, lr=args.lr, steps=args.steps,
                       output_path=args.output)

@@ -92,9 +92,3 @@ Results saved to `experiments/determinism_testing/results/`:
 - `bouncing_ball_pipeline.py` - Actual Pipeline.run() with Flow-based gradient computation
 - `plot_determinism_results.py` - Visualization script
 - `verify_gradient.py` - Gradient verification via finite differences
-
-## Documentation
-
-See detailed analysis and results in:
-- `/Users/zlf/ProjectsRemote/2024-Retriever/RetrieverNotes/experiments/determinism/EXPERIMENT_REPORT.md`
-- `/Users/zlf/ProjectsRemote/2024-Retriever/RetrieverNotes/experiments/determinism/SUMMARY.md`

@@ -8,7 +8,6 @@ Works with both scalar θ and batched θ [B].
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Tuple
 
 import torch
 
@@ -27,7 +26,7 @@ def step_batch(
     x: torch.Tensor,
     v: torch.Tensor,
     cfg: PhysicsConfig,
-) -> Tuple[torch.Tensor, torch.Tensor]:
+) -> tuple[torch.Tensor, torch.Tensor]:
     """
     One semi-implicit Euler step for a batch of balls.
 
@@ -86,11 +85,11 @@ def finite_difference_gradient(
     theta_val: float,
     cfg: PhysicsConfig,
     eps: float = 1e-6,
-) -> Tuple[float, float]:
+) -> tuple[float, float]:
     """
     Scalar finite-difference gradient dL/dθ at a single θ value.
 
-    Uses forward differences: (L(θ+ε) - L(θ)) / ε
+    Uses central differences: (L(θ+ε/2) - L(θ-ε/2)) / ε
 
     Returns:
         (gradient, loss_at_theta)
@@ -107,6 +106,7 @@ def finite_difference_gradient(
         return (x - cfg.x_target) ** 2
 
     loss = simulate_loss(theta_val)
-    loss_plus = simulate_loss(theta_val + eps)
-    grad = (loss_plus - loss) / eps
+    loss_plus = simulate_loss(theta_val + eps / 2)
+    loss_minus = simulate_loss(theta_val - eps / 2)
+    grad = (loss_plus - loss_minus) / eps
     return grad, loss
