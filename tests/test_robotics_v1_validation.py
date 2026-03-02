@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from golden_retriever.robotics_typing.v1 import (
+from golden_retriever.robotics_typing import (
     Header,
     JointState,
     PoseStamped,

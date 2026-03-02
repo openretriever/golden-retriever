@@ -1,7 +1,7 @@
 """Retriever type system with dual-surface robotics typing exports.
 
 Primary access:
-    from golden_retriever.robotics_typing.v1 import PoseStamped
+    from golden_retriever.robotics_typing import PoseStamped
 
 Compatibility access:
     from golden_retriever.types import PoseStamped
