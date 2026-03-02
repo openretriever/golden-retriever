@@ -66,6 +66,11 @@ The same canonical classes are now available through:
 - `golden_retriever.types` re-exports,
 - registry lookup with `get_type(...)`.
 
+Current recommendation:
+- prefer `golden_retriever.robotics_typing` in public examples,
+- keep `.v1` for pinned implementation references,
+- treat `golden_retriever.types` as compatibility + registry surface rather than the primary tutorial path.
+
 ### Migrated files
 
 The following high-impact modules were migrated to the new typing surface:
@@ -103,16 +108,20 @@ Validated commands:
 ```bash
 python examples/advanced/robotics_typing_standard/type_catalog_demo.py
 python examples/advanced/robotics_typing_standard/compositional_contract_demo.py
+python examples/advanced/robotics_typing_standard/perception_to_control_boundary_demo.py
 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest -q \
   tests/test_robotics_v1_validation.py \
   tests/test_robotics_v1_registry.py \
+  tests/test_robotics_typing_public_surface.py \
   tests/test_compositional_collision_contract.py
 ```
 
 Observed results:
 - both demo scripts run successfully,
+- the boundary demo shows stamped frame transitions and typed command serialization,
 - registry lookup resolves canonical classes,
 - robotics v1 validation tests pass,
+- public package surface matches pinned `v1` and registry lookup,
 - collision-contract tests pass,
 - migrated files are free of `retriever.types.core_types`, `Pose3`, and `Transform3`.
 

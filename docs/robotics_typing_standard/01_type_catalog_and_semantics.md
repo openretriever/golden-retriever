@@ -1,6 +1,9 @@
 # Type Catalog and Semantics (v1)
 
-Canonical module:
+Preferred module:
+- `golden_retriever.robotics_typing`
+
+Pinned implementation module:
 - `golden_retriever.robotics_typing.v1`
 
 Compatibility/registry access:
