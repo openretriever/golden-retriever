@@ -20,8 +20,10 @@ pixi run app
 ```bash
 pixi run demo-robotics-typing-catalog
 pixi run demo-robotics-typing-contract
+pixi run demo-robotics-typing-boundary
 ```
 
 Canonical robotics typing API:
-- `golden_retriever.robotics_typing.v1`
+- `golden_retriever.robotics_typing`
+- `golden_retriever.robotics_typing.v1` (pinned implementation path)
 - `golden_retriever.types` (re-export + `get_type(...)`)

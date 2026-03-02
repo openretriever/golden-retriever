@@ -40,7 +40,8 @@ Stamped wrappers carry:
 - source id (`source`).
 
 Canonical access surfaces:
-- direct import: `from golden_retriever.robotics_typing.v1 import PoseStamped`
+- preferred import: `from golden_retriever.robotics_typing import PoseStamped`
+- pinned import: `from golden_retriever.robotics_typing.v1 import PoseStamped`
 - convenience import: `from golden_retriever.types import PoseStamped`
 - registry lookup: `from golden_retriever.types import get_type`
 
@@ -76,3 +77,14 @@ No implicit broadcast writes are allowed for ambiguous names.
 - Safer cross-team composition.
 - Fewer frame/unit mistakes.
 - Cleaner migration path toward strict shareable-flow typing checks.
+
+## 8. Boundary Walkthrough
+
+Representative example flow:
+1. perception emits `PoseStamped` in `camera_color_optical_frame`,
+2. normalization emits `PoseStamped` in `base_link`,
+3. controller emits `TwistStamped` in `base_link`,
+4. logging/replay path serializes the typed command with stable type identity.
+
+Reference demo:
+- `examples/advanced/robotics_typing_standard/perception_to_control_boundary_demo.py`

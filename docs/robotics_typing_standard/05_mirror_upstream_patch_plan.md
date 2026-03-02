@@ -48,7 +48,7 @@ This document defines the exact carry-back patch bundle for `retriever-mirror`.
 - Replace spatial boundary payloads with stamped v1 payloads where applicable.
 
 6. Docs and demos
-- Update robotics typing docs to canonical path `retriever.robotics_typing.v1`.
+- Update robotics typing docs to prefer `retriever.robotics_typing` for normal imports and keep `retriever.robotics_typing.v1` for pinned implementation references.
 - Update advanced typing demos to import canonical module and include registry lookup example.
 
 ## Candidate Mirror Files
