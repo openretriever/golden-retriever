@@ -24,7 +24,7 @@ platforms = ["osx-arm64", "linux-64"]
 [pypi-dependencies]
 # Temporary: install this monorepo editable, but keep core extras only.
 # In the split, this becomes the `retriever-golden` package in the golden repo.
-retriever = { path = "dist/retriever_dist/install/retriever-0.0.0-py3-none-any.whl", editable = false, extras = [
+retriever = { path = "./retriever_dist/install/retriever-0.0.0-py3-none-any.whl", editable = false, extras = [
     "dora",
     "demo",
 ] }
@@ -210,7 +210,7 @@ benchmark_python = "ros2 run benchmark_python publisher & ros2 run benchmark_pyt
 # Optional: RoboPlan motion planning environments
 # -----------------------------------------------------------------------------
 [feature.roboplan]
-platforms = ["linux-64"]
+platforms = ["linux-64", "osx-arm64"]
 
 [feature.roboplan.dependencies]
 roboplan-python = "*"
@@ -221,6 +221,10 @@ xacro = "*"
 tyro = "*"
 viser = "*"
 matplotlib = "*"
+
+[feature.roboplan.tasks]
+demo-ik           = { cmd = "python examples/advanced/motion_planning/ik_example.py", env = { PYTHONPATH = "." } }
+demo-motion-track = { cmd = "python examples/advanced/motion_planning/motion_tracking_example.py", env = { PYTHONPATH = "." } }
 
 # -----------------------------------------------------------------------------
 # Environments
@@ -236,7 +240,7 @@ twist2 = { features = ["py311", "twist2"] }
 cpu = { features = ["py311", "cpu"] }
 gpu = { features = ["py311", "gpu"] }
 ros = { features = ["ros"] }
-roboplan = { features = ["py311", "roboplan"] }
+roboplan = { features = ["roboplan"] }
 golden = { features = ["py311", "golden"] }
 
 [feature.vlm_planning.tasks]
@@ -247,8 +251,19 @@ demo-highlevel-planning = { cmd = "python examples/experimental/closed_loop_plan
 # Tasks
 # -----------------------------------------------------------------------------
 [tasks]
-demo-dora = "python -m examples.tutorial.009_dora_perception --backend dora"
-demo-request-dora = "python -m examples.tutorial.010_request_response"
+# Tutorial examples (run from retriever_dist/ so examples/ is on the path)
+demo-basic-flow       = { cmd = "python -m examples.tutorial.a_flow_fundamentals.01_basic_flow", cwd = "retriever_dist" }
+demo-full-pipeline    = { cmd = "python -m examples.tutorial.a_flow_fundamentals.04_full_pipeline", cwd = "retriever_dist" }
+demo-dora-simple      = { cmd = "python -m examples.tutorial.b_ir_and_execution.05_dora_simple", cwd = "retriever_dist" }
+demo-dora             = { cmd = "python -m examples.tutorial.b_ir_and_execution.06_dora_perception --backend dora", cwd = "retriever_dist" }
+demo-request-dora     = { cmd = "python -m examples.tutorial.b_ir_and_execution.07_request_response", cwd = "retriever_dist" }
+demo-stepper          = { cmd = "python -m examples.tutorial.c_debug_and_replay.01_debug_stepper", cwd = "retriever_dist" }
+demo-record-replay    = { cmd = "python -m examples.tutorial.c_debug_and_replay.04_record_replay_perception", cwd = "retriever_dist" }
+demo-closed-loop-env  = { cmd = "python -m examples.tutorial.d_closed_loop_state_feedback.01_closed_loop_env", cwd = "retriever_dist" }
+demo-symbolic-planning = { cmd = "python -m examples.tutorial.d_closed_loop_state_feedback.02_symbolic_planning", cwd = "retriever_dist" }
+demo-multirate        = { cmd = "python -m examples.tutorial.e_resource_and_sync.01_multirate_window", cwd = "retriever_dist" }
+
+# Benchmarks
 benchmark-dora-suite = { cmd = "dora up && dora start dataflow_node.yml --attach", cwd = "experiments/benchmarks/dora_benchmark/dora-rs/py-latency" }
 benchmark-ros-suite-build = { cmd = "colcon build", cwd = "./experiments/benchmarks/dora_benchmark/ros2/py_pubsub" }
 # benchmark-retriever-dora = { cmd = "python experiments/benchmarks/benchmark_retriever.py --backend dora", env = { PYTHONPATH = "." } }
