@@ -52,7 +52,9 @@ def plot_results():
         "retriever_multiprocessing_benchmark_results.csv": "Retriever [multiprocessing]",
         "retriever_mp_benchmark_results.csv": "Retriever [multiprocessing]",
         "retriever_in-process_benchmark_results.csv": "Retriever [single-process]",
-        "dora_benchmark_results.csv": "dora-rs (native)"
+        "dora_benchmark_results.csv": "dora-rs (native)",
+        "ros_cpp_benchmark_results.csv": "ROS2 (C++)",
+        "ros_python_benchmark_results.csv": "ROS2 (Python)"
     }
     
     # Define order for plotting (determines legend order)
@@ -65,7 +67,9 @@ def plot_results():
         "retriever_dora_benchmark_results.csv",
         "retriever_multiprocessing_benchmark_results.csv",
         "retriever_mp_benchmark_results.csv",
-        "dora_benchmark_results.csv"
+        "dora_benchmark_results.csv",
+        "ros_cpp_benchmark_results.csv",
+        "ros_python_benchmark_results.csv"
     ]
     
     def get_sort_key(filepath):
@@ -89,7 +93,9 @@ def plot_results():
         "Retriever [dora backend]": "#1f77b4",          # Blue
         "Retriever [multiprocessing]": "#2ca02c", # Green
         "Retriever [single-process]": "#d62728",    # Red
-        "dora-rs (native)": "#ff7f0e"           # Orange
+        "dora-rs (native)": "#ff7f0e",          # Orange
+        "ROS2 (C++)": "#9467bd",                 # Purple
+        "ROS2 (Python)": "#8c564b"               # Brown
     }
 
     file_data = {}
@@ -155,9 +161,13 @@ def plot_results():
                     latencies_ms = [l / 1_000 for l in latencies] # us -> ms
                 elif lat_col == "Latency (μs)":
                     latencies_ms = [l / 1_000 for l in latencies]
-                else: # Fallback, assume us if it matches others, or ns? 
+                else: # Fallback, assume us if it matches others, or ns?
                     # Given the project consistency, assume us -> ms like others
                     latencies_ms = [l / 1_000 for l in latencies]
+
+                # FIXME: ROS2 C++ benchmark results are off by 10^3 (reported in ns instead of us)
+                if filename in ["ros_cpp_benchmark_results.csv", "ros_python_benchmark_results.csv"]:
+                    latencies_ms = [l / 1_000 for l in latencies_ms]
 
                 median = np.median(latencies_ms)
                 p10 = np.percentile(latencies_ms, 10)
@@ -173,7 +183,7 @@ def plot_results():
                 
                 # Filter out outliers for multiprocessing > 64MB as requested
                 if "multiprocessing" in label.lower():
-                    filtered_indices = [i for i, s in enumerate(sizes) if s <= 64 * 1024 * 1024]
+                    filtered_indices = [i for i, s in enumerate(sizes) if (s <= 64 * 1024 * 1024)]
                     sizes = [sizes[i] for i in filtered_indices]
                     medians = [medians[i] for i in filtered_indices]
                     yerr_lower = [yerr_lower[i] for i in filtered_indices]
@@ -198,7 +208,7 @@ def plot_results():
                 # Plot immediately (but ticks are calculated later)
                 if sizes:
                     # Filter plot data to max 64MB for display
-                    display_indices = [i for i, s in enumerate(sizes) if s <= 64 * 1024 * 1024]
+                    display_indices = [i for i, s in enumerate(sizes) if (s <= 64 * 1024 * 1024 and s >= 512)]
                     d_sizes = [sizes[i] for i in display_indices]
                     d_medians = [medians[i] for i in display_indices]
                     d_yerr_lower = [yerr_lower[i] for i in display_indices]
