@@ -32,6 +32,12 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
+# Shared physics (experiments/physics.py)
+_experiments_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _experiments_dir not in sys.path:
+    sys.path.insert(0, _experiments_dir)
+from physics_config import PhysicsConfig
+
 # Retriever imports
 # Note: We define Flow types following Retriever's patterns, but execute with
 # a simple loop to demonstrate the semantic guarantees (event-time, determinism)
@@ -43,21 +49,6 @@ try:
     HAS_MATPLOTLIB = True
 except ImportError:
     HAS_MATPLOTLIB = False
-
-
-# =============================================================================
-# Physics Configuration
-# =============================================================================
-
-@dataclass
-class PhysicsConfig:
-    """Physics simulation configuration."""
-    g: float = 9.81       # Gravity (m/s^2)
-    e: float = 0.8        # Coefficient of restitution (0 < e < 1)
-    dt: float = 0.01      # Time step (s)
-    T: int = 100          # Horizon (number of steps)
-    x_target: float = 0.5 # Target height at final time
-    x_init: float = 1.0   # Initial height
 
 
 # =============================================================================

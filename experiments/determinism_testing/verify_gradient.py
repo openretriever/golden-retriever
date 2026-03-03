@@ -21,38 +21,11 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-
-def finite_difference_gradient(g: float, e: float, dt: float, x_init: float, x_target: float, theta: float, T: int, eps: float = 1e-6) -> tuple[float, float]:
-    """
-    Compute gradient using finite differences.
-
-    This is the numerically stable way to verify PyTorch's autograd.
-    """
-    def simulate_loss(theta_val: float) -> float:
-        x = x_init
-        v = theta_val
-
-        for t in range(T):
-            v_pred = v - g * dt
-            x_pred = x + v_pred * dt
-
-            if x_pred < 0.0:
-                x = 0.0
-                v = -e * v_pred
-            else:
-                x = x_pred
-                v = v_pred
-
-        return (x - x_target) ** 2
-
-    # Compute loss at theta and theta + eps
-    loss_center = simulate_loss(theta)
-    loss_plus = simulate_loss(theta + eps)
-
-    # Finite difference approximation
-    gradient = (loss_plus - loss_center) / eps
-
-    return gradient, loss_center
+# Shared physics (experiments/physics.py)
+_experiments_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _experiments_dir not in sys.path:
+    sys.path.insert(0, _experiments_dir)
+from physics_config import PhysicsConfig, finite_difference_gradient
 
 
 def pytorch_gradient(g: float, e: float, dt: float, x_init: float, x_target: float, theta_val: float, T: int) -> tuple[float, float]:
@@ -100,7 +73,8 @@ def main():
 
     # Compute finite difference gradient
     print("Computing finite difference gradient...")
-    grad_fd, loss_fd = finite_difference_gradient(g, e, dt, x_init, x_target, theta, T)
+    cfg = PhysicsConfig(g=g, e=e, dt=dt, T=T, x_target=x_target, x_init=x_init)
+    grad_fd, loss_fd = finite_difference_gradient(theta, cfg)
 
     # Compute PyTorch gradient
     print("Computing PyTorch autograd gradient...")

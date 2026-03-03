@@ -36,8 +36,8 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-# Local physics module
-sys.path.insert(0, os.path.dirname(__file__))
+# Local physics module (torch-based; imports PhysicsConfig from experiments/physics.py)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from physics import PhysicsConfig, step_batch, simulate_batch, batch_loss, finite_difference_gradient
 
 # Retriever imports

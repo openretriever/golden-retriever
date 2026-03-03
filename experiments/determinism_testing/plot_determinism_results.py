@@ -26,6 +26,12 @@ except ImportError:
     print("Error: matplotlib is required. Install with: pip install matplotlib")
     sys.exit(1)
 
+# Shared physics (experiments/physics.py)
+_experiments_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _experiments_dir not in sys.path:
+    sys.path.insert(0, _experiments_dir)
+from physics_config import PhysicsConfig, finite_difference_gradient
+
 
 def load_results(csv_path: str) -> tuple[list[float], list[float], list[float], list[float]]:
     """Load results from CSV file.
@@ -59,28 +65,6 @@ def load_results(csv_path: str) -> tuple[list[float], list[float], list[float], 
     return retriever_gradients, retriever_losses, pubsub_gradients, pubsub_losses
 
 
-def compute_analytical_gradient(g=9.81, e=0.8, dt=0.01, T=100, x_init=1.0, x_target=0.5, theta=3.0, eps=1e-6):
-    """Compute analytical gradient using finite differences."""
-    def simulate_loss(theta_val: float) -> float:
-        x = x_init
-        v = theta_val
-        for t in range(T):
-            v_pred = v - g * dt
-            x_pred = x + v_pred * dt
-            if x_pred < 0.0:
-                x = 0.0
-                v = -e * v_pred
-            else:
-                x = x_pred
-                v = v_pred
-        return (x - x_target) ** 2
-
-    loss_center = simulate_loss(theta)
-    loss_plus = simulate_loss(theta + eps)
-    gradient = (loss_plus - loss_center) / eps
-    return gradient
-
-
 def plot_gradient_histogram(
     retriever_gradients: list[float],
     pubsub_gradients: list[float],
@@ -105,7 +89,7 @@ def plot_gradient_histogram(
     ps_unique = len(set(f"{g:.10f}" for g in ps_grads))
 
     # Compute analytical/true gradient
-    true_grad = compute_analytical_gradient()
+    true_grad, _ = finite_difference_gradient(3.0, PhysicsConfig())
 
     # Pub/Sub histogram with larger bins for better distribution
     ps_bins = min(ps_unique, 60)  # Use more bins to show distribution

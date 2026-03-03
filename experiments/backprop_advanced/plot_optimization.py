@@ -25,8 +25,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-# Local imports
-sys.path.insert(0, os.path.dirname(__file__))
+# Local physics module (torch-based; imports PhysicsConfig from experiments/physics.py)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from physics import PhysicsConfig, finite_difference_gradient
 
 project_root = Path(__file__).resolve().parent.parent.parent
