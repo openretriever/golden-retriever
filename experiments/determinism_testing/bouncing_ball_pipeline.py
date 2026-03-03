@@ -25,7 +25,6 @@ from __future__ import annotations
 import argparse
 import os
 import sys
-from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -36,18 +35,14 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
+# Shared physics (experiments/physics.py)
+_experiments_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _experiments_dir not in sys.path:
+    sys.path.insert(0, _experiments_dir)
+from physics_config import PhysicsConfig
+
 # Retriever imports
 from retriever.flow import Flow, Pipeline, Rate, Trigger, io
-
-# Physics configuration
-@dataclass
-class PhysicsConfig:
-    g: float = 9.81
-    e: float = 0.8
-    dt: float = 0.01
-    T: int = 100
-    x_target: float = 0.5
-    x_init: float = 1.0
 
 
 # =============================================================================
