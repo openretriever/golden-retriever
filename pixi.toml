@@ -24,7 +24,7 @@ platforms = ["osx-arm64", "linux-64"]
 [pypi-dependencies]
 # Temporary: install this monorepo editable, but keep core extras only.
 # In the split, this becomes the `retriever-golden` package in the golden repo.
-retriever = { path = "/home/sebastian/Downloads/retriever/install/retriever-0.0.0-py3-none-any.whl", editable = false, extras = [
+retriever = { path = "dist/retriever_dist/install/retriever-0.0.0-py3-none-any.whl", editable = false, extras = [
     "dora",
     "demo",
 ] }
