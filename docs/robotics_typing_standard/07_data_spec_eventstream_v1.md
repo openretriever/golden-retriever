@@ -1,0 +1,59 @@
+# Data Spec + EventStream v1 (`retriever_typing.data`)
+
+## Goal
+
+Define a reusable, deterministic data contract for collection/replay/export workflows without changing default core runtime behavior.
+
+Canonical package:
+- `retriever_typing.data`
+- pinned path: `retriever_typing.data.v1`
+
+## Core contracts
+
+- `Event[T]`
+  - immutable event record with deterministic ordering key:
+  - `(event_time_ns, ingest_time_ns, stream_id, seq)`
+- `EventRef`, `LineageRef`
+  - explicit source lineage for derived/joined events.
+- `StreamId`, `ClockDomain`, `SchemaRef`
+  - stable stream identity and schema metadata.
+- `EventBuffer[T]`, `MultiStreamBuffer`
+  - immutable stream buffers.
+- `JoinPolicy`, `WatermarkPolicy`, `WindowPolicy`
+  - explicit policy objects for alignment/pruning/sampling.
+
+## Deterministic multi-stream operators
+
+Event-time profile (normative):
+- `align_exact`
+- `align_latest_before(max_delta_ns)`
+- `align_window(window_ns)`
+- `merge_sorted`
+- `watermark_prune`
+
+Processing-time compatibility profile:
+- `latest`
+- `hold`
+- `window_agg`
+
+## Minimal runtime impact
+
+This wave does not modify `retriever-mirror` default scheduler/runtime behavior.
+
+Interop is opt-in via:
+- `from_runtime_event_buffer(...)`
+- `to_runtime_event_buffer(...)`
+
+## Example imports
+
+```python
+from retriever_typing.data import Event, EventBuffer, align_latest_before, WindowPolicy
+from retriever_typing.data.v1 import EventBuffer as PinnedEventBuffer
+```
+
+## Acceptance checks
+
+- import contract works for both convenience and pinned paths,
+- mixed-stream merges are deterministic,
+- join/window semantics are stable and test-covered,
+- no `golden_retriever.*` dependency inside `src/retriever_typing`.
