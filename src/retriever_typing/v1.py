@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from math import sqrt
 from typing import Final
 
-from golden_retriever.types.registry import register_type
+from .registry import register_type
 
 _ROBOTICS_CATEGORY: Final[str] = "robotics"
 

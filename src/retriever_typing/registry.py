@@ -130,10 +130,10 @@ def _bootstrap_builtin_types() -> None:
 
     root_package = __name__.split(".", 1)[0]
     modules = (
-        f"{root_package}.types.core_types",
-        f"{root_package}.types.vision_types",
-        f"{root_package}.types.robotics_types",
-        "retriever_typing.v1",
+        f"{root_package}.core_types",
+        f"{root_package}.vision_types",
+        f"{root_package}.robotics_types",
+        f"{root_package}.v1",
     )
     for module_name in modules:
         try:

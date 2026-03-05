@@ -10,7 +10,7 @@ from typing import Any, Callable, Dict, Optional, Type
 import numpy as np
 import pyarrow as pa
 
-from retriever_typing.v1 import (
+from .v1 import (
     Header,
     JointState,
     PoseStamped,
