@@ -10,10 +10,10 @@ This note tracks which branches are intended for PRs into `origin/main` and whic
 
 ### `origin/feat/robotics-typing-v1`
 - Purpose: robotics typing public surface, registry, migration updates, docs/examples/tests.
-- Current state: ahead `10`, behind `0` vs `origin/main`.
+- Current state: updated continuously as the branch evolves.
 - Include policy:
   - `src/retriever_typing/*`
-  - `src/golden_retriever/types/*` public-surface updates
+  - `src/golden_retriever/flows/*` and `src/golden_retriever/pipelines/*` import rewires
   - `docs/robotics_typing_standard/*`
   - `examples/advanced/robotics_typing_standard/*`
   - robotics typing tests

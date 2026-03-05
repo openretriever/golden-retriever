@@ -42,8 +42,8 @@ Stamped wrappers carry:
 Canonical access surfaces:
 - preferred import: `from retriever_typing import PoseStamped`
 - pinned import: `from retriever_typing.v1 import PoseStamped`
-- convenience import: `from golden_retriever.types import PoseStamped`
-- registry lookup: `from golden_retriever.types import get_type`
+- convenience import: `from retriever_typing import PoseStamped`
+- registry lookup: `from retriever_typing import get_type`
 
 ## 4. Compositional Flow Typing Model
 

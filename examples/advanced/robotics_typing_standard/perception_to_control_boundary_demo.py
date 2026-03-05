@@ -24,7 +24,7 @@ from retriever_typing import (
     validate_joint_state,
     validate_pose_stamped,
 )
-from golden_retriever.types import convert_from_arrow, convert_to_arrow
+from retriever_typing import convert_from_arrow, convert_to_arrow
 
 
 @dataclass(frozen=True)
