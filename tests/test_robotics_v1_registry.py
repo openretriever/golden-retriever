@@ -12,7 +12,7 @@ from retriever_typing import (
     Wrench,
     WrenchStamped,
 )
-from golden_retriever.types import get_type
+from retriever_typing import get_type
 
 
 def test_registry_lookup_for_v1_types() -> None:

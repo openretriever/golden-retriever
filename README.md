@@ -26,4 +26,4 @@ pixi run demo-robotics-typing-boundary
 Canonical robotics typing API:
 - `retriever_typing`
 - `retriever_typing.v1` (pinned implementation path)
-- `golden_retriever.types` (re-export + `get_type(...)`)
+- registry lookup via `retriever_typing.get_type(...)`

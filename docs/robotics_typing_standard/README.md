@@ -24,7 +24,7 @@ This folder defines the working typing standard for robotics-focused flows in th
 ## Canonical API
 - `retriever_typing` (preferred import surface)
 - `retriever_typing.v1` (pinned implementation/version path)
-- `golden_retriever.types` (dual-surface re-export + registry lookup)
+- `retriever_typing.get_type(...)` (registry lookup)
 
 ## Scope
 This is the design source of truth for now in `GoldenRetriever`. Runtime enforcement can be added incrementally.

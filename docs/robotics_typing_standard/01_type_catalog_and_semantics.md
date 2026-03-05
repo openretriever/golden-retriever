@@ -7,8 +7,8 @@ Pinned implementation module:
 - `retriever_typing.v1`
 
 Compatibility/registry access:
-- `from golden_retriever.types import PoseStamped, SE3Pose`
-- `from golden_retriever.types import get_type`
+- `from retriever_typing import PoseStamped, SE3Pose`
+- `from retriever_typing import get_type`
 - `get_type("PoseStamped")`
 
 ## 1. Core Geometry Types

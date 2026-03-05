@@ -21,7 +21,7 @@ from retriever_typing import (
     validate_joint_state,
     validate_pose_stamped,
 )
-from golden_retriever.types import get_type
+from retriever_typing import get_type
 
 
 def main() -> None:

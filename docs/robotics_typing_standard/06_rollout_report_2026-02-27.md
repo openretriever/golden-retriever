@@ -29,7 +29,7 @@ from retriever_typing.v1 import PoseStamped, SE3Pose, JointState
 Registry lookup:
 
 ```python
-from golden_retriever.types import get_type
+from retriever_typing import get_type
 
 PoseStamped = get_type("PoseStamped")
 ```
@@ -59,17 +59,17 @@ Available payloads:
 - `WrenchStamped`
 - `JointState`
 
-### Dual-surface discovery
+### Canonical package and registry discovery
 
-The same canonical classes are now available through:
-- direct imports,
-- `golden_retriever.types` re-exports,
-- registry lookup with `get_type(...)`.
+Canonical classes are available through:
+- direct imports from `retriever_typing`,
+- pinned imports from `retriever_typing.v1`,
+- registry lookup with `retriever_typing.get_type(...)`.
 
 Current recommendation:
 - prefer `retriever_typing` in public examples,
 - keep `.v1` for pinned implementation references,
-- treat `golden_retriever.types` as compatibility + registry surface rather than the primary tutorial path.
+- use `get_type(...)` only for dynamic lookup paths.
 
 ### Migrated files
 
@@ -89,7 +89,7 @@ Within this migrated slice:
 
 ### Serialization contract
 
-`src/golden_retriever/types/conversions.py` now supports stable robotics payload identifiers including:
+`src/retriever_typing/conversions.py` supports stable robotics payload identifiers including:
 - `robotics.v1.Header`
 - `robotics.v1.Vector3`
 - `robotics.v1.Quaternion`
