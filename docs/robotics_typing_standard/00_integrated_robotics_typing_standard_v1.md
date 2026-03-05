@@ -40,8 +40,8 @@ Stamped wrappers carry:
 - source id (`source`).
 
 Canonical access surfaces:
-- preferred import: `from golden_retriever.robotics_typing import PoseStamped`
-- pinned import: `from golden_retriever.robotics_typing.v1 import PoseStamped`
+- preferred import: `from retriever_typing import PoseStamped`
+- pinned import: `from retriever_typing.v1 import PoseStamped`
 - convenience import: `from golden_retriever.types import PoseStamped`
 - registry lookup: `from golden_retriever.types import get_type`
 

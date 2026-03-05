@@ -17,13 +17,13 @@ This rollout established a concrete robotics typing surface in `GoldenRetriever`
 Preferred imports:
 
 ```python
-from golden_retriever.robotics_typing import PoseStamped, SE3Pose, JointState
+from retriever_typing import PoseStamped, SE3Pose, JointState
 ```
 
 Pinned/versioned imports:
 
 ```python
-from golden_retriever.robotics_typing.v1 import PoseStamped, SE3Pose, JointState
+from retriever_typing.v1 import PoseStamped, SE3Pose, JointState
 ```
 
 Registry lookup:
@@ -37,15 +37,15 @@ PoseStamped = get_type("PoseStamped")
 Decision:
 - keep `v1` at the module boundary,
 - do not put version suffixes into type names,
-- prefer `golden_retriever.robotics_typing` in normal user-facing examples.
+- prefer `retriever_typing` in normal user-facing examples.
 
 ## What Landed
 
 ### Canonical robotics type catalog
 
 New package:
-- `src/golden_retriever/robotics_typing/v1.py`
-- `src/golden_retriever/robotics_typing/__init__.py`
+- `src/retriever_typing/v1.py`
+- `src/retriever_typing/__init__.py`
 
 Available payloads:
 - `Header`
@@ -67,7 +67,7 @@ The same canonical classes are now available through:
 - registry lookup with `get_type(...)`.
 
 Current recommendation:
-- prefer `golden_retriever.robotics_typing` in public examples,
+- prefer `retriever_typing` in public examples,
 - keep `.v1` for pinned implementation references,
 - treat `golden_retriever.types` as compatibility + registry surface rather than the primary tutorial path.
 

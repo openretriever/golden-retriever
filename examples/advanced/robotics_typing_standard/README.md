@@ -11,10 +11,10 @@ These examples accompany `docs/robotics_typing_standard/`.
   - representative stamped-boundary walkthrough: camera-frame target -> base-frame target -> typed control command -> serialization roundtrip.
 
 Preferred import surface:
-- `golden_retriever.robotics_typing`
+- `retriever_typing`
 
 Pinned implementation path:
-- `golden_retriever.robotics_typing.v1`
+- `retriever_typing.v1`
 
 ## Run
 ```bash

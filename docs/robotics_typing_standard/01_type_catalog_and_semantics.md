@@ -1,10 +1,10 @@
 # Type Catalog and Semantics (v1)
 
 Preferred module:
-- `golden_retriever.robotics_typing`
+- `retriever_typing`
 
 Pinned implementation module:
-- `golden_retriever.robotics_typing.v1`
+- `retriever_typing.v1`
 
 Compatibility/registry access:
 - `from golden_retriever.types import PoseStamped, SE3Pose`

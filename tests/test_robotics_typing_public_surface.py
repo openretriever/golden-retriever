@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from golden_retriever.robotics_typing import PoseStamped as PublicPoseStamped
-from golden_retriever.robotics_typing import SE3Pose as PublicSE3Pose
-from golden_retriever.robotics_typing.v1 import PoseStamped as PinnedPoseStamped
-from golden_retriever.robotics_typing.v1 import SE3Pose as PinnedSE3Pose
+from retriever_typing import PoseStamped as PublicPoseStamped
+from retriever_typing import SE3Pose as PublicSE3Pose
+from retriever_typing.v1 import PoseStamped as PinnedPoseStamped
+from retriever_typing.v1 import SE3Pose as PinnedSE3Pose
 from golden_retriever.types import get_type
 
 
