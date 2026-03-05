@@ -20,11 +20,21 @@ This folder defines the working typing standard for robotics-focused flows in th
   - Mirror-ready upstream carry-back patch map and dependency order.
 - `06_rollout_report_2026-02-27.md`
   - Public rollout summary, validation results, and remaining follow-up.
+- `07_data_spec_eventstream_v1.md`
+  - `retriever_typing.data` event/data spec (Event/EventBuffer, join/window/watermark semantics).
+- `08_lerobot_interop_and_dataset_profile.md`
+  - Dataset manifest profile and LeRobot mapping constraints.
 
 ## Canonical API
 - `retriever_typing` (preferred import surface)
 - `retriever_typing.v1` (pinned implementation/version path)
 - `retriever_typing.get_type(...)` (registry lookup)
+- `retriever_typing.data` (data/event contracts and multi-stream operators)
+- `retriever_typing.data.v1` (pinned data/event schema path)
 
 ## Scope
 This is the design source of truth for now in `GoldenRetriever`. Runtime enforcement can be added incrementally.
+
+Mirror impact for this wave:
+- no default runtime behavior changes in `retriever-mirror`,
+- only opt-in bridge adapters via `retriever_typing.data.interop_retriever_runtime`.
