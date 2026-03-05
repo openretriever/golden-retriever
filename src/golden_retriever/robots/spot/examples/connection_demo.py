@@ -13,7 +13,7 @@ from retriever.robots.spot.connection import (
     SpotConnectionManager,
     MockSpotConnectionManager,
 )
-from golden_retriever.types import Action, Command
+from retriever_typing import Action, Command
 
 
 def as_command(action_type: str, **params) -> Command:

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Dict
 
 from retriever.core.flow import Flow
-from golden_retriever.types import Status
+from retriever_typing import Status
 from retriever.robots.connection_base import RobotConnection
 
 

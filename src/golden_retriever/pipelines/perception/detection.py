@@ -10,7 +10,7 @@ import time
 
 from retriever.core.flow import Flow
 from retriever.core.types import Pipeline, ExecutionTimer
-from golden_retriever.types import Detection, RGBImage
+from retriever_typing import Detection, RGBImage
 from retriever.core.frp import flow
 from retriever.flows.vision.camera import CameraFlow, RGBCameraFlow
 from retriever.flows.vision.detection import (

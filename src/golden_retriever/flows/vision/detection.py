@@ -10,8 +10,8 @@ import cv2
 import numpy as np
 
 from retriever.core.flow import Flow
-from golden_retriever.types import BoundingBox as BBox
-from golden_retriever.types import Detection, ExecutionTimer, RGBImage
+from retriever_typing import BoundingBox as BBox
+from retriever_typing import Detection, ExecutionTimer, RGBImage
 from retriever.core.frp import flow
 
 

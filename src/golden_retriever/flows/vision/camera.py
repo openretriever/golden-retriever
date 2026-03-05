@@ -11,7 +11,7 @@ import cv2
 import numpy as np
 
 from retriever.core.flow import Flow
-from golden_retriever.types import ExecutionTimer, RGBDImage, RGBImage
+from retriever_typing import ExecutionTimer, RGBDImage, RGBImage
 from retriever import flow
 
 

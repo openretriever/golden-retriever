@@ -19,7 +19,7 @@ from retriever_typing.v1 import (
     Vector3,
     validate_pose_stamped,
 )
-from golden_retriever.types import ExecutionTimer, RGBDImage, RGBImage
+from retriever_typing import ExecutionTimer, RGBDImage, RGBImage
 
 
 @flow(rate="10hz")
