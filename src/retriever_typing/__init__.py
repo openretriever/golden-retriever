@@ -111,6 +111,9 @@ _TYPE_MODULES = {
 
 
 def __getattr__(name: str):
+    if name == "data":
+        return import_module(f"{__name__}.data")
+
     module = _TYPE_MODULES.get(name)
     if module is None:
         raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
@@ -120,7 +123,7 @@ def __getattr__(name: str):
 
 
 def __dir__():
-    return sorted(set(globals().keys()) | set(_TYPE_MODULES.keys()))
+    return sorted(set(globals().keys()) | set(_TYPE_MODULES.keys()) | {"data"})
 
 
 __all__ = [
@@ -183,4 +186,5 @@ __all__ = [
     "convert_to_arrow",
     "convert_from_arrow",
     "register_conversion",
+    "data",
 ]
