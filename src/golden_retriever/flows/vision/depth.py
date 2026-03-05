@@ -11,7 +11,7 @@ import numpy as np
 
 from retriever.core.flow import Flow
 from retriever.core.frp import flow
-from golden_retriever.robotics_typing.v1 import (
+from retriever_typing.v1 import (
     Header,
     PoseStamped,
     Quaternion,

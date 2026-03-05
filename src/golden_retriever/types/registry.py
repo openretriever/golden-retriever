@@ -133,7 +133,7 @@ def _bootstrap_builtin_types() -> None:
         f"{root_package}.types.core_types",
         f"{root_package}.types.vision_types",
         f"{root_package}.types.robotics_types",
-        f"{root_package}.robotics_typing.v1",
+        "retriever_typing.v1",
     )
     for module_name in modules:
         try:

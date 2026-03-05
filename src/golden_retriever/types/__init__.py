@@ -1,7 +1,7 @@
-"""Retriever type system with dual-surface robotics typing exports.
+"""Retriever type system with robotics typing exports.
 
 Primary access:
-    from golden_retriever.robotics_typing import PoseStamped
+    from retriever_typing import PoseStamped
 
 Compatibility access:
     from golden_retriever.types import PoseStamped
@@ -105,15 +105,11 @@ _ROBOTICS_TYPING_V1_TYPES = {
     "validate_joint_state",
 }
 
-_ROOT_PACKAGE = __name__.split(".", 1)[0]
 _TYPE_MODULES = {
     **{name: "core_types" for name in _CORE_TYPES},
     **{name: "vision_types" for name in _VISION_TYPES},
     **{name: "robotics_types" for name in _ROBOTICS_TYPES},
-    **{
-        name: f"{_ROOT_PACKAGE}.robotics_typing.v1"
-        for name in _ROBOTICS_TYPING_V1_TYPES
-    },
+    **{name: "retriever_typing.v1" for name in _ROBOTICS_TYPING_V1_TYPES},
 }
 
 
