@@ -10,9 +10,9 @@ This note tracks which branches are intended for PRs into `origin/main` and whic
 
 ### `origin/feat/robotics-typing-v1`
 - Purpose: robotics typing public surface, registry, migration updates, docs/examples/tests.
-- Current state (before cleanup push): ahead `33`, behind `15` vs `origin/main`.
+- Current state: ahead `10`, behind `0` vs `origin/main`.
 - Include policy:
-  - `src/golden_retriever/robotics_typing/*`
+  - `src/retriever_typing/*`
   - `src/golden_retriever/types/*` public-surface updates
   - `docs/robotics_typing_standard/*`
   - `examples/advanced/robotics_typing_standard/*`

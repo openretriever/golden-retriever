@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from golden_retriever.robotics_typing import (
+from retriever_typing import (
     Header,
     JointState,
     PoseStamped,

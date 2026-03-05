@@ -7,7 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "src"))
 
-from golden_retriever.robotics_typing import (
+from retriever_typing import (
     Header,
     JointState,
     PoseStamped,
