@@ -19,6 +19,12 @@ class Region:
     center: Pose2D
     half_extents: tuple[float, float]
 
+    def contains(self, pose: Pose2D) -> bool:
+        return (
+            abs(pose.x - self.center.x) <= self.half_extents[0]
+            and abs(pose.y - self.center.y) <= self.half_extents[1]
+        )
+
 
 @dataclass(frozen=True)
 class Obstacle:

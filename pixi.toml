@@ -227,6 +227,22 @@ demo-ik           = { cmd = "python examples/advanced/motion_planning/ik_example
 demo-motion-track = { cmd = "python examples/advanced/motion_planning/motion_tracking_example.py", env = { PYTHONPATH = "." } }
 
 # -----------------------------------------------------------------------------
+# Optional: TAMP tabletop environment
+# -----------------------------------------------------------------------------
+[feature.tamp]
+platforms = ["linux-64", "osx-arm64"]
+
+[feature.tamp.dependencies]
+pybullet = "*"
+
+[feature.tamp.pypi-dependencies]
+"retriever-tamp" = { path = "./packages/retriever-tamp", editable = true }
+
+[feature.tamp.tasks]
+demo-tamp-tabletop-gui = { cmd = "python examples/advanced/tamp_tabletop_pick_place/app.py --sim pybullet-gui" }
+demo-tamp-tabletop-nosim = { cmd = "python examples/advanced/tamp_tabletop_pick_place/app.py --sim none --no-obstacle" }
+
+# -----------------------------------------------------------------------------
 # Environments
 # -----------------------------------------------------------------------------
 [environments]
@@ -242,6 +258,7 @@ gpu = { features = ["py311", "gpu"] }
 ros = { features = ["ros"] }
 roboplan = { features = ["roboplan"] }
 golden = { features = ["py311", "golden"] }
+tamp = { features = ["py311", "tamp"] }
 
 [feature.vlm_planning.tasks]
 # demo-highlevel-planning = { cmd = "python examples/experimental/closed_loop_planning/pipelines/demo_highlevel_planning.py" }
@@ -262,7 +279,7 @@ demo-record-replay    = { cmd = "python -m examples.tutorial.c_debug_and_replay.
 demo-closed-loop-env  = { cmd = "python -m examples.tutorial.d_closed_loop_state_feedback.01_closed_loop_env", cwd = "retriever_dist" }
 demo-symbolic-planning = { cmd = "python -m examples.tutorial.d_closed_loop_state_feedback.02_symbolic_planning", cwd = "retriever_dist" }
 demo-multirate        = { cmd = "python -m examples.tutorial.e_resource_and_sync.01_multirate_window", cwd = "retriever_dist" }
-demo-tamp-tabletop = { cmd = "python examples/advanced/tamp_tabletop_pick_place/app.py", env = { PYTHONPATH = "." } }
+demo-tamp-tabletop    = { cmd = "python examples/advanced/tamp_tabletop_pick_place/app.py --sim pybullet-direct" }
 
 # Benchmarks
 benchmark-dora-suite = { cmd = "dora up && dora start dataflow_node.yml --attach", cwd = "experiments/benchmarks/dora_benchmark/dora-rs/py-latency" }
