@@ -31,6 +31,13 @@ def test_tabletop_tamp_demo_no_sim_runs() -> None:
     assert "Done. Goal satisfied" in result.stdout
 
 
+def test_tabletop_tamp_demo_default_obstacle_path_replans_successfully() -> None:
+    result = _run_demo()
+    assert result.returncode == 0, result.stderr or result.stdout
+    assert "place-left-entry@goal_region, place-top-entry@goal_region" in result.stdout
+    assert "selected: place-top-entry@goal_region" in result.stdout
+
+
 def test_tabletop_tamp_demo_pybullet_direct_runs_if_installed() -> None:
     pytest.importorskip("pybullet")
     result = _run_demo("--sim", "pybullet-direct", "--no-obstacle")

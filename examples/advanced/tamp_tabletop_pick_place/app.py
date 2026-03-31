@@ -6,6 +6,8 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 RETRIEVER_TAMP_SRC = REPO_ROOT / "packages" / "retriever-tamp" / "src"
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 if str(RETRIEVER_TAMP_SRC) not in sys.path:
     sys.path.insert(0, str(RETRIEVER_TAMP_SRC))
 
@@ -28,7 +30,6 @@ from domain import (
     goals_satisfied,
     pretty_state,
 )
-from pybullet_sim import PyBulletTabletopSimulator, SimConfig
 from scene import build_demo_scene
 
 
@@ -56,8 +57,14 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--gui-sleep",
         type=float,
-        default=1.0 / 240.0,
+        default=1.0 / 60.0,
         help="Sleep per PyBullet GUI step to make the animation visible.",
+    )
+    parser.add_argument(
+        "--final-hold-seconds",
+        type=float,
+        default=0.0,
+        help="Keep the GUI viewer alive for a short time after the final state.",
     )
     return parser.parse_args()
 
@@ -72,6 +79,8 @@ def main() -> int:
 
     simulator = None
     if args.sim != "none":
+        from pybullet_sim import PyBulletTabletopSimulator, SimConfig
+
         try:
             simulator = PyBulletTabletopSimulator(
                 scene,
@@ -164,6 +173,8 @@ def main() -> int:
         return 0
     finally:
         if simulator is not None:
+            if args.sim == "pybullet-gui" and args.final_hold_seconds > 0.0:
+                simulator.hold(args.final_hold_seconds)
             simulator.close()
 
 

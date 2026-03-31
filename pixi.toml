@@ -239,7 +239,7 @@ pybullet = "*"
 "retriever-tamp" = { path = "./packages/retriever-tamp", editable = true }
 
 [feature.tamp.tasks]
-demo-tamp-tabletop-gui = { cmd = "python examples/advanced/tamp_tabletop_pick_place/app.py --sim pybullet-gui" }
+demo-tamp-tabletop-gui = { cmd = "python examples/advanced/tamp_tabletop_pick_place/app.py --sim pybullet-gui --final-hold-seconds 8" }
 demo-tamp-tabletop-nosim = { cmd = "python examples/advanced/tamp_tabletop_pick_place/app.py --sim none --no-obstacle" }
 
 # -----------------------------------------------------------------------------
