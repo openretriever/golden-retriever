@@ -353,7 +353,7 @@ Suggested first moves:
 1. move reusable symbolic data structures into `retriever_tamp.symbolic`,
 2. move candidate refinement into `retriever_tamp.refinement.providers.tabletop_candidates`,
 3. represent the tabletop task in `retriever_tamp.problems.tabletop_pick_place`,
-4. rewrite the example as a thin adapter over `TAMPController`.
+4. rewrite the example as a thin adapter over `TAMPController` (now done in the tabletop MVP).
 
 ### Phase 3 — GoldenRetriever bridge
 
@@ -404,7 +404,7 @@ If the next pass is allowed to do more than scaffolding, the most leverage-per-l
 
 1. implement a tiny `AStarTaskPlanner` in `retriever_tamp.symbolic.planners.astar`,
 2. port the current `motion_refiner.py` into `retriever_tamp.refinement.providers.tabletop_candidates`,
-3. wrap the existing example through `TAMPController`,
+3. keep the existing example routed through `TAMPController`,
 4. leave all GoldenRetriever-specific execution outside the kernel.
 
 That would prove the package boundary with the current example while keeping the migration path clean.

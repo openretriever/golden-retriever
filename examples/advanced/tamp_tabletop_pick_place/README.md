@@ -33,31 +33,59 @@ Explicitly not included yet:
 - `scene.py` — scripted tabletop geometry and motion candidates
 - `task_planner.py` — tiny local A* over grounded operators
 - `motion_refiner.py` — lazy next-step refinement
-- `app.py` — end-to-end sequential loop
+- `bridge.py` — adapters from the local tabletop domain into `retriever_tamp`
+- `pybullet_sim.py` — lightweight tabletop simulator for execution playback
+- `app.py` — end-to-end loop routed through `retriever_tamp.execution.TAMPController`
 
 ## Run
 
 From the `GoldenRetriever/` repo root:
 
 ```bash
-python3 examples/advanced/tamp_tabletop_pick_place/app.py
+python examples/advanced/tamp_tabletop_pick_place/app.py
 ```
 
-Or, after the added Pixi task lands:
+That default path keeps execution symbolic-only and does not require PyBullet.
+
+To run the same controller loop against the lightweight tabletop simulator:
 
 ```bash
-pixi run demo-tamp-tabletop
+python examples/advanced/tamp_tabletop_pick_place/app.py --sim pybullet-direct
 ```
 
-To see the same flow without the obstacle affecting the first placement candidate:
+To open the PyBullet viewer:
 
 ```bash
-python3 examples/advanced/tamp_tabletop_pick_place/app.py --no-obstacle
+python examples/advanced/tamp_tabletop_pick_place/app.py --sim pybullet-gui
 ```
+
+To use the repo-managed Pixi environment for the simulator-backed path:
+
+```bash
+pixi run -e tamp demo-tamp-tabletop
+```
+
+Useful variations:
+
+```bash
+python examples/advanced/tamp_tabletop_pick_place/app.py --no-obstacle
+python examples/advanced/tamp_tabletop_pick_place/app.py --sim pybullet-direct --no-obstacle
+python examples/advanced/tamp_tabletop_pick_place/app.py --sim pybullet-gui
+pixi run -e tamp demo-tamp-tabletop-nosim
+pixi run -e tamp demo-tamp-tabletop-gui
+```
+
+## Simulator modes
+
+- `--sim none` keeps execution symbolic-only and is the fastest debug path
+- `--sim pybullet-direct` runs the same loop in a headless PyBullet scene
+- `--sim pybullet-gui` shows the tabletop animation in a PyBullet window
+
+The current simulator is intentionally minimal: it animates the tabletop object and a simple tool marker. It is not yet a full robot-arm execution backend.
 
 ## Why this shape
 
-This example stays local on purpose. The current repo still has symbolic import drift between older `retriever.types.*` references and newer `Retriever/retriever/core/symbolic_structs.py` surfaces. Until that is cleaned up, the safest move is to validate the TAMP loop in one example directory and only then decide what abstractions deserve promotion.
+This example stays local on purpose. The current repo still has older planning/runtime surfaces mixed with newer package boundaries. The safest move is to validate the TAMP loop in one example directory and promote only the reusable seams.
 
 ## Broader subsystem direction
 
@@ -66,7 +94,7 @@ This local example is still the right concrete foothold, but the broader reusabl
 - `docs/tamp/2026-03-15_predicators_style_tamp_direction.md`
 - `packages/retriever-tamp/`
 
-The recommended path is to keep this demo runnable while gradually lifting reusable symbolic / refinement / execution-loop pieces into the standalone `retriever-tamp` package boundary.
+The recommended path is to keep this demo runnable while gradually lifting reusable symbolic / refinement / execution-loop pieces into the standalone `retriever-tamp` package boundary. The current app already routes through `TAMPController`; the simulator and tabletop scene remain example-local.
 
 ## Next likely upgrade
 

@@ -1,7 +1,25 @@
 from __future__ import annotations
 
 import argparse
+import sys
+from pathlib import Path
 
+REPO_ROOT = Path(__file__).resolve().parents[3]
+RETRIEVER_TAMP_SRC = REPO_ROOT / "packages" / "retriever-tamp" / "src"
+if str(RETRIEVER_TAMP_SRC) not in sys.path:
+    sys.path.insert(0, str(RETRIEVER_TAMP_SRC))
+
+from retriever_tamp.execution.loop import ReplanReason, TAMPController
+
+from bridge import (
+    TabletopExecutionAdapter,
+    TabletopRefinementProvider,
+    TabletopSymbolicModel,
+    TabletopTaskPlanner,
+    action_from_tamp,
+    build_snapshot,
+    format_tamp_plan,
+)
 from domain import (
     DEFAULT_GOAL_ATOMS,
     DEFAULT_INITIAL_STATE,
@@ -10,12 +28,11 @@ from domain import (
     goals_satisfied,
     pretty_state,
 )
-from motion_refiner import refine_action
+from pybullet_sim import PyBulletTabletopSimulator, SimConfig
 from scene import build_demo_scene
-from task_planner import format_plan, task_plan
 
 
-def main() -> int:
+def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Minimal tabletop TAMP pick-and-place MVP example."
     )
@@ -30,70 +47,124 @@ def main() -> int:
         default=3,
         help="Maximum number of blacklist-and-replan attempts after refinement failure.",
     )
-    args = parser.parse_args()
+    parser.add_argument(
+        "--sim",
+        choices=("none", "pybullet-direct", "pybullet-gui"),
+        default="none",
+        help="Execution backend for the tabletop demo. PyBullet modes are optional and require the TAMP environment.",
+    )
+    parser.add_argument(
+        "--gui-sleep",
+        type=float,
+        default=1.0 / 240.0,
+        help="Sleep per PyBullet GUI step to make the animation visible.",
+    )
+    return parser.parse_args()
 
+
+def main() -> int:
+    args = _parse_args()
     scene = build_demo_scene(include_obstacle=not args.no_obstacle)
     symbolic_state = DEFAULT_INITIAL_STATE
     executed_actions = []
     banned_actions: set[str] = set()
     replans = 0
 
+    simulator = None
+    if args.sim != "none":
+        try:
+            simulator = PyBulletTabletopSimulator(
+                scene,
+                SimConfig(mode=args.sim, gui_sleep_s=args.gui_sleep),
+            )
+        except RuntimeError as exc:
+            print(f"[sim] {exc}")
+            return 4
+
+    planner = TabletopTaskPlanner()
+    controller = TAMPController(
+        symbolic_model=TabletopSymbolicModel(goal_atoms=DEFAULT_GOAL_ATOMS),
+        task_planner=planner,
+        refinement_provider=TabletopRefinementProvider(scene),
+        execution_adapter=TabletopExecutionAdapter(scene, simulator=simulator),
+    )
+
     print("=== TAMP tabletop pick-place MVP ===")
+    print(f"Simulator mode: {args.sim}")
     print(scene.summary())
     print(f"Initial symbolic state: {pretty_state(symbolic_state)}")
     print(f"Goal atoms:            {pretty_state(DEFAULT_GOAL_ATOMS)}")
     print()
 
-    while not goals_satisfied(symbolic_state, DEFAULT_GOAL_ATOMS):
-        plan = task_plan(
-            symbolic_state,
-            DEFAULT_GOAL_ATOMS,
-            banned_action_signatures=frozenset(banned_actions),
+    try:
+        while not goals_satisfied(symbolic_state, DEFAULT_GOAL_ATOMS):
+            planner.set_banned_actions(frozenset(banned_actions))
+            snapshot = build_snapshot(scene, symbolic_state)
+            reason, plan, refinement, feedback = controller.step(snapshot)
+
+            if plan:
+                print(f"[task planner] symbolic plan: {format_tamp_plan(plan)}")
+
+            if reason == ReplanReason.NO_PLAN:
+                print("[task planner] no plan found for the current symbolic state.")
+                return 1
+
+            if reason == ReplanReason.GOAL_REACHED:
+                break
+
+            if refinement is not None:
+                next_action = action_from_tamp(refinement.action)
+                print(f"[tamp] lazily refine next step only: {next_action}")
+                tried = ", ".join(refinement.tried_candidates) or "<none>"
+                print(f"[motion refiner] tried candidates: {tried}")
+
+                if reason == ReplanReason.REFINEMENT_FAILED:
+                    print(f"[motion refiner] refinement failed: {refinement.failure_reason}")
+                    banned_actions.add(action_signature(next_action))
+                    replans += 1
+                    if replans > args.max_replans:
+                        print("[tamp] exceeded max replans; stopping.")
+                        return 2
+                    print(f"[tamp] blacklisted {next_action} and will replan.\n")
+                    continue
+
+                if refinement.candidate is not None:
+                    print(f"[motion refiner] selected: {refinement.candidate.label}")
+                    for primitive in refinement.candidate.primitives:
+                        print(f"  - {primitive.name}")
+
+            if reason == ReplanReason.STEP_EXECUTED:
+                completed_action = action_from_tamp(
+                    feedback.completed_action if feedback and feedback.completed_action else plan[0]
+                )
+                symbolic_state = apply_ground_action(symbolic_state, completed_action)
+                executed_actions.append(completed_action)
+                print(f"[executor] symbolic state -> {pretty_state(symbolic_state)}")
+                if feedback is not None:
+                    scene_summary = feedback.payload.get("scene_summary", scene.compact_summary())
+                    print(f"[executor] scene summary  -> {scene_summary}")
+                    print(f"[executor] message        -> {feedback.message}")
+                print()
+                continue
+
+            if reason == ReplanReason.EXECUTION_FAILED:
+                print("[executor] execution failed.")
+                if feedback is not None:
+                    print(f"[executor] message -> {feedback.message}")
+                return 3
+
+            if reason == ReplanReason.MONITOR_TRIGGER:
+                print("[monitor] execution monitor requested a replan.")
+                continue
+
+        print(
+            f"Done. Goal satisfied after {len(executed_actions)} actions: "
+            f"{' -> '.join(str(action) for action in executed_actions)}"
         )
-        if not plan:
-            print("[task planner] no plan found for the current symbolic state.")
-            return 1
-
-        next_action = plan[0]
-        print(f"[task planner] symbolic plan: {format_plan(plan)}")
-        print(f"[tamp] lazily refine next step only: {next_action}")
-
-        refinement = refine_action(scene, next_action)
-        tried = ", ".join(refinement.tried_candidates) or "<none>"
-        print(f"[motion refiner] tried candidates: {tried}")
-
-        if not refinement.success:
-            print(f"[motion refiner] refinement failed: {refinement.failure_reason}")
-            banned_actions.add(action_signature(next_action))
-            replans += 1
-            if replans > args.max_replans:
-                print("[tamp] exceeded max replans; stopping.")
-                return 2
-            print(f"[tamp] blacklisted {next_action} and will replan.\n")
-            continue
-
-        assert refinement.segment is not None
-        print(f"[motion refiner] selected: {refinement.segment.candidate_label}")
-        for command in refinement.segment.commands:
-            print(f"  - {command}")
-
-        if next_action.name == "Pick":
-            scene.commit_pick(next_action.args[0])
-        elif next_action.name == "Place":
-            scene.commit_place(next_action.args[0], refinement.segment.target_pose)
-
-        symbolic_state = apply_ground_action(symbolic_state, next_action)
-        executed_actions.append(next_action)
-
-        print(f"[executor] symbolic state -> {pretty_state(symbolic_state)}")
-        print(f"[executor] scene summary  -> {scene.compact_summary()}")
-        print()
-
-    print(
-        f"Done. Goal satisfied after {len(executed_actions)} actions: "
-        f"{format_plan(executed_actions)}"
-    )
-    return 0
+        return 0
+    finally:
+        if simulator is not None:
+            simulator.close()
 
 
 if __name__ == "__main__":

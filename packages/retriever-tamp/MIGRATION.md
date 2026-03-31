@@ -55,7 +55,7 @@ Good first ports:
 1. local symbolic planner implementation
 2. local tabletop candidate refiner
 3. tabletop problem/world spec
-4. example rewritten as a thin bridge over `TAMPController`
+4. example rewritten as a thin bridge over `TAMPController` (now done in the tabletop MVP)
 
 Do **not** start by pulling in broad GoldenRetriever planning/runtime internals.
 

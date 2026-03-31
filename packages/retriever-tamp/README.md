@@ -50,7 +50,7 @@ It currently defines:
 - refinement interfaces,
 - a small closed-loop controller surface,
 - problem/world definition interfaces,
-- a bridge note for the current tabletop MVP,
+- a reusable controller already used by the current tabletop MVP,
 - placeholder package landing zones for the first concrete ports.
 
 It does **not** yet provide:
@@ -84,11 +84,10 @@ Putting `retriever-tamp` behind its own package boundary makes the migration cle
 
 1. keep the current example runnable,
 2. port reusable symbolic/refinement pieces into this package,
-3. wrap the example through `retriever_tamp.execution.TAMPController`,
+3. keep the example routed through `retriever_tamp.execution.TAMPController`,
 4. add GoldenRetriever-specific bridges only after the core interfaces settle,
 5. decide later whether `packages/retriever-tamp/` stays vendored or becomes its own repo.
 
 For the concrete file-by-file migration plan, see:
 
 - `packages/retriever-tamp/MIGRATION.md`
-- `retriever_tamp.bridges.legacy_tabletop_pick_place`
