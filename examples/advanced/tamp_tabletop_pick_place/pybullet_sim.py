@@ -8,6 +8,15 @@ from domain import GroundAction
 from motion_refiner import MotionSegment
 from scene import Pose2D, TabletopScene
 
+from examples.advanced.shared.pybullet import (
+    DebugCameraPose,
+    add_debug_label,
+    connect_pybullet,
+    rendering_disabled,
+    set_debug_camera,
+    step_gui_frames,
+)
+
 
 SimMode = Literal["pybullet-direct", "pybullet-gui"]
 
@@ -16,28 +25,18 @@ SimMode = Literal["pybullet-direct", "pybullet-gui"]
 class SimConfig:
     mode: SimMode = "pybullet-direct"
     path_steps: int = 32
-    gui_sleep_s: float = 1.0 / 240.0
+    gui_sleep_s: float = 1.0 / 60.0
+    gui_warmup_frames: int = 18
 
 
 class PyBulletTabletopSimulator:
     def __init__(self, scene: TabletopScene, config: SimConfig) -> None:
-        try:
-            import pybullet as p
-        except ImportError as exc:
-            raise RuntimeError(
-                "PyBullet is required for simulator-backed TAMP runs. "
-                "Install `pybullet` in the Python environment used to launch the demo."
-            ) from exc
-
-        self._p = p
         self._config = config
-        connection_mode = p.GUI if config.mode == "pybullet-gui" else p.DIRECT
-        self._client_id = p.connect(connection_mode)
-        if self._client_id < 0:
-            raise RuntimeError("Failed to connect to PyBullet.")
-
-        if config.mode == "pybullet-gui":
-            self._configure_gui()
+        self._camera = self._camera_for_scene(scene)
+        self._p, self._client_id = connect_pybullet(
+            gui=config.mode == "pybullet-gui",
+            time_step_s=1.0 / 240.0,
+        )
 
         self._table_top_z = 0.0
         self._block_half_extents = (0.02, 0.02, 0.02)
@@ -51,20 +50,17 @@ class PyBulletTabletopSimulator:
 
         self._reset_world(scene)
 
-    def _configure_gui(self) -> None:
-        p = self._p
-        # Hide the default Bullet debug panes so the scene is actually visible.
-        p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
-        p.configureDebugVisualizer(p.COV_ENABLE_RGB_BUFFER_PREVIEW, 0)
-        p.configureDebugVisualizer(p.COV_ENABLE_DEPTH_BUFFER_PREVIEW, 0)
-        p.configureDebugVisualizer(p.COV_ENABLE_SEGMENTATION_MARK_PREVIEW, 0)
-        p.configureDebugVisualizer(p.COV_ENABLE_MOUSE_PICKING, 0)
-        time.sleep(0.15)
-
     def close(self) -> None:
         if self._client_id >= 0:
             self._p.disconnect(self._client_id)
             self._client_id = -1
+
+    def hold(self, seconds: float) -> None:
+        if self._config.mode != "pybullet-gui" or seconds <= 0.0:
+            return
+
+        frames = max(1, round(seconds / max(self._config.gui_sleep_s, 1.0 / 240.0)))
+        step_gui_frames(self._p, frames=frames, sleep_s=self._config.gui_sleep_s)
 
     def execute(self, action: GroundAction, segment: MotionSegment, scene: TabletopScene) -> None:
         if action.name == "Pick":
@@ -76,30 +72,27 @@ class PyBulletTabletopSimulator:
 
     def _reset_world(self, scene: TabletopScene) -> None:
         p = self._p
+        with rendering_disabled(p, active=self._config.mode == "pybullet-gui"):
+            p.resetSimulation()
+            p.setGravity(0.0, 0.0, -9.81)
+            p.setTimeStep(1.0 / 240.0)
+
+            self._create_table()
+            self._create_regions(scene)
+            self._create_block(scene)
+            self._create_obstacle(scene)
+            self._create_tool(scene)
+            self._create_labels(scene)
+
         if self._config.mode == "pybullet-gui":
-            p.configureDebugVisualizer(p.COV_ENABLE_RENDERING, 0)
-
-        p.resetSimulation()
-        p.setGravity(0.0, 0.0, -9.81)
-        p.setTimeStep(1.0 / 240.0)
-
-        self._create_table()
-        self._create_regions(scene)
-        self._create_block(scene)
-        self._create_obstacle(scene)
-        self._create_tool(scene)
-
-        if self._config.mode == "pybullet-gui":
-            p.configureDebugVisualizer(p.COV_ENABLE_RENDERING, 1)
-            p.resetDebugVisualizerCamera(
-                cameraDistance=0.8,
-                cameraYaw=45.0,
-                cameraPitch=-60.0,
-                cameraTargetPosition=[0.32, 0.0, 0.02],
+            set_debug_camera(p, self._camera)
+            step_gui_frames(
+                p,
+                frames=self._config.gui_warmup_frames,
+                sleep_s=self._config.gui_sleep_s,
             )
-            for _ in range(4):
-                p.stepSimulation()
-                time.sleep(self._config.gui_sleep_s)
+            set_debug_camera(p, self._camera)
+            step_gui_frames(p, frames=2, sleep_s=self._config.gui_sleep_s)
 
     def _create_table(self) -> None:
         p = self._p
@@ -123,7 +116,7 @@ class PyBulletTabletopSimulator:
 
     def _create_region_box(self, pose: Pose2D, color: list[float]) -> None:
         p = self._p
-        half_extents = [0.055, 0.055, 0.001]
+        half_extents = [0.055, 0.055, 0.002]
         visual = p.createVisualShape(
             p.GEOM_BOX,
             halfExtents=half_extents,
@@ -134,6 +127,37 @@ class PyBulletTabletopSimulator:
             baseVisualShapeIndex=visual,
             basePosition=[pose.x, pose.y, self._table_top_z + half_extents[2]],
         )
+
+    def _create_labels(self, scene: TabletopScene) -> None:
+        if self._config.mode != "pybullet-gui":
+            return
+
+        p = self._p
+        add_debug_label(
+            p,
+            "start",
+            (scene.start_region.center.x - 0.03, scene.start_region.center.y, 0.035),
+            color=(0.2, 0.9, 0.3),
+        )
+        add_debug_label(
+            p,
+            "goal",
+            (scene.goal_region.center.x - 0.02, scene.goal_region.center.y, 0.035),
+            color=(0.4, 0.5, 1.0),
+        )
+        add_debug_label(
+            p,
+            scene.block_name,
+            (scene.block_pose.x - 0.03, scene.block_pose.y, 0.06),
+            color=(1.0, 0.35, 0.35),
+        )
+        if scene.obstacle is not None:
+            add_debug_label(
+                p,
+                scene.obstacle.name,
+                (scene.obstacle.center.x - 0.02, scene.obstacle.center.y, 0.12),
+                color=(0.9, 0.9, 0.9),
+            )
 
     def _create_block(self, scene: TabletopScene) -> None:
         p = self._p
@@ -221,7 +245,11 @@ class PyBulletTabletopSimulator:
             ]
             p.resetBasePositionAndOrientation(self._tool_id, xyz, [0.0, 0.0, 0.0, 1.0])
             if carrying and self._block_id is not None:
-                block_xyz = [xyz[0], xyz[1], max(self._block_half_extents[2], xyz[2] - self._tool_radius)]
+                block_xyz = [
+                    xyz[0],
+                    xyz[1],
+                    max(self._block_half_extents[2], xyz[2] - self._tool_radius),
+                ]
                 p.resetBasePositionAndOrientation(
                     self._block_id,
                     block_xyz,
@@ -245,3 +273,25 @@ class PyBulletTabletopSimulator:
 
     def _tool_xyz(self, pose: Pose2D, z: float) -> list[float]:
         return [pose.x, pose.y, z]
+
+    def _camera_for_scene(self, scene: TabletopScene) -> DebugCameraPose:
+        points = [
+            scene.start_region.center,
+            scene.goal_region.center,
+            scene.block_pose,
+        ]
+        if scene.obstacle is not None:
+            points.append(scene.obstacle.center)
+
+        xs = [point.x for point in points]
+        ys = [point.y for point in points]
+        x_mid = 0.5 * (min(xs) + max(xs))
+        y_mid = 0.5 * (min(ys) + max(ys))
+        span = max(max(xs) - min(xs), max(ys) - min(ys))
+
+        return DebugCameraPose(
+            distance=max(0.72, 1.6 * span + 0.45),
+            yaw=42.0,
+            pitch=-58.0,
+            target=(x_mid, y_mid, 0.02),
+        )

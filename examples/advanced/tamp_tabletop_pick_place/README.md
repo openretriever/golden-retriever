@@ -35,6 +35,7 @@ Explicitly not included yet:
 - `motion_refiner.py` — lazy next-step refinement
 - `bridge.py` — adapters from the local tabletop domain into `retriever_tamp`
 - `pybullet_sim.py` — lightweight tabletop simulator for execution playback
+- `../shared/pybullet.py` — tiny shared PyBullet viewer/bootstrap helper distilled from older env code, without importing the older environment stack
 - `app.py` — end-to-end loop routed through `retriever_tamp.execution.TAMPController`
 
 ## Run
@@ -58,6 +59,9 @@ To open the PyBullet viewer:
 ```bash
 python examples/advanced/tamp_tabletop_pick_place/app.py --sim pybullet-gui
 ```
+
+The GUI path intentionally runs with a slower default step sleep so the motion is actually visible on desktop.
+Add `--final-hold-seconds 8` if you want the viewer to stay open briefly after the final pose.
 
 To use the repo-managed Pixi environment for the simulator-backed path:
 
