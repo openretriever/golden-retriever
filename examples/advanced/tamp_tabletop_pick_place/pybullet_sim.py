@@ -36,6 +36,9 @@ class PyBulletTabletopSimulator:
         if self._client_id < 0:
             raise RuntimeError("Failed to connect to PyBullet.")
 
+        if config.mode == "pybullet-gui":
+            self._configure_gui()
+
         self._table_top_z = 0.0
         self._block_half_extents = (0.02, 0.02, 0.02)
         self._tool_radius = 0.015
@@ -47,6 +50,16 @@ class PyBulletTabletopSimulator:
         self._held_object: str | None = None
 
         self._reset_world(scene)
+
+    def _configure_gui(self) -> None:
+        p = self._p
+        # Hide the default Bullet debug panes so the scene is actually visible.
+        p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
+        p.configureDebugVisualizer(p.COV_ENABLE_RGB_BUFFER_PREVIEW, 0)
+        p.configureDebugVisualizer(p.COV_ENABLE_DEPTH_BUFFER_PREVIEW, 0)
+        p.configureDebugVisualizer(p.COV_ENABLE_SEGMENTATION_MARK_PREVIEW, 0)
+        p.configureDebugVisualizer(p.COV_ENABLE_MOUSE_PICKING, 0)
+        time.sleep(0.15)
 
     def close(self) -> None:
         if self._client_id >= 0:
@@ -63,6 +76,9 @@ class PyBulletTabletopSimulator:
 
     def _reset_world(self, scene: TabletopScene) -> None:
         p = self._p
+        if self._config.mode == "pybullet-gui":
+            p.configureDebugVisualizer(p.COV_ENABLE_RENDERING, 0)
+
         p.resetSimulation()
         p.setGravity(0.0, 0.0, -9.81)
         p.setTimeStep(1.0 / 240.0)
@@ -74,12 +90,16 @@ class PyBulletTabletopSimulator:
         self._create_tool(scene)
 
         if self._config.mode == "pybullet-gui":
+            p.configureDebugVisualizer(p.COV_ENABLE_RENDERING, 1)
             p.resetDebugVisualizerCamera(
                 cameraDistance=0.8,
                 cameraYaw=45.0,
                 cameraPitch=-60.0,
                 cameraTargetPosition=[0.32, 0.0, 0.02],
             )
+            for _ in range(4):
+                p.stepSimulation()
+                time.sleep(self._config.gui_sleep_s)
 
     def _create_table(self) -> None:
         p = self._p
