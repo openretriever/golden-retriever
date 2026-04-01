@@ -34,7 +34,8 @@ Explicitly not included yet:
 - `task_planner.py` — tiny local A* over grounded operators
 - `motion_refiner.py` — lazy next-step refinement
 - `bridge.py` — adapters from the local tabletop domain into `retriever_tamp`
-- `pybullet_sim.py` — lightweight tabletop simulator for execution playback
+- `pybullet_sim.py` — lightweight tabletop simulator for execution playback with a real UR5 + suction visual
+- `ur5_arm.py` — tiny UR5+suction arm wrapper using the local legacy asset files, without importing the old environment stack
 - `../shared/pybullet.py` — tiny shared PyBullet viewer/bootstrap helper distilled from older env code, without importing the older environment stack
 - `app.py` — end-to-end loop routed through `retriever_tamp.execution.TAMPController`
 
@@ -85,7 +86,7 @@ pixi run -e tamp demo-tamp-tabletop-gui
 - `--sim pybullet-direct` runs the same loop in a headless PyBullet scene
 - `--sim pybullet-gui` shows the tabletop animation in a PyBullet window
 
-The current simulator is intentionally minimal: it animates the tabletop object and a simple tool marker. It is not yet a full robot-arm execution backend.
+The current simulator is intentionally thin: it animates a real UR5 arm with the legacy suction geometry, but the pickup/place behavior is still a deterministic demo path rather than a full contact-rich robot execution backend.
 
 ## Why this shape
 

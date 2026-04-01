@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import time
 from dataclasses import dataclass
 from typing import Literal
 
 from domain import GroundAction
 from motion_refiner import MotionSegment
 from scene import Pose2D, TabletopScene
+from ur5_arm import UR5SuctionArm, UR5SuctionArmConfig
 
 from examples.advanced.shared.pybullet import (
     DebugCameraPose,
@@ -40,12 +40,12 @@ class PyBulletTabletopSimulator:
 
         self._table_top_z = 0.0
         self._block_half_extents = (0.02, 0.02, 0.02)
-        self._tool_radius = 0.015
+        self._grasp_clearance = 0.002
         self._transit_z = 0.16
-        self._contact_z = self._table_top_z + self._block_half_extents[2] + self._tool_radius
+        self._contact_z = self._table_top_z + 2 * self._block_half_extents[2] + self._grasp_clearance
 
         self._block_id: int | None = None
-        self._tool_id: int | None = None
+        self._arm: UR5SuctionArm | None = None
         self._held_object: str | None = None
 
         self._reset_world(scene)
@@ -81,7 +81,7 @@ class PyBulletTabletopSimulator:
             self._create_regions(scene)
             self._create_block(scene)
             self._create_obstacle(scene)
-            self._create_tool(scene)
+            self._create_arm()
             self._create_labels(scene)
 
         if self._config.mode == "pybullet-gui":
@@ -199,19 +199,13 @@ class PyBulletTabletopSimulator:
             basePosition=[scene.obstacle.center.x, scene.obstacle.center.y, 0.07],
         )
 
-    def _create_tool(self, scene: TabletopScene) -> None:
-        p = self._p
-        collision = p.createCollisionShape(p.GEOM_SPHERE, radius=self._tool_radius)
-        visual = p.createVisualShape(
-            p.GEOM_SPHERE,
-            radius=self._tool_radius,
-            rgbaColor=[0.1, 0.45, 0.95, 1.0],
-        )
-        self._tool_id = p.createMultiBody(
-            baseMass=0.0,
-            baseCollisionShapeIndex=collision,
-            baseVisualShapeIndex=visual,
-            basePosition=self._tool_xyz(scene.block_pose, self._transit_z),
+    def _create_arm(self) -> None:
+        self._arm = UR5SuctionArm(
+            self._p,
+            UR5SuctionArmConfig(
+                path_steps=self._config.path_steps,
+                gui_sleep_s=self._config.gui_sleep_s if self._config.mode == "pybullet-gui" else 0.0,
+            ),
         )
 
     def _animate_pick(self, object_name: str, segment: MotionSegment, scene: TabletopScene) -> None:
@@ -233,31 +227,26 @@ class PyBulletTabletopSimulator:
         self._move_tool(segment.retreat_pose, self._transit_z, carrying=False)
 
     def _move_tool(self, target_pose: Pose2D, z: float, *, carrying: bool) -> None:
-        assert self._tool_id is not None
-        p = self._p
-        start_xyz = p.getBasePositionAndOrientation(self._tool_id)[0]
-        end_xyz = self._tool_xyz(target_pose, z)
-        for step in range(1, self._config.path_steps + 1):
-            alpha = step / self._config.path_steps
-            xyz = [
-                start_xyz[i] + alpha * (end_xyz[i] - start_xyz[i])
-                for i in range(3)
-            ]
-            p.resetBasePositionAndOrientation(self._tool_id, xyz, [0.0, 0.0, 0.0, 1.0])
-            if carrying and self._block_id is not None:
-                block_xyz = [
-                    xyz[0],
-                    xyz[1],
-                    max(self._block_half_extents[2], xyz[2] - self._tool_radius),
-                ]
-                p.resetBasePositionAndOrientation(
-                    self._block_id,
-                    block_xyz,
-                    [0.0, 0.0, 0.0, 1.0],
-                )
-            p.stepSimulation()
-            if self._config.mode == "pybullet-gui":
-                time.sleep(self._config.gui_sleep_s)
+        assert self._arm is not None
+        on_step = self._move_held_block if carrying and self._block_id is not None else None
+        self._arm.move_tip_linear(tuple(self._tool_xyz(target_pose, z)), on_step=on_step)
+
+    def _move_held_block(self, tip_xyz: tuple[float, float, float]) -> None:
+        if self._block_id is None:
+            return
+        block_xyz = [
+            tip_xyz[0],
+            tip_xyz[1],
+            max(
+                self._block_half_extents[2],
+                tip_xyz[2] - (self._block_half_extents[2] + self._grasp_clearance),
+            ),
+        ]
+        self._p.resetBasePositionAndOrientation(
+            self._block_id,
+            block_xyz,
+            [0.0, 0.0, 0.0, 1.0],
+        )
 
     def _set_block_pose(self, pose: Pose2D, z: float) -> None:
         if self._block_id is None:
@@ -276,6 +265,7 @@ class PyBulletTabletopSimulator:
 
     def _camera_for_scene(self, scene: TabletopScene) -> DebugCameraPose:
         points = [
+            Pose2D(0.0, 0.0),
             scene.start_region.center,
             scene.goal_region.center,
             scene.block_pose,
@@ -290,8 +280,8 @@ class PyBulletTabletopSimulator:
         span = max(max(xs) - min(xs), max(ys) - min(ys))
 
         return DebugCameraPose(
-            distance=max(0.72, 1.6 * span + 0.45),
-            yaw=42.0,
-            pitch=-58.0,
-            target=(x_mid, y_mid, 0.02),
+            distance=max(1.0, 1.8 * span + 0.55),
+            yaw=38.0,
+            pitch=-50.0,
+            target=(x_mid, y_mid, 0.08),
         )
