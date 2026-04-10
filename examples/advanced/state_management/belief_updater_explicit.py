@@ -2,7 +2,7 @@
 Explicit-state belief updater (state passed through the pipeline).
 
 Run:
-  pixi run python examples/advanced/state_management/belief_updater_explicit.py --steps 12 --dt 0.1
+  pixi run demo-belief-updater-explicit
 """
 
 from __future__ import annotations
@@ -59,17 +59,17 @@ class SensorSim(Flow[None, SensorOut]):
         return {"dt": self.dt}
 
     def init(self) -> None:
-        self.step = 0
+        self.step_idx = 0
         self.t_sim = 0.0
 
     def reset(self) -> None:
-        self.step = 0
+        self.step_idx = 0
         self.t_sim = 0.0
 
     def step(self, _):  # type: ignore[override]
-        self.step += 1
+        self.step_idx += 1
         self.t_sim += self.dt
-        reading = 0.8 + 0.2 * ((self.step % 6) - 3)
+        reading = 0.8 + 0.2 * ((self.step_idx % 6) - 3)
         return SensorOut(t_sim=self.t_sim, reading=reading)
 
 

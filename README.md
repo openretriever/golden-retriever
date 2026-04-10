@@ -14,6 +14,10 @@ pixi install
 pixi run demo-robotics-typing-catalog
 pixi run demo-synthetic-color-stepper
 pixi run demo-perception-record
+pixi run demo-perception-replay
+pixi run demo-stateful-reset
+pixi run demo-belief-updater-internal
+pixi run demo-belief-updater-explicit
 pixi run demo-perception-replay-to-belief
 pixi run demo-perception-belief-control
 pixi run demo-multi-agent-communication
@@ -24,7 +28,7 @@ pixi run -e tamp demo-tamp-tabletop
 
 - `src/golden_retriever`: system integrations, robot drivers, and domain-specific runtime glue.
 - `src/retriever_typing`: typed robotics and event/data helpers used by several advanced demos.
-- `examples/advanced`: runnable advanced demos with concrete launch points.
+- `examples/advanced`: runnable advanced demos with concrete launch points. Start with `examples/advanced/README.md`.
 - `examples/experimental`: heavier prototypes that are still valuable, but less polished.
 - `docs/robotics_typing_standard`: typed payload and data-profile notes for this repo.
 
@@ -33,6 +37,8 @@ pixi run -e tamp demo-tamp-tabletop
 - `examples/advanced/perception_debug`: synthetic perception, MCAP recording, and replay.
 - `examples/advanced/state_management`: internal state, reset behavior, and memory-oriented flows.
 - `examples/advanced/functional_wiring`: flow composition, fan-in/fan-out, staged builders, and sync policies.
+
+For the end-to-end perception -> memory -> composition walkthrough, see `docs/examples/perception_memory_composition_v1.md`.
 - `examples/advanced/multi_agent_communication`: a compact coordination/composition example.
 - `examples/advanced/tamp_tabletop_pick_place`: tabletop TAMP with a PyBullet-backed simulator.
 

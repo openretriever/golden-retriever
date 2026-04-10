@@ -34,3 +34,14 @@ pixi run demo-perception-replay
 ## Why this folder exists
 
 The heavier webcam/model demos are useful once hardware and model downloads are available. These examples give you the same debugging surface without requiring cameras, large models, or live APIs.
+
+
+## Next step: replay into memory
+
+After `demo-perception-record` / `demo-perception-replay`, continue with:
+
+```bash
+pixi run demo-perception-replay-to-belief
+```
+
+That gives you the same perception artifact flowing into a stateful belief update stage instead of stopping at detector outputs.
