@@ -6,6 +6,7 @@ Lightweight perception examples focused on deterministic stepping, breakpoints, 
 
 ```bash
 pixi run demo-synthetic-color-stepper
+pixi run -e golden-local demo-detection-window-stats
 pixi run demo-perception-record
 pixi run demo-perception-replay
 ```
@@ -22,7 +23,17 @@ pixi run demo-synthetic-color-stepper
 pixi run python examples/advanced/perception_debug/synthetic_color_stepper.py --steps 12 --dt 0.1
 ```
 
-### 2. Record + Replay Perception
+### 2. Windowed Detection Stats
+
+Add a temporal aggregation stage on top of the same synthetic detector:
+
+```bash
+pixi run -e golden-local demo-detection-window-stats
+```
+
+This is a good bridge between raw detections and the later memory-oriented examples because it introduces a small amount of temporal structure without needing a full stateful belief model. Use the local editable-core env for this one.
+
+### 3. Record + Replay Perception
 
 Record a short synthetic perception session to MCAP, then replay it through the same detector without re-running the source.
 

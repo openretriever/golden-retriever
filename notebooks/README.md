@@ -22,3 +22,6 @@ This notebook is a Jupytext mechanics demo for the current Golden environment. I
 
 Use the `.py` file for review in git. Regenerate the `.ipynb` only when you
 need a notebook UI such as Jupyter or Deepnote.
+
+
+If you want notebook code to run against the live sibling `retriever-mirror` checkout instead of the bundled wheel, use the `golden-local` environment described in the repo root README. The current notebook content remains a mechanics demo either way.
