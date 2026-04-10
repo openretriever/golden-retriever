@@ -1,53 +1,22 @@
-# Hierarchical VLA (Vision-Language-Action) Controller
+# Hierarchical VLA Controller
 
-This example demonstrates a **hierarchical control architecture** typical in advanced robotics. It simulates a "slow" Vision-Language Model (VLA) running on a high-latency loop and a "fast" low-level controller running at high frequency.
+A mixed-frequency perception/control demo: a slow VLA-style perception stage drives a faster low-level controller.
 
-## Key Concepts
-
-1.  **Mixed-Frequency Execution**:
-    -   **Perception (VLA)**: Runs at **~1 Hz**. It processes complex multimodal inputs (text/images) to generate a high-level "Goal Embedding".
-    -   **Control**: Runs at **~50 Hz**. It consumes the latest goal embedding and joint states to output high-frequency motor commands.
-
-2.  **Wrappers & Factories**:
-    -   Uses `retriever.lib.hf.from_hf` to wrap Hugging Face Transformers.
-    -   Demonstrates the **Factory Pattern** (`create_pipeline`) to ensure compatibility with multiprocessing backends like `dora`.
-
-3.  **Dataflow**:
-    -   Uses `Rate` adapters to manage the frequency difference.
-    -   The Control loop always receives the **latest** available perception output without blocking.
-
-## Architecture
-
-```mermaid
-graph TD
-    User[Command Generator] -->|Text Command| Perception[Perception VLA]
-    Perception -->|Goal Embedding (1 Hz)| Control[Control Policy]
-    Robot[Robot Driver] -->|Joint State (50 Hz)| Control
-    Control -->|Motor Torques (50 Hz)| Robot
-```
-
-## Running the Example
-
-This example requires the `torch` environment.
+## Quick Start
 
 ```bash
-# Run with default settings (dora backend, 15s duration)
+# Recommended local path
 pixi run -e torch demo-hierarchical-vla
 
-# Run with custom duration
-pixi run -e torch demo-hierarchical-vla --duration 30
+# Direct command with explicit backend choice
+pixi run -e torch python examples/advanced/hierarchical_vla/app.py --backend multiprocessing --duration 15
+pixi run -e torch python examples/advanced/hierarchical_vla/app.py --backend dora --duration 15
 ```
 
-## Implementation Details
+## What it demonstrates
 
--   **`perception.py`**: Wraps a `bert-tiny` model (simulating a VLA) using `from_hf`.
--   **`control.py`**: A PyTorch-based MLP policy that expects a goal vector and joint angles.
--   **`app.py`**: Orchestrates the graph using `connect` and `Latest` strategies.
+- slow perception and fast control in one graph
+- `Latest()` sampling between mismatched rates
+- wrapping model-style components behind Retriever flows
 
-## Notes on Backends
-
--   **Dora**: The default and recommended backend. It runs nodes in separate processes, simulating a real distributed robot OS. We use a top-level factory function for the pipeline to ensure it can be pickled and sent to the worker process.
-
-## Design Notes
-For the architectural decisions behind this example, see:
-- [Design Notes](DESIGN.md)
+`multiprocessing` is the easiest local backend. Use `dora` when you specifically want the distributed/runtime split.
