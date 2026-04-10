@@ -66,7 +66,7 @@ class SensorSim(Flow[None, SensorOut]):
         self.step = 0
         self.t_sim = 0.0
 
-    def run(self, _):  # type: ignore[override]
+    def step(self, _):  # type: ignore[override]
         self.step += 1
         self.t_sim += self.dt
         reading = 0.8 + 0.2 * ((self.step % 6) - 3)
@@ -94,7 +94,7 @@ class StateHolder(Flow[StateIn, StateOut]):
     def reset(self) -> None:
         self.state = self.initial
 
-    def run(self, input: StateIn) -> StateOut:
+    def step(self, input: StateIn) -> StateOut:
         if input.state is not None:
             self.state = input.state
         return StateOut(state=self.state)
@@ -110,7 +110,7 @@ class BeliefUpdater(Flow[UpdateIn, UpdateOut]):
     def init_config(self) -> dict:
         return {"alpha": self.alpha}
 
-    def run(self, input: UpdateIn) -> UpdateOut:
+    def step(self, input: UpdateIn) -> UpdateOut:
         if input.t_sim is None or input.reading is None or input.state is None:
             return UpdateOut()
 
@@ -129,7 +129,7 @@ class BeliefUpdater(Flow[UpdateIn, UpdateOut]):
 
 
 class Printer(Flow[UpdateOut, None]):
-    def run(self, input: UpdateOut) -> None:
+    def step(self, input: UpdateOut) -> None:
         if input.t_sim is None or input.estimate is None or input.confidence is None:
             return None
         print(

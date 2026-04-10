@@ -30,14 +30,14 @@ class Sensor(Flow[None, SensorData]):
     def init_config(self):
         return {"label": self._label}
 
-    def run(self, _) -> SensorData:
+    def step(self, _) -> SensorData:
         self._count += 1
         return SensorData(reading=f"{self._label}{self._count}")
 
 
 class Monitor(Flow[SensorData, None]):
     """Receives latest from any sensor."""
-    def run(self, inp: SensorData):
+    def step(self, inp: SensorData):
         print(f"  Monitor <- {inp.reading}")
 
 
@@ -80,13 +80,13 @@ class NumericSensor(Flow[None, NumericData]):
     def init_config(self):
         return {"value": self._value}
 
-    def run(self, _) -> NumericData:
+    def step(self, _) -> NumericData:
         return NumericData(value=self._value)
 
 
 class Aggregator(Flow[NumericData, None]):
     """Shows mean of shared buffer."""
-    def run(self, inp: NumericData):
+    def step(self, inp: NumericData):
         print(f"  Aggregator <- mean = {inp.value:.1f}")
 
 
