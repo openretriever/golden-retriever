@@ -1,0 +1,3 @@
+formats = "py:percent"
+cell_metadata_filter = "-all"
+notebook_metadata_filter = "kernelspec,language_info"

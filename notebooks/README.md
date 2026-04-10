@@ -1,0 +1,22 @@
+# Notebooks
+
+This repo keeps notebooks git-friendly by treating percent-format Python files as
+the source of truth.
+
+## Layout
+
+- `notebooks/src/*.py`: source notebooks in `py:percent` format
+- `notebooks/generated/*.ipynb`: generated notebook files for UI-based execution
+
+## Build the demo notebook
+
+```bash
+pixi run notebook-to-ipynb-demo
+```
+
+That command regenerates:
+
+- `notebooks/generated/retriever_demo.ipynb`
+
+Use the `.py` file for review in git. Regenerate the `.ipynb` only when you
+need a notebook UI such as Jupyter or Deepnote.
