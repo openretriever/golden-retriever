@@ -18,5 +18,7 @@ That command regenerates:
 
 - `notebooks/generated/retriever_demo.ipynb`
 
+This notebook is a Jupytext mechanics demo for the current Golden environment. It does not currently demonstrate Retriever Hub, because the bundled `retriever_dist` snapshot in this repo does not yet expose Hub.
+
 Use the `.py` file for review in git. Regenerate the `.ipynb` only when you
 need a notebook UI such as Jupyter or Deepnote.
