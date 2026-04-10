@@ -1,34 +1,19 @@
 # MCP Integration Examples
 
-This directory demonstrates three patterns for integrating Retriever with the **Model Context Protocol (MCP)**.
-
-All examples use a local, Python-based memory server (`server.py`) and a shared configuration (`mcp.json`).
+Three small examples showing different ways to integrate Retriever with a local MCP server.
 
 ## Setup
 
-First, ensure you have the `mcp` dependency installed (if managed via pixi):
-
-```bash
-pixi add mcp
-```
+Ensure the `mcp` dependency is installed in the active environment.
 
 ## Examples
 
-### 1. Utility Client (`01_utility_client.py`)
-This represents the simplest integration. The Flow holds an instance of `MCPClient` and calls it imperatively within `step()`.
-*   **Best for**: Quick prototypes, simple wrappers.
-*   **Run**: `pixi run python 01_utility_client.py`
+```bash
+pixi run python examples/advanced/mcp_examples/01_utility_client.py
+pixi run python examples/advanced/mcp_examples/02_reactive_flow.py
+pixi run python examples/advanced/mcp_examples/03_agent_flow.py
+```
 
-### 2. Reactive Flow (`02_reactive_flow.py`)
-This wraps the MCP server connection into a dedicated `MCPToolFlow`. Interactions happen via signal passing (`MCPRequest` -> `MCPResponse`).
-*   **Best for**: Complex, purely reactive pipelines where tool execution is a distinct phase.
-*   **Run**: `pixi run python 02_reactive_flow.py`
-
-### 3. Agentic Flow (`03_agent_flow.py`)
-This is the most advanced pattern. The `MCPAgentFlow` discovers available tools from the server and uses a simulated agent (or LLM) to decide which tools to call to achieve a goal.
-*   **Best for**: Autonomous agents.
-*   **Run**: `pixi run python 03_agent_flow.py`
-
-## Shared Components
-*   `server.py`: A local MCP server implementation (using `fastmcp`) that provides a simple key-value memory store.
-*   `mcp.json`: Configuration file defining how to connect to `server.py`.
+- `01_utility_client.py`: imperative client calls inside a flow.
+- `02_reactive_flow.py`: tool execution as a separate reactive stage.
+- `03_agent_flow.py`: an agent-style loop that selects MCP tools dynamically.
