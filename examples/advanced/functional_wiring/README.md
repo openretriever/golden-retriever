@@ -30,3 +30,13 @@ In this folder, `perception_belief_control_pipeline.py` uses exactly that patter
 - `attach_control_stage(...)` consumes that surfaced belief flow and adds the downstream controller slice.
 
 That keeps graph construction explicit without forcing a registry or hub dependency into every example.
+
+
+## Related stateful examples
+
+To see where this staged-builder pattern plugs into memory-bearing flows, continue with:
+
+- `../state_management/belief_updater_internal.py`
+- `../state_management/perception_replay_to_belief.py`
+
+Those examples provide the belief-state surface that can be composed into a downstream control slice.

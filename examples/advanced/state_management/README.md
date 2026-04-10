@@ -8,7 +8,7 @@ These examples focus on memory, reset behavior, and deterministic stepper workfl
 pixi run demo-stateful-reset
 pixi run demo-belief-updater-internal
 pixi run demo-perception-replay-to-belief
-pixi run python examples/advanced/state_management/belief_updater_explicit.py --steps 12 --dt 0.1
+pixi run demo-belief-updater-explicit
 ```
 
 ## Examples
@@ -19,3 +19,8 @@ pixi run python examples/advanced/state_management/belief_updater_explicit.py --
 - `perception_replay_to_belief.py`: replayed perception outputs feeding a stateful belief update stage.
 - `localization_eff.py`: effectful localization with deterministic sensor inputs.
 - `object_tracking_eff.py`: effectful multi-object tracking with deterministic detections.
+
+## Related guides
+
+- `../perception_debug/README.md` for the perception-side record/replay workflow.
+- `../functional_wiring/README.md` for the composition pattern used after belief state becomes stable.
