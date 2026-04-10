@@ -99,7 +99,7 @@ class SensorSim(Flow[None, SensorOut]):
         self.true_y = 0.0
         self.true_theta = 0.0
 
-    def run(self, _):  # type: ignore[override]
+    def step(self, _):  # type: ignore[override]
         self.step += 1
         self.t += self.dt
 
@@ -149,7 +149,7 @@ class LocalizationFlow(Flow[SensorOut, PoseOut]):
     def reset(self) -> None:
         self.state = PoseBelief()
 
-    def run(self, input: SensorOut) -> PoseOut:
+    def step(self, input: SensorOut) -> PoseOut:
         missing = input.dx is None or input.dy is None or input.dtheta is None or input.t is None
         if missing:
             return PoseOut()
@@ -188,7 +188,7 @@ class Printer(Flow[PoseOut, None]):
     def init(self) -> None:
         self.k = 0
 
-    def run(self, input: PoseOut) -> None:
+    def step(self, input: PoseOut) -> None:
         if input.x is None or input.y is None or input.t is None:
             return None
         self.k += 1

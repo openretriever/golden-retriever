@@ -114,7 +114,7 @@ class TaskGenerator(Flow[None, TaskSignal]):
         self._step = 0
         self._idx = 0
 
-    def run(self, _):  # type: ignore[override]
+    def step(self, _):  # type: ignore[override]
         self._step += 1
         if self._idx >= len(self._schedule):
             return TaskSignal()
@@ -165,7 +165,7 @@ class BiddingAgent(Flow[TaskSignal, BidSignal]):
     def reset(self) -> None:
         self._last_task_id = None
 
-    def run(self, task_signal: TaskSignal) -> BidSignal:
+    def step(self, task_signal: TaskSignal) -> BidSignal:
         task = task_signal.packet
         if (
             task is None
@@ -215,7 +215,7 @@ class Auctioneer(Flow[AuctionInput, AssignmentSignal]):
     def reset(self) -> None:
         self._assigned_task_ids = set()
 
-    def run(self, input: AuctionInput) -> AssignmentSignal:
+    def step(self, input: AuctionInput) -> AssignmentSignal:
         task = input.task
         if task is None or task.task_id is None:
             return AssignmentSignal()
@@ -289,7 +289,7 @@ class ExecutionAgent(Flow[AgentInput, ReportSignal]):
         zone_ticks = {"A": 0, "B": 2, "C": 4}
         return int(skill_ticks.get(skill or "", 7) + zone_ticks.get(zone or "", 1))
 
-    def run(self, input: AgentInput) -> ReportSignal:
+    def step(self, input: AgentInput) -> ReportSignal:
         task = input.task
         assignment = input.assignment
 
@@ -371,7 +371,7 @@ class MissionMonitor(Flow[MonitorInput, None]):
             progress_bucket,
         )
 
-    def run(self, input: MonitorInput) -> None:
+    def step(self, input: MonitorInput) -> None:
         task = input.task
         assignment = input.assignment
 

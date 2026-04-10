@@ -1,19 +1,10 @@
 # =============================================================================
-# Pixi Configuration (Golden / System Stack) — TEMPLATE
+# Pixi Configuration (Golden / System Stack)
 # =============================================================================
 #
-# This manifest is a companion to `pyproject-golden.toml`.
-#
-# Purpose
-# - The repo root `pixi.toml` is intentionally **runtime-only** (fast, minimal).
-# - This `pixi-golden.toml` captures the **full system** environment (models/robots/etc.)
-#   that will move to a separate golden repo.
-#
-# Important
-# - Pixi writes a `pixi.lock` next to the manifest. If you run Pixi with
-#   `--manifest-path pixi-golden.toml` in this repo, it will update `pixi.lock`.
-# - Recommended workflow today: copy this file into the future golden repo (or a
-#   separate working directory) before running `pixi install`.
+# This manifest captures the heavier Golden example/demo environment.
+# It installs the core `retriever` wheel from `retriever_dist/` plus the extra
+# libraries needed by the advanced system demos in this repo.
 #
 # =============================================================================
 
@@ -32,6 +23,7 @@ retriever = { path = "./retriever_dist/install/retriever-0.0.0-py3-none-any.whl"
 # Keep test tooling lightweight.
 pygments = "*"
 typing-extensions = "*"
+mcap = "*"
 
 # -----------------------------------------------------------------------------
 # Base system feature (the "golden" stack)
@@ -250,8 +242,9 @@ default = { features = ["py311"] }
 training = { features = ["py311", "training"] }
 mapper = { features = ["py311", "mapper"] }
 spot = { features = ["py311", "spot"] }
-vlm = { features = ["py311", "vlm_planning"] }
-llm = { features = ["py311", "vlm_planning"] }
+vlm = { features = ["py311", "golden", "vlm_planning"] }
+llm = { features = ["py311", "golden", "vlm_planning"] }
+torch = { features = ["py311", "golden", "cpu"] }
 twist2 = { features = ["py311", "twist2"] }
 cpu = { features = ["py311", "cpu"] }
 gpu = { features = ["py311", "gpu"] }
@@ -283,6 +276,28 @@ demo-robotics-typing-catalog = { cmd = "python examples/advanced/robotics_typing
 demo-robotics-typing-contract = { cmd = "python examples/advanced/robotics_typing_standard/compositional_contract_demo.py", env = { PYTHONPATH = "." } }
 demo-robotics-typing-boundary = "python examples/advanced/robotics_typing_standard/perception_to_control_boundary_demo.py"
 demo-tamp-tabletop    = { cmd = "python examples/advanced/tamp_tabletop_pick_place/app.py --sim pybullet-direct" }
+demo-synthetic-color-stepper = { cmd = "python examples/advanced/perception_debug/synthetic_color_stepper.py", env = { PYTHONPATH = "." } }
+demo-perception-record = { cmd = "python examples/advanced/perception_debug/record_replay_perception.py record --out logs/perception_debug.mcap --steps 12", env = { PYTHONPATH = "." } }
+demo-perception-replay = { cmd = "python examples/advanced/perception_debug/record_replay_perception.py replay --recording logs/perception_debug.mcap --steps 12", env = { PYTHONPATH = "." } }
+demo-stateful-reset = { cmd = "python examples/advanced/state_management/stateful_flow_reset.py", env = { PYTHONPATH = "." } }
+demo-belief-updater-internal = { cmd = "python examples/advanced/state_management/belief_updater_internal.py", env = { PYTHONPATH = "." } }
+demo-perception-replay-to-belief = { cmd = "python examples/advanced/state_management/perception_replay_to_belief.py --mode combined --steps 12", env = { PYTHONPATH = "." } }
+demo-perception-belief-control = { cmd = "python examples/advanced/functional_wiring/perception_belief_control_pipeline.py", env = { PYTHONPATH = "." } }
+demo-webcam-rerun = { cmd = "python examples/advanced/webcam_rerun/app.py", env = { PYTHONPATH = "." } }
+demo-hierarchical-vla = { cmd = "python examples/advanced/hierarchical_vla/app.py --backend multiprocessing", env = { PYTHONPATH = "." } }
+demo-llm-streaming = { cmd = "python -m examples.advanced.llm_streaming_rl.app", env = { PYTHONPATH = "." } }
+demo-vlm-gridworld = { cmd = "python -m examples.advanced.vlm_gridworld.app", env = { PYTHONPATH = "." } }
+demo-chaining = { cmd = "python examples/advanced/functional_wiring/chaining.py", env = { PYTHONPATH = "." } }
+demo-fanin = { cmd = "python examples/advanced/functional_wiring/fanin.py", env = { PYTHONPATH = "." } }
+demo-fanout = { cmd = "python examples/advanced/functional_wiring/fanout.py", env = { PYTHONPATH = "." } }
+demo-sync-policies = { cmd = "python examples/advanced/functional_wiring/sync_policies.py", env = { PYTHONPATH = "." } }
+demo-skill-switching = { cmd = "python -m examples.advanced.skill_switching.main", env = { PYTHONPATH = "." } }
+demo-skill-switching-fanin = { cmd = "python -m examples.advanced.skill_switching.main --fan-in", env = { PYTHONPATH = "." } }
+demo-pytorch-async = { cmd = "python examples/advanced/pytorch_cuda_async/app.py --backend multiprocessing", env = { PYTHONPATH = "." } }
+binding-controller-python = { cmd = "python examples/advanced/native_controller/app.py --backend python --duration 5", env = { PYTHONPATH = "." } }
+binding-controller-rust = { cmd = "python examples/advanced/native_controller/app.py --backend rust --duration 5", env = { PYTHONPATH = "." } }
+binding-controller-cpp = { cmd = "python examples/advanced/native_controller/app.py --backend cpp --duration 5", env = { PYTHONPATH = "." } }
+demo-multi-agent-communication = { cmd = "python examples/advanced/multi_agent_communication/app.py --mode step --steps 40 --dt 0.1", env = { PYTHONPATH = "." } }
 
 # Benchmarks
 benchmark-dora-suite = { cmd = "dora up && dora start dataflow_node.yml --attach", cwd = "experiments/benchmarks/dora_benchmark/dora-rs/py-latency" }

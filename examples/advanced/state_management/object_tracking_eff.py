@@ -71,7 +71,7 @@ class DetectionsSim(Flow[None, DetectionsOut]):
         self.step = 0
         self.t_sim = 0.0
 
-    def run(self, _):  # type: ignore[override]
+    def step(self, _):  # type: ignore[override]
         self.step += 1
         self.t_sim += self.dt
 
@@ -221,7 +221,7 @@ class TrackerFlow(Flow[DetectionsOut, TrackingOut]):
     def reset(self) -> None:
         self.state = TrackerState(tracks={}, next_id=1)
 
-    def run(self, input: DetectionsOut) -> TrackingOut:
+    def step(self, input: DetectionsOut) -> TrackingOut:
         if input.detections is None or input.dt is None or input.t_sim is None:
             return TrackingOut()
 
@@ -248,7 +248,7 @@ class Printer(Flow[TrackingOut, None]):
     def init(self) -> None:
         self.step = 0
 
-    def run(self, input: TrackingOut) -> None:
+    def step(self, input: TrackingOut) -> None:
         if input.tracks is None or input.t_sim is None:
             return None
         self.step += 1
