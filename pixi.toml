@@ -24,6 +24,7 @@ retriever = { path = "./retriever_dist/install/retriever-0.0.0-py3-none-any.whl"
 pygments = "*"
 typing-extensions = "*"
 mcap = "*"
+jupytext = "*"
 
 # -----------------------------------------------------------------------------
 # Base system feature (the "golden" stack)
@@ -299,6 +300,7 @@ binding-controller-python = { cmd = "python examples/advanced/native_controller/
 binding-controller-rust = { cmd = "python examples/advanced/native_controller/app.py --backend rust --duration 5", env = { PYTHONPATH = "." } }
 binding-controller-cpp = { cmd = "python examples/advanced/native_controller/app.py --backend cpp --duration 5", env = { PYTHONPATH = "." } }
 demo-multi-agent-communication = { cmd = "python examples/advanced/multi_agent_communication/app.py --mode step --steps 40 --dt 0.1", env = { PYTHONPATH = "." } }
+notebook-to-ipynb-demo = { cmd = "python -m jupytext --to ipynb notebooks/src/retriever_demo.py --output notebooks/generated/retriever_demo.ipynb", env = { PYTHONPATH = "." } }
 
 # Benchmarks
 benchmark-dora-suite = { cmd = "dora up && dora start dataflow_node.yml --attach", cwd = "experiments/benchmarks/dora_benchmark/dora-rs/py-latency" }

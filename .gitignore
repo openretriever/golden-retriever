@@ -47,6 +47,7 @@ compile_commands.json
 
 # Data
 *.mcap
+notebooks/generated/*.ipynb
 TWIST2/
 viz-*.html
 
