@@ -21,7 +21,6 @@ pixi run demo-belief-updater-explicit
 pixi run demo-perception-replay-to-belief
 pixi run demo-perception-belief-control
 pixi run demo-multi-agent-communication
-pixi run notebook-to-ipynb-demo
 pixi run -e tamp demo-tamp-tabletop
 ```
 
@@ -53,3 +52,12 @@ pixi run demo-robotics-typing-boundary
 ```
 
 For runnable type/data examples, start with `examples/advanced/robotics_typing_standard/README.md`.
+
+## Notebook workflow
+
+```bash
+pixi run notebook-to-ipynb-demo
+```
+
+This task regenerates the git-friendly Jupytext demo notebook. It is a notebook build utility, not a system demo launch point.
+

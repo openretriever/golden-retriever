@@ -29,7 +29,7 @@ pixi run demo-perception-belief-control
 - `state_management/README.md`: state, reset, and belief updates.
 - `functional_wiring/README.md`: composition, fan-in/fan-out, and surfaced builders.
 - `robotics_typing_standard/README.md`: typed payload and data-spec demos.
-- `notebooks/README.md`: git-friendly notebook workflow for turning reviewed `.py` sources into `.ipynb` files.
+- `notebooks/README.md`: git-friendly notebook workflow for a small mechanics demo; keep the main runnable progression in the advanced example families above.
 
 ## Integrated walkthrough
 
