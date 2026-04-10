@@ -13,18 +13,25 @@ channels = ["https://prefix.dev/conda-forge"]
 platforms = ["osx-arm64", "linux-64"]
 
 [pypi-dependencies]
-# Temporary: install this monorepo editable, but keep core extras only.
-# In the split, this becomes the `retriever-golden` package in the golden repo.
-retriever = { path = "./retriever_dist/install/retriever-0.0.0-py3-none-any.whl", editable = false, extras = [
-    "dora",
-    "demo",
-] }
-
 # Keep test tooling lightweight.
 pygments = "*"
 typing-extensions = "*"
 mcap = "*"
 jupytext = "*"
+
+[feature.bundled_core.pypi-dependencies]
+# Public/default path: use the bundled retriever wheel checked into retriever_dist/.
+retriever = { path = "./retriever_dist/install/retriever-0.0.0-py3-none-any.whl", editable = false, extras = [
+    "dora",
+    "demo",
+] }
+
+[feature.local_core.pypi-dependencies]
+# Local debugging path: point Golden at a sibling retriever-mirror checkout.
+retriever = { path = "../retriever-mirror", editable = true, extras = [
+    "dora",
+    "demo",
+] }
 
 # -----------------------------------------------------------------------------
 # Base system feature (the "golden" stack)
@@ -239,20 +246,23 @@ demo-tamp-tabletop-nosim = { cmd = "python examples/advanced/tamp_tabletop_pick_
 # Environments
 # -----------------------------------------------------------------------------
 [environments]
-default = { features = ["py311"] }
-training = { features = ["py311", "training"] }
-mapper = { features = ["py311", "mapper"] }
-spot = { features = ["py311", "spot"] }
-vlm = { features = ["py311", "golden", "vlm_planning"] }
-llm = { features = ["py311", "golden", "vlm_planning"] }
-torch = { features = ["py311", "golden", "cpu"] }
-twist2 = { features = ["py311", "twist2"] }
-cpu = { features = ["py311", "cpu"] }
-gpu = { features = ["py311", "gpu"] }
-ros = { features = ["ros"] }
-roboplan = { features = ["roboplan"] }
-golden = { features = ["py311", "golden"] }
-tamp = { features = ["py311", "tamp"] }
+default = { features = ["py311", "bundled_core"] }
+training = { features = ["py311", "bundled_core", "training"] }
+mapper = { features = ["py311", "bundled_core", "mapper"] }
+spot = { features = ["py311", "bundled_core", "spot"] }
+vlm = { features = ["py311", "bundled_core", "golden", "vlm_planning"] }
+llm = { features = ["py311", "bundled_core", "golden", "vlm_planning"] }
+torch = { features = ["py311", "bundled_core", "golden", "cpu"] }
+twist2 = { features = ["py311", "bundled_core", "twist2"] }
+cpu = { features = ["py311", "bundled_core", "cpu"] }
+gpu = { features = ["py311", "bundled_core", "gpu"] }
+ros = { features = ["bundled_core", "ros"] }
+roboplan = { features = ["bundled_core", "roboplan"] }
+golden = { features = ["py311", "bundled_core", "golden"] }
+tamp = { features = ["py311", "bundled_core", "tamp"] }
+local-core = { features = ["py311", "local_core"] }
+golden-local = { features = ["py311", "local_core", "golden"] }
+tamp-local = { features = ["py311", "local_core", "tamp"] }
 
 [feature.vlm_planning.tasks]
 # demo-highlevel-planning = { cmd = "python examples/experimental/closed_loop_planning/pipelines/demo_highlevel_planning.py" }
@@ -280,11 +290,14 @@ demo-tamp-tabletop    = { cmd = "python examples/advanced/tamp_tabletop_pick_pla
 demo-synthetic-color-stepper = { cmd = "python examples/advanced/perception_debug/synthetic_color_stepper.py", env = { PYTHONPATH = "." } }
 demo-perception-record = { cmd = "python examples/advanced/perception_debug/record_replay_perception.py record --out logs/perception_debug.mcap --steps 12", env = { PYTHONPATH = "." } }
 demo-perception-replay = { cmd = "python examples/advanced/perception_debug/record_replay_perception.py replay --recording logs/perception_debug.mcap --steps 12", env = { PYTHONPATH = "." } }
+demo-detection-window-stats = { cmd = "python examples/advanced/perception_debug/detection_window_stats.py --backend multiprocessing --duration 3", env = { PYTHONPATH = "." } }
 demo-stateful-reset = { cmd = "python examples/advanced/state_management/stateful_flow_reset.py", env = { PYTHONPATH = "." } }
 demo-belief-updater-internal = { cmd = "python examples/advanced/state_management/belief_updater_internal.py", env = { PYTHONPATH = "." } }
 demo-belief-updater-explicit = { cmd = "python examples/advanced/state_management/belief_updater_explicit.py --steps 12 --dt 0.1", env = { PYTHONPATH = "." } }
+demo-stateful-replanning = { cmd = "python examples/advanced/state_management/stateful_replanning.py --steps 10 --dt 0.2", env = { PYTHONPATH = "." } }
 demo-perception-replay-to-belief = { cmd = "python examples/advanced/state_management/perception_replay_to_belief.py --mode combined --steps 12", env = { PYTHONPATH = "." } }
 demo-perception-belief-control = { cmd = "python examples/advanced/functional_wiring/perception_belief_control_pipeline.py", env = { PYTHONPATH = "." } }
+demo-composable-pipelines = { cmd = "python examples/advanced/core_composition/composable_pipelines.py", env = { PYTHONPATH = "." } }
 demo-webcam-rerun = { cmd = "python examples/advanced/webcam_rerun/app.py", env = { PYTHONPATH = "." } }
 demo-hierarchical-vla = { cmd = "python examples/advanced/hierarchical_vla/app.py --backend multiprocessing", env = { PYTHONPATH = "." } }
 demo-llm-streaming = { cmd = "python -m examples.advanced.llm_streaming_rl.app", env = { PYTHONPATH = "." } }

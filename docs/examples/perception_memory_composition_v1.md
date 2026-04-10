@@ -66,10 +66,38 @@ This uses the staged-builder pattern from `examples/advanced/functional_wiring/`
 - surface the belief flow as the next stage boundary
 - attach a downstream control slice explicitly
 
-## 6. Where to go next
+## 6. Add one more perception surface: windowed stats
 
-If you want more depth after this progression:
-- `examples/advanced/perception_debug/README.md` for more perception-first debugging workflows
-- `examples/advanced/state_management/README.md` for memory/state patterns
-- `examples/advanced/functional_wiring/README.md` for composition patterns
-- `examples/advanced/tamp_tabletop_pick_place/README.md` for a larger integrated planning/execution example
+If you want one more perception-side debugging surface before moving on, run:
+
+```bash
+pixi run -e golden-local demo-detection-window-stats
+```
+
+This keeps the same deterministic synthetic camera source, but adds a windowed aggregation stage so you can see how temporal statistics sit between raw detections and downstream memory. Right now it expects the local editable-core env because the bundled wheel in `retriever_dist` still uses the older startup semantics.
+
+## 7. Add one more memory surface: stateful replanning
+
+To see internal planner memory without bringing in a full robot stack, run:
+
+```bash
+pixi run -e golden-local demo-stateful-replanning
+```
+
+This example keeps state inside the replanner and emits plan updates only when obstacle events occur or clear. It also currently expects the local editable-core env so the runtime startup path matches the reset-first contract.
+
+## 8. Next: newer core composition surfaces
+
+To explore the newer registry-backed composition surfaces from the current `retriever-mirror` core, switch to the local editable-core env and run:
+
+```bash
+pixi install -e golden-local
+pixi run -e golden-local demo-composable-pipelines
+```
+
+That example demonstrates:
+- surfaced input injection into a named internal stage
+- replacing an internal stage after pipeline construction
+- wrapping a registered pipeline back into a larger graph via `build_pipeline_flow(...)`
+
+For a dedicated walkthrough of that surface, continue with `docs/examples/core_composition_surfaces_v1.md`.
