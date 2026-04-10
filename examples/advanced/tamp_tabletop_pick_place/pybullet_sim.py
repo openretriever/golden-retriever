@@ -24,7 +24,7 @@ SimMode = Literal["pybullet-direct", "pybullet-gui"]
 @dataclass(frozen=True)
 class SimConfig:
     mode: SimMode = "pybullet-direct"
-    path_steps: int = 32
+    path_steps: int = 48
     gui_sleep_s: float = 1.0 / 60.0
     gui_warmup_frames: int = 18
 

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
-from math import pi
 from pathlib import Path
 from typing import Callable
 
@@ -30,8 +29,9 @@ UR5_READY_JOINTS = np.array(
 
 @dataclass(frozen=True)
 class UR5SuctionArmConfig:
-    path_steps: int = 32
+    path_steps: int = 48
     gui_sleep_s: float = 1.0 / 60.0
+    control_substeps: int = 1
 
 
 class UR5SuctionArm:
@@ -39,26 +39,15 @@ class UR5SuctionArm:
         self._p = p
         self._config = config
         self._joint_indices = [2, 3, 4, 5, 6, 7]
-        self._tool_link_index = 10
-        self._tool_parent_link = 9
+        self._tool0_link_index = 9
+        self._tool_tip_link_index = 10
         self._downward_orientation = p.getQuaternionFromEuler((0.0, 0.0, 0.0))
 
         self._robot_id = self._load_urdf_strict(UR5_URDF_PATH, useFixedBase=True)
-        self._suction_base_id = self._load_urdf_strict(
-            SUCTION_BASE_URDF_PATH,
-            [0.487, 0.109, 0.438],
-            p.getQuaternionFromEuler((pi, 0.0, 0.0)),
-        )
-        self._suction_head_id = self._load_urdf_strict(
-            SUCTION_HEAD_URDF_PATH,
-            [0.487, 0.109, 0.347],
-            p.getQuaternionFromEuler((pi, 0.0, 0.0)),
-        )
-        self._attach_suction_geometry()
+        self._suction_base_id = self._load_visual_urdf(SUCTION_BASE_URDF_PATH)
+        self._suction_head_id = self._load_visual_urdf(SUCTION_HEAD_URDF_PATH)
         self.reset_ready_pose()
-        tcp_xyz = self.current_tcp_xyz()
-        tip_xyz = self.current_suction_tip_xyz()
-        self._tcp_to_tip_offset = tuple(tip_xyz[i] - tcp_xyz[i] for i in range(3))
+        self._sync_tool_visuals()
 
     @property
     def robot_id(self) -> int:
@@ -69,6 +58,7 @@ class UR5SuctionArm:
             self._p.resetJointState(self._robot_id, joint_index, float(value))
         for joint_index, value in zip(self._joint_indices, UR5_READY_JOINTS):
             self._p.resetJointState(self._robot_id, joint_index, float(value))
+        self._sync_tool_visuals()
 
     def move_tip_linear(
         self,
@@ -76,37 +66,44 @@ class UR5SuctionArm:
         *,
         on_step: Callable[[tuple[float, float, float]], None] | None = None,
     ) -> None:
-        start_xyz = self.current_suction_tip_xyz()
-        end_xyz = list(target_xyz)
+        start_xyz = np.array(self.current_suction_tip_xyz(), dtype=float)
+        target_xyz_arr = np.array(target_xyz, dtype=float)
+
         for step in range(1, self._config.path_steps + 1):
             alpha = step / self._config.path_steps
-            xyz = [
-                start_xyz[i] + alpha * (end_xyz[i] - start_xyz[i])
-                for i in range(3)
-            ]
-            self._set_tip_pose(tuple(xyz))
-            if on_step is not None:
-                on_step(tuple(xyz))
-            self._p.stepSimulation()
-            if self._config.gui_sleep_s > 0.0:
-                time.sleep(self._config.gui_sleep_s)
+            smooth_alpha = alpha * alpha * (3.0 - 2.0 * alpha)
+            waypoint_xyz = start_xyz + smooth_alpha * (target_xyz_arr - start_xyz)
+            joint_targets = self._solve_tip_ik(tuple(waypoint_xyz.tolist()))
+            for joint_index, value in zip(self._joint_indices, joint_targets):
+                self._p.resetJointState(self._robot_id, joint_index, float(value))
+
+            for _ in range(self._config.control_substeps):
+                self._p.stepSimulation()
+                self._sync_tool_visuals()
+                if on_step is not None:
+                    on_step(tuple(self.current_suction_tip_xyz()))
+                if self._config.gui_sleep_s > 0.0:
+                    time.sleep(self._config.gui_sleep_s)
+
+    def current_joint_positions(self) -> np.ndarray:
+        return np.array(
+            [self._p.getJointState(self._robot_id, joint_index)[0] for joint_index in self._joint_indices],
+            dtype=float,
+        )
 
     def current_tcp_xyz(self) -> list[float]:
-        link_state = self._p.getLinkState(self._robot_id, self._tool_link_index)
-        return list(link_state[4])
+        return self.current_suction_tip_xyz()
+
+    def current_tcp_orientation(self) -> tuple[float, float, float, float]:
+        return self._link_orientation(self._tool_tip_link_index)
 
     def current_suction_tip_xyz(self) -> list[float]:
-        link_state = self._p.getLinkState(self._suction_head_id, 0)
-        return list(link_state[4])
+        return self._link_position(self._tool_tip_link_index)
 
-    def _set_tip_pose(self, xyz: tuple[float, float, float]) -> None:
-        tcp_xyz = tuple(xyz[i] - self._tcp_to_tip_offset[i] for i in range(3))
-        self._set_tcp_pose(tcp_xyz)
-
-    def _set_tcp_pose(self, xyz: tuple[float, float, float]) -> None:
+    def _solve_tip_ik(self, xyz: tuple[float, float, float]) -> np.ndarray:
         joint_targets = self._p.calculateInverseKinematics(
             bodyUniqueId=self._robot_id,
-            endEffectorLinkIndex=self._tool_link_index,
+            endEffectorLinkIndex=self._tool_tip_link_index,
             targetPosition=xyz,
             targetOrientation=self._downward_orientation,
             lowerLimits=[-3 * np.pi / 2, -2.3562, -17, -17, -17, -17],
@@ -116,32 +113,67 @@ class UR5SuctionArm:
             maxNumIterations=100,
             residualThreshold=1e-5,
         )
-        for joint_index, value in zip(self._joint_indices, joint_targets[:6]):
-            self._p.resetJointState(self._robot_id, joint_index, float(value))
+        return np.array(joint_targets[:6], dtype=float)
 
-    def _attach_suction_geometry(self) -> None:
-        base_constraint = self._p.createConstraint(
-            parentBodyUniqueId=self._robot_id,
-            parentLinkIndex=self._tool_parent_link,
-            childBodyUniqueId=self._suction_base_id,
-            childLinkIndex=-1,
-            jointType=self._p.JOINT_FIXED,
-            jointAxis=(0, 0, 0),
-            parentFramePosition=(0, 0, 0),
-            childFramePosition=(0, 0, 0.01),
+    def _load_visual_urdf(self, path: Path) -> int:
+        body_id = self._load_urdf_strict(path, useFixedBase=True)
+        for link_index in range(-1, self._p.getNumJoints(body_id)):
+            self._p.setCollisionFilterGroupMask(body_id, link_index, 0, 0)
+        return body_id
+
+    def _sync_tool_visuals(self) -> None:
+        tool0_xyz = np.array(self._link_position(self._tool0_link_index), dtype=float)
+        tip_xyz = np.array(self._link_position(self._tool_tip_link_index), dtype=float)
+        direction = tip_xyz - tool0_xyz
+        norm = float(np.linalg.norm(direction))
+        if norm <= 1e-8:
+            direction = np.array([0.0, 0.0, -1.0], dtype=float)
+        else:
+            direction = direction / norm
+
+        orientation = self._quat_from_z_axis(direction)
+        head_base_xyz = (tip_xyz - direction * 0.029).tolist()
+
+        self._p.resetBasePositionAndOrientation(
+            self._suction_base_id,
+            tool0_xyz.tolist(),
+            orientation,
         )
-        head_constraint = self._p.createConstraint(
-            parentBodyUniqueId=self._robot_id,
-            parentLinkIndex=self._tool_parent_link,
-            childBodyUniqueId=self._suction_head_id,
-            childLinkIndex=-1,
-            jointType=self._p.JOINT_FIXED,
-            jointAxis=(0, 0, 0),
-            parentFramePosition=(0, 0, 0),
-            childFramePosition=(0, 0, -0.08),
+        self._p.resetBasePositionAndOrientation(
+            self._suction_head_id,
+            head_base_xyz,
+            orientation,
         )
-        self._p.changeConstraint(base_constraint, maxForce=50)
-        self._p.changeConstraint(head_constraint, maxForce=50)
+
+    def _link_position(self, link_index: int) -> list[float]:
+        link_state = self._p.getLinkState(self._robot_id, link_index)
+        return list(link_state[4])
+
+    def _link_orientation(self, link_index: int) -> tuple[float, float, float, float]:
+        link_state = self._p.getLinkState(self._robot_id, link_index)
+        return tuple(link_state[5])
+
+    def _quat_from_z_axis(self, direction: np.ndarray) -> tuple[float, float, float, float]:
+        z_axis = np.array([0.0, 0.0, 1.0], dtype=float)
+        direction = direction / np.linalg.norm(direction)
+        dot = float(np.clip(np.dot(z_axis, direction), -1.0, 1.0))
+
+        if dot >= 1.0 - 1e-8:
+            return (0.0, 0.0, 0.0, 1.0)
+        if dot <= -1.0 + 1e-8:
+            return tuple(self._p.getQuaternionFromEuler((np.pi, 0.0, 0.0)))
+
+        axis = np.cross(z_axis, direction)
+        axis = axis / np.linalg.norm(axis)
+        angle = float(np.arccos(dot))
+        half_angle = angle / 2.0
+        sin_half = float(np.sin(half_angle))
+        return (
+            float(axis[0] * sin_half),
+            float(axis[1] * sin_half),
+            float(axis[2] * sin_half),
+            float(np.cos(half_angle)),
+        )
 
     def _load_urdf_strict(self, path: Path, *args, **kwargs) -> int:
         body_id = self._p.loadURDF(str(path), *args, **kwargs)
