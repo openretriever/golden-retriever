@@ -11,7 +11,7 @@ import cv2
 import numpy as np
 
 from retriever.core.flow import Flow
-from retriever.types.core_types import RGBImage, RGBDImage, ExecutionTimer
+from retriever_typing import ExecutionTimer, RGBDImage, RGBImage
 from retriever import flow
 
 
@@ -64,8 +64,7 @@ class CameraFlow(Flow[None, RGBImage]):
         return RGBImage(
             data=rgb_frame,
             timestamp=time.time(),
-            height=rgb_frame.shape[0],
-            width=rgb_frame.shape[1]
+            camera_id=str(self.camera_id),
         )
 
 
@@ -106,8 +105,7 @@ class RGBCameraFlow(CameraFlow):
         return RGBImage(
             data=rgb_frame,
             timestamp=time.time(),
-            height=rgb_frame.shape[0],
-            width=rgb_frame.shape[1]
+            camera_id=str(self.camera_id),
         )
 
 
@@ -139,11 +137,10 @@ class DepthCameraFlow(Flow[None, RGBDImage]):
         depth_frame = np.ones((rgb_frame.shape[0], rgb_frame.shape[1]), dtype=np.float32) * 1000.0
         
         return RGBDImage(
-            rgb_data=rgb_frame,
-            depth_data=depth_frame,
+            rgb=rgb_frame,
+            depth=depth_frame,
             timestamp=time.time(),
-            height=rgb_frame.shape[0],
-            width=rgb_frame.shape[1]
+            camera_id=str(self.camera_id),
         )
 
 
@@ -180,8 +177,7 @@ class ImageProcessingFlow(Flow[RGBImage, RGBImage]):
         return RGBImage(
             data=processed,
             timestamp=time.time(),
-            height=processed.shape[0],
-            width=processed.shape[1]
+            camera_id=image.camera_id,
         )
 
 

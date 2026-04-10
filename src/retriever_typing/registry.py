@@ -8,6 +8,7 @@ with Retriever's Flow system and Dora code generation.
 from typing import Dict, Type, Any, Optional, Callable
 from dataclasses import dataclass
 import inspect
+from importlib import import_module
 
 @dataclass
 class TypeInfo:
@@ -118,6 +119,29 @@ class TypeRegistry:
 
 # Global registry instance
 _global_registry = TypeRegistry()
+_did_bootstrap_builtin_types = False
+
+
+def _bootstrap_builtin_types() -> None:
+    """Import built-in type modules once so registry lookups are stable."""
+    global _did_bootstrap_builtin_types
+    if _did_bootstrap_builtin_types:
+        return
+
+    root_package = __name__.split(".", 1)[0]
+    modules = (
+        f"{root_package}.core_types",
+        f"{root_package}.vision_types",
+        f"{root_package}.robotics_types",
+        f"{root_package}.v1",
+    )
+    for module_name in modules:
+        try:
+            import_module(module_name)
+        except Exception:
+            # Keep lazy bootstrap best-effort; missing optional modules should not hard fail.
+            pass
+    _did_bootstrap_builtin_types = True
 
 def register_type(name_or_class=None, **kwargs):
     """
@@ -178,12 +202,7 @@ def get_type(name: str) -> Type:
     """
     info = _global_registry.get_type_info(name)
     if info is None:
-        # Lazy-load built-in core types on demand.
-        # This avoids importing optional heavy deps (e.g., numpy) at `import retriever` time.
-        try:
-            import retriever.types.core_types  # noqa: F401
-        except Exception:
-            pass
+        _bootstrap_builtin_types()
         info = _global_registry.get_type_info(name)
     if info is None:
         available = list(_global_registry._types.keys())

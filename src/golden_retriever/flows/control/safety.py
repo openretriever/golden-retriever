@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Dict
 
 from retriever.core.flow import Flow
-from retriever.types.core_types import Status
+from retriever_typing import Status
 from retriever.robots.connection_base import RobotConnection
 
 
@@ -42,4 +42,3 @@ class EmergencyStopFlow(Flow[Any, Status]):
         if result.get("ok"):
             return Status(state="completed", message="ok")
         return Status(state="failed", message=str(result.get("error", "unknown error")))
-
