@@ -227,6 +227,22 @@ demo-ik           = { cmd = "python examples/advanced/motion_planning/ik_example
 demo-motion-track = { cmd = "python examples/advanced/motion_planning/motion_tracking_example.py", env = { PYTHONPATH = "." } }
 
 # -----------------------------------------------------------------------------
+# Optional: TAMP tabletop environment
+# -----------------------------------------------------------------------------
+[feature.tamp]
+platforms = ["linux-64", "osx-arm64"]
+
+[feature.tamp.dependencies]
+pybullet = "*"
+
+[feature.tamp.pypi-dependencies]
+"retriever-tamp" = { path = "./packages/retriever-tamp", editable = true }
+
+[feature.tamp.tasks]
+demo-tamp-tabletop-gui = { cmd = "python examples/advanced/tamp_tabletop_pick_place/app.py --sim pybullet-gui --final-hold-seconds 8" }
+demo-tamp-tabletop-nosim = { cmd = "python examples/advanced/tamp_tabletop_pick_place/app.py --sim none --no-obstacle" }
+
+# -----------------------------------------------------------------------------
 # Environments
 # -----------------------------------------------------------------------------
 [environments]
@@ -242,6 +258,7 @@ gpu = { features = ["py311", "gpu"] }
 ros = { features = ["ros"] }
 roboplan = { features = ["roboplan"] }
 golden = { features = ["py311", "golden"] }
+tamp = { features = ["py311", "tamp"] }
 
 [feature.vlm_planning.tasks]
 # demo-highlevel-planning = { cmd = "python examples/experimental/closed_loop_planning/pipelines/demo_highlevel_planning.py" }
@@ -265,6 +282,7 @@ demo-multirate        = { cmd = "python -m examples.tutorial.e_resource_and_sync
 demo-robotics-typing-catalog = { cmd = "python examples/advanced/robotics_typing_standard/type_catalog_demo.py", env = { PYTHONPATH = "." } }
 demo-robotics-typing-contract = { cmd = "python examples/advanced/robotics_typing_standard/compositional_contract_demo.py", env = { PYTHONPATH = "." } }
 demo-robotics-typing-boundary = "python examples/advanced/robotics_typing_standard/perception_to_control_boundary_demo.py"
+demo-tamp-tabletop    = { cmd = "python examples/advanced/tamp_tabletop_pick_place/app.py --sim pybullet-direct" }
 
 # Benchmarks
 benchmark-dora-suite = { cmd = "dora up && dora start dataflow_node.yml --attach", cwd = "experiments/benchmarks/dora_benchmark/dora-rs/py-latency" }

@@ -1,0 +1,15 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "retriever-tamp"
+version = "0.0.0"
+description = "Predicators-style TAMP kernel for GoldenRetriever"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [{ name = "Retriever Team" }]
+dependencies = []
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/retriever_tamp"]
