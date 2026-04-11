@@ -76,7 +76,15 @@ For runnable type/data examples, start with `examples/advanced/robotics_typing_s
 
 ```bash
 pixi run notebook-to-ipynb-demo
+pixi run notebook-to-ipynb-hub
 ```
 
-This task regenerates the git-friendly Jupytext demo notebook. It is a notebook build utility, not a system demo launch point.
+These tasks regenerate the git-friendly Jupytext notebooks. `retriever_demo` is a mechanics notebook for the packaged Golden environment. `hub_demo` is the Hub-first notebook and is meant to be *run* from the local editable-core env:
+
+```bash
+pixi install -e golden-local
+pixi run -e golden-local demo-hub-notebook-source
+```
+
+The Hub notebook reads published module refs from environment variables instead of hardcoding any private or organization-specific module names.
 

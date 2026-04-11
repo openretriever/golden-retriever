@@ -37,3 +37,15 @@ Use the older folder first if you are learning the runtime. Use the newer folder
 - `examples/advanced/perception_debug/detection_window_stats.py`: add a temporal aggregation stage to a deterministic perception pipeline
 - `examples/advanced/state_management/stateful_replanning.py`: add internal planner memory and change-only event emission
 - `examples/advanced/functional_wiring/perception_belief_control_pipeline.py`: compose a belief stage into downstream control without relying on the registry-backed layer
+
+## Notebook version
+
+If you want the same local editable-core path in notebook form, build and run the Hub-first notebook:
+
+```bash
+pixi run notebook-to-ipynb-hub
+pixi install -e golden-local
+pixi run -e golden-local demo-hub-notebook-source
+```
+
+The notebook lives at `notebooks/src/hub_demo.py` and stays parameterized by environment variables so the repo does not hardcode any private or organization-specific published module refs.

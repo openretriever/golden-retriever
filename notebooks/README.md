@@ -8,20 +8,30 @@ the source of truth.
 - `notebooks/src/*.py`: source notebooks in `py:percent` format
 - `notebooks/generated/*.ipynb`: generated notebook files for UI-based execution
 
-## Build the demo notebook
+## Build the notebooks
 
 ```bash
 pixi run notebook-to-ipynb-demo
+pixi run notebook-to-ipynb-hub
 ```
 
-That command regenerates:
+Those commands regenerate:
 
 - `notebooks/generated/retriever_demo.ipynb`
+- `notebooks/generated/hub_demo.ipynb`
 
-This notebook is a Jupytext mechanics demo for the current Golden environment. It does not currently demonstrate Retriever Hub, because the bundled `retriever_dist` snapshot in this repo does not yet expose Hub.
+`retriever_demo.ipynb` stays a small Jupytext mechanics demo for the packaged Golden environment.
 
-Use the `.py` file for review in git. Regenerate the `.ipynb` only when you
-need a notebook UI such as Jupyter or Deepnote.
+`hub_demo.ipynb` is the Hub-first notebook. It is intended for the local editable-core path, not the bundled wheel. Run it from the `golden-local` environment so `retriever` resolves from the sibling `../retriever-mirror` checkout:
 
+```bash
+pixi install -e golden-local
+pixi run -e golden-local demo-hub-notebook-source
+```
 
-If you want notebook code to run against the live sibling `retriever-mirror` checkout instead of the bundled wheel, use the `golden-local` environment described in the repo root README. The current notebook content remains a mechanics demo either way.
+The Hub notebook does not hardcode any private or organization-specific module refs. Set these environment variables before running it if you want the live Hub cells to execute:
+
+- `RETRIEVER_HUB_HELLO_WORLD_MODULE`
+- `RETRIEVER_HUB_COMPOSE_MODULE`
+
+Use the `.py` files for review in git. Regenerate the `.ipynb` files only when you need a notebook UI such as Jupyter or Deepnote.
