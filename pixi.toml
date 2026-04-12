@@ -295,6 +295,9 @@ demo-perception-segmentation-flow = { cmd = "python -m examples.advanced.percept
 demo-perception-pointing-flow = { cmd = "python -m examples.advanced.perception_examples.pointing_flow --target red --steps 12 --dt 0.1", env = { PYTHONPATH = "." } }
 demo-detection-window-stats = { cmd = "python examples/advanced/perception_debug/detection_window_stats.py --backend multiprocessing --duration 3", env = { PYTHONPATH = "." } }
 demo-stateful-reset = { cmd = "python examples/advanced/state_management/stateful_flow_reset.py", env = { PYTHONPATH = "." } }
+demo-memory-belief-flow = { cmd = "python -m examples.advanced.memory_examples.belief_from_detections --steps 12 --dt 0.1", env = { PYTHONPATH = "." } }
+demo-memory-dropout-flow = { cmd = "python -m examples.advanced.memory_examples.memory_under_dropout --steps 12 --dt 0.1", env = { PYTHONPATH = "." } }
+demo-memory-pointing-flow = { cmd = "python -m examples.advanced.memory_examples.pointing_with_memory --target red --steps 12 --dt 0.1", env = { PYTHONPATH = "." } }
 demo-belief-updater-internal = { cmd = "python examples/advanced/state_management/belief_updater_internal.py", env = { PYTHONPATH = "." } }
 demo-belief-updater-explicit = { cmd = "python examples/advanced/state_management/belief_updater_explicit.py --steps 12 --dt 0.1", env = { PYTHONPATH = "." } }
 demo-stateful-replanning = { cmd = "python examples/advanced/state_management/stateful_replanning.py --steps 10 --dt 0.2", env = { PYTHONPATH = "." } }
