@@ -20,5 +20,5 @@ For runnable examples in this repo, start with `examples/advanced/robotics_typin
 
 ## Historical / Integration Notes
 
-- `05_mirror_upstream_patch_plan.md`: archival integration-history note.
-- `06_rollout_report_2026-02-27.md`: rollout and validation snapshot for that earlier wave.
+- `archive/05_mirror_upstream_patch_plan.md`: archival integration-history note.
+- `archive/06_rollout_report_2026-02-27.md`: rollout and validation snapshot for that earlier wave.

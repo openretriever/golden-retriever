@@ -136,4 +136,4 @@ Not done yet:
 ## Next Step
 
 Carry the same package, bootstrap, conversion, and scoped migration strategy back into `retriever-mirror` in small commits using:
-- `docs/robotics_typing_standard/05_mirror_upstream_patch_plan.md`
+- `docs/robotics_typing_standard/archive/05_mirror_upstream_patch_plan.md`
