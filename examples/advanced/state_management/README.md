@@ -22,6 +22,8 @@ pixi run demo-perception-replay-to-belief
 - `localization_eff.py`: effectful localization with deterministic sensor inputs.
 - `object_tracking_eff.py`: effectful multi-object tracking with deterministic detections.
 
+These files are example-local carriers for state and memory patterns. Stable cross-example/process payloads should still come from the shared basic type surfaces; use these examples to learn reset and memory structure, not as canonical schema definitions.
+
 ## Related guides
 
 - `../perception_debug/README.md` for the perception-side record/replay workflow.

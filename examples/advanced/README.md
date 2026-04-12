@@ -29,6 +29,8 @@ The three `golden-local` launch points above require the local editable-core env
 5. `multi_agent_communication/`: compact coordination/composition patterns.
 6. `tamp_tabletop_pick_place/`: a larger integrated planning + execution demo with a simulator.
 
+Across these examples, prefer shared basic payloads (`tuple[...]`, belief/state dataclasses, shared symbolic actions/atoms, stamped spatial types) plus structural composition. Do not treat each stage as a reason to invent a new `Input` / `Output` envelope unless the grouped shape is itself a stable domain contract.
+
 ## Best entry points by topic
 
 - `perception_debug/README.md`: stepper-first perception debugging.

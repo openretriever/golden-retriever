@@ -53,6 +53,8 @@ This is the most direct perception -> memory handoff in the repo:
 - the belief stage accumulates state across steps
 - you can inspect the pipeline without requiring live sensors
 
+The intended design rule here is shared payloads first: replayed detections flow into one belief-state payload, and downstream stages consume that same stable shape instead of defining one-off IO envelope classes per node.
+
 ## 5. Compose belief into downstream control
 
 Once the belief stage is stable, compose it into a larger pipeline:
@@ -65,6 +67,8 @@ This uses the staged-builder pattern from `examples/advanced/functional_wiring/`
 - build a perception slice
 - surface the belief flow as the next stage boundary
 - attach a downstream control slice explicitly
+
+The composition is structural: stages are wired together around a small shared payload vocabulary, not around pipeline-specific wrapper dataclasses.
 
 ## 6. Add one more perception surface: windowed stats
 
@@ -99,5 +103,7 @@ That example demonstrates:
 - surfaced input injection into a named internal stage
 - replacing an internal stage after pipeline construction
 - wrapping a registered pipeline back into a larger graph via `build_pipeline_flow(...)`
+
+Again, the point is to keep payloads stable while changing structure around them.
 
 For a dedicated walkthrough of that surface, continue with `docs/examples/core_composition_surfaces_v1.md`.

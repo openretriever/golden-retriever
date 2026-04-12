@@ -29,11 +29,11 @@ Explicitly not included yet:
 
 ## Files
 
-- `domain.py` — symbolic atoms, operators, initial state, goal
+- `domain.py` — local operator logic plus the initial state and goal, all expressed on top of the shared `retriever_tamp.core.types` symbolic payloads
 - `scene.py` — scripted tabletop geometry and motion candidates
 - `task_planner.py` — tiny local A* over grounded operators
 - `motion_refiner.py` — lazy next-step refinement
-- `bridge.py` — adapters from the local tabletop domain into `retriever_tamp`
+- `bridge.py` — narrow bridge into `retriever_tamp` execution/refinement interfaces without a second symbolic conversion layer
 - `pybullet_sim.py` — lightweight tabletop simulator for execution playback with a real UR5 + suction visual
 - `ur5_arm.py` — tiny UR5+suction arm wrapper using the local legacy asset files, without importing the old environment stack
 - `../shared/pybullet.py` — tiny shared PyBullet viewer/bootstrap helper distilled from older env code, without importing the older environment stack
@@ -91,6 +91,11 @@ The current simulator is intentionally thin: it animates a real UR5 arm with the
 ## Why this shape
 
 This example stays local on purpose. The current repo still has older planning/runtime surfaces mixed with newer package boundaries. The safest move is to validate the TAMP loop in one example directory and promote only the reusable seams.
+
+The symbolic boundary is intentionally small:
+- shared object-centric symbolic payloads live in `retriever_tamp.core.types`
+- local files keep only example-specific planning logic, scene geometry, and simulator behavior
+- the controller loop composes those stages structurally instead of wrapping each step in a new ad hoc payload class
 
 ## Broader subsystem direction
 

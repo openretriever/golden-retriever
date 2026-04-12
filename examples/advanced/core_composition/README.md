@@ -13,4 +13,4 @@ pixi run -e golden-local demo-composable-pipelines
 
 ## Examples
 
-- `composable_pipelines.py`: register a small pipeline, override one internal stage, inject surfaced inputs, and then wrap the pipeline back into a larger graph with `build_pipeline_flow(...)`.
+- `composable_pipelines.py`: register a small pipeline, override one internal stage, inject surfaced inputs, and then wrap the pipeline back into a larger graph with `build_pipeline_flow(...)`. The payloads stay on one small shared basic type vocabulary; the example is about changing structure, not inventing pipeline-specific schema classes.

@@ -55,12 +55,12 @@ The three `golden-local` launch points above are the ones in this list that requ
 
 - `examples/advanced/perception_debug`: synthetic perception, windowed stats, MCAP recording, and replay.
 - `examples/advanced/state_management`: internal state, reset behavior, and memory-oriented flows.
-- `examples/advanced/functional_wiring`: flow composition, fan-in/fan-out, staged builders, and sync policies.
-- `examples/advanced/core_composition`: registry-backed pipeline composition surfaces that are easiest to explore from the local editable-core env.
+- `examples/advanced/functional_wiring`: flow composition, fan-in/fan-out, staged builders, and sync policies. These examples keep payloads simple and structural instead of inventing a new IO wrapper per stage.
+- `examples/advanced/core_composition`: registry-backed pipeline composition surfaces that are easiest to explore from the local editable-core env. The intended pattern is stable shared payloads plus structural rewiring, not pipeline-specific envelope classes.
 
 For the end-to-end perception -> memory -> composition walkthrough, see `docs/examples/perception_memory_composition_v1.md`. For the newer registry-backed composition surfaces, continue with `docs/examples/core_composition_surfaces_v1.md`.
 - `examples/advanced/multi_agent_communication`: a compact coordination/composition example.
-- `examples/advanced/tamp_tabletop_pick_place`: tabletop TAMP with a PyBullet-backed simulator.
+- `examples/advanced/tamp_tabletop_pick_place`: tabletop TAMP with a PyBullet-backed simulator. This example now reuses shared symbolic core types from `retriever-tamp` instead of maintaining a separate local planning type universe.
 
 ## Typed Payload Demos
 
@@ -87,4 +87,3 @@ pixi run -e golden-local demo-hub-notebook-source
 ```
 
 The Hub notebook reads published module refs from environment variables instead of hardcoding any private or organization-specific module names.
-
