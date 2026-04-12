@@ -4,35 +4,25 @@ from dataclasses import dataclass
 from itertools import product
 from typing import Iterable, Mapping, Sequence
 
-Atom = tuple[str, tuple[str, ...]]
-State = frozenset[Atom]
+from retriever_tamp.core.types import GroundAction, GroundAtom, SymbolicState
+
 Binding = dict[str, str]
 
 
-def atom(predicate: str, *args: str) -> Atom:
-    return (predicate, tuple(args))
+def atom(predicate: str, *args: str) -> GroundAtom:
+    return GroundAtom(predicate=predicate, args=tuple(args))
 
 
 def _is_variable(token: str) -> bool:
     return token.startswith("?")
 
-
-@dataclass(frozen=True, order=True)
-class GroundAction:
-    name: str
-    args: tuple[str, ...]
-
-    def __str__(self) -> str:
-        return f"{self.name}({', '.join(self.args)})"
-
-
 @dataclass(frozen=True)
 class Operator:
     name: str
     parameters: tuple[tuple[str, str], ...]
-    preconditions: tuple[Atom, ...]
-    add_effects: tuple[Atom, ...]
-    delete_effects: tuple[Atom, ...]
+    preconditions: tuple[GroundAtom, ...]
+    add_effects: tuple[GroundAtom, ...]
+    delete_effects: tuple[GroundAtom, ...]
 
     def iter_bindings(self, object_sets: Mapping[str, Sequence[str]]) -> Iterable[Binding]:
         if not self.parameters:
@@ -50,19 +40,19 @@ class Operator:
         args = tuple(binding[variable_name] for variable_name, _ in self.parameters)
         return GroundAction(self.name, args)
 
-    def grounded_preconditions(self, binding: Mapping[str, str]) -> tuple[Atom, ...]:
+    def grounded_preconditions(self, binding: Mapping[str, str]) -> tuple[GroundAtom, ...]:
         return tuple(_ground_atom(pattern, binding) for pattern in self.preconditions)
 
-    def grounded_add_effects(self, binding: Mapping[str, str]) -> tuple[Atom, ...]:
+    def grounded_add_effects(self, binding: Mapping[str, str]) -> tuple[GroundAtom, ...]:
         return tuple(_ground_atom(pattern, binding) for pattern in self.add_effects)
 
-    def grounded_delete_effects(self, binding: Mapping[str, str]) -> tuple[Atom, ...]:
+    def grounded_delete_effects(self, binding: Mapping[str, str]) -> tuple[GroundAtom, ...]:
         return tuple(_ground_atom(pattern, binding) for pattern in self.delete_effects)
 
-    def is_applicable(self, state: State, binding: Mapping[str, str]) -> bool:
+    def is_applicable(self, state: SymbolicState, binding: Mapping[str, str]) -> bool:
         return set(self.grounded_preconditions(binding)).issubset(state)
 
-    def apply(self, state: State, binding: Mapping[str, str]) -> State:
+    def apply(self, state: SymbolicState, binding: Mapping[str, str]) -> SymbolicState:
         next_atoms = set(state)
         next_atoms -= set(self.grounded_delete_effects(binding))
         next_atoms |= set(self.grounded_add_effects(binding))
@@ -102,24 +92,25 @@ PLACE = Operator(
 OPERATORS: tuple[Operator, ...] = (PICK, PLACE)
 OPERATORS_BY_NAME = {operator.name: operator for operator in OPERATORS}
 
-DEFAULT_INITIAL_STATE: State = frozenset(
+DEFAULT_INITIAL_STATE: SymbolicState = frozenset(
     {
         atom("HandEmpty"),
         atom("InRegion", "red_block", "start_region"),
     }
 )
 
-DEFAULT_GOAL_ATOMS: State = frozenset(
+DEFAULT_GOAL_ATOMS: SymbolicState = frozenset(
     {
         atom("InRegion", "red_block", "goal_region"),
     }
 )
 
 
-def _ground_atom(pattern: Atom, binding: Mapping[str, str]) -> Atom:
-    predicate, args = pattern
-    grounded_args = tuple(binding.get(arg, arg) if _is_variable(arg) else arg for arg in args)
-    return (predicate, grounded_args)
+def _ground_atom(pattern: GroundAtom, binding: Mapping[str, str]) -> GroundAtom:
+    grounded_args = tuple(
+        binding.get(arg, arg) if _is_variable(arg) else arg for arg in pattern.args
+    )
+    return GroundAtom(predicate=pattern.predicate, args=grounded_args)
 
 
 def bind_action(action: GroundAction) -> Binding:
@@ -130,13 +121,15 @@ def bind_action(action: GroundAction) -> Binding:
     }
 
 
-def apply_ground_action(state: State, action: GroundAction) -> State:
+def apply_ground_action(state: SymbolicState, action: GroundAction) -> SymbolicState:
     operator = OPERATORS_BY_NAME[action.name]
     binding = bind_action(action)
     return operator.apply(state, binding)
 
 
-def goals_satisfied(state: State, goal_atoms: State = DEFAULT_GOAL_ATOMS) -> bool:
+def goals_satisfied(
+    state: SymbolicState, goal_atoms: SymbolicState = DEFAULT_GOAL_ATOMS
+) -> bool:
     return set(goal_atoms).issubset(state)
 
 
@@ -144,12 +137,9 @@ def action_signature(action: GroundAction) -> str:
     return str(action)
 
 
-def format_atoms(atoms: Iterable[Atom]) -> str:
-    rendered = []
-    for predicate, args in sorted(atoms):
-        rendered.append(f"{predicate}({', '.join(args)})")
-    return "{" + ", ".join(rendered) + "}"
+def format_atoms(atoms: Iterable[GroundAtom]) -> str:
+    return "{" + ", ".join(str(atom) for atom in sorted(atoms)) + "}"
 
 
-def pretty_state(state: State) -> str:
+def pretty_state(state: SymbolicState) -> str:
     return format_atoms(state)

@@ -18,7 +18,6 @@ from bridge import (
     TabletopRefinementProvider,
     TabletopSymbolicModel,
     TabletopTaskPlanner,
-    action_from_tamp,
     build_snapshot,
     format_tamp_plan,
 )
@@ -122,7 +121,7 @@ def main() -> int:
                 break
 
             if refinement is not None:
-                next_action = action_from_tamp(refinement.action)
+                next_action = refinement.action
                 print(f"[tamp] lazily refine next step only: {next_action}")
                 tried = ", ".join(refinement.tried_candidates) or "<none>"
                 print(f"[motion refiner] tried candidates: {tried}")
@@ -143,7 +142,7 @@ def main() -> int:
                         print(f"  - {primitive.name}")
 
             if reason == ReplanReason.STEP_EXECUTED:
-                completed_action = action_from_tamp(
+                completed_action = (
                     feedback.completed_action if feedback and feedback.completed_action else plan[0]
                 )
                 symbolic_state = apply_ground_action(symbolic_state, completed_action)

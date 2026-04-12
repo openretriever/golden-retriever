@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable, Mapping, Sequence
+from typing import Sequence
 
-from retriever_tamp.core.types import GoalSpec, GroundAction as TGroundAction, GroundAtom as TGroundAtom
-from retriever_tamp.core.types import WorldSnapshot
+from retriever_tamp.core.types import GoalSpec, GroundAction, SymbolicState, WorldSnapshot
 from retriever_tamp.execution.loop import ExecutionAdapter, ExecutionFeedback
 from retriever_tamp.refinement.base import (
     ExecutionPrimitive,
@@ -15,50 +14,18 @@ from retriever_tamp.refinement.base import (
 )
 from retriever_tamp.symbolic.base import OperatorSchema, SymbolicModel, TaskPlanner, TaskPlanningProblem
 
-from domain import (
-    DEFAULT_GOAL_ATOMS,
-    OPERATORS,
-    Atom,
-    GroundAction,
-    State,
-    action_signature,
-)
+from domain import DEFAULT_GOAL_ATOMS, OPERATORS, action_signature
 from motion_refiner import MotionSegment, refine_action
 from scene import Pose2D, TabletopScene
 
 
-def atom_to_tamp(atom: Atom) -> TGroundAtom:
-    predicate, args = atom
-    return TGroundAtom(predicate=predicate, args=args)
-
-
-def atom_from_tamp(atom: TGroundAtom) -> Atom:
-    return (atom.predicate, atom.args)
-
-
-def action_to_tamp(action: GroundAction) -> TGroundAction:
-    return TGroundAction(name=action.name, args=action.args)
-
-
-def action_from_tamp(action: TGroundAction) -> GroundAction:
-    return GroundAction(name=action.name, args=action.args)
-
-
-def state_to_tamp(state: State) -> frozenset[TGroundAtom]:
-    return frozenset(atom_to_tamp(atom) for atom in state)
-
-
-def state_from_tamp(state: Iterable[TGroundAtom]) -> State:
-    return frozenset(atom_from_tamp(atom) for atom in state)
-
-
-def format_tamp_plan(plan: Sequence[TGroundAction]) -> str:
+def format_tamp_plan(plan: Sequence[GroundAction]) -> str:
     if not plan:
         return "<no plan>"
-    return " -> ".join(str(action_from_tamp(action)) for action in plan)
+    return " -> ".join(str(action) for action in plan)
 
 
-def build_snapshot(scene: TabletopScene, symbolic_state: State) -> WorldSnapshot:
+def build_snapshot(scene: TabletopScene, symbolic_state: SymbolicState) -> WorldSnapshot:
     region_membership: dict[str, str | None] = {}
     for region_name in (scene.start_region.name, scene.goal_region.name):
         region_membership[region_name] = None
@@ -87,7 +54,7 @@ def build_snapshot(scene: TabletopScene, symbolic_state: State) -> WorldSnapshot
 
     return WorldSnapshot(
         raw_observation=scene,
-        symbolic_state=state_to_tamp(symbolic_state),
+        symbolic_state=symbolic_state,
         objects=objects,
         metadata={"held_object": scene.held_object, "scene_summary": scene.compact_summary()},
     )
@@ -97,18 +64,18 @@ def _operator_to_schema(operator) -> OperatorSchema:
     return OperatorSchema(
         name=operator.name,
         parameters=operator.parameters,
-        preconditions=tuple(atom_to_tamp(atom) for atom in operator.preconditions),
-        add_effects=tuple(atom_to_tamp(atom) for atom in operator.add_effects),
-        delete_effects=tuple(atom_to_tamp(atom) for atom in operator.delete_effects),
+        preconditions=operator.preconditions,
+        add_effects=operator.add_effects,
+        delete_effects=operator.delete_effects,
     )
 
 
 @dataclass
 class TabletopSymbolicModel(SymbolicModel):
-    goal_atoms: State = DEFAULT_GOAL_ATOMS
+    goal_atoms: SymbolicState = DEFAULT_GOAL_ATOMS
 
-    def abstract(self, snapshot: WorldSnapshot):
-        return tuple(snapshot.symbolic_state)
+    def abstract(self, snapshot: WorldSnapshot) -> SymbolicState:
+        return snapshot.symbolic_state
 
     def operators(self, snapshot: WorldSnapshot):
         del snapshot
@@ -116,7 +83,7 @@ class TabletopSymbolicModel(SymbolicModel):
 
     def goal(self, snapshot: WorldSnapshot) -> GoalSpec:
         del snapshot
-        return GoalSpec(required_atoms=state_to_tamp(self.goal_atoms))
+        return GoalSpec(required_atoms=self.goal_atoms)
 
 
 @dataclass
@@ -129,12 +96,13 @@ class TabletopTaskPlanner(TaskPlanner):
     def plan(self, problem: TaskPlanningProblem):
         from task_planner import task_plan
 
-        local_plan = task_plan(
-            initial_state=state_from_tamp(problem.initial_state),
-            goal_atoms=state_from_tamp(problem.goal.required_atoms),
-            banned_action_signatures=self.banned_action_signatures,
+        return tuple(
+            task_plan(
+                initial_state=problem.initial_state,
+                goal_atoms=problem.goal.required_atoms,
+                banned_action_signatures=self.banned_action_signatures,
+            )
         )
-        return tuple(action_to_tamp(action) for action in local_plan)
 
 
 def _make_candidate(segment: MotionSegment) -> RefinementCandidate:
@@ -154,8 +122,7 @@ class TabletopRefinementProvider(RefinementProvider):
     scene: TabletopScene
 
     def refine(self, request: RefinementRequest) -> RefinementResult:
-        local_action = action_from_tamp(request.action)
-        result = refine_action(self.scene, local_action)
+        result = refine_action(self.scene, request.action)
         if not result.success or result.segment is None:
             return RefinementResult(
                 action=request.action,
@@ -177,7 +144,6 @@ class TabletopExecutionAdapter(ExecutionAdapter):
         self._simulator = simulator
 
     def execute(self, refinement: RefinementResult) -> ExecutionFeedback:
-        local_action = action_from_tamp(refinement.action)
         segment = None
         if refinement.candidate is not None:
             segment = refinement.candidate.metadata.get("segment")
@@ -190,7 +156,7 @@ class TabletopExecutionAdapter(ExecutionAdapter):
 
         if self._simulator is not None:
             try:
-                self._simulator.execute(local_action, segment, self._scene)
+                self._simulator.execute(refinement.action, segment, self._scene)
             except Exception as exc:
                 return ExecutionFeedback(
                     success=False,
@@ -198,21 +164,21 @@ class TabletopExecutionAdapter(ExecutionAdapter):
                     message=f"Simulator execution failed: {exc}",
                 )
 
-        if local_action.name == "Pick":
-            self._scene.commit_pick(local_action.args[0])
-        elif local_action.name == "Place":
-            self._scene.commit_place(local_action.args[0], segment.target_pose)
+        if refinement.action.name == "Pick":
+            self._scene.commit_pick(refinement.action.args[0])
+        elif refinement.action.name == "Place":
+            self._scene.commit_place(refinement.action.args[0], segment.target_pose)
         else:
             return ExecutionFeedback(
                 success=False,
                 completed_action=refinement.action,
-                message=f"Unsupported action type: {local_action.name}",
+                message=f"Unsupported action type: {refinement.action.name}",
             )
 
         return ExecutionFeedback(
             success=True,
             completed_action=refinement.action,
-            message=f"Executed {action_signature(local_action)}",
+            message=f"Executed {action_signature(refinement.action)}",
             payload={"scene_summary": self._scene.compact_summary()},
         )
 

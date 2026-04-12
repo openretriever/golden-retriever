@@ -4,20 +4,20 @@ import heapq
 from itertools import count
 from typing import Sequence
 
+from retriever_tamp.core.types import GroundAction, SymbolicState
+
 from domain import (
     DEFAULT_GOAL_ATOMS,
     DEFAULT_INITIAL_STATE,
     OBJECT_SETS,
     OPERATORS,
-    GroundAction,
-    State,
     action_signature,
     apply_ground_action,
 )
 
 
 def get_applicable_actions(
-    state: State,
+    state: SymbolicState,
     *,
     banned_action_signatures: frozenset[str] = frozenset(),
 ) -> list[GroundAction]:
@@ -32,25 +32,25 @@ def get_applicable_actions(
     return sorted(actions)
 
 
-def _heuristic(state: State, goal_atoms: State) -> int:
+def _heuristic(state: SymbolicState, goal_atoms: SymbolicState) -> int:
     return len(set(goal_atoms) - set(state))
 
 
 def task_plan(
-    initial_state: State = DEFAULT_INITIAL_STATE,
-    goal_atoms: State = DEFAULT_GOAL_ATOMS,
+    initial_state: SymbolicState = DEFAULT_INITIAL_STATE,
+    goal_atoms: SymbolicState = DEFAULT_GOAL_ATOMS,
     *,
     banned_action_signatures: frozenset[str] = frozenset(),
     max_expansions: int = 64,
 ) -> list[GroundAction]:
-    frontier: list[tuple[int, int, int, State, list[GroundAction]]] = []
+    frontier: list[tuple[int, int, int, SymbolicState, list[GroundAction]]] = []
     ticket = count()
     heapq.heappush(
         frontier,
         (_heuristic(initial_state, goal_atoms), 0, next(ticket), initial_state, []),
     )
 
-    best_cost_by_state: dict[State, int] = {initial_state: 0}
+    best_cost_by_state: dict[SymbolicState, int] = {initial_state: 0}
     expansions = 0
 
     while frontier and expansions < max_expansions:
