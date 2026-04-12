@@ -290,6 +290,9 @@ demo-tamp-tabletop    = { cmd = "python examples/advanced/tamp_tabletop_pick_pla
 demo-synthetic-color-stepper = { cmd = "python examples/advanced/perception_debug/synthetic_color_stepper.py", env = { PYTHONPATH = "." } }
 demo-perception-record = { cmd = "python examples/advanced/perception_debug/record_replay_perception.py record --out logs/perception_debug.mcap --steps 12", env = { PYTHONPATH = "." } }
 demo-perception-replay = { cmd = "python examples/advanced/perception_debug/record_replay_perception.py replay --recording logs/perception_debug.mcap --steps 12", env = { PYTHONPATH = "." } }
+demo-perception-detection-flow = { cmd = "python -m examples.advanced.perception_examples.detection_flow --steps 12 --dt 0.1", env = { PYTHONPATH = "." } }
+demo-perception-segmentation-flow = { cmd = "python -m examples.advanced.perception_examples.segmentation_flow --steps 12 --dt 0.1", env = { PYTHONPATH = "." } }
+demo-perception-pointing-flow = { cmd = "python -m examples.advanced.perception_examples.pointing_flow --target red --steps 12 --dt 0.1", env = { PYTHONPATH = "." } }
 demo-detection-window-stats = { cmd = "python examples/advanced/perception_debug/detection_window_stats.py --backend multiprocessing --duration 3", env = { PYTHONPATH = "." } }
 demo-stateful-reset = { cmd = "python examples/advanced/state_management/stateful_flow_reset.py", env = { PYTHONPATH = "." } }
 demo-belief-updater-internal = { cmd = "python examples/advanced/state_management/belief_updater_internal.py", env = { PYTHONPATH = "." } }
