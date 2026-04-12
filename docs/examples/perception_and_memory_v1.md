@@ -32,6 +32,8 @@ These show the intended composition rule directly:
 - memory layers consume the same payloads
 - later stages change structure around those payloads instead of redefining them
 
+Composite flow typing is usually enough here. If one local stage needs `(Frame2D, DetectionBatch)` or `(SceneBelief, GoalSpec)`, prefer `Flow[(A, B), C]` over inventing another example-only `Input` dataclass.
+
 ## 3. Record one short perception session and replay it
 
 Record a short synthetic session to MCAP, then replay it without re-running the source.

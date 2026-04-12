@@ -32,6 +32,8 @@ Golden's existing `functional_wiring/` examples are still the right starting poi
 
 Use the older folder first if you are learning the runtime. Use the newer folder when you want reusable named pipeline building blocks.
 
+Do not treat this layer as a license to invent pipeline-specific envelope types. The preferred pattern is still: shared primitive payloads first, composite `Flow[...]` typing for local structure, named envelopes only when the boundary is reused and semantically stable.
+
 ## Related examples
 
 - `examples/advanced/perception_debug/detection_window_stats.py`: add a temporal aggregation stage to a deterministic perception pipeline

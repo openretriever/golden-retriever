@@ -6,7 +6,7 @@ These are concise advanced examples for the common perception stages you usually
 2. `segmentation_flow.py`: turn the same scene into segmentation summaries.
 3. `pointing_flow.py`: choose a normalized point target from detections.
 
-All three examples reuse the same small payload vocabulary from `common.py`.
+All three examples reuse the same small payload vocabulary from `common.py`. Those local payloads are the current prototype source for `retriever.types.perception` until the bundled core is refreshed.
 
 Run:
 

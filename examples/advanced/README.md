@@ -32,7 +32,7 @@ The `golden-local` launch points above require the local editable-core environme
 7. `multi_agent_communication/`: compact coordination/composition patterns.
 8. `tamp_tabletop_pick_place/`: a larger integrated planning + execution demo with a simulator.
 
-Across these examples, prefer shared basic payloads (`tuple[...]`, belief/state dataclasses, shared symbolic actions/atoms, stamped spatial types) plus structural composition. Do not treat each stage as a reason to invent a new `Input` / `Output` envelope unless the grouped shape is itself a stable domain contract.
+Across these examples, prefer shared basic payloads plus structural composition. If a local stage needs grouped inputs or outputs, use composite `Flow[...]` typing first; only introduce a new named `Input` / `Output` envelope when that grouped boundary is itself a stable domain contract.
 
 ## Best entry points by topic
 

@@ -2,6 +2,8 @@
 
 These guides stay close to the runnable surfaces under `examples/advanced/`.
 
+They follow one design rule throughout: start from a small shared payload vocabulary, then use structural composition (including composite `Flow[...]` IO) before inventing new named envelopes.
+
 ## Start Here
 
 - `perception_and_memory_v1.md`: concise perception, belief, replay, and composition ladder.
