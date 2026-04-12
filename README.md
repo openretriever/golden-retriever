@@ -51,6 +51,7 @@ The `golden-local` launch points above are the ones in this list that require th
 - `notebooks`: git-friendly notebook sources and generated notebook artifacts. Start with `notebooks/README.md`.
 - `examples/experimental`: heavier prototypes that are still valuable, but less polished.
 - `docs/robotics_typing_standard`: typed payload and data-profile notes for this repo.
+- `docs`: public topic-based docs. Start with `docs/README.md`.
 
 ## Example Families
 
@@ -63,7 +64,7 @@ The `golden-local` launch points above are the ones in this list that require th
 - `examples/advanced/multi_agent_communication`: a compact coordination/composition example.
 - `examples/advanced/tamp_tabletop_pick_place`: tabletop TAMP with a PyBullet-backed simulator. This example now reuses shared symbolic core types from `retriever-tamp` instead of maintaining a separate local planning type universe.
 
-For the end-to-end perception -> memory -> composition walkthrough, see `docs/examples/perception_memory_composition_v1.md`. For the newer registry-backed composition surfaces, continue with `docs/examples/core_composition_surfaces_v1.md`.
+For the end-to-end perception -> memory -> composition walkthrough, see `docs/examples/perception_and_memory_v1.md`. For the newer registry-backed composition surfaces, continue with `docs/examples/pipeline_composition_v1.md`.
 
 ## Typed Payload Demos
 

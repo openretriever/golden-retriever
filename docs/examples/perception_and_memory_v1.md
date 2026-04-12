@@ -123,4 +123,4 @@ That example demonstrates:
 
 Again, the point is to keep payloads stable while changing structure around them.
 
-For a dedicated walkthrough of that surface, continue with `docs/examples/core_composition_surfaces_v1.md`.
+For a dedicated walkthrough of that surface, continue with `docs/examples/pipeline_composition_v1.md`.

@@ -47,6 +47,6 @@ Across these examples, prefer shared basic payloads (`tuple[...]`, belief/state 
 
 ## Integrated walkthrough
 
-For one self-contained article covering synthetic perception -> replay -> belief/memory -> composed control, see:
+For the public example-guide front door, start with `docs/examples/README.md`. For one self-contained article covering synthetic perception -> replay -> belief/memory -> composed control, continue with:
 
-- `docs/examples/perception_memory_composition_v1.md`
+- `docs/examples/perception_and_memory_v1.md`

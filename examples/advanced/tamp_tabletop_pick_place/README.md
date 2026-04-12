@@ -101,7 +101,7 @@ The symbolic boundary is intentionally small:
 
 This local example is still the right concrete foothold, but the broader reusable direction is now documented in:
 
-- `docs/tamp/2026-03-15_predicators_style_tamp_direction.md`
+- `docs/tamp/predicators_style_tamp_direction_v1.md`
 - `packages/retriever-tamp/`
 
 The recommended path is to keep this demo runnable while gradually lifting reusable symbolic / refinement / execution-loop pieces into the standalone `retriever-tamp` package boundary. The current app already routes through `TAMPController`; the simulator and tabletop scene remain example-local.
