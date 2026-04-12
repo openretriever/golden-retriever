@@ -10,6 +10,8 @@ pixi run -e golden-perception demo-gemini-pointing-flow
 pixi run -e golden-perception demo-owl-sam-segmentation-flow
 ```
 
+Start with the mock tasks first. Use the explicit `--backend` runs below only when the model dependencies and credentials are available.
+
 ## Backend policy
 
 - `mock`: deterministic fallback over the same static scene used by the synthetic ladder.

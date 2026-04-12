@@ -262,6 +262,7 @@ golden = { features = ["py311", "bundled_core", "golden"] }
 tamp = { features = ["py311", "bundled_core", "tamp"] }
 local-core = { features = ["py311", "local_core"] }
 golden-local = { features = ["py311", "local_core", "golden"] }
+golden-perception = { features = ["py311", "bundled_core", "golden", "cpu"] }
 tamp-local = { features = ["py311", "local_core", "tamp"] }
 
 [feature.vlm_planning.tasks]
@@ -298,6 +299,11 @@ demo-stateful-reset = { cmd = "python examples/advanced/state_management/statefu
 demo-memory-belief-flow = { cmd = "python -m examples.advanced.memory_examples.belief_from_detections --steps 12 --dt 0.1", env = { PYTHONPATH = "." } }
 demo-memory-dropout-flow = { cmd = "python -m examples.advanced.memory_examples.memory_under_dropout --steps 12 --dt 0.1", env = { PYTHONPATH = "." } }
 demo-memory-pointing-flow = { cmd = "python -m examples.advanced.memory_examples.pointing_with_memory --target red --steps 12 --dt 0.1", env = { PYTHONPATH = "." } }
+demo-gemini-detection-flow = { cmd = "python -m examples.advanced.real_perception.gemini_detection_flow --backend mock --steps 2 --dt 0.2", env = { PYTHONPATH = "." } }
+demo-gemini-pointing-flow = { cmd = "python -m examples.advanced.real_perception.gemini_pointing_flow --backend mock --steps 2 --dt 0.2", env = { PYTHONPATH = "." } }
+demo-owl-sam-segmentation-flow = { cmd = "python -m examples.advanced.real_perception.owl_sam_segmentation_flow --backend mock --steps 1 --dt 0.2", env = { PYTHONPATH = "." } }
+demo-belief-from-real-detections = { cmd = "python -m examples.advanced.real_memory.belief_from_real_detections --backend mock --steps 4 --dt 0.2", env = { PYTHONPATH = "." } }
+demo-grounded-reference-memory = { cmd = "python -m examples.advanced.real_memory.grounded_reference_memory --backend mock --steps 3 --dt 0.2", env = { PYTHONPATH = "." } }
 demo-belief-updater-internal = { cmd = "python examples/advanced/state_management/belief_updater_internal.py", env = { PYTHONPATH = "." } }
 demo-belief-updater-explicit = { cmd = "python examples/advanced/state_management/belief_updater_explicit.py --steps 12 --dt 0.1", env = { PYTHONPATH = "." } }
 demo-stateful-replanning = { cmd = "python examples/advanced/state_management/stateful_replanning.py --steps 10 --dt 0.2", env = { PYTHONPATH = "." } }

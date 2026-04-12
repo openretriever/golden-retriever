@@ -124,3 +124,17 @@ That example demonstrates:
 Again, the point is to keep payloads stable while changing structure around them.
 
 For a dedicated walkthrough of that surface, continue with `docs/examples/pipeline_composition_v1.md`.
+
+
+## 10. Optional: explicit real-model backends
+
+Once the concise synthetic ladders are clear, you can switch to explicit real/mock backends that keep the same payload contracts:
+
+```bash
+pixi run -e golden-perception demo-gemini-detection-flow
+pixi run -e golden-perception demo-gemini-pointing-flow
+pixi run -e golden-perception demo-belief-from-real-detections
+pixi run -e golden-perception demo-grounded-reference-memory
+```
+
+These examples stay secondary on purpose: they are useful for model integration and grounded-reference experiments, but the main teaching path should remain deterministic and easy to inspect.

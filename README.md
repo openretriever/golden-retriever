@@ -31,6 +31,8 @@ pixi run demo-perception-pointing-flow
 pixi run demo-memory-belief-flow
 pixi run demo-memory-dropout-flow
 pixi run demo-memory-pointing-flow
+pixi run -e golden-perception demo-gemini-detection-flow
+pixi run -e golden-perception demo-belief-from-real-detections
 pixi run demo-perception-record
 pixi run demo-perception-replay
 pixi run -e golden-local demo-detection-window-stats
@@ -59,6 +61,7 @@ The `golden-local` launch points above are the ones in this list that require th
 - `examples/advanced/memory_examples`: concise belief and remembered-pointing flows over the same perception payloads.
 - `examples/advanced/perception_debug`: synthetic perception, windowed stats, MCAP recording, and replay.
 - `examples/advanced/state_management`: older internal state, reset behavior, and memory-oriented flows.
+- `examples/advanced/real_memory`: optional explicit real/mock memory flows built on the same detection and belief payloads.
 - `examples/advanced/functional_wiring`: flow composition, fan-in/fan-out, staged builders, and sync policies. These examples keep payloads simple and structural instead of inventing a new IO wrapper per stage.
 - `examples/advanced/core_composition`: registry-backed pipeline composition surfaces that are easiest to explore from the local editable-core env. The intended pattern is stable shared payloads plus structural rewiring, not pipeline-specific envelope classes.
 - `examples/advanced/multi_agent_communication`: a compact coordination/composition example.
