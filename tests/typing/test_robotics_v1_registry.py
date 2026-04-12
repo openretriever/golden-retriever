@@ -12,7 +12,7 @@ from retriever_typing import (
     Wrench,
     WrenchStamped,
 )
-from retriever_typing import get_type
+from retriever_typing import get_registered_types, get_type
 
 
 def test_registry_lookup_for_v1_types() -> None:
@@ -30,3 +30,20 @@ def test_registry_lookup_for_v1_types() -> None:
     }
     for name, cls in expected.items():
         assert get_type(name) is cls
+
+
+def test_registry_metadata_for_representative_spatial_types() -> None:
+    registry = get_registered_types()
+
+    pose_info = registry["PoseStamped"]
+    assert pose_info.type_class is PoseStamped
+    assert pose_info.category == "robotics"
+    assert pose_info.module.endswith(".v1")
+    assert "robotics" in pose_info.tags
+    assert "pose" in pose_info.tags
+
+    joint_info = registry["JointState"]
+    assert joint_info.type_class is JointState
+    assert joint_info.category == "robotics"
+    assert joint_info.module.endswith(".v1")
+    assert "joint" in joint_info.tags

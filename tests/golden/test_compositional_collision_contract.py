@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from retriever_typing import Header, PoseStamped, Quaternion, SE3Pose, Twist, TwistStamped, Vector3
 
 
 class AmbiguousFieldError(RuntimeError):
@@ -122,6 +123,32 @@ def test_qualified_access_succeeds() -> None:
     assert view._has_signal("B.arg1")
     view._set_signal("A.arg1", 77)
     assert view.A.arg1 == 77
+
+
+def test_shared_spatial_payloads_follow_same_collision_rules() -> None:
+    header = Header(stamp_ns=100, frame_id="map", source="unit-test")
+    pose = PoseStamped(
+        header=header,
+        pose=SE3Pose(
+            position=Vector3(0.0, 0.0, 0.0),
+            orientation=Quaternion(0.0, 0.0, 0.0, 1.0),
+        ),
+    )
+    twist = TwistStamped(
+        header=header,
+        twist=Twist(
+            linear=Vector3(1.0, 0.0, 0.0),
+            angular=Vector3(0.0, 0.0, 1.0),
+        ),
+    )
+
+    view = CompositeIOView({"pose": pose, "twist": twist})
+
+    assert view.pose.pose.position.x == 0.0
+    assert view.twist.twist.linear.x == 1.0
+    with pytest.raises(AmbiguousFieldError):
+        _ = view.header
+    assert view._get_signal("pose.header") == header
 
 
 def test_migrated_files_have_no_legacy_core_type_imports() -> None:

@@ -21,6 +21,27 @@ def test_runtime_buffer_roundtrip() -> None:
     assert back == runtime
 
 
+def test_runtime_buffer_preserves_optional_metadata() -> None:
+    runtime = [(1.0, "a"), (2.0, "b")]
+    typed = from_runtime_event_buffer(
+        runtime,
+        stream_id="cam",
+        frame_id="camera",
+        units="score",
+        ingest_offset_ns=25,
+    )
+
+    assert typed[0].frame_id == "camera"
+    assert typed[0].units == "score"
+    assert typed[0].ingest_time_ns == typed[0].event_time_ns + 25
+    assert typed[1].ingest_time_ns == typed[1].event_time_ns + 25
+
+
+def test_runtime_buffer_rejects_negative_ingest_offset() -> None:
+    with pytest.raises(ValueError, match="ingest_offset_ns"):
+        from_runtime_event_buffer([(1.0, "a")], stream_id="cam", ingest_offset_ns=-1)
+
+
 def test_runtime_buffer_shape_detection() -> None:
     assert is_runtime_event_buffer([(1.0, 1), (2.0, 2)])
     assert is_runtime_event_buffer([])
