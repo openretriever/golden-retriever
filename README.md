@@ -25,14 +25,15 @@ Use this when you want Golden to resolve `retriever` from the sibling `../retrie
 
 ```bash
 pixi run demo-robotics-typing-catalog
-pixi run demo-synthetic-color-stepper
+pixi run demo-perception-detection-flow
+pixi run demo-perception-segmentation-flow
+pixi run demo-perception-pointing-flow
+pixi run demo-memory-belief-flow
+pixi run demo-memory-dropout-flow
+pixi run demo-memory-pointing-flow
 pixi run demo-perception-record
 pixi run demo-perception-replay
 pixi run -e golden-local demo-detection-window-stats
-pixi run demo-stateful-reset
-pixi run demo-belief-updater-internal
-pixi run demo-belief-updater-explicit
-pixi run -e golden-local demo-stateful-replanning
 pixi run demo-perception-replay-to-belief
 pixi run demo-perception-belief-control
 pixi run -e golden-local demo-composable-pipelines
@@ -40,7 +41,7 @@ pixi run demo-multi-agent-communication
 pixi run -e tamp demo-tamp-tabletop
 ```
 
-The three `golden-local` launch points above are the ones in this list that require the local editable-core environment.
+The `golden-local` launch points above are the ones in this list that require the local editable-core environment.
 
 ## Repository Layout
 
@@ -53,14 +54,16 @@ The three `golden-local` launch points above are the ones in this list that requ
 
 ## Example Families
 
+- `examples/advanced/perception_examples`: concise detection, segmentation, and pointing flows over one shared synthetic scene.
+- `examples/advanced/memory_examples`: concise belief and remembered-pointing flows over the same perception payloads.
 - `examples/advanced/perception_debug`: synthetic perception, windowed stats, MCAP recording, and replay.
-- `examples/advanced/state_management`: internal state, reset behavior, and memory-oriented flows.
+- `examples/advanced/state_management`: older internal state, reset behavior, and memory-oriented flows.
 - `examples/advanced/functional_wiring`: flow composition, fan-in/fan-out, staged builders, and sync policies. These examples keep payloads simple and structural instead of inventing a new IO wrapper per stage.
 - `examples/advanced/core_composition`: registry-backed pipeline composition surfaces that are easiest to explore from the local editable-core env. The intended pattern is stable shared payloads plus structural rewiring, not pipeline-specific envelope classes.
-
-For the end-to-end perception -> memory -> composition walkthrough, see `docs/examples/perception_memory_composition_v1.md`. For the newer registry-backed composition surfaces, continue with `docs/examples/core_composition_surfaces_v1.md`.
 - `examples/advanced/multi_agent_communication`: a compact coordination/composition example.
 - `examples/advanced/tamp_tabletop_pick_place`: tabletop TAMP with a PyBullet-backed simulator. This example now reuses shared symbolic core types from `retriever-tamp` instead of maintaining a separate local planning type universe.
+
+For the end-to-end perception -> memory -> composition walkthrough, see `docs/examples/perception_memory_composition_v1.md`. For the newer registry-backed composition surfaces, continue with `docs/examples/core_composition_surfaces_v1.md`.
 
 ## Typed Payload Demos
 

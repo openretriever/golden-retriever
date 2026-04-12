@@ -2,20 +2,37 @@
 
 This guide walks one concrete GoldenRetriever progression from a minimal synthetic perception loop to a composed perception -> belief -> control pipeline.
 
-## 1. Start with deterministic synthetic perception
+## 1. Start with the concise perception ladder
 
-Use the smallest perception loop first so debugging stays local and reproducible.
+Use the smallest perception flows first so debugging stays local and reproducible.
 
 ```bash
-pixi run demo-synthetic-color-stepper
+pixi run demo-perception-detection-flow
+pixi run demo-perception-segmentation-flow
+pixi run demo-perception-pointing-flow
 ```
 
 What to look for:
-- a synthetic image source instead of a live camera
-- deterministic stepping and inspectable outputs
-- a minimal detector path before any replay or memory is introduced
+- one deterministic camera surface reused across all three examples
+- detection, segmentation, and pointing built from a small shared payload vocabulary
+- no one-off `Input` / `Output` shells just to move between stages
 
-## 2. Record one short perception session and replay it
+## 2. Add the concise memory ladder
+
+Then add the smallest memory-bearing flows on top of the same perception payloads:
+
+```bash
+pixi run demo-memory-belief-flow
+pixi run demo-memory-dropout-flow
+pixi run demo-memory-pointing-flow
+```
+
+These show the intended composition rule directly:
+- perception emits stable payloads
+- memory layers consume the same payloads
+- later stages change structure around those payloads instead of redefining them
+
+## 3. Record one short perception session and replay it
 
 Record a short synthetic session to MCAP, then replay it without re-running the source.
 
@@ -26,7 +43,7 @@ pixi run demo-perception-replay
 
 This gives you a stable artifact you can feed into later stages.
 
-## 3. Move from raw perception into memory / belief state
+## 4. Compare with the older state-management surfaces
 
 Start with the smallest stateful examples:
 
@@ -40,7 +57,7 @@ Use these to answer two different questions:
 - what exactly does `pipe.reset()` clear?
 - should state live inside one flow, or be passed explicitly through the graph?
 
-## 4. Feed replayed perception into a belief updater
+## 5. Feed replayed perception into a belief updater
 
 Now bridge the replay artifact into a memory-bearing stage:
 
@@ -55,7 +72,7 @@ This is the most direct perception -> memory handoff in the repo:
 
 The intended design rule here is shared payloads first: replayed detections flow into one belief-state payload, and downstream stages consume that same stable shape instead of defining one-off IO envelope classes per node.
 
-## 5. Compose belief into downstream control
+## 6. Compose belief into downstream control
 
 Once the belief stage is stable, compose it into a larger pipeline:
 
@@ -70,7 +87,7 @@ This uses the staged-builder pattern from `examples/advanced/functional_wiring/`
 
 The composition is structural: stages are wired together around a small shared payload vocabulary, not around pipeline-specific wrapper dataclasses.
 
-## 6. Add one more perception surface: windowed stats
+## 7. Add one more perception surface: windowed stats
 
 If you want one more perception-side debugging surface before moving on, run:
 
@@ -80,7 +97,7 @@ pixi run -e golden-local demo-detection-window-stats
 
 This keeps the same deterministic synthetic camera source, but adds a windowed aggregation stage so you can see how temporal statistics sit between raw detections and downstream memory. Right now it expects the local editable-core env because the bundled wheel in `retriever_dist` still uses the older startup semantics.
 
-## 7. Add one more memory surface: stateful replanning
+## 8. Add one more memory surface: stateful replanning
 
 To see internal planner memory without bringing in a full robot stack, run:
 
@@ -90,7 +107,7 @@ pixi run -e golden-local demo-stateful-replanning
 
 This example keeps state inside the replanner and emits plan updates only when obstacle events occur or clear. It also currently expects the local editable-core env so the runtime startup path matches the reset-first contract.
 
-## 8. Next: newer core composition surfaces
+## 9. Next: newer core composition surfaces
 
 To explore the newer registry-backed composition surfaces from the current `retriever-mirror` core, switch to the local editable-core env and run:
 
