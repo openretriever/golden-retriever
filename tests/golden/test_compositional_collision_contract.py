@@ -125,7 +125,7 @@ def test_qualified_access_succeeds() -> None:
 
 
 def test_migrated_files_have_no_legacy_core_type_imports() -> None:
-    repo_root = Path(__file__).resolve().parents[1]
+    repo_root = Path(__file__).resolve().parents[2]
     migrated_files = [
         "src/golden_retriever/flows/control/robot_io.py",
         "src/golden_retriever/flows/control/safety.py",

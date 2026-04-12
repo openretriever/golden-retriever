@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 APP_PATH = REPO_ROOT / "examples" / "advanced" / "tamp_tabletop_pick_place" / "app.py"
 
 
