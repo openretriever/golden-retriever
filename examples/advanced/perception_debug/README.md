@@ -1,21 +1,18 @@
-# Perception Debug Examples
+# Perception Debug Follow-Ups
 
-Lightweight perception examples focused on deterministic stepping, breakpoints, and record/replay workflows.
+Primary learning path now lives in `../perception_examples/README.md`. This folder is the narrower debug/replay follow-on path once the basic detection, segmentation, and pointing surfaces are clear.
 
 ## Quick Start
 
 ```bash
 pixi run demo-synthetic-color-stepper
-pixi run -e golden-local demo-detection-window-stats
 pixi run demo-perception-record
 pixi run demo-perception-replay
 ```
 
-## Examples
+## Ordered progression
 
-### 1. Synthetic Color Stepper
-
-Minimal perception loop with a synthetic image source, a simple color detector, and an in-process stepper.
+### 1. Step deterministic perception
 
 ```bash
 pixi run demo-synthetic-color-stepper
@@ -23,36 +20,29 @@ pixi run demo-synthetic-color-stepper
 pixi run python examples/advanced/perception_debug/synthetic_color_stepper.py --steps 12 --dt 0.1
 ```
 
-### 2. Windowed Detection Stats
+Use this first when you want one deterministic image source, one detector, and one stepper surface.
 
-Add a temporal aggregation stage on top of the same synthetic detector:
-
-```bash
-pixi run -e golden-local demo-detection-window-stats
-```
-
-This is a good bridge between raw detections and the later memory-oriented examples because it introduces a small amount of temporal structure without needing a full stateful belief model. Use the local editable-core env for this one.
-
-### 3. Record + Replay Perception
-
-Record a short synthetic perception session to MCAP, then replay it through the same detector without re-running the source.
+### 2. Record and replay the same perception session
 
 ```bash
 pixi run demo-perception-record
 pixi run demo-perception-replay
 ```
 
-## Why this folder exists
+This is the main reason this folder exists: stable artifacts for debugging and downstream belief updates.
 
-The heavier webcam/model demos are useful once hardware and model downloads are available. These examples give you the same debugging surface without requiring cameras, large models, or live APIs.
+## Additional example
 
-
-## Next step: replay into memory
-
-After `demo-perception-record` / `demo-perception-replay`, continue with:
+### Windowed detection stats
 
 ```bash
-pixi run demo-perception-replay-to-belief
+pixi run -e golden-local demo-detection-window-stats
 ```
 
-That gives you the same perception artifact flowing into a stateful belief update stage instead of stopping at detector outputs.
+This adds a temporal aggregation stage on top of the same synthetic detector. Keep it as a follow-on because it needs the local editable-core env.
+
+## Where to go next
+
+- Main perception path: `../perception_examples/README.md`
+- Stateful follow-on after replay: `../memory_examples/README.md`
+- Older state-focused reference: `../state_management/README.md`
