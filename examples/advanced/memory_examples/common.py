@@ -2,28 +2,11 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-
-from retriever.flow import Flow, io
+from retriever.flow import Flow
 from retriever.types.perception import DetectionBatch, PointTarget2D
 
+from examples.advanced.memory_examples.types import ObjectBelief, SceneBelief
 
-@dataclass(frozen=True)
-class ObjectBelief:
-    label: str
-    x_norm: float
-    y_norm: float
-    confidence: float
-    seen_count: int
-    last_frame_index: int
-    missing_steps: int
-
-
-@io
-@dataclass(frozen=True)
-class SceneBelief:
-    frame_index: int | None = None
-    objects: tuple[ObjectBelief, ...] = ()
 
 
 class DetectionDropout(Flow[DetectionBatch, DetectionBatch]):

@@ -72,7 +72,7 @@ This is the most direct perception -> memory handoff in the repo:
 - the belief stage accumulates state across steps
 - you can inspect the pipeline without requiring live sensors
 
-The intended design rule here is shared payloads first: replayed detections flow into one belief-state payload, and downstream stages consume that same stable shape instead of defining one-off IO envelope classes per node.
+The intended design rule here is shared payloads first: replayed detections flow into one belief-state payload, and downstream stages consume that same stable shape instead of defining one-off IO envelope classes per node. In this ladder, the local belief carriers live in `examples/advanced/memory_examples/types.py` rather than inside the flow helper module.
 
 ## 6. Compose belief into downstream control
 

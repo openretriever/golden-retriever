@@ -6,7 +6,7 @@ These are concise advanced examples for the common memory and belief stages that
 2. `memory_under_dropout.py`: keep belief state stable when detections disappear.
 3. `pointing_with_memory.py`: keep target pointing stable through intermittent perception.
 
-All three examples reuse the canonical detection and pointing payloads from `retriever.types.perception`. Memory stays layered on top of those primitives instead of redefining image or detection carriers.
+All three examples reuse the canonical detection and pointing payloads from `retriever.types.perception`. The local memory-only state payloads live in `memory_examples/types.py`, so the flows stay separate from the belief carriers they manipulate.
 
 Run with the local editable core so the examples use the current Retriever type surface:
 

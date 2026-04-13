@@ -1,6 +1,6 @@
 # Real Memory
 
-These examples reuse the local `SceneBelief` memory state together with canonical `PointTarget2D` and `DetectionBatch` payloads from `retriever.types.perception`, but feed them from explicit real/mock perception backends.
+These examples reuse the local `SceneBelief` memory state from `examples/advanced/memory_examples/types.py` together with canonical `PointTarget2D` and `DetectionBatch` payloads from `retriever.types.perception`, but feed them from explicit real/mock perception backends.
 
 ## Start Here
 
