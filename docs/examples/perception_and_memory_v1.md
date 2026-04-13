@@ -138,10 +138,7 @@ These use the canonical core language primitives directly and keep structural co
 
 For the dedicated walkthrough, continue with `docs/examples/language_and_grounding_v1.md`.
 
-For a dedicated walkthrough of that surface, continue with `docs/examples/pipeline_composition_v1.md`.
-
-
-## 10. Optional: explicit real-model backends
+## 11. Optional: explicit real-model backends
 
 Once the concise synthetic ladders are clear, you can switch to explicit real/mock backends that keep the same payload contracts:
 
