@@ -25,12 +25,12 @@ Use this when you want Golden to resolve `retriever` from the sibling `../retrie
 
 ```bash
 pixi run demo-robotics-typing-catalog
-pixi run demo-perception-detection-flow
-pixi run demo-perception-segmentation-flow
-pixi run demo-perception-pointing-flow
-pixi run demo-memory-belief-flow
-pixi run demo-memory-dropout-flow
-pixi run demo-memory-pointing-flow
+pixi run -e golden-local demo-perception-detection-flow
+pixi run -e golden-local demo-perception-segmentation-flow
+pixi run -e golden-local demo-perception-pointing-flow
+pixi run -e golden-local demo-memory-belief-flow
+pixi run -e golden-local demo-memory-dropout-flow
+pixi run -e golden-local demo-memory-pointing-flow
 pixi run -e golden-perception demo-gemini-detection-flow
 pixi run -e golden-perception demo-belief-from-real-detections
 pixi run demo-perception-record

@@ -1,6 +1,6 @@
 # Real Memory
 
-These examples reuse the same `SceneBelief` and `PointTarget2D` contracts from `memory_examples/`, but feed them from explicit real/mock perception backends.
+These examples reuse the local `SceneBelief` memory state together with canonical `PointTarget2D` and `DetectionBatch` payloads from `retriever.types.perception`, but feed them from explicit real/mock perception backends.
 
 ## Start Here
 
@@ -14,7 +14,7 @@ Start with the mock tasks first. They keep the same surface but avoid credential
 ## Design rule
 
 Real memory stays small on purpose:
-- reuse `DetectionBatch` from the perception side
+- reuse canonical `DetectionBatch` from `retriever.types.perception`
 - reuse `BeliefTracker` from the memory side
 - keep backend choice explicit (`mock` or `gemini_api`)
 

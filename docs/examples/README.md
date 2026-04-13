@@ -2,7 +2,7 @@
 
 These guides stay close to the runnable surfaces under `examples/advanced/`.
 
-They follow one design rule throughout: start from a small shared payload vocabulary, then use structural composition (including composite `Flow[...]` IO) before inventing new named envelopes.
+They follow one design rule throughout: start from a small shared payload vocabulary from Retriever core, then use structural composition (including composite `Flow[...]` IO) before inventing new named envelopes.
 
 ## Start Here
 

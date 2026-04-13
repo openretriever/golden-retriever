@@ -5,12 +5,12 @@ This folder collects runnable GoldenRetriever demos that build on top of the cor
 ## Start Here
 
 ```bash
-pixi run demo-perception-detection-flow
-pixi run demo-perception-segmentation-flow
-pixi run demo-perception-pointing-flow
-pixi run demo-memory-belief-flow
-pixi run demo-memory-dropout-flow
-pixi run demo-memory-pointing-flow
+pixi run -e golden-local demo-perception-detection-flow
+pixi run -e golden-local demo-perception-segmentation-flow
+pixi run -e golden-local demo-perception-pointing-flow
+pixi run -e golden-local demo-memory-belief-flow
+pixi run -e golden-local demo-memory-dropout-flow
+pixi run -e golden-local demo-memory-pointing-flow
 pixi run demo-perception-record
 pixi run demo-perception-replay
 pixi run -e golden-local demo-detection-window-stats
@@ -19,7 +19,7 @@ pixi run demo-perception-belief-control
 pixi run -e golden-local demo-composable-pipelines
 ```
 
-The `golden-local` launch points above require the local editable-core environment; the rest run on the bundled default setup.
+The concise perception and memory ladders now require the local editable-core environment so they can use the current canonical Retriever type surface. The older bundled-core demos remain available for the other paths.
 
 ## Recommended progression
 

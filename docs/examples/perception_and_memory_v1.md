@@ -7,14 +7,14 @@ This guide walks one concrete GoldenRetriever progression from a minimal synthet
 Use the smallest perception flows first so debugging stays local and reproducible.
 
 ```bash
-pixi run demo-perception-detection-flow
-pixi run demo-perception-segmentation-flow
-pixi run demo-perception-pointing-flow
+pixi run -e golden-local demo-perception-detection-flow
+pixi run -e golden-local demo-perception-segmentation-flow
+pixi run -e golden-local demo-perception-pointing-flow
 ```
 
 What to look for:
 - one deterministic camera surface reused across all three examples
-- detection, segmentation, and pointing built from a small shared payload vocabulary
+- detection, segmentation, and pointing built from `retriever.types.perception` primitives plus local flow logic
 - no one-off `Input` / `Output` shells just to move between stages
 
 ## 2. Add the concise memory ladder
@@ -22,9 +22,9 @@ What to look for:
 Then add the smallest memory-bearing flows on top of the same perception payloads:
 
 ```bash
-pixi run demo-memory-belief-flow
-pixi run demo-memory-dropout-flow
-pixi run demo-memory-pointing-flow
+pixi run -e golden-local demo-memory-belief-flow
+pixi run -e golden-local demo-memory-dropout-flow
+pixi run -e golden-local demo-memory-pointing-flow
 ```
 
 These show the intended composition rule directly:
@@ -32,7 +32,7 @@ These show the intended composition rule directly:
 - memory layers consume the same payloads
 - later stages change structure around those payloads instead of redefining them
 
-Composite flow typing is usually enough here. If one local stage needs `(Frame2D, DetectionBatch)` or `(SceneBelief, GoalSpec)`, prefer `Flow[(A, B), C]` over inventing another example-only `Input` dataclass.
+Composite flow typing is usually enough here. If one local stage needs `(Image2D, DetectionBatch)` or `(SceneBelief, GoalSpec)`, prefer `Flow[(A, B), C]` over inventing another example-only `Input` dataclass.
 
 ## 3. Record one short perception session and replay it
 

@@ -6,12 +6,12 @@ These are concise advanced examples for the common perception stages you usually
 2. `segmentation_flow.py`: turn the same scene into segmentation summaries.
 3. `pointing_flow.py`: choose a normalized point target from detections.
 
-All three examples reuse the same small payload vocabulary from `common.py`. Those local payloads are the current prototype source for `retriever.types.perception` until the bundled core is refreshed.
+All three examples now use the canonical primitive payloads from `retriever.types.perception`. The example-local code only keeps the deterministic scene logic and printers.
 
-Run:
+Run with the local editable core so the examples use the current Retriever type surface:
 
 ```bash
-pixi run demo-perception-detection-flow
-pixi run demo-perception-segmentation-flow
-pixi run demo-perception-pointing-flow
+pixi run -e golden-local demo-perception-detection-flow
+pixi run -e golden-local demo-perception-segmentation-flow
+pixi run -e golden-local demo-perception-pointing-flow
 ```

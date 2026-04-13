@@ -1,7 +1,7 @@
 """Minimal advanced memory example: hold belief state through dropped detections.
 
 Run:
-  pixi run demo-memory-dropout-flow
+  pixi run -e golden-local demo-memory-dropout-flow
   pixi run python -m examples.advanced.memory_examples.memory_under_dropout --steps 12 --dt 0.1
 """
 

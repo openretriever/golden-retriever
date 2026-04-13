@@ -6,12 +6,12 @@ These are concise advanced examples for the common memory and belief stages that
 2. `memory_under_dropout.py`: keep belief state stable when detections disappear.
 3. `pointing_with_memory.py`: keep target pointing stable through intermittent perception.
 
-All three examples reuse the detection payloads from `examples.advanced.perception_examples.common`. Memory stays layered on top of the perception primitives instead of redefining frame or detection carriers.
+All three examples reuse the canonical detection and pointing payloads from `retriever.types.perception`. Memory stays layered on top of those primitives instead of redefining image or detection carriers.
 
-Run:
+Run with the local editable core so the examples use the current Retriever type surface:
 
 ```bash
-pixi run demo-memory-belief-flow
-pixi run demo-memory-dropout-flow
-pixi run demo-memory-pointing-flow
+pixi run -e golden-local demo-memory-belief-flow
+pixi run -e golden-local demo-memory-dropout-flow
+pixi run -e golden-local demo-memory-pointing-flow
 ```

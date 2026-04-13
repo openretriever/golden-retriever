@@ -1,6 +1,6 @@
 # Real Perception
 
-These examples keep the same small payload vocabulary used by `perception_examples/`, but swap the detector / pointer / segmenter backend for explicit real-model paths.
+These examples keep the same canonical `retriever.types.perception` payload vocabulary used by the concise perception ladder, but swap the detector / pointer / segmenter backend for explicit real-model paths.
 
 ## Start Here
 
