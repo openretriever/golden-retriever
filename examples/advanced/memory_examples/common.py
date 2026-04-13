@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from retriever.flow import Flow, flow_io
-
-from examples.advanced.perception_examples.common import DetectionBatch, PointTarget2D
+from retriever.flow import Flow, io
+from retriever.types.perception import DetectionBatch, PointTarget2D
 
 
 @dataclass(frozen=True)
@@ -16,14 +15,14 @@ class ObjectBelief:
     y_norm: float
     confidence: float
     seen_count: int
-    last_frame: int
+    last_frame_index: int
     missing_steps: int
 
 
-@flow_io
+@io
 @dataclass(frozen=True)
 class SceneBelief:
-    frame_id: int | None = None
+    frame_index: int | None = None
     objects: tuple[ObjectBelief, ...] = ()
 
 
@@ -39,10 +38,10 @@ class DetectionDropout(Flow[DetectionBatch, DetectionBatch]):
         return {"target_label": self.target_label, "every_n": self.every_n}
 
     def step(self, batch: DetectionBatch) -> DetectionBatch:
-        if batch.frame_id is None or batch.frame_id % self.every_n != 0:
+        if batch.frame_index is None or batch.frame_index % self.every_n != 0:
             return batch
         kept = tuple(det for det in batch.detections if det.label != self.target_label)
-        return DetectionBatch(frame_id=batch.frame_id, detections=kept)
+        return DetectionBatch(detections=kept, header=batch.header, frame_index=batch.frame_index)
 
 
 class BeliefTracker(Flow[DetectionBatch, SceneBelief]):
@@ -70,7 +69,7 @@ class BeliefTracker(Flow[DetectionBatch, SceneBelief]):
         self._memory: dict[str, ObjectBelief] = {}
 
     def step(self, batch: DetectionBatch) -> SceneBelief:
-        if batch.frame_id is None:
+        if batch.frame_index is None:
             return SceneBelief()
 
         updated: dict[str, ObjectBelief] = {}
@@ -78,9 +77,9 @@ class BeliefTracker(Flow[DetectionBatch, SceneBelief]):
 
         for det in batch.detections:
             prev = self._memory.get(det.label)
-            x_norm = det.centroid_x / max(self.image_width - 1.0, 1.0)
-            y_norm = det.centroid_y / max(self.image_height - 1.0, 1.0)
-            confidence = det.confidence
+            x_norm = (det.centroid_x or 0.0) / max(self.image_width - 1.0, 1.0)
+            y_norm = (det.centroid_y or 0.0) / max(self.image_height - 1.0, 1.0)
+            confidence = det.confidence or 0.0
             seen_count = 1
             if prev is not None:
                 x_norm = (1.0 - self.alpha) * prev.x_norm + self.alpha * x_norm
@@ -93,7 +92,7 @@ class BeliefTracker(Flow[DetectionBatch, SceneBelief]):
                 y_norm=y_norm,
                 confidence=confidence,
                 seen_count=seen_count,
-                last_frame=batch.frame_id,
+                last_frame_index=batch.frame_index,
                 missing_steps=0,
             )
 
@@ -109,24 +108,24 @@ class BeliefTracker(Flow[DetectionBatch, SceneBelief]):
                 y_norm=prev.y_norm,
                 confidence=prev.confidence * 0.85,
                 seen_count=prev.seen_count,
-                last_frame=prev.last_frame,
+                last_frame_index=prev.last_frame_index,
                 missing_steps=missing,
             )
 
         self._memory = updated
         objects = tuple(sorted(updated.values(), key=lambda obj: obj.label))
-        return SceneBelief(frame_id=batch.frame_id, objects=objects)
+        return SceneBelief(frame_index=batch.frame_index, objects=objects)
 
 
 class BeliefPrinter(Flow[SceneBelief, None]):
     def step(self, belief: SceneBelief) -> None:
-        if belief.frame_id is None:
+        if belief.frame_index is None:
             return None
         summary = [
             f"{obj.label}@({obj.x_norm:.2f},{obj.y_norm:.2f}) c={obj.confidence:.2f} seen={obj.seen_count} miss={obj.missing_steps}"
             for obj in belief.objects
         ]
-        print(f"[frame={belief.frame_id:02d}] belief={summary}")
+        print(f"[frame={belief.frame_index:02d}] belief={summary}")
         return None
 
 
@@ -139,16 +138,16 @@ class SelectBeliefTarget(Flow[SceneBelief, PointTarget2D]):
         return {"target_label": self.target_label}
 
     def step(self, belief: SceneBelief) -> PointTarget2D:
-        if belief.frame_id is None:
+        if belief.frame_index is None:
             return PointTarget2D()
         for obj in belief.objects:
             if obj.label != self.target_label:
                 continue
             return PointTarget2D(
-                frame_id=belief.frame_id,
+                frame_index=belief.frame_index,
                 label=obj.label,
                 x_norm=obj.x_norm,
                 y_norm=obj.y_norm,
                 confidence=obj.confidence,
             )
-        return PointTarget2D(frame_id=belief.frame_id)
+        return PointTarget2D(frame_index=belief.frame_index)

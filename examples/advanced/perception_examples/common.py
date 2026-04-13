@@ -1,68 +1,33 @@
-"""Shared synthetic perception payloads and flows for advanced examples."""
+"""Shared synthetic perception flows for advanced examples.
+
+The reusable payloads come from `retriever.types.perception`. This module keeps
+only the deterministic scene logic and example-local printers/helpers.
+"""
 
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
 
 import numpy as np
 
-from retriever.flow import Flow, flow_io
+from retriever.flow import Flow
+from retriever.types.perception import (
+    BBox2D,
+    Detection2D,
+    DetectionBatch,
+    Image2D,
+    PointTarget2D,
+    SegmentationMask2D,
+)
+from retriever.types.spatial import Header
 
 
-@flow_io
-@dataclass(frozen=True)
-class Frame2D:
-    image: np.ndarray | None = None
-    frame_id: int | None = None
-    t_sim: float | None = None
+def _make_header(*, frame_index: int, t_sim: float, source: str) -> Header:
+    stamp_ns = max(1, int(round(t_sim * 1_000_000_000)))
+    return Header(stamp_ns=stamp_ns, frame_id="synthetic_camera", source=source)
 
 
-@dataclass(frozen=True)
-class BBox2D:
-    x: float
-    y: float
-    width: float
-    height: float
-
-
-@dataclass(frozen=True)
-class Detection2D:
-    label: str
-    confidence: float
-    bbox: BBox2D
-    centroid_x: float
-    centroid_y: float
-    pixel_count: int
-
-
-@flow_io
-@dataclass(frozen=True)
-class DetectionBatch:
-    frame_id: int | None = None
-    detections: tuple[Detection2D, ...] = ()
-
-
-@flow_io
-@dataclass(frozen=True)
-class SegmentationView:
-    frame_id: int | None = None
-    labels: tuple[str, ...] = ()
-    pixel_counts: dict[str, int] = field(default_factory=dict)
-    centroids: dict[str, tuple[float, float]] = field(default_factory=dict)
-
-
-@flow_io
-@dataclass(frozen=True)
-class PointTarget2D:
-    frame_id: int | None = None
-    label: str | None = None
-    x_norm: float | None = None
-    y_norm: float | None = None
-    confidence: float | None = None
-
-
-class SyntheticColorCamera(Flow[None, Frame2D]):
+class SyntheticColorCamera(Flow[None, Image2D]):
     """Deterministic scene with one red and one blue object moving over time."""
 
     def __init__(self, *, width: int = 96, height: int = 72, dt: float = 0.1) -> None:
@@ -78,19 +43,19 @@ class SyntheticColorCamera(Flow[None, Frame2D]):
         self.reset()
 
     def reset(self) -> None:
-        self.frame_id = 0
+        self.frame_index = 0
         self.t_sim = 0.0
 
     def step(self, _):  # type: ignore[override]
-        self.frame_id += 1
+        self.frame_index += 1
         self.t_sim += self.dt
         image = np.zeros((self.height, self.width, 3), dtype=np.uint8)
         image[..., 1] = 18
 
-        red_x = int((0.15 + 0.55 * abs(math.sin(self.frame_id * 0.23))) * (self.width - 12))
-        red_y = int((0.35 + 0.15 * math.cos(self.frame_id * 0.17)) * (self.height - 12))
-        blue_x = int((0.20 + 0.45 * abs(math.cos(self.frame_id * 0.19))) * (self.width - 10))
-        blue_y = int((0.55 + 0.18 * math.sin(self.frame_id * 0.27)) * (self.height - 10))
+        red_x = int((0.15 + 0.55 * abs(math.sin(self.frame_index * 0.23))) * (self.width - 12))
+        red_y = int((0.35 + 0.15 * math.cos(self.frame_index * 0.17)) * (self.height - 12))
+        blue_x = int((0.20 + 0.45 * abs(math.cos(self.frame_index * 0.19))) * (self.width - 10))
+        blue_y = int((0.55 + 0.18 * math.sin(self.frame_index * 0.27)) * (self.height - 10))
 
         image[red_y : red_y + 12, red_x : red_x + 12, 0] = 255
         image[red_y : red_y + 12, red_x : red_x + 12, 1] = 45
@@ -100,7 +65,12 @@ class SyntheticColorCamera(Flow[None, Frame2D]):
         image[blue_y : blue_y + 10, blue_x : blue_x + 10, 1] = 45
         image[blue_y : blue_y + 10, blue_x : blue_x + 10, 2] = 255
 
-        return Frame2D(image=image, frame_id=self.frame_id, t_sim=self.t_sim)
+        return Image2D(
+            data=image,
+            encoding="rgb8",
+            header=_make_header(frame_index=self.frame_index, t_sim=self.t_sim, source="golden.synthetic_color_camera"),
+            frame_index=self.frame_index,
+        )
 
 
 def _mask_stats(mask: np.ndarray) -> tuple[int, float, float, BBox2D] | None:
@@ -119,14 +89,29 @@ def _mask_stats(mask: np.ndarray) -> tuple[int, float, float, BBox2D] | None:
     )
 
 
-class ColorDetector(Flow[Frame2D, DetectionBatch]):
+def summarize_segmentation(mask_msg: SegmentationMask2D) -> tuple[list[str], dict[str, int], dict[str, tuple[float, float]]]:
+    labels: list[str] = []
+    pixel_counts: dict[str, int] = {}
+    centroids: dict[str, tuple[float, float]] = {}
+    for value, label in sorted(mask_msg.label_map.items()):
+        if value == 0:
+            continue
+        coords = np.argwhere(mask_msg.mask == value)
+        if len(coords) == 0:
+            continue
+        ys = coords[:, 0]
+        xs = coords[:, 1]
+        labels.append(label)
+        pixel_counts[label] = int(len(coords))
+        centroids[label] = (float(xs.mean()), float(ys.mean()))
+    return labels, pixel_counts, centroids
+
+
+class ColorDetector(Flow[Image2D, DetectionBatch]):
     MIN_PIXELS = 20
 
-    def step(self, frame: Frame2D) -> DetectionBatch:
-        if frame.image is None or frame.frame_id is None:
-            return DetectionBatch()
-
-        image = frame.image
+    def step(self, frame: Image2D) -> DetectionBatch:
+        image = frame.data
         red_mask = (image[..., 0] > 180) & (image[..., 1] < 100) & (image[..., 2] < 100)
         blue_mask = (image[..., 2] > 180) & (image[..., 0] < 100) & (image[..., 1] < 100)
 
@@ -148,37 +133,23 @@ class ColorDetector(Flow[Frame2D, DetectionBatch]):
                     pixel_count=pixel_count,
                 )
             )
-        return DetectionBatch(frame_id=frame.frame_id, detections=tuple(detections))
+        return DetectionBatch(detections=tuple(detections), header=frame.header, frame_index=frame.frame_index)
 
 
-class ColorSegmenter(Flow[Frame2D, SegmentationView]):
-    def step(self, frame: Frame2D) -> SegmentationView:
-        if frame.image is None or frame.frame_id is None:
-            return SegmentationView()
+class ColorSegmenter(Flow[Image2D, SegmentationMask2D]):
+    def step(self, frame: Image2D) -> SegmentationMask2D:
+        image = frame.data
+        red_mask = (image[..., 0] > 180) & (image[..., 1] < 100) & (image[..., 2] < 100)
+        blue_mask = (image[..., 2] > 180) & (image[..., 0] < 100) & (image[..., 1] < 100)
 
-        image = frame.image
-        masks = {
-            "red": (image[..., 0] > 180) & (image[..., 1] < 100) & (image[..., 2] < 100),
-            "blue": (image[..., 2] > 180) & (image[..., 0] < 100) & (image[..., 1] < 100),
-        }
-        pixel_counts: dict[str, int] = {}
-        centroids: dict[str, tuple[float, float]] = {}
-        labels: list[str] = []
-        for label, mask in masks.items():
-            stats = _mask_stats(mask)
-            if stats is None:
-                continue
-            pixel_count, centroid_x, centroid_y, _bbox = stats
-            if pixel_count == 0:
-                continue
-            labels.append(label)
-            pixel_counts[label] = pixel_count
-            centroids[label] = (centroid_x, centroid_y)
-        return SegmentationView(
-            frame_id=frame.frame_id,
-            labels=tuple(labels),
-            pixel_counts=pixel_counts,
-            centroids=centroids,
+        mask = np.zeros(image.shape[:2], dtype=np.int32)
+        mask[red_mask] = 1
+        mask[blue_mask] = 2
+        return SegmentationMask2D(
+            mask=mask,
+            header=frame.header,
+            frame_index=frame.frame_index,
+            label_map={0: "background", 1: "red", 2: "blue"},
         )
 
 
@@ -197,51 +168,52 @@ class PointToLabel(Flow[DetectionBatch, PointTarget2D]):
         }
 
     def step(self, batch: DetectionBatch) -> PointTarget2D:
-        if batch.frame_id is None:
+        if batch.frame_index is None:
             return PointTarget2D()
         for det in batch.detections:
             if det.label != self.target_label:
                 continue
             return PointTarget2D(
-                frame_id=batch.frame_id,
+                frame_index=batch.frame_index,
+                header=batch.header,
                 label=det.label,
-                x_norm=det.centroid_x / max(self.image_width - 1.0, 1.0),
-                y_norm=det.centroid_y / max(self.image_height - 1.0, 1.0),
+                x_norm=det.centroid_x / max(self.image_width - 1.0, 1.0) if det.centroid_x is not None else None,
+                y_norm=det.centroid_y / max(self.image_height - 1.0, 1.0) if det.centroid_y is not None else None,
                 confidence=det.confidence,
             )
-        return PointTarget2D(frame_id=batch.frame_id)
+        return PointTarget2D(frame_index=batch.frame_index, header=batch.header)
 
 
 class DetectionPrinter(Flow[DetectionBatch, None]):
     def step(self, batch: DetectionBatch) -> None:
-        if batch.frame_id is None:
+        if batch.frame_index is None:
             return None
         if not batch.detections:
-            print(f"[frame={batch.frame_id:02d}] detections=[]")
+            print(f"[frame={batch.frame_index:02d}] detections=[]")
             return None
-        summary = [f"{det.label}@({det.centroid_x:4.1f},{det.centroid_y:4.1f}) c={det.confidence:.2f}" for det in batch.detections]
-        print(f"[frame={batch.frame_id:02d}] detections={summary}")
+        summary = [
+            f"{det.label}@({det.centroid_x:4.1f},{det.centroid_y:4.1f}) c={det.confidence:.2f}"
+            for det in batch.detections
+            if det.centroid_x is not None and det.centroid_y is not None and det.confidence is not None
+        ]
+        print(f"[frame={batch.frame_index:02d}] detections={summary}")
         return None
 
 
-class SegmentationPrinter(Flow[SegmentationView, None]):
-    def step(self, seg: SegmentationView) -> None:
-        if seg.frame_id is None:
+class SegmentationPrinter(Flow[SegmentationMask2D, None]):
+    def step(self, seg: SegmentationMask2D) -> None:
+        if seg.frame_index is None:
             return None
-        print(
-            f"[frame={seg.frame_id:02d}] labels={list(seg.labels)} pixel_counts={seg.pixel_counts} centroids={seg.centroids}"
-        )
+        labels, pixel_counts, centroids = summarize_segmentation(seg)
+        print(f"[frame={seg.frame_index:02d}] labels={labels} pixel_counts={pixel_counts} centroids={centroids}")
         return None
 
 
 class PointPrinter(Flow[PointTarget2D, None]):
     def step(self, point: PointTarget2D) -> None:
-        if point.frame_id is None:
-            return None
-        if point.label is None or point.x_norm is None or point.y_norm is None:
-            print(f"[frame={point.frame_id:02d}] target-missing")
+        if point.frame_index is None:
             return None
         print(
-            f"[frame={point.frame_id:02d}] point_to={point.label} x_norm={point.x_norm:.2f} y_norm={point.y_norm:.2f} conf={float(point.confidence or 0.0):.2f}"
+            f"[frame={point.frame_index:02d}] target={point.label} x_norm={point.x_norm:.2f} y_norm={point.y_norm:.2f} confidence={point.confidence:.2f}"
         )
         return None

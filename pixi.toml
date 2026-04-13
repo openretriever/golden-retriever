@@ -262,7 +262,7 @@ golden = { features = ["py311", "bundled_core", "golden"] }
 tamp = { features = ["py311", "bundled_core", "tamp"] }
 local-core = { features = ["py311", "local_core"] }
 golden-local = { features = ["py311", "local_core", "golden"] }
-golden-perception = { features = ["py311", "bundled_core", "golden", "cpu"] }
+golden-perception = { features = ["py311", "local_core", "golden", "cpu"] }
 tamp-local = { features = ["py311", "local_core", "tamp"] }
 
 [feature.vlm_planning.tasks]

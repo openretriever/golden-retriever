@@ -1,7 +1,7 @@
 """Shared helpers for real perception examples.
 
-These examples intentionally reuse the small payload vocabulary from
-`perception_examples/common.py` so the real-model path does not invent a second
+These examples intentionally reuse the canonical perception payloads from
+`retriever.types.perception` so the real-model path does not invent a second
 set of example-only types.
 """
 
@@ -17,16 +17,17 @@ import numpy as np
 from PIL import Image
 
 from retriever.flow import Flow
-
-from examples.advanced.perception_examples.common import (
+from retriever.types.perception import (
     BBox2D,
     Detection2D,
     DetectionBatch,
-    Frame2D,
+    Image2D,
     PointTarget2D,
-    SegmentationView,
-    SyntheticColorCamera,
+    SegmentationMask2D,
 )
+from retriever.types.spatial import Header
+
+from examples.advanced.perception_examples.common import SyntheticColorCamera
 
 
 DEFAULT_DETECTION_LABELS = ("red block", "blue block")
@@ -38,6 +39,11 @@ DEFAULT_POINT_QUERY = "point to the red block"
 class ExampleImage:
     image: np.ndarray
     description: str
+
+
+def _make_header(*, frame_index: int, t_sim: float, source: str) -> Header:
+    stamp_ns = max(1, int(round(t_sim * 1_000_000_000)))
+    return Header(stamp_ns=stamp_ns, frame_id="real_perception_image", source=source)
 
 
 def parse_labels(raw: str | Sequence[str] | None, *, fallback: tuple[str, ...]) -> tuple[str, ...]:
@@ -53,11 +59,10 @@ def parse_labels(raw: str | Sequence[str] | None, *, fallback: tuple[str, ...]) 
 def render_default_example_image(*, width: int = 96, height: int = 72, frame_index: int = 4) -> ExampleImage:
     camera = SyntheticColorCamera(width=width, height=height, dt=0.1)
     camera.reset()
-    frame = Frame2D()
-    for _ in range(max(1, frame_index)):
+    frame = camera.step(None)
+    for _ in range(max(0, frame_index - 1)):
         frame = camera.step(None)
-    assert frame.image is not None
-    return ExampleImage(image=frame.image.copy(), description="synthetic red/blue tabletop scene")
+    return ExampleImage(image=frame.data.copy(), description="synthetic red/blue tabletop scene")
 
 
 def load_example_image(image_path: str | None) -> ExampleImage:
@@ -68,7 +73,7 @@ def load_example_image(image_path: str | None) -> ExampleImage:
     return ExampleImage(image=np.array(image), description=str(path))
 
 
-class StaticImageSource(Flow[None, Frame2D]):
+class StaticImageSource(Flow[None, Image2D]):
     def __init__(self, *, image_path: str | None = None, dt: float = 0.1) -> None:
         super().__init__()
         self.image_path = image_path
@@ -81,14 +86,19 @@ class StaticImageSource(Flow[None, Frame2D]):
         self.reset()
 
     def reset(self) -> None:
-        self._frame_id = 0
+        self._frame_index = 0
         self._t_sim = 0.0
         self._example = load_example_image(self.image_path)
 
     def step(self, _):  # type: ignore[override]
-        self._frame_id += 1
+        self._frame_index += 1
         self._t_sim += self.dt
-        return Frame2D(image=self._example.image.copy(), frame_id=self._frame_id, t_sim=self._t_sim)
+        return Image2D(
+            data=self._example.image.copy(),
+            encoding="rgb8",
+            header=_make_header(frame_index=self._frame_index, t_sim=self._t_sim, source="golden.static_image_source"),
+            frame_index=self._frame_index,
+        )
 
 
 class GeminiVisionBackend:
@@ -139,7 +149,7 @@ class GeminiVisionBackend:
             raise RuntimeError("Gemini response did not contain text output")
         return text
 
-    def detect(self, image_rgb: np.ndarray, *, labels: tuple[str, ...], frame_id: int | None) -> DetectionBatch:
+    def detect(self, image_rgb: np.ndarray, *, labels: tuple[str, ...], header: Header | None, frame_index: int | None) -> DetectionBatch:
         label_list = ", ".join(labels)
         prompt = (
             "Detect the requested objects in the image. "
@@ -173,9 +183,9 @@ class GeminiVisionBackend:
                     pixel_count=int(max(1.0, (x3 - x0) * (y3 - y0))),
                 )
             )
-        return DetectionBatch(frame_id=frame_id, detections=tuple(detections))
+        return DetectionBatch(detections=tuple(detections), header=header, frame_index=frame_index)
 
-    def point(self, image_rgb: np.ndarray, *, query: str, frame_id: int | None) -> PointTarget2D:
+    def point(self, image_rgb: np.ndarray, *, query: str, header: Header | None, frame_index: int | None) -> PointTarget2D:
         prompt = (
             "Point to the object described by the user. "
             f"Description: {query}. "
@@ -184,17 +194,18 @@ class GeminiVisionBackend:
         )
         items = self._extract_json_list(self._generate_text(prompt=prompt, image_rgb=image_rgb))
         if not items:
-            return PointTarget2D(frame_id=frame_id)
+            return PointTarget2D(frame_index=frame_index, header=header)
         item = items[0]
         point = item.get("point")
         if not isinstance(point, list) or len(point) != 2:
-            return PointTarget2D(frame_id=frame_id)
+            return PointTarget2D(frame_index=frame_index, header=header)
         try:
             y, x = [float(value) for value in point]
         except (TypeError, ValueError):
-            return PointTarget2D(frame_id=frame_id)
+            return PointTarget2D(frame_index=frame_index, header=header)
         return PointTarget2D(
-            frame_id=frame_id,
+            frame_index=frame_index,
+            header=header,
             label=str(item.get("label", query)),
             x_norm=max(0.0, min(1.0, x / 1000.0)),
             y_norm=max(0.0, min(1.0, y / 1000.0)),
@@ -202,7 +213,7 @@ class GeminiVisionBackend:
         )
 
 
-class GeminiDetector(Flow[Frame2D, DetectionBatch]):
+class GeminiDetector(Flow[Image2D, DetectionBatch]):
     def __init__(self, *, labels: tuple[str, ...], model: str = "gemini-2.0-flash") -> None:
         super().__init__()
         self.labels = tuple(labels)
@@ -212,13 +223,11 @@ class GeminiDetector(Flow[Frame2D, DetectionBatch]):
     def init_config(self) -> dict:
         return {"labels": list(self.labels), "model": self.model}
 
-    def step(self, frame: Frame2D) -> DetectionBatch:
-        if frame.image is None:
-            return DetectionBatch()
-        return self._backend.detect(frame.image, labels=self.labels, frame_id=frame.frame_id)
+    def step(self, frame: Image2D) -> DetectionBatch:
+        return self._backend.detect(frame.data, labels=self.labels, header=frame.header, frame_index=frame.frame_index)
 
 
-class GeminiPointer(Flow[Frame2D, PointTarget2D]):
+class GeminiPointer(Flow[Image2D, PointTarget2D]):
     def __init__(self, *, query: str, model: str = "gemini-2.0-flash") -> None:
         super().__init__()
         self.query = query
@@ -228,13 +237,11 @@ class GeminiPointer(Flow[Frame2D, PointTarget2D]):
     def init_config(self) -> dict:
         return {"query": self.query, "model": self.model}
 
-    def step(self, frame: Frame2D) -> PointTarget2D:
-        if frame.image is None:
-            return PointTarget2D()
-        return self._backend.point(frame.image, query=self.query, frame_id=frame.frame_id)
+    def step(self, frame: Image2D) -> PointTarget2D:
+        return self._backend.point(frame.data, query=self.query, header=frame.header, frame_index=frame.frame_index)
 
 
-class OwlSamSegmenter(Flow[Frame2D, SegmentationView]):
+class OwlSamSegmenter(Flow[Image2D, SegmentationMask2D]):
     def __init__(self, *, labels: tuple[str, ...], score_threshold: float = 0.1) -> None:
         super().__init__()
         self.labels = tuple(labels)
@@ -268,14 +275,10 @@ class OwlSamSegmenter(Flow[Frame2D, SegmentationView]):
         self._sam_processor = SamProcessor.from_pretrained("facebook/sam-vit-base")
         self._sam_model = SamModel.from_pretrained("facebook/sam-vit-base").to(device)
 
-    def step(self, frame: Frame2D) -> SegmentationView:
-        if frame.image is None or frame.frame_id is None:
-            return SegmentationView()
+    def step(self, frame: Image2D) -> SegmentationMask2D:
         if self._torch is None:
             self.init()
-        import cv2
-
-        image_rgb = frame.image.astype(np.uint8)
+        image_rgb = frame.data.astype(np.uint8)
         pil_image = Image.fromarray(image_rgb)
         torch = self._torch
         assert torch is not None
@@ -294,8 +297,10 @@ class OwlSamSegmenter(Flow[Frame2D, SegmentationView]):
         )[0]
         boxes = results["boxes"]
         label_indexes = results["labels"]
+        mask = np.zeros(image_rgb.shape[:2], dtype=np.int32)
+        label_map = {0: "background"}
         if len(boxes) == 0:
-            return SegmentationView(frame_id=frame.frame_id)
+            return SegmentationMask2D(mask=mask, header=frame.header, frame_index=frame.frame_index, label_map=label_map)
 
         input_points = []
         labels: list[str] = []
@@ -317,21 +322,8 @@ class OwlSamSegmenter(Flow[Frame2D, SegmentationView]):
         )
         mask_array = masks[0][:, 0, :, :].numpy() if masks else np.zeros((0,) + image_rgb.shape[:2], dtype=bool)
 
-        pixel_counts: dict[str, int] = {}
-        centroids: dict[str, tuple[float, float]] = {}
-        ordered_labels: list[str] = []
-        for label, mask in zip(labels, mask_array):
-            coords = np.argwhere(mask > 0)
-            if len(coords) == 0:
-                continue
-            ys = coords[:, 0]
-            xs = coords[:, 1]
-            pixel_counts[label] = int(len(coords))
-            centroids[label] = (float(xs.mean()), float(ys.mean()))
-            ordered_labels.append(label)
-        return SegmentationView(
-            frame_id=frame.frame_id,
-            labels=tuple(ordered_labels),
-            pixel_counts=pixel_counts,
-            centroids=centroids,
-        )
+        for idx, (label, single_mask) in enumerate(zip(labels, mask_array), start=1):
+            if np.any(single_mask > 0):
+                mask[single_mask > 0] = idx
+                label_map[idx] = label
+        return SegmentationMask2D(mask=mask, header=frame.header, frame_index=frame.frame_index, label_map=label_map)
