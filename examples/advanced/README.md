@@ -25,12 +25,13 @@ The concise perception and memory ladders now require the local editable-core en
 
 1. `perception_examples/`: concise detection, segmentation, and pointing flows over one shared synthetic scene.
 2. `memory_examples/`: concise belief, dropout-memory, and remembered-pointing flows built on the same perception payloads.
-3. `perception_debug/`: deterministic record/replay and windowed stats once the basic perception surfaces are clear.
-4. `state_management/`: reset behavior, older belief examples, and event-driven replanning.
-5. `functional_wiring/`: composing surfaced flows into larger pipelines.
-6. `core_composition/`: registry-backed pipeline composition using a local editable core checkout.
-7. `multi_agent_communication/`: compact coordination/composition patterns.
-8. `tamp_tabletop_pick_place/`: a larger integrated planning + execution demo with a simulator.
+3. `language_examples/`: concise caption, grounding, and primitive plan-text flows over canonical core types.
+4. `perception_debug/`: deterministic record/replay and windowed stats once the basic perception surfaces are clear.
+5. `state_management/`: reset behavior, older belief examples, and event-driven replanning.
+6. `functional_wiring/`: composing surfaced flows into larger pipelines.
+7. `core_composition/`: registry-backed pipeline composition using a local editable core checkout.
+8. `multi_agent_communication/`: compact coordination/composition patterns.
+9. `tamp_tabletop_pick_place/`: a larger integrated planning + execution demo with a simulator.
 
 Across these examples, prefer shared basic payloads plus structural composition. If a local stage needs grouped inputs or outputs, use composite `Flow[...]` typing first; only introduce a new named `Input` / `Output` envelope when that grouped boundary is itself a stable domain contract.
 
@@ -38,6 +39,7 @@ Across these examples, prefer shared basic payloads plus structural composition.
 
 - `perception_examples/README.md`: the shortest path through detection, segmentation, and pointing.
 - `memory_examples/README.md`: the shortest path through belief and remembered actions.
+- `language_examples/README.md`: the shortest path through captions, grounding, and primitive plan text.
 - `perception_debug/README.md`: stepper-first perception debugging and record/replay.
 - `state_management/README.md`: older state, reset, and belief-update examples.
 - `functional_wiring/README.md`: composition, fan-in/fan-out, and surfaced builders.

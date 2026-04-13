@@ -125,6 +125,19 @@ That example demonstrates:
 
 Again, the point is to keep payloads stable while changing structure around them.
 
+## 10. Add one small language and grounding ladder
+
+If you want the smallest text-facing examples without jumping into model-specific packets, continue with:
+
+```bash
+pixi run -e golden-local demo-language-caption-plan
+pixi run -e golden-local demo-language-grounded-reference
+```
+
+These use the canonical core language primitives directly and keep structural composition explicit.
+
+For the dedicated walkthrough, continue with `docs/examples/language_and_grounding_v1.md`.
+
 For a dedicated walkthrough of that surface, continue with `docs/examples/pipeline_composition_v1.md`.
 
 
