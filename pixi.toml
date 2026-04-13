@@ -299,6 +299,8 @@ demo-stateful-reset = { cmd = "python examples/advanced/state_management/statefu
 demo-memory-belief-flow = { cmd = "python -m examples.advanced.memory_examples.belief_from_detections --steps 12 --dt 0.1", env = { PYTHONPATH = "." } }
 demo-memory-dropout-flow = { cmd = "python -m examples.advanced.memory_examples.memory_under_dropout --steps 12 --dt 0.1", env = { PYTHONPATH = "." } }
 demo-memory-pointing-flow = { cmd = "python -m examples.advanced.memory_examples.pointing_with_memory --target red --steps 12 --dt 0.1", env = { PYTHONPATH = "." } }
+demo-language-caption-plan = { cmd = "python -m examples.advanced.language_examples.caption_to_plan --steps 4 --dt 0.1", env = { PYTHONPATH = "." } }
+demo-language-grounded-reference = { cmd = "python -m examples.advanced.language_examples.grounded_reference --steps 6 --dt 0.1", env = { PYTHONPATH = "." } }
 demo-gemini-detection-flow = { cmd = "python -m examples.advanced.real_perception.gemini_detection_flow --backend mock --steps 2 --dt 0.2", env = { PYTHONPATH = "." } }
 demo-gemini-pointing-flow = { cmd = "python -m examples.advanced.real_perception.gemini_pointing_flow --backend mock --steps 2 --dt 0.2", env = { PYTHONPATH = "." } }
 demo-owl-sam-segmentation-flow = { cmd = "python -m examples.advanced.real_perception.owl_sam_segmentation_flow --backend mock --steps 1 --dt 0.2", env = { PYTHONPATH = "." } }
