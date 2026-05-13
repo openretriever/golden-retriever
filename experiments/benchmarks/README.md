@@ -46,15 +46,24 @@ pixi run python experiments/benchmarks/plot_benchmark_results.py
 We also include benchmarks imported from the [dora-benchmark](https://github.com/dora-rs/dora-benchmark) repository.
 
 **Dora (Python Latency):**
+
 ```bash
 pixi run benchmark-dora-suite
 # Results: experiments/benchmarks/results/dora_benchmark_results.csv
 ```
 
 **ROS 2 (Python PubSub):**
+
+First build the code.
+
 ```bash
 pixi run -e ros benchmark-ros-suite-build
-# Then run manually:
-# source experiments/benchmarks/dora_benchmark/ros2/py_pubsub/install/setup.bash
-# ros2 run py_pubsub listener & ros2 run py_pubsub talker
+```
+
+Then run manually.
+
+```bash
+pixi shell -e ros
+source experiments/benchmarks/dora_benchmark/ros2/py_pubsub/install/setup.bash
+ros2 run py_pubsub listener & ros2 run py_pubsub talker
 ```
