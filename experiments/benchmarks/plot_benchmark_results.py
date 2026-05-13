@@ -54,14 +54,11 @@ def plot_results():
         "retriever_in-process_benchmark_results.csv": "Retriever [single-process]",
         "dora_benchmark_results.csv": "dora-rs (native)",
         "ros_cpp_benchmark_results.csv": "ROS2 (C++)",
+        "ros_cpp_components_benchmark_results.csv": "ROS2 (C++, Components)",
         "ros_python_benchmark_results.csv": "ROS2 (Python)"
     }
     
     # Define order for plotting (determines legend order)
-    # 1. Retriever [single-process]
-    # 2. Retriever [dora backend]
-    # 3. Retriever [multiprocessing]
-    # 4. dora-rs (native)
     priority_order = [
         "retriever_in-process_benchmark_results.csv",
         "retriever_dora_benchmark_results.csv",
@@ -69,6 +66,7 @@ def plot_results():
         "retriever_mp_benchmark_results.csv",
         "dora_benchmark_results.csv",
         "ros_cpp_benchmark_results.csv",
+        "ros_cpp_components_benchmark_results.csv",
         "ros_python_benchmark_results.csv"
     ]
     
@@ -90,12 +88,13 @@ def plot_results():
     
     # Colors for paper clarity
     colors = {
-        "Retriever [dora backend]": "#1f77b4",          # Blue
-        "Retriever [multiprocessing]": "#2ca02c", # Green
+        "Retriever [dora backend]": "#1f77b4",      # Blue
+        "Retriever [multiprocessing]": "#2ca02c",   # Green
         "Retriever [single-process]": "#d62728",    # Red
-        "dora-rs (native)": "#ff7f0e",          # Orange
-        "ROS2 (C++)": "#9467bd",                 # Purple
-        "ROS2 (Python)": "#8c564b"               # Brown
+        "dora-rs (native)": "#ff7f0e",              # Orange
+        "ROS2 (C++)": "#9467bd",                    # Purple
+        "ROS2 (C++, Components)": "#bcbd22",        # Olive
+        "ROS2 (Python)": "#8c564b"                  # Brown
     }
 
     file_data = {}
@@ -144,31 +143,19 @@ def plot_results():
 
                 if "latency_ns" in row:
                     lat_col = "latency_ns"
+                    lat_to_ms = 1 / 1_000_000
                 elif "Latency (μs)" in row: # legacy helper format
                     lat_col = "Latency (μs)"
+                    lat_to_ms = 1 / 1_000
                 else:
-                    lat_col = df.columns[-1]
+                    raise ValueError("Did not find latency in nanoseconds or microseconds")
 
                 latencies = parse_latencies(row[lat_col])
                 if not latencies:
                     continue
                 
-                # Convert latencies to milliseconds
-                # NOTE: Both benchmark_retriever.py and dora-rs/node_2.py divide the 
-                # nanosecond difference by 1000 BEFORE logging.
-                # So the values in 'latency_ns' column are actually in MICROSECONDS.
-                if lat_col == "latency_ns":
-                    latencies_ms = [l / 1_000 for l in latencies] # us -> ms
-                elif lat_col == "Latency (μs)":
-                    latencies_ms = [l / 1_000 for l in latencies]
-                else: # Fallback, assume us if it matches others, or ns?
-                    # Given the project consistency, assume us -> ms like others
-                    latencies_ms = [l / 1_000 for l in latencies]
-
-                # FIXME: ROS2 C++ benchmark results are off by 10^3 (reported in ns instead of us)
-                if filename in ["ros_cpp_benchmark_results.csv", "ros_python_benchmark_results.csv"]:
-                    latencies_ms = [l / 1_000 for l in latencies_ms]
-
+                # Convert latencies to milliseconds and get statistics.
+                latencies_ms = [l * lat_to_ms for l in latencies]
                 median = np.median(latencies_ms)
                 p10 = np.percentile(latencies_ms, 10)
                 p90 = np.percentile(latencies_ms, 90)

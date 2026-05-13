@@ -14,10 +14,25 @@ pixi run python experiments/benchmarks/benchmark_retriever.py --backend multipro
 
 ## ROS Benchmarks
 
+First, build the ROS 2 packages using `colcon.
+
 ```bash
 pixi run -e ros build
+```
+
+Then, you can run the standard Python (`rclpy`) and C++ (`rclcpp`) benchmarks.
+These use the CycloneDDS middleware to communicate between processes.
+
+```bash
 pixi run -e ros benchmark_python
 pixi run -e ros benchmark_cpp
+```
+
+Additionally, in C++, you can set up node components to communicate between nodes using shared memory (intra-process communication).
+For more information, see [this link](https://docs.ros.org/en/kilted/Tutorials/Intermediate/Composition.html).
+
+```bash
+pixi run -e ros benchmark_cpp_components
 ```
 
 ## Plot results

@@ -4,20 +4,26 @@
 #include <memory>
 
 #include "rclcpp/rclcpp.hpp"
+#include "rclcpp_components/register_node_macro.hpp"
 #include "std_msgs/msg/u_int64_multi_array.hpp"
 
-static std::string kName{"ROS 2 C++"};
-static std::string kPlatform{"COMPUTER_PERF"};
-static std::string kOutputFilePath{"experiments/benchmarks/results/ros_cpp_benchmark_results.csv"};
+static const std::string kPlatform{"COMPUTER_PERF"};
+static const std::string kDefaultName{"ROS 2 C++"};
+static const std::string kDefaultOutputFile{
+    "experiments/benchmarks/results/ros_cpp_benchmark_results.csv"};
 static constexpr size_t kNumPointsPerSize {100};
 
 
 class MinimalSubscriber : public rclcpp::Node
 {
 public:
-  MinimalSubscriber()
-  : Node("minimal_subscriber"), n_(0), file_(kOutputFilePath)
+  explicit MinimalSubscriber(const rclcpp::NodeOptions & options)
+  : Node("minimal_subscriber", options),
+    n_(0),
+    name_(this->declare_parameter<std::string>("benchmark_name", kDefaultName)),
+    output_file_(this->declare_parameter<std::string>("output_file", kDefaultOutputFile))
   {
+    file_.open(output_file_);
     writeHeader();
     latencies_.reserve(kNumPointsPerSize);
 
@@ -48,10 +54,11 @@ public:
 
   void writeHeader() {
     file_ << "name,platform,size,latency_ns\n";
+    file_.flush();
   }
 
   void writeRow(size_t cur_size, const std::vector<size_t>& latencies) {
-    file_ << kName << "," << kPlatform << "," << cur_size << ",\"[";
+    file_ << name_ << "," << kPlatform << "," << cur_size << ",\"[";
     for (size_t i = 0; i < latencies.size(); ++i) {
         file_ << std::to_string(latencies.at(i));
         if (i < latencies.size() - 1) {
@@ -59,10 +66,14 @@ public:
         }
     }
     file_ << "]\"\n";
+    file_.flush();
   }
 
   ~MinimalSubscriber() {
     if (file_.is_open()) {
+        if (n_ > 0) {
+            writeRow(cur_size_, latencies_);
+        }
         file_.close();
     }
   }
@@ -72,13 +83,19 @@ private:
   size_t n_;
   size_t cur_size_;
   std::vector<size_t> latencies_;  // nanoseconds
+  std::string name_;
+  std::string output_file_;
   std::ofstream file_;
 };
 
+RCLCPP_COMPONENTS_REGISTER_NODE(MinimalSubscriber)
+
+#ifndef BENCHMARK_CPP_AS_COMPONENT
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<MinimalSubscriber>());
+  rclcpp::spin(std::make_shared<MinimalSubscriber>(rclcpp::NodeOptions()));
   rclcpp::shutdown();
   return 0;
 }
+#endif

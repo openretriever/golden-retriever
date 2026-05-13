@@ -4,6 +4,7 @@
 #include <string>
 
 #include "rclcpp/rclcpp.hpp"
+#include "rclcpp_components/register_node_macro.hpp"
 #include "std_msgs/msg/u_int64_multi_array.hpp"
 
 /**
@@ -27,23 +28,23 @@ static constexpr std::chrono::milliseconds kDataRate {50};
 class MinimalPublisher : public rclcpp::Node
 {
 public:
-  MinimalPublisher()
-  : Node("minimal_publisher"), i_(0), j_(0), rng_(std::random_device{}()), dist_(0, 254)
+  explicit MinimalPublisher(const rclcpp::NodeOptions & options)
+  : Node("minimal_publisher", options), i_(0), j_(0), rng_(std::random_device{}()), dist_(0, 254)
   {
     publisher_ = this->create_publisher<std_msgs::msg::UInt64MultiArray>("topic", 10);
     auto timer_callback =
       [this]() -> void {
-        auto message = std_msgs::msg::UInt64MultiArray();
-        message.data.resize(kSizes.at(i_));
-        for (auto& elem : message.data)
+        auto message = std::make_unique<std_msgs::msg::UInt64MultiArray>();
+        message->data.resize(kSizes.at(i_));
+        for (auto& elem : message->data)
         {
             elem = dist_(rng_);
         }
-        message.data[0] = std::chrono::duration_cast<std::chrono::nanoseconds>(
+        message->data[0] = std::chrono::duration_cast<std::chrono::nanoseconds>(
             std::chrono::steady_clock::now().time_since_epoch()
         ).count();
         // RCLCPP_INFO(this->get_logger(), "Publishing message of size %lu", kSizes.at(i_));
-        this->publisher_->publish(message);
+        this->publisher_->publish(std::move(message));
 
         if (j_ == kNumPointsPerSize)
         {
@@ -70,10 +71,14 @@ private:
   std::uniform_int_distribution<uint64_t> dist_;
 };
 
+RCLCPP_COMPONENTS_REGISTER_NODE(MinimalPublisher)
+
+#ifndef BENCHMARK_CPP_AS_COMPONENT
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<MinimalPublisher>());
+  rclcpp::spin(std::make_shared<MinimalPublisher>(rclcpp::NodeOptions()));
   rclcpp::shutdown();
   return 0;
 }
+#endif
