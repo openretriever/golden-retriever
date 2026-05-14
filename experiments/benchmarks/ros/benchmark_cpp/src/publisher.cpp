@@ -11,16 +11,20 @@
  *  Publisher node for ROS 2 C++ benchmarking.
  */
 
-std::vector<size_t> kSizes {
-    8,
-    64,
-    512,
-    10 * 512,
-    100 * 512,
-    1000 * 512,
-    10000 * 512,
-    8
-};
+// NOTE: kSizes defines the number of uint64 elements in the payload.
+// Since each uint64 is 8 bytes, the actual payload size in bytes is: Element Count * 8.
+// Matches SIZES in benchmark_python/publisher.py: [2^i for i in range(6, 25)].
+//   i=6  -> 2^6  = 64 elements   -> 512 Bytes
+//   i=20 -> 2^20 = 1M elements   -> 8 MB
+//   i=24 -> 2^24 = 16M elements  -> 128 MB
+std::vector<size_t> kSizes = []() {
+    std::vector<size_t> sizes;
+    sizes.reserve(25 - 6);
+    for (size_t i = 6; i < 25; ++i) {
+        sizes.push_back(static_cast<size_t>(1) << i);
+    }
+    return sizes;
+}();
 static constexpr size_t kNumPointsPerSize {100};
 static constexpr std::chrono::milliseconds kDataRate {50};
 

@@ -52,10 +52,10 @@ def plot_results():
         "retriever_multiprocessing_benchmark_results.csv": "Retriever [multiprocessing]",
         "retriever_mp_benchmark_results.csv": "Retriever [multiprocessing]",
         "retriever_in-process_benchmark_results.csv": "Retriever [single-process]",
-        "dora_benchmark_results.csv": "dora-rs (native)",
-        "ros_cpp_benchmark_results.csv": "ROS2 (C++)",
-        "ros_cpp_components_benchmark_results.csv": "ROS2 (C++, Components)",
-        "ros_python_benchmark_results.csv": "ROS2 (Python)"
+        "dora_benchmark_results.csv": "dora-rs [native]",
+        "ros_cpp_benchmark_results.csv": "ROS 2 [C++]",
+        "ros_cpp_components_benchmark_results.csv": "ROS 2 [C++, components]",
+        "ros_python_benchmark_results.csv": "ROS 2 [Python]"
     }
     
     # Define order for plotting (determines legend order)
@@ -91,10 +91,10 @@ def plot_results():
         "Retriever [dora backend]": "#1f77b4",      # Blue
         "Retriever [multiprocessing]": "#2ca02c",   # Green
         "Retriever [single-process]": "#d62728",    # Red
-        "dora-rs (native)": "#ff7f0e",              # Orange
-        "ROS2 (C++)": "#9467bd",                    # Purple
-        "ROS2 (C++, Components)": "#bcbd22",        # Olive
-        "ROS2 (Python)": "#8c564b"                  # Brown
+        "dora-rs [native]": "#ff7f0e",              # Orange
+        "ROS 2 [C++]": "#9467bd",                    # Purple
+        "ROS 2 [C++, components]": "#bcbd22",        # Olive
+        "ROS 2 [Python]": "#8c564b"                  # Brown
     }
 
     file_data = {}
@@ -259,6 +259,8 @@ def plot_results():
         
         plt.gca().get_xaxis().set_major_formatter(FuncFormatter(human_readable))
         plt.xticks(rotation=45)
+
+        plt.gca().get_yaxis().set_major_formatter(FuncFormatter(lambda y, pos: f'{y:g}'))
         
         plt.xlabel("Message Size")
         plt.ylabel("Latency (ms)")

@@ -35,6 +35,9 @@ For more information, see [this link](https://docs.ros.org/en/kilted/Tutorials/I
 pixi run -e ros benchmark_cpp_components
 ```
 
+In all cases, the benchmarks will indicate when they have completed data collection.
+At this point, you should terminate the program yourself with Ctrl+C or equivalent.
+
 ## Plot results
 
 ```bash
