@@ -72,7 +72,7 @@ class MinimalSubscriber(Node):
             self.n = 0
             self.latencies = []
         t_send = msg.data[0]
-        self.latencies.append((t_received - t_send) / 1000)
+        self.latencies.append((t_received - t_send))  # Manual modification: Log as nanoseconds
         self.n += 1
         # self.get_logger().info('I heard: "%s"' % msg.data)
 

@@ -46,7 +46,7 @@ class MinimalPublisher(Node):
             np.random.randint(255, size=SIZES[self.i], dtype=np.uint64)
         )
 
-        random_data[0] = np.array([time.perf_counter_ns()])
+        random_data[0] = time.perf_counter_ns()
 
         random_data = (
             random_data.tobytes()
@@ -57,6 +57,12 @@ class MinimalPublisher(Node):
         if self.j == 100:
             self.i += 1
             self.j = 0
+            # Manual modification: Prevents raising an exception when benchmark is done.
+            if self.i >= len(SIZES):
+                self.get_logger().info("Benchmarking data collection complete!")
+                self.timer.cancel()
+                self.destroy_node()
+            # End manual modification
         else:
             self.j += 1
 
