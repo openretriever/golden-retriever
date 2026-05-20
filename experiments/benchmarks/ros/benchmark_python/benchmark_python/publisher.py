@@ -12,16 +12,13 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import UInt64MultiArray
 
-SIZES = [
-    8,
-    64,
-    512,
-    10 * 512,
-    100 * 512,
-    1000 * 512,
-    10000 * 512,
-    8,
-]
+# NOTE: SIZES defines the number of uint64 elements in the payload.
+# Since each uint64 is 8 bytes, the actual payload size in bytes is: Element Count * 8.
+# Examples:
+#   i=6  -> 2^6  = 64 elements   -> 512 Bytes
+#   i=20 -> 2^20 = 1M elements   -> 8 MB
+#   i=24 -> 2^24 = 16M elements  -> 128 MB
+SIZES = [2**i for i in range(6, 25)] 
 NUM_POINTS_PER_SIZE = 100
 DATA_RATE_S = 0.05  # seconds
 

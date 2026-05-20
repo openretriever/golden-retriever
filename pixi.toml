@@ -205,6 +205,9 @@ RMW_IMPLEMENTATION = "rmw_cyclonedds_cpp"
 [feature.ros.tasks]
 build = { cmd = "colcon build", cwd = "./experiments/benchmarks/ros" }
 benchmark_python = "ros2 run benchmark_python publisher & ros2 run benchmark_python subscriber"
+benchmark_cpp = "ros2 run benchmark_cpp publisher & ros2 run benchmark_cpp subscriber"
+benchmark_cpp_components = "ros2 launch benchmark_cpp intra_process.launch.py"
+
 
 # -----------------------------------------------------------------------------
 # Optional: RoboPlan motion planning environments
