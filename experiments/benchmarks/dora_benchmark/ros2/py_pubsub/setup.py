@@ -17,7 +17,6 @@ setup(
     maintainer_email='tao.xavier@outlook.com',
     description='TODO: Package description',
     license='TODO: License declaration',
-    tests_require=['pytest'],
     entry_points={
         'console_scripts': [
                 'talker = py_pubsub.publisher_member_function:main',

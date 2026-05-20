@@ -45,7 +45,7 @@ while True:
     #
     ## Arrow Test: Using Arrow
     t_send = data[0].as_py()
-    latencies.append((t_received - t_send) / 1000)
+    latencies.append((t_received - t_send))  # Manual modification: Log as nanoseconds
 
     n += 1
     i += 1
