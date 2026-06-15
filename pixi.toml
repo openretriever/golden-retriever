@@ -18,6 +18,10 @@ pygments = "*"
 typing-extensions = "*"
 mcap = "*"
 jupytext = "*"
+rerun-sdk = "*"
+mujoco = "*"
+fastapi = ">=0.100.0"
+uvicorn = { version = "*", extras = ["standard"] }
 
 [feature.bundled_core.pypi-dependencies]
 # Public/default path: use the bundled retriever wheel checked into retriever_dist/.
@@ -156,6 +160,7 @@ rerun-sdk = "*"
 [feature.twist2.tasks]
 demo-twist2 = { cmd = "mjpython examples/advanced/twist2_simulation/app.py", env = { PYTHONPATH = "." } }
 demo-twist2-rerun = { cmd = "python examples/advanced/twist2_simulation/app.py --no-viewer", env = { PYTHONPATH = "." } }
+demo-twist2-web = { cmd = "python examples/advanced/twist2_web_simulation/app.py", env = { PYTHONPATH = "." } }
 
 # -----------------------------------------------------------------------------
 # Optional: VLM planning stack
@@ -255,7 +260,7 @@ mapper = { features = ["py311", "bundled_core", "mapper"] }
 spot = { features = ["py311", "bundled_core", "spot"] }
 vlm = { features = ["py311", "bundled_core", "golden", "vlm_planning"] }
 llm = { features = ["py311", "bundled_core", "golden", "vlm_planning"] }
-torch = { features = ["py311", "bundled_core", "golden", "cpu"] }
+torch = { features = ["py311", "bundled_core", "golden", "cpu", "twist2"] }
 twist2 = { features = ["py311", "bundled_core", "twist2"] }
 cpu = { features = ["py311", "bundled_core", "cpu"] }
 gpu = { features = ["py311", "bundled_core", "gpu"] }
@@ -302,6 +307,7 @@ demo-perception-replay-to-belief = { cmd = "python examples/advanced/state_manag
 demo-perception-belief-control = { cmd = "python examples/advanced/functional_wiring/perception_belief_control_pipeline.py", env = { PYTHONPATH = "." } }
 demo-composable-pipelines = { cmd = "python examples/advanced/core_composition/composable_pipelines.py", env = { PYTHONPATH = "." } }
 demo-webcam-rerun = { cmd = "python examples/advanced/webcam_rerun/app.py", env = { PYTHONPATH = "." } }
+demo-mujoco-web = { cmd = "python examples/advanced/mujoco_web_manipulation/app.py", env = { PYTHONPATH = "." } }
 demo-hierarchical-vla = { cmd = "python examples/advanced/hierarchical_vla/app.py --backend multiprocessing", env = { PYTHONPATH = "." } }
 demo-llm-streaming = { cmd = "python -m examples.advanced.llm_streaming_rl.app", env = { PYTHONPATH = "." } }
 demo-vlm-gridworld = { cmd = "python -m examples.advanced.vlm_gridworld.app", env = { PYTHONPATH = "." } }
