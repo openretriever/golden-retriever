@@ -8,7 +8,7 @@ They follow one design rule throughout: start from a small shared payload vocabu
 
 - `perception_and_memory_v1.md`: concise perception, belief, replay, and composition ladder.
 - `language_and_grounding_v1.md`: concise caption, grounding, and primitive plan-text ladder.
-- `pipeline_composition_v1.md`: newer registry-backed composition surfaces from the local editable core.
+- `pipeline_composition_v1.md`: newer registry-backed composition surfaces.
 
 ## Example Families
 

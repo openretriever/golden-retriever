@@ -2,7 +2,7 @@
 
 GoldenRetriever keeps the public docs small and topic-based.
 
-Core runtime source for now: default demos use the temporary `debug-retriever` PyPI package; local editable demos use a sibling `../retriever` checkout.
+Core runtime source for now: Golden demos use the temporary `debug-retriever` PyPI package until the public `retriever` package is published.
 
 ## Start Here
 

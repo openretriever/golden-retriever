@@ -97,7 +97,7 @@ If you want one more perception-side debugging surface before moving on, run:
 pixi run -e golden-local demo-detection-window-stats
 ```
 
-This keeps the same deterministic synthetic camera source, but adds a windowed aggregation stage so you can see how temporal statistics sit between raw detections and downstream memory. Right now it expects the local editable-core env because the bundled wheel in `retriever_dist` still uses the older startup semantics.
+This keeps the same deterministic synthetic camera source, but adds a windowed aggregation stage so you can see how temporal statistics sit between raw detections and downstream memory.
 
 ## 8. Add one more memory surface: stateful replanning
 
@@ -107,14 +107,13 @@ To see internal planner memory without bringing in a full robot stack, run:
 pixi run -e golden-local demo-stateful-replanning
 ```
 
-This example keeps state inside the replanner and emits plan updates only when obstacle events occur or clear. It also currently expects the local editable-core env so the runtime startup path matches the reset-first contract.
+This example keeps state inside the replanner and emits plan updates only when obstacle events occur or clear.
 
 ## 9. Next: newer core composition surfaces
 
-To explore the newer registry-backed composition surfaces from the current core Retriever checkout, switch to the local editable-core env and run:
+To explore the newer registry-backed composition surfaces, run:
 
 ```bash
-pixi install -e golden-local
 pixi run -e golden-local demo-composable-pipelines
 ```
 

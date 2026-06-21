@@ -12,14 +12,14 @@ pixi install
 
 Use this for portable Golden examples. Until the public `retriever` package is published, the default environment resolves the core runtime from the temporary `debug-retriever` PyPI package.
 
-### Local editable core (for debugging against core Retriever)
+### Golden demo environments
 
 ```bash
 pixi install -e golden-local
 pixi run -e golden-local python -c "import retriever; print(retriever.__file__)"
 ```
 
-Use this when you want Golden to resolve `retriever` from a sibling `../retriever` checkout while keeping the public/default environment unchanged. This is the public convention for working on the core runtime and companion examples side by side.
+The `golden-local` and `golden-perception` names are retained for existing launch commands. For now they resolve the temporary `debug-retriever` runtime package.
 
 ## Recommended Launch Points
 
@@ -42,11 +42,10 @@ pixi run -e golden-local demo-composable-pipelines
 pixi run demo-multi-agent-communication
 ```
 
-The `golden-local` and `golden-perception` launch points above require the local editable-core environment; the plain `pixi run ...` launch points use the temporary packaged-core path.
+The `golden-local` and `golden-perception` launch points use the same temporary packaged runtime plus the Golden example features needed by those commands.
 
 ## Repository Layout
 
-- `src/golden_retriever`: system integrations, robot drivers, and domain-specific runtime glue.
 - `src/retriever_typing`: typed robotics and event/data helpers used by several advanced demos.
 - `examples/advanced`: runnable advanced demos with concrete launch points. Start with `examples/advanced/README.md`.
 - `notebooks`: git-friendly notebook sources and generated notebook artifacts. Start with `notebooks/README.md`.
@@ -62,7 +61,7 @@ The `golden-local` and `golden-perception` launch points above require the local
 - `examples/advanced/state_management`: older internal state, reset behavior, and memory-oriented flows.
 - `examples/advanced/real_memory`: optional explicit real/mock memory flows built on the same detection and belief payloads.
 - `examples/advanced/functional_wiring`: flow composition, fan-in/fan-out, staged builders, and sync policies. These examples keep payloads simple and structural instead of inventing a new IO wrapper per stage.
-- `examples/advanced/core_composition`: registry-backed pipeline composition surfaces that are easiest to explore from the local editable-core env. The intended pattern is stable shared payloads plus structural rewiring, not pipeline-specific envelope classes.
+- `examples/advanced/core_composition`: registry-backed pipeline composition surfaces. The intended pattern is stable shared payloads plus structural rewiring, not pipeline-specific envelope classes.
 - `examples/advanced/multi_agent_communication`: a compact coordination/composition example.
 
 For the end-to-end perception -> memory -> composition walkthrough, see `docs/examples/perception_and_memory_v1.md`. For the newer registry-backed composition surfaces, continue with `docs/examples/pipeline_composition_v1.md`.
@@ -84,7 +83,7 @@ pixi run notebook-to-ipynb-demo
 pixi run notebook-to-ipynb-hub
 ```
 
-These tasks regenerate the git-friendly Jupytext notebooks. `retriever_demo` is a mechanics notebook for the packaged Golden environment. `hub_demo` is the Hub-first notebook and is meant to be *run* from the local editable-core env:
+These tasks regenerate the git-friendly Jupytext notebooks. `retriever_demo` is a mechanics notebook for the packaged Golden environment. `hub_demo` is the Hub-first notebook and is meant to be run from the Golden demo environment:
 
 ```bash
 pixi install -e golden-local

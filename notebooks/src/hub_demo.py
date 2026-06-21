@@ -11,8 +11,7 @@
 # # Retriever Hub notebook demo
 #
 # This notebook is Hub-first and assumes you are running it from Golden's
-# `golden-local` environment so `retriever` resolves from the sibling
-# `../retriever` checkout.
+# `golden-local` environment so the Golden example feature set is available.
 #
 # Configure one or both environment variables before running the source file or
 # launching the generated notebook:
@@ -22,7 +21,7 @@
 # - `RETRIEVER_HUB_COMPOSE_MODULE`: module ref that exports one or more
 #   `Build*Pipeline` / `Build*PipelineFlow` factories
 #
-# The notebook is still useful without them: it validates the local-core setup
+# The notebook is still useful without them: it validates the runtime setup
 # and shows the expected Hub surface.
 
 # %%

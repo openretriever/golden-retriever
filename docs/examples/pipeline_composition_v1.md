@@ -1,15 +1,15 @@
 # Core Composition Surfaces v1
 
-This guide covers the newer registry-backed pipeline composition surfaces that come from the current core Retriever checkout. Keep Golden on its default packaged environment for portable demos, and switch to the local editable-core env only when you want to debug against the live sibling core checkout.
+This guide covers the newer registry-backed pipeline composition surfaces used by the Golden examples. Keep the examples on the packaged runtime path until the public core package replaces the temporary debug package.
 
-## Local core setup
+## Runtime check
 
 ```bash
 pixi install -e golden-local
 pixi run -e golden-local python -c "import retriever; print(retriever.__file__)"
 ```
 
-The printed path should point into the sibling `../retriever` checkout.
+The printed path should resolve to the installed runtime package for this environment.
 
 ## First runnable example
 
@@ -42,7 +42,7 @@ Do not treat this layer as a license to invent pipeline-specific envelope types.
 
 ## Notebook version
 
-If you want the same local editable-core path in notebook form, build and run the Hub-first notebook:
+If you want the same composition path in notebook form, build and run the Hub-first notebook:
 
 ```bash
 pixi run notebook-to-ipynb-hub

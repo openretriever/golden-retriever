@@ -10,7 +10,7 @@ import time
 import numpy as np
 
 from retriever import Flow
-from retriever.flow import flow_io
+from retriever.flow import io
 from .env import TabletopEnv
 from .executor import PolicyExecutor, ExecutionRequest
 from .agent import CodeGenAgent
@@ -19,20 +19,20 @@ logger = logging.getLogger(__name__)
 
 # --- I/O Definitions ---
 
-@flow_io
+@io
 @dataclass
 class EnvObservation:
     objects: dict
     gripper: dict
     time: float = 0.0
 
-@flow_io
+@io
 @dataclass
 class EnvAction:
     target_pos: Optional[list[float]] = None
     gripper_open: Optional[bool] = None
 
-@flow_io
+@io
 @dataclass
 class UserInstruction:
     text: str
@@ -84,7 +84,7 @@ class CodePolicyFlow(Flow[EnvObservation, EnvAction]):
         super().__init__()
         self.instruction = instruction
         self.model = model
-        self.env_flow = env_flow  # Reference to RAVENS env for direct primitive calls
+        self.env_flow = env_flow  # Optional handle for environment-specific helpers.
         self.agent = None
         self.executor = None
         self.generated_code = None
@@ -151,29 +151,10 @@ class CodePolicyFlow(Flow[EnvObservation, EnvAction]):
                     action.target_pos = target_3d
             
             elif req.command == "pick":
-                # Store pick position for later combined pick-and-place action
-                obj_name = req.args[0]
-                if obj_name in obs.objects:
-                    pick_pos = obs.objects[obj_name]["position"]
-                    self.pending_pick_pos = pick_pos
-                    logger.info(f"[Policy] Stored pick position for {obj_name}: {pick_pos}")
-                    self._complete_req(None)
-                else:
-                    self._complete_req(None, ValueError(f"Object {obj_name} not found"))
+                self._handle_pick_macro(req, obs, action)
 
             elif req.command == "place":
-                # Execute atomic pick-and-place using RAVENS native primitive
-                place_pos = req.args[0]
-                if self.pending_pick_pos is not None and self.env_flow is not None:
-                    logger.info(f"[Policy] Executing pick_and_place: {self.pending_pick_pos} -> {place_pos}")
-                    success = self.env_flow.pick_and_place(self.pending_pick_pos, place_pos)
-                    self.pending_pick_pos = None
-                    self._complete_req(success)
-                else:
-                    if self.pending_pick_pos is None:
-                        self._complete_req(None, ValueError("No pending pick position"))
-                    else:
-                        self._complete_req(None, ValueError("No env_flow reference"))
+                self._handle_place_macro(req, obs, action)
 
         return action
 

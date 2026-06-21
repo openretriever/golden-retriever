@@ -8,7 +8,7 @@ These are concise advanced examples for the common memory and belief stages that
 
 All three examples reuse the canonical detection and pointing payloads from `retriever.types.perception`. The local memory-only state payloads live in `memory_examples/types.py`, so the flows stay separate from the belief carriers they manipulate.
 
-Run with the local editable core so the examples use the current Retriever type surface:
+Run the examples through the Golden demo environment:
 
 ```bash
 pixi run -e golden-local demo-memory-belief-flow

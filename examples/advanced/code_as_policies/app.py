@@ -2,11 +2,7 @@
 Main Application for Code as Policies Example.
 """
 
-from retriever import Pipeline
-from retriever.flow import io
-from .flows import TabletopEnvFlow, CodePolicyFlow, EnvAction, EnvObservation
-from .ravens_wrapper import RavensEnvFlow
-from .executor import ExecutionRequest
+from .flows import TabletopEnvFlow, CodePolicyFlow, EnvAction
 
 def main():
     import argparse
@@ -21,8 +17,7 @@ def main():
     print(f"Starting Code as Policies Demo with task: '{args.task}'")
     
     # 1. Define Flows
-    # env_flow = TabletopEnvFlow()
-    env_flow = RavensEnvFlow()  # Use RAVENS integration
+    env_flow = TabletopEnvFlow()
     policy_flow = CodePolicyFlow(instruction=args.task, model=args.model, env_flow=env_flow)
 
     # 2. Define Pipeline

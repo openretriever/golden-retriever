@@ -1,7 +1,7 @@
 """
 Registry-backed composable pipeline demo for GoldenRetriever.
 
-This example requires the local editable core environment:
+This example runs through the Golden demo environment:
 
   pixi run -e golden-local demo-composable-pipelines
 

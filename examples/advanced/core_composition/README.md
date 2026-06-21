@@ -1,18 +1,18 @@
 
 # Core Composition Examples
 
-These examples exercise registry-backed pipeline composition surfaces from a local editable core Retriever checkout.
+These examples exercise registry-backed pipeline composition surfaces.
 
-## Local Core Requirement
+## Runtime Requirement
 
-Use the local editable Golden environment so `retriever` resolves to the sibling `../retriever` checkout:
+Use the Golden demo environment so the example feature set is available:
 
 ```bash
 pixi install -e golden-local
 pixi run -e golden-local demo-composable-pipelines
 ```
 
-The printed import path from this command should point into `../retriever`:
+You can inspect the runtime package being used with:
 
 ```bash
 pixi run -e golden-local python -c "import retriever; print(retriever.__file__)"

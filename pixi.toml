@@ -33,10 +33,11 @@ debug-retriever = { version = ">=0.1.4", extras = [
     "demo",
 ] }
 
-[feature.local_core.pypi-dependencies]
-# Local debugging path: point Golden at a sibling retriever core checkout.
-# Public convention: clone the core repo next to this repo as ../retriever.
-retriever = { path = "../retriever", editable = true, extras = [
+[feature.runtime_core.pypi-dependencies]
+# Compatibility environment name retained for existing Golden launch commands.
+# Until the public openretriever/retriever package is published, this resolves
+# the same temporary runtime package as the default bundled-core path.
+debug-retriever = { version = ">=0.1.4", extras = [
     "dora",
     "demo",
 ] }
@@ -251,10 +252,10 @@ gpu = { features = ["py311", "bundled_core", "gpu"] }
 ros = { features = ["bundled_core", "ros"] }
 roboplan = { features = ["bundled_core", "roboplan"] }
 golden = { features = ["py311", "bundled_core", "golden"] }
-local-core = { features = ["py311", "local_core"] }
-golden-local = { features = ["py311", "local_core", "golden"] }
+runtime-core = { features = ["py311", "runtime_core"] }
+golden-local = { features = ["py311", "runtime_core", "golden"] }
 docs = { features = ["py311", "docs"] }
-golden-perception = { features = ["py311", "local_core", "golden", "cpu"] }
+golden-perception = { features = ["py311", "runtime_core", "golden", "cpu"] }
 
 [feature.vlm_planning.tasks]
 # demo-highlevel-planning = { cmd = "python examples/experimental/closed_loop_planning/pipelines/demo_highlevel_planning.py" }

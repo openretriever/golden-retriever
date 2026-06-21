@@ -27,10 +27,10 @@ Run the application with a task description:
 
 ```bash
 # Default (uses gemini-robotics-er-1.5-preview)
-pixi run -e ravens python -m examples.advanced.code_as_policies.app --task "Put the block in the bowl"
+pixi run python -m examples.advanced.code_as_policies.app --task "Put the block in the bowl"
 
 # Use free tier model
-pixi run -e ravens python -m examples.advanced.code_as_policies.app --model gemini-2.0-flash-exp --task "Put the block in the bowl"
+pixi run python -m examples.advanced.code_as_policies.app --model gemini-2.0-flash-exp --task "Put the block in the bowl"
 ```
 *Note: The default model `gemini-robotics-er-1.5-preview` is optimized for spatial reasoning.*
 
@@ -50,42 +50,3 @@ pixi run -e ravens python -m examples.advanced.code_as_policies.app --model gemi
 - `agent.py`: LLM client.
 - `prompts.py`: System prompt and API docs.
 - `env.py`: Simulation logic.
-
-## TODO
-
-- [ ] Clean up `ravens_wrapper.py` lint warnings (trailing whitespace, unused imports)
-- [ ] Update `flows.py` to use `step()` instead of `run()` (new Flow API)
-- [ ] Extract RAVENS environment into self-contained `ravens/` subdirectory (see below)
-
-### RAVENS Reorganization Plan
-
-**Goal:** Move minimal RAVENS code from `golden_retriever` into this example.
-
-**Proposed structure:**
-```
-examples/advanced/code_as_policies/
-├── ravens/                    ← [NEW] Self-contained module
-│   ├── environment.py         ← Core sim (UR5, PyBullet, IK)
-│   ├── task.py                ← Base task class
-│   ├── put_block_in_bowl.py   ← Task definition
-│   ├── primitives.py          ← PickPlace primitive
-│   ├── grippers.py            ← Suction gripper
-│   ├── cameras.py             ← Camera configs  
-│   ├── utils.py               ← Transform utilities
-│   └── assets/                ← URDF/mesh files (symlink or subset)
-├── ravens_wrapper.py          ← Updated imports
-└── ...
-```
-
-**Files to move:**
-
-| Source | Destination |
-|--------|-------------|
-| `envs/environment.py` | `ravens/environment.py` |
-| `tasks/task.py` | `ravens/task.py` |
-| `tasks/put_block_in_bowl.py` | `ravens/put_block_in_bowl.py` |
-| `tasks/primitives.py` | `ravens/primitives.py` |
-| `tasks/grippers.py` | `ravens/grippers.py` |
-| `tasks/cameras.py` | `ravens/cameras.py` |
-| `utils/cliport/utils.py` | `ravens/utils.py` |
-| `envs/assets/` | `ravens/assets/` (symlink) |

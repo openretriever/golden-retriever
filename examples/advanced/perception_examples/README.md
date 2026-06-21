@@ -8,7 +8,7 @@ These are concise advanced examples for the common perception stages you usually
 
 All three examples now use the canonical primitive payloads from `retriever.types.perception`. The example-local code only keeps the deterministic scene logic and printers.
 
-Run with the local editable core so the examples use the current Retriever type surface:
+Run the examples through the Golden demo environment:
 
 ```bash
 pixi run -e golden-local demo-perception-detection-flow

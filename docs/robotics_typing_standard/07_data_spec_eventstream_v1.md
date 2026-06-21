@@ -56,4 +56,4 @@ from retriever_typing.data.v1 import EventBuffer as PinnedEventBuffer
 - import contract works for both convenience and pinned paths,
 - mixed-stream merges are deterministic,
 - join/window semantics are stable and test-covered,
-- no `golden_retriever.*` dependency inside `src/retriever_typing`.
+- no dependency from `src/retriever_typing` back into legacy system packages.

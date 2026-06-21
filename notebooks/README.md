@@ -22,7 +22,7 @@ Those commands regenerate:
 
 `retriever_demo.ipynb` stays a small Jupytext mechanics demo for the packaged Golden environment.
 
-`hub_demo.ipynb` is the Hub-first notebook. It is intended for the local editable-core path, not the temporary packaged-core path. Run it from the `golden-local` environment so `retriever` resolves from the sibling `../retriever` checkout:
+`hub_demo.ipynb` is the Hub-first notebook. Run it from the `golden-local` environment so the Golden example feature set is available:
 
 ```bash
 pixi install -e golden-local

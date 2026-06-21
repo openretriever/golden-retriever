@@ -8,8 +8,7 @@ planning outputs.
 2. `grounded_reference.py`: combine a `ReferringExpression` with a `DetectionBatch`
    to emit a `GroundedPhrase`.
 
-Run them with the local editable core so they use the current Retriever type
-surface:
+Run them through the Golden demo environment:
 
 ```bash
 pixi run -e golden-local demo-language-caption-plan

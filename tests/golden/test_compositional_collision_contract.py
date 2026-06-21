@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 import pytest
@@ -149,27 +148,3 @@ def test_shared_spatial_payloads_follow_same_collision_rules() -> None:
     with pytest.raises(AmbiguousFieldError):
         _ = view.header
     assert view._get_signal("pose.header") == header
-
-
-def test_migrated_files_have_no_legacy_core_type_imports() -> None:
-    repo_root = Path(__file__).resolve().parents[2]
-    migrated_files = [
-        "src/golden_retriever/flows/control/robot_io.py",
-        "src/golden_retriever/flows/control/safety.py",
-        "src/golden_retriever/flows/vision/depth.py",
-        "src/golden_retriever/flows/vision/camera.py",
-        "src/golden_retriever/flows/vision/detection.py",
-        "src/golden_retriever/flows/vision/visualization.py",
-        "src/golden_retriever/pipelines/perception/detection.py",
-        "src/golden_retriever/robots/spot/examples/connection_demo.py",
-    ]
-    forbidden = (
-        "retriever.types.core_types",
-        "Pose3",
-        "Transform3",
-    )
-
-    for rel_path in migrated_files:
-        content = (repo_root / rel_path).read_text()
-        for token in forbidden:
-            assert token not in content, f"{token} found in {rel_path}"

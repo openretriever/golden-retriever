@@ -39,7 +39,7 @@ This is the main reason this folder exists: stable artifacts for debugging and d
 pixi run -e golden-local demo-detection-window-stats
 ```
 
-This adds a temporal aggregation stage on top of the same synthetic detector. Keep it as a follow-on because it needs the local editable-core env.
+This adds a temporal aggregation stage on top of the same synthetic detector. Keep it as a follow-on after the concise perception ladder.
 
 ## Where to go next
 
