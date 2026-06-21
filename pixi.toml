@@ -3,8 +3,9 @@
 # =============================================================================
 #
 # This manifest captures the heavier Golden example/demo environment.
-# It installs the core `retriever` wheel from `retriever_dist/` plus the extra
-# libraries needed by the advanced system demos in this repo.
+# It installs the core Retriever runtime from the temporary public
+# `debug-retriever` package plus the extra libraries needed by the advanced
+# system demos in this repo.
 #
 # =============================================================================
 
@@ -270,17 +271,8 @@ demo-highlevel-planning = { cmd = "python examples/experimental/closed_loop_plan
 docs-build = "mkdocs build --strict"
 docs-serve = "mkdocs serve --dev-addr 127.0.0.1:8001"
 
-# Tutorial examples (run from retriever_dist/ so examples/ is on the path)
-demo-basic-flow       = { cmd = "python -m examples.tutorial.a_flow_fundamentals.01_basic_flow", cwd = "retriever_dist" }
-demo-full-pipeline    = { cmd = "python -m examples.tutorial.a_flow_fundamentals.04_full_pipeline", cwd = "retriever_dist" }
-demo-dora-simple      = { cmd = "python -m examples.tutorial.b_ir_and_execution.05_dora_simple", cwd = "retriever_dist" }
-demo-dora             = { cmd = "python -m examples.tutorial.b_ir_and_execution.06_dora_perception --backend dora", cwd = "retriever_dist" }
-demo-request-dora     = { cmd = "python -m examples.tutorial.b_ir_and_execution.07_request_response", cwd = "retriever_dist" }
-demo-stepper          = { cmd = "python -m examples.tutorial.c_debug_and_replay.01_debug_stepper", cwd = "retriever_dist" }
-demo-record-replay    = { cmd = "python -m examples.tutorial.c_debug_and_replay.04_record_replay_perception", cwd = "retriever_dist" }
-demo-closed-loop-env  = { cmd = "python -m examples.tutorial.d_closed_loop_state_feedback.01_closed_loop_env", cwd = "retriever_dist" }
-demo-symbolic-planning = { cmd = "python -m examples.tutorial.d_closed_loop_state_feedback.02_symbolic_planning", cwd = "retriever_dist" }
-demo-multirate        = { cmd = "python -m examples.tutorial.e_resource_and_sync.01_multirate_window", cwd = "retriever_dist" }
+# Core runtime tutorial examples live in the main `retriever` repository.
+# Golden task aliases below are reserved for Golden-specific advanced examples.
 demo-robotics-typing-catalog = { cmd = "python examples/advanced/robotics_typing_standard/type_catalog_demo.py", env = { PYTHONPATH = "." } }
 demo-robotics-typing-contract = { cmd = "python examples/advanced/robotics_typing_standard/compositional_contract_demo.py", env = { PYTHONPATH = "." } }
 demo-robotics-typing-boundary = "python examples/advanced/robotics_typing_standard/perception_to_control_boundary_demo.py"
