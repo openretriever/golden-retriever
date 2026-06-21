@@ -117,6 +117,8 @@ pixi run -e golden-local demo-perception-detection-flow
 pixi run build
 ```
 
+See `RELEASE.md` for the launch, docs deployment, and package boundary checklist.
+
 ## Relationship To Core Retriever
 
 GoldenRetriever is the companion examples and system-integration repository. The core runtime, API reference, and backend implementation live in the main `retriever` repository:

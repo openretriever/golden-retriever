@@ -4,7 +4,7 @@ Scope: release-prep audit of GoldenRetriever for public-release readiness. This 
 
 ## Live State
 
-- Current release-prep branch: `chore/remove-golden-src-20260621`.
+- Current public-facing branch: `main`; `chore/remove-golden-src-20260621` remains as the release-prep/audit branch and currently points at the same commit.
 - This branch removes the legacy `src/golden_retriever` package and treats Golden as an examples/docs companion to the core `retriever` runtime.
 - Generated experiment outputs are treated as local artifacts unless explicitly promoted as release assets.
 - Public clean-clone checks now include `pixi run -e docs docs-build`, `pixi run -e golden-local test`, `pixi run -e golden-local demo-perception-detection-flow`, and `pixi run build`.
