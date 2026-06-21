@@ -13,7 +13,7 @@ Scope: read-only audit of GoldenRetriever for public-release readiness. This rep
 
 1. Root release metadata needs final verification.
    - Root `pyproject.toml`, `LICENSE`, `CONTRIBUTING.md`, and `SECURITY.md` now exist for the companion examples repo.
-   - A `NOTICE` file and GitHub issue/PR templates can be added when the public repository is created.
+   - GitHub issue and PR templates now exist; add a `NOTICE` file only if Golden starts bundling third-party notices that require one.
    - Package metadata for nested or optional packages is still not intended as a public distribution boundary.
 
 2. Public onboarding depends on sibling development checkouts.
@@ -42,7 +42,7 @@ Scope: read-only audit of GoldenRetriever for public-release readiness. This rep
 
 1. Keep Golden public scope as a public examples/docs companion repo, not the core runtime.
 2. Continue using a dedicated release-prep branch rather than publishing an old staging `main`.
-3. Add final GitHub issue/PR templates and optional `NOTICE` policy when the public repo is created.
+3. Add an optional `NOTICE` policy if future bundled assets or third-party code require one.
 4. Split current tree into keep/archive/artifact/drop buckets.
 5. Remove or parameterize hardcoded local paths in active code.
 6. Move heavyweight assets and generated outputs out of git unless intentionally shipped with documented provenance.

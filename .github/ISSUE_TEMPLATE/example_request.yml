@@ -1,0 +1,22 @@
+---
+name: Example request
+description: Propose a GoldenRetriever example or integration
+labels: [enhancement]
+body:
+  - type: textarea
+    id: use_case
+    attributes:
+      label: Use case
+      description: What robot/example scenario should this demonstrate?
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: Hardware, simulator, model, dataset, API key, or optional Pixi feature needed.
+  - type: textarea
+    id: public_boundary
+    attributes:
+      label: Public boundary
+      description: How can this stay runnable without private paths, credentials, or unpublished artifacts?
