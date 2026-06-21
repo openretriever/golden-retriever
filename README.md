@@ -106,6 +106,16 @@ pixi run -e docs docs-serve
 
 Keep Golden docs example-first: concise perception, memory, language, composition, and robotics typing guides belong here; core runtime API details belong in the main `retriever` repo.
 
+## Validation
+
+Use these checks before opening a release branch or publishing docs:
+
+```bash
+pixi run -e docs docs-build
+pixi run -e golden-local test
+pixi run -e golden-local demo-perception-detection-flow
+```
+
 ## Relationship To Core Retriever
 
 GoldenRetriever is the companion examples and system-integration repository. The core runtime, API reference, and backend implementation live in the main `retriever` repository:

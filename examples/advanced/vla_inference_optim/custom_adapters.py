@@ -1,15 +1,16 @@
 from dataclasses import dataclass
-from typing import Optional, Any, Iterable
+from typing import Optional, Any, Iterable, TypeAlias
 import time
 import numpy as np
 
 from retriever.flow.adapter import Adapter, Chunking, register_adapter
 from retriever.flow import io
-from retriever.flow.types import EventBuffer
 try:
     from .mock_vla_node import VLAAction, VLAInput
 except ImportError:
     from mock_vla_node import VLAAction, VLAInput
+
+RuntimeEventBuffer: TypeAlias = list[tuple[float, Any]]
 
 @io
 @dataclass
@@ -34,7 +35,7 @@ class ActionChunking(Chunking[VLAAction]):
     dt: float = 0.1  # Time between steps in the chunk
 
     def __call__(
-        self, buffer: EventBuffer[VLAAction], now: Optional[float] = None, **kwargs
+        self, buffer: RuntimeEventBuffer, now: Optional[float] = None, **kwargs
     ) -> Optional[np.ndarray]:
         if not buffer:
             return None
@@ -81,6 +82,5 @@ class ActionChunking(Chunking[VLAAction]):
         if hasattr(value, 'action'):
             return value.action
         return super()._extract_array(value)
-
 
 

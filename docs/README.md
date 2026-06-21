@@ -25,3 +25,11 @@ Core runtime source for now: Golden demos use the temporary `debug-retriever` Py
 pixi run -e docs docs-build
 pixi run -e docs docs-serve
 ```
+
+For a quick release check from a clean clone:
+
+```bash
+pixi run -e docs docs-build
+pixi run -e golden-local test
+pixi run -e golden-local demo-perception-detection-flow
+```

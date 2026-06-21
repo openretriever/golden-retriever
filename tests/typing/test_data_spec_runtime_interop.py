@@ -50,7 +50,10 @@ def test_runtime_buffer_shape_detection() -> None:
 
 def test_interop_with_runtime_eventbuffer_class_if_available() -> None:
     flow_types = pytest.importorskip("retriever.flow.types")
-    runtime_buffer = flow_types.EventBuffer([(3.0, 33), (4.0, 44)])
+    event_buffer_cls = getattr(flow_types, "EventBuffer", None)
+    if event_buffer_cls is None:
+        pytest.skip("retriever runtime does not expose retriever.flow.types.EventBuffer")
+    runtime_buffer = event_buffer_cls([(3.0, 33), (4.0, 44)])
 
     typed = from_runtime_event_buffer(runtime_buffer, stream_id="imu")
     back = to_runtime_event_buffer(typed)
