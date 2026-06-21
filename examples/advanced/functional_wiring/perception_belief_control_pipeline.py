@@ -14,10 +14,10 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from retriever.flow import Flow, Pipeline, Rate, Trigger, Latest, flow_io
+from retriever.flow import Flow, Pipeline, Rate, Trigger, Latest, io
 
 
-@flow_io
+@io
 @dataclass
 class CameraFrame:
     image: np.ndarray | None = None
@@ -25,7 +25,7 @@ class CameraFrame:
     t_sim: float | None = None
 
 
-@flow_io
+@io
 @dataclass
 class Observation:
     frame_id: int | None = None
@@ -34,7 +34,7 @@ class Observation:
     confidence: float | None = None
 
 
-@flow_io
+@io
 @dataclass
 class Belief:
     frame_id: int | None = None
@@ -43,7 +43,7 @@ class Belief:
     confidence: float | None = None
 
 
-@flow_io
+@io
 @dataclass
 class ControlAction:
     frame_id: int | None = None

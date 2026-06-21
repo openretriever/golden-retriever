@@ -14,9 +14,9 @@ from pathlib import Path
 
 from retriever import Flow
 from retriever.context import MCPClient
-from retriever.flow import flow_io
+from retriever.flow import io
 
-@flow_io
+@io
 @dataclass
 class String:
     value: str

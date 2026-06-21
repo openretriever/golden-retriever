@@ -8,14 +8,14 @@ Demo 2: Window(mean) - proves shared buffer (mean of 10,20,30 ≈ 20)
 """
 
 from dataclasses import dataclass
-from retriever.flow import Flow, flow_io, Rate, Trigger, Pipeline, Latest, Window
+from retriever.flow import Flow, io, Rate, Trigger, Pipeline, Latest, Window
 
 
 # =============================================================================
 # Demo 1: Fan-in with Latest (string readings: A1, B1, C1...)
 # =============================================================================
 
-@flow_io
+@io
 @dataclass
 class SensorData:
     reading: str
@@ -66,7 +66,7 @@ def demo_latest():
 # Demo 2: Fan-in with Window(mean) - proves shared buffer
 # =============================================================================
 
-@flow_io
+@io
 @dataclass
 class NumericData:
     value: float

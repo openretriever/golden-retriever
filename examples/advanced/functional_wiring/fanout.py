@@ -7,31 +7,31 @@ This is the dual of fan-in (fusion).
 from dataclasses import dataclass
 
 from retriever.flow import Flow, Pipeline, Rate
-from retriever.flow.io import flow_io
+from retriever.flow import io
 
 
-@flow_io
+@io
 @dataclass
 class SensorReading:
     value: float | None = None
     timestamp: float | None = None
 
 
-@flow_io
+@io
 @dataclass
 class DetReading:
     value: float | None = None
     timestamp: float | None = None
 
 
-@flow_io
+@io
 @dataclass
 class LogReading:
     value: float | None = None
     timestamp: float | None = None
 
 
-@flow_io
+@io
 @dataclass
 class DetectionResult:
     detected: bool

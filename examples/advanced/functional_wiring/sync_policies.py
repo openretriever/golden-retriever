@@ -2,10 +2,10 @@ from dataclasses import dataclass
 
 from retriever.flow import Flow, Pipeline, Rate
 from retriever.flow.adapter import Window
-from retriever.flow.io import flow_io
+from retriever.flow import io
 
 
-@flow_io
+@io
 @dataclass
 class FastOutput:
     val: float
@@ -20,13 +20,13 @@ class FastSource(Flow[None, FastOutput]):
         return out
 
 
-@flow_io
+@io
 @dataclass
 class WindowInput:
     val: float
 
 
-@flow_io
+@io
 @dataclass
 class WindowFusionOut:
     mean: float

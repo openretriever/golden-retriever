@@ -29,7 +29,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..
 src_root = os.path.join(project_root, "src")
 sys.path.insert(0, src_root)
 # isort: off
-from retriever.flow import Pipeline, Rate, Flow, flow_io, Latest
+from retriever.flow import Pipeline, Rate, Flow, io, Latest
 import retriever
 # from retriever.flow.vla.openpi import OpenPIFlow, VLAInput, VLAAction
 # ... imports
@@ -41,25 +41,25 @@ except ImportError:
     from custom_adapters import ActionChunking, SingleAction
 
 
-@flow_io
+@io
 @dataclass
 class RobotState:
     joint_positions: list[float]
     joint_velocities: list[float]
     timestamp: float
 
-@flow_io
+@io
 @dataclass
 class CameraImage:
     data: str
 
-@flow_io
+@io
 @dataclass
 class VLAAdapterInput:
     state: RobotState
     img: CameraImage
 
-@flow_io
+@io
 @dataclass
 class RobotOutput:
     state: RobotState
@@ -85,7 +85,7 @@ class DummyRobotSource(Flow[None, RobotOutput]):
             timestamp=now
         ))
 
-@flow_io
+@io
 @dataclass
 class CameraOutput:
     img: CameraImage

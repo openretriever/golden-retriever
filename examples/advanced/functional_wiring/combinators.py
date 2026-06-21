@@ -8,24 +8,24 @@ Demonstrates Arrow-style combinators for building dataflow graphs in one express
 from dataclasses import dataclass
 
 from retriever.flow import Flow, Pipeline, Rate
-from retriever.flow.io import flow_io
+from retriever.flow import io
 
 
-@flow_io
+@io
 @dataclass
 class SensorData:
     value: float
     seq: int
 
 
-@flow_io
+@io
 @dataclass
 class SensorIn:
     value: float
     seq: int
 
 
-@flow_io
+@io
 @dataclass
 class AlertResult:
     alert: bool

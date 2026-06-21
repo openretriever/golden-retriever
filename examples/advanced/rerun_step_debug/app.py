@@ -20,7 +20,7 @@ from typing import Optional
 import numpy as np
 
 import retriever
-from retriever.flow import Flow, Rate, flow_io
+from retriever.flow import Flow, Rate, io
 from retriever.lib.rerun import rerun_loggable
 
 # =============================================================================
@@ -29,7 +29,7 @@ from retriever.lib.rerun import rerun_loggable
 
 
 @rerun_loggable({"image": "Image", "brightness": "Scalar"})
-@flow_io
+@io
 @dataclass
 class ImageWithMetrics:
     """Image with computed metrics - each field logs separately in Rerun."""
@@ -40,7 +40,7 @@ class ImageWithMetrics:
 
 
 @rerun_loggable({"detection_count": "Scalar", "confidence": "Scalar"})
-@flow_io
+@io
 @dataclass
 class DetectionMetrics:
     """Detection results as metrics for timeline visualization."""
@@ -51,7 +51,7 @@ class DetectionMetrics:
 
 
 @rerun_loggable({"reward": "Scalar", "episode": "Scalar"})
-@flow_io
+@io
 @dataclass
 class RewardSignal:
     """Reward signal over time - good for RL debugging."""

@@ -3,16 +3,16 @@ from typing import Optional
 import time
 import numpy as np
 import rerun as rr
-from retriever.flow import Flow, flow_io
+from retriever.flow import Flow, io
 from env import MujocoEnv
 
 
-@flow_io
+@io
 @dataclass
 class Control:
     ctrl: np.ndarray
 
-@flow_io
+@io
 @dataclass
 class State:
     time: float

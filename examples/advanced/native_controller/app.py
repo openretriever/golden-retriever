@@ -10,19 +10,19 @@ from dataclasses import dataclass
 
 import numpy as np
 from retriever import Flow, Pipeline, Rate, Latest
-from retriever.flow.io import flow_io
+from retriever.flow import io
 
 # ==============================================================================
 # Flow I/O Types
 # ==============================================================================
 
-@flow_io
+@io
 @dataclass
 class TargetPose:
     # [x, y, z, roll, pitch, yaw]
     pose: np.ndarray 
 
-@flow_io
+@io
 @dataclass
 class JointAngles:
     # [j1, j2, j3, j4, j5, j6]

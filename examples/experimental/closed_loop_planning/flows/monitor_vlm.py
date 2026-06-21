@@ -3,14 +3,14 @@ from typing import Optional, List
 from pathlib import Path
 import time
 import sys
-from retriever.flow import Flow, flow_io
+from retriever.flow import Flow, io
 from retriever.types.options import Option
 from ..types.belief import BeliefState
 from ..types.flow_types import MonitorOutput, ExecutionState
 from ..pipelines.vlm_utils import BeliefVLMPlanner
 import os
 
-@flow_io
+@io
 @dataclass
 class VLMMonitorInput:
     state: BeliefState = None  # type: ignore[assignment]

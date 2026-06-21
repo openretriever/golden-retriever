@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
 
-from retriever.flow import Flow, flow_io
+from retriever.flow import Flow, io
 
 
 # =============================================================================
@@ -17,7 +17,7 @@ class SkillMode(str, Enum):
     MANIPULATE = "manipulate"
 
 
-@flow_io
+@io
 @dataclass
 class RobotState:
     """Simulated state of the robot."""
@@ -27,7 +27,7 @@ class RobotState:
     holding_object: bool = False
 
 
-@flow_io
+@io
 @dataclass
 class UserCommand:
     """Command from the 'user' (or high-level planner) to change modes."""
@@ -36,7 +36,7 @@ class UserCommand:
     target_y: float = 0.0
 
 
-@flow_io
+@io
 @dataclass
 class SkillInput:
     """Standardized input packet for a skill."""
@@ -46,14 +46,14 @@ class SkillInput:
     active: bool = True
 
 
-@flow_io
+@io
 @dataclass
 class SkillSignal:
     """Wrapper to pass SkillInput as a single object (port) rather than flattened fields."""
     flow: Optional[SkillInput]
 
 
-@flow_io
+@io
 @dataclass
 class RobotAction:
     """Action emitted by a skill."""
@@ -67,14 +67,14 @@ class RobotAction:
     skill_name: str = "unknown"
 
 
-@flow_io
+@io
 @dataclass
 class ActionSignal:
     """Wrapper for RobotAction."""
     packet: Optional[RobotAction] = None
 
 
-@flow_io
+@io
 @dataclass
 class RouterInputHelper:
     """
@@ -93,7 +93,7 @@ class RouterInputHelper:
     target_y: float = 0.0
 
 
-@flow_io
+@io
 @dataclass
 class RouterOutput:
     """
@@ -106,7 +106,7 @@ class RouterOutput:
     current_mode: str = SkillMode.IDLE.value
 
 
-@flow_io
+@io
 @dataclass
 class ArbiterInput:
     """Inputs from start wrappers."""
@@ -333,7 +333,7 @@ class ActionArbiter(Flow[ArbiterInput, ActionSignal]):
 # FAN-IN VARIANTS (Simpler!)
 # =============================================================================
 
-@flow_io
+@io
 @dataclass
 class ArbiterInputFanIn:
     """

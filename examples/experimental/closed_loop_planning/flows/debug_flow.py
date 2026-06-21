@@ -1,17 +1,17 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from retriever.flow import Flow, flow_io
+from retriever.flow import Flow, io
 
 from ..types.belief import BeliefState
 
 
-@flow_io
+@io
 @dataclass
 class DebugInput:
     data: Optional[BeliefState]
 
-@flow_io
+@io
 @dataclass
 class DebugOutput:
     pass

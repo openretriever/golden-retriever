@@ -6,25 +6,25 @@ import numpy as np
 import time
 
 from retriever import Flow
-from retriever.flow import flow_io, gui_flow
+from retriever.flow import io, gui_flow
 from retriever.lib.rerun import rerun_loggable
 
 
 # --- Data Schemas ---
-@flow_io
+@io
 @dataclass
 class MotionOutput:
     action_mimic: Optional[Any]  # np.array(35)
 
 
-@flow_io
+@io
 @dataclass
 class PolicyOutput:
     policy_action: Optional[Any]  # np.array(29)
 
 
 @rerun_loggable({"dof_pos": "Scalars", "target": "Scalars"})
-@flow_io
+@io
 @dataclass
 class VisState:
     dof_pos: Any
@@ -34,21 +34,21 @@ class VisState:
 
 
 @rerun_loggable({"vis": "TimeSeries"})
-@flow_io
+@io
 @dataclass
 class EnvOutput:
     proprio: Optional[Any]  # np.array(92)
     vis: Optional[VisState]
 
 
-@flow_io
+@io
 @dataclass
 class Twist2EnvInput:
     action_mimic: Optional[Any] = None
     policy_action: Optional[Any] = None
 
 
-@flow_io
+@io
 @dataclass
 class Twist2PolicyInput:
     proprio: Optional[Any] = None
@@ -56,7 +56,7 @@ class Twist2PolicyInput:
 
 
 @rerun_loggable({"vis": "TimeSeries"})
-@flow_io
+@io
 @dataclass
 class VisInput:
     vis: Optional[VisState] = None

@@ -18,10 +18,10 @@ from pathlib import Path
 from retriever import Flow
 from retriever.context import MCPToolFlow
 from retriever.context.flow import MCPRequest, MCPResponse
-from retriever.flow import flow_io
+from retriever.flow import io
 
 # Reuse types or define new ones if needed
-@flow_io
+@io
 @dataclass
 class String:
     value: str

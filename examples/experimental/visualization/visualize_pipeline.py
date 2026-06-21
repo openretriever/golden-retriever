@@ -2,13 +2,13 @@ import sys
 from typing import Dict, Any
 from dataclasses import dataclass
 
-from retriever.flow import Pipeline, Flow, Rate, Trigger, flow_io
+from retriever.flow import Pipeline, Flow, Rate, Trigger, io
 from retriever.ir import IR
 from retriever.ir.viz import generate_ascii_graph, save_interactive_html
 
 
 # --- Dummy Objects for Demo ---
-@flow_io
+@io
 @dataclass
 class DummyIO:
     data: Dict[str, Any]

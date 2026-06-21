@@ -17,7 +17,7 @@ src_root = os.path.join(project_root, "src")
 if src_root not in sys.path:
     sys.path.insert(0, src_root)
 
-from retriever.flow import flow_io, Flow, Pipeline, Rate
+from retriever.flow import io, Flow, Pipeline, Rate
 
 logger = logging.getLogger(__name__)
 
@@ -25,23 +25,23 @@ logger = logging.getLogger(__name__)
 # FLOW IO DEFINITIONS
 # ============================================================================
 
-@flow_io
+@io
 @dataclass
 class SourceOutput:
     hidden_state: Any # torch.Tensor (Auto zero-copy)
     timestamp: float
 
-@flow_io
+@io
 @dataclass
 class SourceInput:
     gradient: Any # torch.Tensor (Auto zero-copy)
 
-@flow_io
+@io
 @dataclass
 class ComputeOutput:
     gradient: Any # torch.Tensor (Auto zero-copy)
 
-@flow_io
+@io
 @dataclass
 class ComputeInput:
     hidden_state: Any # torch.Tensor (Auto zero-copy)

@@ -25,7 +25,7 @@ from pathlib import Path
 
 import numpy as np
 
-from retriever.flow import Flow, Pipeline, Rate, Trigger, Latest, flow_io
+from retriever.flow import Flow, Pipeline, Rate, Trigger, Latest, io
 
 
 # =============================================================================
@@ -33,7 +33,7 @@ from retriever.flow import Flow, Pipeline, Rate, Trigger, Latest, flow_io
 # =============================================================================
 
 
-@flow_io
+@io
 @dataclass
 class CameraFrame:
     """Camera frame with metadata."""

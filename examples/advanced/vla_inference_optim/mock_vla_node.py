@@ -15,11 +15,11 @@ import numpy as np
 from datetime import datetime
 
 
-from retriever.flow import Flow, flow_io
+from retriever.flow import Flow, io
 
 logger = logging.getLogger(__name__)
 
-@flow_io
+@io
 @dataclass
 class VLAInput:
     """Input to the VLA model."""
@@ -28,7 +28,7 @@ class VLAInput:
     state: Dict[str, Any] # Robot state (q, dq, ee_pose, etc.)
     timestamp: float
 
-@flow_io
+@io
 @dataclass
 class VLAAction:
     """Output action from VLA."""

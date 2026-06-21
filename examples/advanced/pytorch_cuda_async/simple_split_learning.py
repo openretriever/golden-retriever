@@ -35,7 +35,7 @@ if src_root not in sys.path:
     sys.path.insert(0, src_root)
 
 import retriever
-from retriever.flow import flow_io, Flow, Rate
+from retriever.flow import io, Flow, Rate
 from retriever.lib.torch import SplitOptimizer, RemoteAutograd
 
 logging.basicConfig(level=logging.INFO)
@@ -45,13 +45,13 @@ logger = logging.getLogger("SplitUnified")
 # DATA TYPES
 # ============================================================================
 
-@flow_io
+@io
 @dataclass
 class Activations:
     data: Any # torch.Tensor
     batch_index: int
 
-@flow_io
+@io
 @dataclass
 class Gradients:
     grads: Any # torch.Tensor

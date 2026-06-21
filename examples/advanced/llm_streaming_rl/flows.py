@@ -12,7 +12,7 @@ import time
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
 
-from retriever.flow import Flow, flow_io
+from retriever.flow import Flow, io
 from .env import TwentyQuestionsEnv, EnvState
 from .streaming import (
     StreamingLLMClient,
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 # Flow I/O Types
 # ============================================================================
 
-@flow_io
+@io
 @dataclass
 class TextObservation:
     """Observation from text environment."""
@@ -43,7 +43,7 @@ class TextObservation:
     info: dict = field(default_factory=dict)
 
 
-@flow_io
+@io
 @dataclass
 class LLMAction:
     """Action produced by LLM agent."""
@@ -54,7 +54,7 @@ class LLMAction:
     stream_chunks: List[str] = field(default_factory=list)  # Token chunks for logging
 
 
-@flow_io
+@io
 @dataclass
 class StreamEvent:
     """A streaming token event for real-time display."""

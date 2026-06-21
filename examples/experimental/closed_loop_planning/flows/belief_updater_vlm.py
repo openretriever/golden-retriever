@@ -4,13 +4,13 @@
 from typing import Optional
 from dataclasses import dataclass
 
-from retriever.flow import Flow, flow_io
+from retriever.flow import Flow, io
 from retriever.types.symbolic import State
 
 from ..types.belief import BeliefState
 
 
-@flow_io
+@io
 @dataclass
 class VLMBeliefInput:
     """Input for VLM belief updater."""
@@ -18,7 +18,7 @@ class VLMBeliefInput:
     raw_observation: Optional[dict] = None  # Frame data from VLMPerceptionFlow
 
 
-@flow_io
+@io
 @dataclass
 class VLMBeliefOutput:
     """Output for VLM belief updater."""

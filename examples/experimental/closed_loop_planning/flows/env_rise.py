@@ -4,7 +4,7 @@ from typing import Any, Dict, Tuple
 from rich import print as rprint
 from rich.panel import Panel
 
-from retriever.flow import Flow, flow_io
+from retriever.flow import Flow, io
 
 from ..types.flow_types import EnvInput, EnvOutput
 
@@ -15,7 +15,7 @@ class SpotState:
     battery_level: float = 100.0
     status: str = "IDLE"
 
-@flow_io
+@io
 @dataclass
 class RiseEnvOutput(EnvOutput):
     """Output from the RISE environment."""

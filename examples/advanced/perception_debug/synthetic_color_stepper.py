@@ -14,10 +14,10 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from retriever.flow import Flow, Pipeline, Rate, Trigger, Latest, flow_io
+from retriever.flow import Flow, Pipeline, Rate, Trigger, Latest, io
 
 
-@flow_io
+@io
 @dataclass
 class SyntheticFrame:
     image: np.ndarray | None = None
@@ -25,7 +25,7 @@ class SyntheticFrame:
     t_sim: float | None = None
 
 
-@flow_io
+@io
 @dataclass
 class DetectionOut:
     frame_id: int | None = None

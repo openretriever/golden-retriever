@@ -4,14 +4,14 @@ import time
 import numpy as np
 
 from retriever.flow.adapter import Adapter, Chunking, register_adapter
-from retriever.flow import flow_io
+from retriever.flow import io
 from retriever.flow.types import EventBuffer
 try:
     from .mock_vla_node import VLAAction, VLAInput
 except ImportError:
     from mock_vla_node import VLAAction, VLAInput
 
-@flow_io
+@io
 @dataclass
 class SingleAction:
     action: np.ndarray

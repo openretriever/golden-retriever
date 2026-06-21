@@ -19,7 +19,7 @@ from typing import Optional, List
 
 import numpy as np
 
-from retriever.flow import Flow, flow_io
+from retriever.flow import Flow, io
 from .env import GridWorld, GridState
 
 logger = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 # Flow I/O Types
 # ============================================================================
 
-@flow_io
+@io
 @dataclass
 class GridObservation:
     """Observation from the GridWorld environment."""
@@ -43,7 +43,7 @@ class GridObservation:
     episode: int = 0
 
 
-@flow_io
+@io
 @dataclass
 class AgentAction:
     """Action produced by the VLM agent."""

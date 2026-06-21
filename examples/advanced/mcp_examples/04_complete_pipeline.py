@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from retriever import Flow, Pipeline
-from retriever.flow import flow_io, Rate, Trigger, Latest
+from retriever.flow import io, Rate, Trigger, Latest
 from retriever.context import MCPToolFlow
 from retriever.context.flow import MCPRequest, MCPResponse
 
@@ -23,7 +23,7 @@ import json
 
 # --- Data Types ---
 
-@flow_io
+@io
 @dataclass
 class TriggerSignal:
     value: str

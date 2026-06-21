@@ -30,19 +30,19 @@ from typing import List, Optional, Tuple, Any
 
 from transformers import Owlv2Processor, Owlv2ForObjectDetection, SamModel, SamProcessor
 
-from retriever.flow import Flow, flow_io, Rate, Pipeline
+from retriever.flow import Flow, io, Rate, Pipeline
 
 # ==============================================================================
 # Data Structures
 # ==============================================================================
 
-@flow_io
+@io
 @dataclass
 class ImageMsg:
     frame: np.ndarray  # BGR
     timestamp: float
 
-@flow_io
+@io
 @dataclass
 class PerceptionResult:
     image: np.ndarray  # BGR

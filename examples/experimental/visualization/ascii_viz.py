@@ -2,10 +2,10 @@ import sys
 from typing import Dict, List, Set, Optional, Any
 from dataclasses import dataclass
 
-from retriever.flow import Pipeline, Flow, Rate, Trigger, flow_io
+from retriever.flow import Pipeline, Flow, Rate, Trigger, io
 from retriever.flow.graph import FlowGraph, FlowNode, FlowEdge
 
-@flow_io
+@io
 @dataclass
 class DummyIO:
     data: Dict[str, Any]

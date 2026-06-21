@@ -5,10 +5,10 @@ from pathlib import Path
 from dataclasses import dataclass
 
 from retriever import Flow
-from retriever.flow import flow_io
+from retriever.flow import io
 from retriever.context import MCPClient
 
-@flow_io
+@io
 @dataclass
 class AgentState:
     """Represents the internal state of the agent."""
@@ -16,7 +16,7 @@ class AgentState:
     memory_context: str
     last_action: str
 
-@flow_io
+@io
 @dataclass
 class AgentAction:
     """Represents an action taken by the agent."""

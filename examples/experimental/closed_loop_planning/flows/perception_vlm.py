@@ -4,13 +4,13 @@
 from typing import Optional, Set
 from dataclasses import dataclass
 
-from retriever.flow import Flow, flow_io
+from retriever.flow import Flow, io
 from retriever.types.symbolic import State, GroundAtom
 
 from ..types.flow_types import PerceptionInput, PerceptionOutput
 
 
-@flow_io
+@io
 @dataclass
 class VLMPerceptionInput:
     """Input for VLM perception - just raw camera data."""
@@ -18,7 +18,7 @@ class VLMPerceptionInput:
     data: dict  # {"rgb": bytes, "timestamp": float}
 
 
-@flow_io
+@io
 @dataclass
 class VLMPerceptionOutput:
     """Output for VLM perception - passes through raw observation."""

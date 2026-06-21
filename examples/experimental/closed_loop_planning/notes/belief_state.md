@@ -11,7 +11,7 @@ particularly the `MockSpotPerceiver` and `AugmentedState` implementations.
 ### 1. BeliefState extends State
 
 ```python
-@flow_io
+@io
 @dataclass
 class BeliefState(State):
     data: dict[Object, NDArray]        # From State

@@ -12,17 +12,17 @@ import argparse
 import math
 from dataclasses import dataclass
 
-from retriever.flow import Flow, Pipeline, Rate, Trigger, Latest, flow_io
+from retriever.flow import Flow, Pipeline, Rate, Trigger, Latest, io
 
 
-@flow_io
+@io
 @dataclass
 class SensorOut:
     t_sim: float | None = None
     reading: float | None = None
 
 
-@flow_io
+@io
 @dataclass
 class BeliefOut:
     t_sim: float | None = None

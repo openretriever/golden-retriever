@@ -11,11 +11,11 @@ import argparse
 import math
 from dataclasses import dataclass, replace
 
-from retriever.flow import Flow, Pipeline, Rate, flow_io
+from retriever.flow import Flow, Pipeline, Rate, io
 from retriever.types import Eff
 
 
-@flow_io
+@io
 @dataclass
 class SensorOut:
     dx: float
@@ -27,7 +27,7 @@ class SensorOut:
     t: float
 
 
-@flow_io
+@io
 @dataclass
 class PoseOut:
     x: float

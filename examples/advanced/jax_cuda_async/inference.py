@@ -21,7 +21,7 @@ src_root = os.path.join(project_root, "src")
 if src_root not in sys.path:
     sys.path.insert(0, src_root)
 
-from retriever.flow import flow_io, Flow, Pipeline, Rate
+from retriever.flow import io, Flow, Pipeline, Rate
 # Import the new JAX library support
 
 # Import the new JAX library support
@@ -56,7 +56,7 @@ class SimpleMLP(nn.Module):
 # CUSTOM SOURCE/SINK FLOWS
 # ============================================================================
 
-@flow_io
+@io
 @dataclass
 class Nothing:
     pass

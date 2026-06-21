@@ -6,14 +6,14 @@
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Set
 
-from retriever.flow import flow_io
+from retriever.flow import io
 from retriever.types.options import Action, Option
 from retriever.types.symbolic import GroundAtom, State
 
 from .vlm import EpistemicState, EpistemicValue, VisualGroundAtom
 
 
-@flow_io
+@io
 @dataclass
 class BeliefState(State):
     """State augmented with epistemic (belief) information.
@@ -68,7 +68,7 @@ class BeliefState(State):
         return key in self.data
 
 
-@flow_io
+@io
 @dataclass
 class BeliefUpdateInput:
     """Input to BeliefUpdaterFlow."""
@@ -81,7 +81,7 @@ class BeliefUpdateInput:
     raw_observation: Optional[Any] = None  # Raw observation data (images, etc.)
 
 
-@flow_io
+@io
 @dataclass
 class BeliefUpdateOutput:
     """Output from BeliefUpdaterFlow."""

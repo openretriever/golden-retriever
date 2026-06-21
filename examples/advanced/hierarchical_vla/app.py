@@ -13,7 +13,7 @@ except ImportError:
     print("PyTorch and Transformers required. Run with `pixi run -e torch`.")
     sys.exit(0)
 
-from retriever.flow import Flow, flow_io, Rate
+from retriever.flow import Flow, io, Rate
 from retriever import connect, Pipeline, run
 from retriever.flow.adapter import Latest
 
@@ -26,7 +26,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("HierarchicalVLA")
 
 # Mock State Provider (Simulates Robot Hardware Driver)
-@flow_io
+@io
 @dataclass
 class Nothing:
     pass

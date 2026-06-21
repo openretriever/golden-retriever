@@ -4,8 +4,8 @@ import time
 from dataclasses import dataclass
 import numpy as np
 
-from retriever.flow import Flow, flow_io, Rate
-from retriever.flow import Flow, flow_io, Rate
+from retriever.flow import Flow, io, Rate
+from retriever.flow import Flow, io, Rate
 from retriever.lib.hf import TransformerInput, from_hf
 from transformers import pipeline
 
@@ -22,7 +22,7 @@ def create_pipeline():
 logger = logging.getLogger(__name__)
 
 # We use a standard IO for the Perception module's output
-@flow_io
+@io
 @dataclass
 class GoalEmbedding:
     vector: np.ndarray

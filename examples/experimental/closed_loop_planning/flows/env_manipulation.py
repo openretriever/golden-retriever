@@ -1,17 +1,17 @@
 from typing import Any, Dict, List, Optional
 import time
 
-from retriever.flow import Flow, flow_io
+from retriever.flow import Flow, io
 from dataclasses import dataclass, field
 from retriever.types.options import Action
 
 # Using Any for types to avoid complex dependency chains in this example
-@flow_io
+@io
 @dataclass
 class EnvInput:
     action: Optional[Action] = None 
 
-@flow_io
+@io
 @dataclass
 class EnvOutput:
     observation: Any = None

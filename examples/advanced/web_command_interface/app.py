@@ -32,7 +32,7 @@ for path in [src_root, project_root]:
 # -- Imports --
 from retriever.flow import (
     Pipeline, Rate, Hybrid,
-    Flow, flow_io, 
+    Flow, io,
     Events
 )
 
@@ -40,7 +40,7 @@ from retriever.flow import (
 # 1. Schema Definition
 # =============================================================================
 
-@flow_io
+@io
 @dataclass
 class VLACommand:
     """A natural language instruction for a VLA model."""

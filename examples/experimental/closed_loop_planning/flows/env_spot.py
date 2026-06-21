@@ -4,7 +4,7 @@ import time
 from dataclasses import dataclass
 from typing import Optional
 
-from retriever.flow import Flow, flow_io
+from retriever.flow import Flow, io
 
 from ..types.flow_types import EnvInput, EnvOutput
 
@@ -26,7 +26,7 @@ except ImportError:
     BOSDYN_AVAILABLE = False
     logger.warning("Bosdyn SDK not found. SpotEnvironmentFlow will be non-functional.")
 
-@flow_io
+@io
 @dataclass
 class SpotEnvOutput(EnvOutput):
     """Output from the Real Spot environment."""

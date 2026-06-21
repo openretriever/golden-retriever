@@ -36,7 +36,7 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 import retriever
-from retriever.flow import Flow, Latest, Pipeline, Rate, Trigger, flow_io
+from retriever.flow import Flow, Latest, Pipeline, Rate, Trigger, io
 from dataclasses import dataclass
 from typing import Optional
 
@@ -68,14 +68,14 @@ except ImportError:
     BaseModel = object
 
 
-@flow_io
+@io
 @dataclass
 class CameraOutput:
     data: dict
     frame: Optional[bytes] = None
 
 
-@flow_io
+@io
 @dataclass
 class WebInstructionOutput:
     task: str

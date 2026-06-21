@@ -4,7 +4,7 @@ import time
 from dataclasses import dataclass
 import numpy as np
 
-from retriever.flow import Flow, flow_io
+from retriever.flow import Flow, io
 from examples.advanced.hierarchical_vla.perception import GoalEmbedding
 
 try:
@@ -16,13 +16,13 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-@flow_io
+@io
 @dataclass
 class RobotState:
     joint_angles: np.ndarray
     timestamp: float
 
-@flow_io
+@io
 @dataclass
 class RobotAction:
     motor_torques: np.ndarray
@@ -90,7 +90,7 @@ class ControlFlow(Flow[RobotState, RobotAction]):
 
 # Redefining with correct input
     
-@flow_io
+@io
 @dataclass
 class ControlInput:
     # From RobotState
@@ -127,7 +127,7 @@ class ControlFlow(Flow[ControlInput, RobotAction]):
         
         # If goal is missing (startup/zeros), use zeros
         # Note: In flattened flow, if goal_vector is None? 
-        # Actually with @flow_io, fields are required usually.
+        # Actually with @io, fields are required usually.
         # But if we use 'Latest', it might wait for first value?
         # If goal_vector comes from `perception`, and valid.
         

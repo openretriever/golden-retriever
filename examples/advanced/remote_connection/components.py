@@ -8,10 +8,10 @@ from dataclasses import dataclass
 import time
 import random
 
-from retriever.flow import Flow, flow_io
+from retriever.flow import Flow, io
 
 
-@flow_io
+@io
 @dataclass
 class RobotState:
     """Simulated robot state (e.g., joint positions, camera image timestamp)"""
@@ -20,7 +20,7 @@ class RobotState:
     image_id: int
 
 
-@flow_io
+@io
 @dataclass
 class RobotAction:
     """Robot action command"""

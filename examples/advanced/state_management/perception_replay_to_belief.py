@@ -12,7 +12,7 @@ import argparse
 from dataclasses import dataclass
 from pathlib import Path
 
-from retriever.flow import Flow, Pipeline, Rate, Trigger, Latest, flow_io
+from retriever.flow import Flow, Pipeline, Rate, Trigger, Latest, io
 
 from examples.advanced.perception_debug.synthetic_color_stepper import (
     SyntheticCamera,
@@ -22,7 +22,7 @@ from examples.advanced.perception_debug.synthetic_color_stepper import (
 from examples.advanced.perception_debug.replay_utils import load_synthetic_frame_buffer_from_mcap
 
 
-@flow_io
+@io
 @dataclass
 class BeliefOut:
     frame_id: int | None = None

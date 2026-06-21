@@ -130,4 +130,4 @@ If `Planner` is stepping but producing empty plans:
 
 The system relies on strong typing defined in `flow_types.py` and `retriever.types.symbolic`:
 -   **Data Structures**: `State`, `Action`, `Option`, `Object`, `GroundAtom`.
--   **Flow IO**: Wrappers like `EnvInput`/`EnvOutput` that are decorated with `@flow_io`.
+-   **Flow IO**: Wrappers like `EnvInput`/`EnvOutput` that are decorated with `@io`.

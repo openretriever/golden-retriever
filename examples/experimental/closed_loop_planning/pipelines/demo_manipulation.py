@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 import retriever
-from retriever.flow import Flow, Latest, Pipeline, Rate, Trigger, flow_io
+from retriever.flow import Flow, Latest, Pipeline, Rate, Trigger, io
 from retriever.types.options import Action
 
 from ..flows.belief_updater import BeliefUpdaterFlow
@@ -27,7 +27,7 @@ from ..types.flow_types import ExecutorOutput
 
 # --- Source/Sink Flows for Physical Robot Interface ---
 
-@flow_io
+@io
 @dataclass
 class CameraOutput:
     """Output from camera sensor."""
@@ -59,7 +59,7 @@ class CameraSourceFlow(Flow[None, CameraOutput]):
         })
 
 
-@flow_io
+@io
 @dataclass
 class ControlCommand:
     """Command sent to robot actuators."""
