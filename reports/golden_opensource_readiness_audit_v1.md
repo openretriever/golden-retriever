@@ -8,6 +8,7 @@ Scope: release-prep audit of GoldenRetriever for public-release readiness. This 
 - This branch removes the legacy `src/golden_retriever` package and treats Golden as an examples/docs companion to the core `retriever` runtime.
 - Generated experiment outputs are treated as local artifacts unless explicitly promoted as release assets.
 - Public clean-clone checks now include `pixi run -e docs docs-build`, `pixi run -e golden-local test`, `pixi run -e golden-local demo-perception-detection-flow`, and `pixi run build`.
+- GitHub Pages docs deployment is wired through `.github/workflows/docs.yml`; the repository Pages source must be set to `GitHub Actions`.
 - Refresh remote status before any public push from a new machine or branch.
 
 ## Release Blockers
