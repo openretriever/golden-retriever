@@ -29,7 +29,7 @@ The wheel intentionally ships the lightweight `retriever_typing` package. Heavy 
 
 ## Runtime Dependency
 
-Golden currently uses the temporary `debug-retriever` package for portable demos. After the real public `retriever` package is published, update:
+Golden currently uses the temporary `debug-retriever` package for portable demos. After the real public `openretriever` distribution is published, update:
 
 - `pixi.toml` bundled/runtime core dependencies,
 - README setup text,

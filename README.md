@@ -10,7 +10,7 @@ Advanced examples, system integrations, and research prototypes built on top of 
 pixi install
 ```
 
-Use this for portable Golden examples. Until the public `retriever` package is published, the default environment resolves the core runtime from the temporary `debug-retriever` PyPI package.
+Use this for portable Golden examples. Until the public `openretriever` distribution is published, the default environment resolves the core runtime from the temporary `debug-retriever` PyPI package.
 
 ### Golden demo environments
 
@@ -127,7 +127,7 @@ GoldenRetriever is the companion examples and system-integration repository. The
 - Runtime docs: `https://openretriever.github.io/retriever/`
 - Golden docs target: `https://openretriever.github.io/golden-retriever/`
 
-Until the public `retriever` package is published, Golden uses the temporary `debug-retriever` runtime package for portable demo environments.
+Until the public `openretriever` distribution is published, Golden uses the temporary `debug-retriever` runtime package for portable demo environments.
 
 ## Contributing And License
 

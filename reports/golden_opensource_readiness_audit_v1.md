@@ -21,7 +21,7 @@ Scope: release-prep audit of GoldenRetriever for public-release readiness. This 
 
 2. Public onboarding depends on sibling development checkouts.
    - Root README and Pixi config now use the temporary `debug-retriever` package instead of a sibling checkout.
-   - This should switch to the public core `retriever` package once it is published.
+   - This should switch to the public core `openretriever` distribution once it is published.
    - Public setup should continue to work from the repo itself, with editable-core guidance kept out of the default path.
 
 3. Machine-specific paths remain in active code/config.

@@ -1,6 +1,6 @@
 # Core Composition Surfaces v1
 
-This guide covers the newer registry-backed pipeline composition surfaces used by the Golden examples. Keep the examples on the packaged runtime path until the public core package replaces the temporary debug package.
+This guide covers the newer registry-backed pipeline composition surfaces used by the Golden examples. Keep the examples on the packaged runtime path until the public core distribution replaces the temporary debug package.
 
 ## Runtime check
 
