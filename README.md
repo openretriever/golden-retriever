@@ -44,6 +44,8 @@ pixi run demo-multi-agent-communication
 
 The `golden-local` and `golden-perception` launch points use the same temporary packaged runtime plus the Golden example features needed by those commands.
 
+Some heavier optional Pixi environments still resolve demo-only dependencies from Git repositories. Those dependencies are intentionally kept in `pixi.toml`, not the Python package metadata, so default docs and concise examples remain installable without cloning extra research stacks.
+
 ## Repository Layout
 
 - `src/retriever_typing`: typed robotics and event/data helpers used by several advanced demos.

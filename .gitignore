@@ -33,6 +33,7 @@ logs/
 out/
 _ssl/
 site/
+experiments/backprop_advanced/results/
 reports/*.html
 reports/golden_codebase_next_cycle_v1_*.md
 reports/retriever_agent_thread_summary_*.md
