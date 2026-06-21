@@ -4,21 +4,22 @@ Scope: read-only audit of GoldenRetriever for public-release readiness. This rep
 
 ## Live State
 
-- Current branch status: `main...origin/main [ahead 21, behind 1]` with untracked `reports/`.
-- Treat local `main` as a staging stack, not a clean public release branch.
-- No remote fetch was performed during this audit.
+- Current release-prep branch: `chore/remove-golden-src-20260621`.
+- This branch removes the legacy `src/golden_retriever` package and treats Golden as an examples/docs companion to the core `retriever` runtime.
+- Local untracked planning/report artifacts may still exist under `reports/`; they are not part of the public tree unless explicitly added.
+- No remote fetch was performed during the original audit; refresh status before any public push.
 
 ## Release Blockers
 
-1. Root release metadata is not ready.
-   - Root `pyproject.toml` is a placeholder/future template and declares proprietary license text.
-   - No root `LICENSE`, `NOTICE`, `CONTRIBUTING.md`, `SECURITY.md`, or `.github/` release surface was found.
-   - Package metadata for nested packages is incomplete for public distribution.
+1. Root release metadata needs final verification.
+   - Root `pyproject.toml`, `LICENSE`, `CONTRIBUTING.md`, and `SECURITY.md` now exist for the companion examples repo.
+   - A `NOTICE` file and GitHub issue/PR templates can be added when the public repository is created.
+   - Package metadata for nested or optional packages is still not intended as a public distribution boundary.
 
 2. Public onboarding depends on sibling development checkouts.
-   - Root README and pixi config still describe resolving `retriever` from a sibling `retriever-mirror` checkout.
-   - Several example docs present local editable-core setup as part of the active path.
-   - Public setup should work from the repo itself, with editable-core guidance moved to a contributor-only section.
+   - Root README and Pixi config now use the temporary `debug-retriever` package instead of a sibling checkout.
+   - This should switch to the public core `retriever` package once it is published.
+   - Public setup should continue to work from the repo itself, with editable-core guidance kept out of the default path.
 
 3. Machine-specific paths remain in active code/config.
    - Active source contains `/scratch/...` and `/home/...` defaults in segmentation/model server, VLMaps, D3Fields, robomimic, and legacy robot/skill code.
@@ -32,14 +33,15 @@ Scope: read-only audit of GoldenRetriever for public-release readiness. This rep
    - Direct Git dependencies and local editable-core assumptions make the public install path fragile.
    - Public package metadata should use stable dependencies or clearly documented optional extras.
 
-6. Public docs still include internal-development framing.
-   - Local editable-core docs, mirror carry-back notes, advanced examples, and archive material should be clearly separated from the public quickstart.
+6. Public docs still need a final staging-vs-public sweep.
+   - Archive material and historical carry-back notes should remain clearly separated from the public quickstart.
+   - The front door should keep concise example lanes first and push heavier prototypes to secondary docs.
 
 ## Recommended Cleanup Order
 
-1. Freeze Golden public scope: decide whether this repo is public examples, research artifacts, or a private staging stack.
-2. Create a dedicated release branch instead of using the current ahead/behind `main`.
-3. Add root OSS metadata: final license, notice policy, contributing/security stubs, package URLs, and ownership docs.
+1. Keep Golden public scope as a public examples/docs companion repo, not the core runtime.
+2. Continue using a dedicated release-prep branch rather than publishing an old staging `main`.
+3. Add final GitHub issue/PR templates and optional `NOTICE` policy when the public repo is created.
 4. Split current tree into keep/archive/artifact/drop buckets.
 5. Remove or parameterize hardcoded local paths in active code.
 6. Move heavyweight assets and generated outputs out of git unless intentionally shipped with documented provenance.

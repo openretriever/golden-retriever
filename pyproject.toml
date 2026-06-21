@@ -1,18 +1,6 @@
-# Template `pyproject.toml` for the future Golden Retriever system repository.
-#
-# This repo is being refocused on the **Retriever runtime/core**. Heavy system deps
-# (models, robots/sim, training, Ray, etc.) will move into a separate repo:
-#   - Runtime: `retriever-rt` (imports as `retriever`)
-#   - System:  `retriever-golden`
-#
-# This file is intentionally **not used** by packaging in this repo. It exists so we
-# can copy it into the future golden repo and iterate without mixing system deps into
-# the runtime `pyproject.toml`.
-#
-# When splitting repos:
-#   1) Create `golden-retriever/` repo
-#   2) Copy this file to `golden-retriever/pyproject.toml`
-#   3) Adjust versions/entry-points/scripts as needed
+# Public metadata for GoldenRetriever, the companion examples and system-demo
+# repository for the core Retriever runtime. The heavy optional stacks remain
+# opt-in so the default public path stays documentation- and example-first.
 
 [build-system]
 requires = ["hatchling"]
@@ -24,17 +12,26 @@ allow-direct-references = true
 [project]
 name = "retriever-golden"
 version = "0.0.0"
-description = "Golden Retriever: reference system built on Retriever runtime"
+description = "Advanced examples and system integrations built on the Retriever runtime."
 readme = "README.md"
-requires-python = ">=3.10"
-license = { text = "Proprietary" }
-authors = [{ name = "Retriever Team" }]
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+authors = [{ name = "OpenRetriever" }]
+keywords = ["robotics", "retriever", "examples", "closed-loop", "agents"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 
-# In the split, Golden depends on the runtime distribution name (planned: retriever-rt).
-# The import name remains `retriever`.
-# dependencies = [
-#     "retriever-rt>=0.0.0",
-# ]
+[project.urls]
+Homepage = "https://github.com/openretriever/golden-retriever"
+Documentation = "https://openretriever.github.io/golden-retriever/"
+Repository = "https://github.com/openretriever/golden-retriever"
+Issues = "https://github.com/openretriever/golden-retriever/issues"
 
 [project.optional-dependencies]
 # Legacy/system stack (carried over from the current monorepo; expect to refine).

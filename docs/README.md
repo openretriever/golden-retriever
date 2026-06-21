@@ -19,7 +19,7 @@ Core runtime source for now: Golden demos use the temporary `debug-retriever` Py
 
 ## Hostable Site
 
-`mkdocs.yml` defines a small public site map for these docs. Use it for local previews now and replace `site_url`/repo links when the public hosting location is final.
+`mkdocs.yml` defines a small public site map for these docs. The configured public target is `openretriever/golden-retriever`, with the core runtime docs hosted separately by the main `retriever` repo.
 
 ```bash
 pixi run -e docs docs-build

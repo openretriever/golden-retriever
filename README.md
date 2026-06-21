@@ -103,3 +103,17 @@ pixi run -e docs docs-serve
 ```
 
 Keep Golden docs example-first: concise perception, memory, language, composition, and robotics typing guides belong here; core runtime API details belong in the main `retriever` repo.
+
+## Relationship To Core Retriever
+
+GoldenRetriever is the companion examples and system-integration repository. The core runtime, API reference, and backend implementation live in the main `retriever` repository:
+
+- Runtime repository: `https://github.com/openretriever/retriever`
+- Runtime docs: `https://openretriever.github.io/retriever/`
+- Golden docs target: `https://openretriever.github.io/golden-retriever/`
+
+Until the public `retriever` package is published, Golden uses the temporary `debug-retriever` runtime package for portable demo environments.
+
+## Contributing And License
+
+See `CONTRIBUTING.md` for the contribution workflow and `SECURITY.md` for private vulnerability reporting. GoldenRetriever is licensed under the Apache License 2.0; see `LICENSE`.
