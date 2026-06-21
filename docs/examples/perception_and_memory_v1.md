@@ -111,7 +111,7 @@ This example keeps state inside the replanner and emits plan updates only when o
 
 ## 9. Next: newer core composition surfaces
 
-To explore the newer registry-backed composition surfaces from the current `retriever-mirror` core, switch to the local editable-core env and run:
+To explore the newer registry-backed composition surfaces from the current core Retriever checkout, switch to the local editable-core env and run:
 
 ```bash
 pixi install -e golden-local

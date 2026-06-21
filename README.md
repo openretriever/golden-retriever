@@ -1,6 +1,6 @@
 # GoldenRetriever
 
-System-level integrations, advanced examples, and research prototypes built on top of the core `retriever` runtime.
+Advanced examples, system integrations, and research prototypes built on top of the core `retriever` runtime.
 
 ## Setup
 
@@ -10,16 +10,16 @@ System-level integrations, advanced examples, and research prototypes built on t
 pixi install
 ```
 
-Use this for the portable Golden examples that rely on the bundled `retriever_dist` wheel.
+Use this for portable Golden examples. Until the public `retriever` package is published, the default environment resolves the core runtime from the temporary `debug-retriever` PyPI package.
 
-### Local editable core (for debugging against `retriever-mirror`)
+### Local editable core (for debugging against core Retriever)
 
 ```bash
 pixi install -e golden-local
 pixi run -e golden-local python -c "import retriever; print(retriever.__file__)"
 ```
 
-Use this when you want Golden to resolve `retriever` from the sibling `../retriever-mirror` checkout while keeping the public/default environment unchanged.
+Use this when you want Golden to resolve `retriever` from a sibling `../retriever` checkout while keeping the public/default environment unchanged. This is the public convention for working on the core runtime and companion examples side by side.
 
 ## Recommended Launch Points
 
@@ -40,10 +40,9 @@ pixi run demo-perception-replay-to-belief
 pixi run demo-perception-belief-control
 pixi run -e golden-local demo-composable-pipelines
 pixi run demo-multi-agent-communication
-pixi run -e tamp demo-tamp-tabletop
 ```
 
-The `golden-local` launch points above are the ones in this list that require the local editable-core environment.
+The `golden-local` and `golden-perception` launch points above require the local editable-core environment; the plain `pixi run ...` launch points use the temporary packaged-core path.
 
 ## Repository Layout
 
@@ -53,7 +52,7 @@ The `golden-local` launch points above are the ones in this list that require th
 - `notebooks`: git-friendly notebook sources and generated notebook artifacts. Start with `notebooks/README.md`.
 - `examples/experimental`: heavier prototypes that are still valuable, but less polished.
 - `docs/robotics_typing_standard`: typed payload and data-profile notes for this repo.
-- `docs`: public topic-based docs. Start with `docs/README.md`.
+- `docs`: public topic-based docs. Start with `docs/README.md`; `mkdocs.yml` provides a hostable site map.
 
 ## Example Families
 
@@ -65,7 +64,6 @@ The `golden-local` launch points above are the ones in this list that require th
 - `examples/advanced/functional_wiring`: flow composition, fan-in/fan-out, staged builders, and sync policies. These examples keep payloads simple and structural instead of inventing a new IO wrapper per stage.
 - `examples/advanced/core_composition`: registry-backed pipeline composition surfaces that are easiest to explore from the local editable-core env. The intended pattern is stable shared payloads plus structural rewiring, not pipeline-specific envelope classes.
 - `examples/advanced/multi_agent_communication`: a compact coordination/composition example.
-- `examples/advanced/tamp_tabletop_pick_place`: tabletop TAMP with a PyBullet-backed simulator. This example now reuses shared symbolic core types from `retriever-tamp` instead of maintaining a separate local planning type universe.
 
 For the end-to-end perception -> memory -> composition walkthrough, see `docs/examples/perception_and_memory_v1.md`. For the newer registry-backed composition surfaces, continue with `docs/examples/pipeline_composition_v1.md`.
 
@@ -94,3 +92,15 @@ pixi run -e golden-local demo-hub-notebook-source
 ```
 
 The Hub notebook reads published module refs from environment variables instead of hardcoding any private or organization-specific module names.
+
+
+## Documentation Site
+
+The docs are structured so they can be hosted as a companion website for the core Retriever docs.
+
+```bash
+pixi run -e docs docs-build
+pixi run -e docs docs-serve
+```
+
+Keep Golden docs example-first: concise perception, memory, language, composition, and robotics typing guides belong here; core runtime API details belong in the main `retriever` repo.

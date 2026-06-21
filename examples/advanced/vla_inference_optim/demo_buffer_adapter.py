@@ -11,7 +11,7 @@ It demonstrates:
 4.  Dora Backend: Running VLA components in separate dataflow nodes.
 
 Usage:
-    pixi run demo-vla
+    python -m examples.advanced.vla_inference_optim.app
     # Or directly as a module:
     pixi run python -m examples.advanced.vla_inference_optim.app
 """

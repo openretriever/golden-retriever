@@ -11,7 +11,7 @@ Architecture:
                           |__(prompt)____________|
 
 How to run:
-    pixi run demo-vision
+    python examples/advanced/interactive_detection/app.py
 """
 import os
 import sys

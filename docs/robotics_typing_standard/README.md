@@ -17,8 +17,3 @@ This folder is the GoldenRetriever reference pack for typed robotics payloads, c
 ## Runnable Demos
 
 For runnable examples in this repo, start with `examples/advanced/robotics_typing_standard/README.md`.
-
-## Historical / Integration Notes
-
-- `archive/05_mirror_upstream_patch_plan.md`: archival integration-history note.
-- `archive/06_rollout_report_2026-02-27.md`: rollout and validation snapshot for that earlier wave.

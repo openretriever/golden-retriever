@@ -54,7 +54,7 @@ These examples intentionally do **not** teach:
 - model-specific VLM request/response packets,
 - prompt orchestration metadata,
 - large domain plans,
-- TAMP-specific bundles.
+- Larger integrated planning bundles.
 
 Those belong in higher-level packages or later examples once the primitive type
 surface is already clear.

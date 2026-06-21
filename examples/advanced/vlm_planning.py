@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-016_vlm_planning.py - Verification of Symbolic Planning Migration
+VLM planning example - verification of symbolic planning migration
 
 This example verifies that:
 1. src/retriever/types/symbolic.py is accessible

@@ -19,7 +19,7 @@ pixi run demo-perception-belief-control
 pixi run -e golden-local demo-composable-pipelines
 ```
 
-The concise perception and memory ladders now require the local editable-core environment so they can use the current canonical Retriever type surface. The older bundled-core demos remain available for the other paths.
+The concise perception, memory, language, and composition ladders use the local editable-core environments (`golden-local` or `golden-perception`) so they can track the current core Retriever type surface. Plain `pixi run ...` commands use the temporary packaged-core path.
 
 ## Recommended progression
 
@@ -31,7 +31,6 @@ The concise perception and memory ladders now require the local editable-core en
 6. `functional_wiring/`: composing surfaced flows into larger pipelines.
 7. `core_composition/`: registry-backed pipeline composition using a local editable core checkout.
 8. `multi_agent_communication/`: compact coordination/composition patterns.
-9. `tamp_tabletop_pick_place/`: a larger integrated planning + execution demo with a simulator.
 
 Across these examples, prefer shared basic payloads plus structural composition. If a local stage needs grouped inputs or outputs, use composite `Flow[...]` typing first; only introduce a new named `Input` / `Output` envelope when that grouped boundary is itself a stable domain contract.
 

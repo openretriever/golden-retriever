@@ -1,16 +1,23 @@
+
 # Core Composition Examples
 
-These examples exercise the newer registry-backed pipeline composition surfaces from the current `retriever-mirror` core.
+These examples exercise registry-backed pipeline composition surfaces from a local editable core Retriever checkout.
 
-## Local core requirement
+## Local Core Requirement
 
-Use the local editable Golden environment so `retriever` resolves to the sibling `../retriever-mirror` checkout:
+Use the local editable Golden environment so `retriever` resolves to the sibling `../retriever` checkout:
 
 ```bash
 pixi install -e golden-local
 pixi run -e golden-local demo-composable-pipelines
 ```
 
+The printed import path from this command should point into `../retriever`:
+
+```bash
+pixi run -e golden-local python -c "import retriever; print(retriever.__file__)"
+```
+
 ## Examples
 
-- `composable_pipelines.py`: register a small pipeline, override one internal stage, inject surfaced inputs, and then wrap the pipeline back into a larger graph with `build_pipeline_flow(...)`. The payloads stay on one small shared basic type vocabulary; the example is about changing structure, not inventing pipeline-specific schema classes.
+- `composable_pipelines.py`: register a small pipeline, override one internal stage, inject surfaced inputs, and wrap the pipeline back into a larger graph with `build_pipeline_flow(...)`. The payloads stay on one small shared type vocabulary; the example is about changing structure, not inventing pipeline-specific schema classes.

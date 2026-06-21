@@ -1,6 +1,6 @@
 # Core Composition Surfaces v1
 
-This guide covers the newer registry-backed pipeline composition surfaces that come from the current `retriever-mirror` core. Keep Golden on its default packaged environment for portable demos, and switch to the local editable-core env only when you want to debug against the live sibling checkout.
+This guide covers the newer registry-backed pipeline composition surfaces that come from the current core Retriever checkout. Keep Golden on its default packaged environment for portable demos, and switch to the local editable-core env only when you want to debug against the live sibling core checkout.
 
 ## Local core setup
 
@@ -9,7 +9,7 @@ pixi install -e golden-local
 pixi run -e golden-local python -c "import retriever; print(retriever.__file__)"
 ```
 
-The printed path should point into the sibling `../retriever-mirror` checkout.
+The printed path should point into the sibling `../retriever` checkout.
 
 ## First runnable example
 

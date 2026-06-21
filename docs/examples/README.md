@@ -17,7 +17,6 @@ They follow one design rule throughout: start from a small shared payload vocabu
 - `examples/advanced/perception_debug/`: deterministic record/replay and windowed stats.
 - `examples/advanced/state_management/`: older state and belief-update examples.
 - `examples/advanced/core_composition/`: registry-backed pipeline composition.
-- `examples/advanced/tamp_tabletop_pick_place/`: larger integrated planning and execution demo.
 
 ## Recommended Order
 

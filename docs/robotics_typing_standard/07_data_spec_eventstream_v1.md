@@ -38,7 +38,7 @@ Processing-time compatibility profile:
 
 ## Minimal runtime impact
 
-This wave does not modify `retriever-mirror` default scheduler/runtime behavior.
+This page does not modify core Retriever scheduler/runtime behavior.
 
 Interop is opt-in via:
 - `from_runtime_event_buffer(...)`

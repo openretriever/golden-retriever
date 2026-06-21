@@ -19,16 +19,24 @@ typing-extensions = "*"
 mcap = "*"
 jupytext = "*"
 
+
+[feature.docs.pypi-dependencies]
+mkdocs = ">=1.6"
+mkdocs-material = ">=9.5"
+pymdown-extensions = ">=10"
+
 [feature.bundled_core.pypi-dependencies]
-# Public/default path: use the bundled retriever wheel checked into retriever_dist/.
-retriever = { path = "./retriever_dist/install/retriever-0.0.0-py3-none-any.whl", editable = false, extras = [
+# Temporary public/default path: use the debug PyPI package until the public
+# openretriever/retriever package is published.
+debug-retriever = { version = ">=0.1.4", extras = [
     "dora",
     "demo",
 ] }
 
 [feature.local_core.pypi-dependencies]
-# Local debugging path: point Golden at a sibling retriever-mirror checkout.
-retriever = { path = "../retriever-mirror", editable = true, extras = [
+# Local debugging path: point Golden at a sibling retriever core checkout.
+# Public convention: clone the core repo next to this repo as ../retriever.
+retriever = { path = "../retriever", editable = true, extras = [
     "dora",
     "demo",
 ] }
@@ -227,22 +235,6 @@ demo-ik           = { cmd = "python examples/advanced/motion_planning/ik_example
 demo-motion-track = { cmd = "python examples/advanced/motion_planning/motion_tracking_example.py", env = { PYTHONPATH = "." } }
 
 # -----------------------------------------------------------------------------
-# Optional: TAMP tabletop environment
-# -----------------------------------------------------------------------------
-[feature.tamp]
-platforms = ["linux-64", "osx-arm64"]
-
-[feature.tamp.dependencies]
-pybullet = "*"
-
-[feature.tamp.pypi-dependencies]
-"retriever-tamp" = { path = "./packages/retriever-tamp", editable = true }
-
-[feature.tamp.tasks]
-demo-tamp-tabletop-gui = { cmd = "python examples/advanced/tamp_tabletop_pick_place/app.py --sim pybullet-gui --final-hold-seconds 8" }
-demo-tamp-tabletop-nosim = { cmd = "python examples/advanced/tamp_tabletop_pick_place/app.py --sim none --no-obstacle" }
-
-# -----------------------------------------------------------------------------
 # Environments
 # -----------------------------------------------------------------------------
 [environments]
@@ -259,11 +251,10 @@ gpu = { features = ["py311", "bundled_core", "gpu"] }
 ros = { features = ["bundled_core", "ros"] }
 roboplan = { features = ["bundled_core", "roboplan"] }
 golden = { features = ["py311", "bundled_core", "golden"] }
-tamp = { features = ["py311", "bundled_core", "tamp"] }
 local-core = { features = ["py311", "local_core"] }
 golden-local = { features = ["py311", "local_core", "golden"] }
+docs = { features = ["py311", "docs"] }
 golden-perception = { features = ["py311", "local_core", "golden", "cpu"] }
-tamp-local = { features = ["py311", "local_core", "tamp"] }
 
 [feature.vlm_planning.tasks]
 # demo-highlevel-planning = { cmd = "python examples/experimental/closed_loop_planning/pipelines/demo_highlevel_planning.py" }
@@ -273,6 +264,11 @@ demo-highlevel-planning = { cmd = "python examples/experimental/closed_loop_plan
 # Tasks
 # -----------------------------------------------------------------------------
 [tasks]
+# Documentation site
+# Run: pixi run -e docs docs-build
+docs-build = "mkdocs build --strict"
+docs-serve = "mkdocs serve --dev-addr 127.0.0.1:8001"
+
 # Tutorial examples (run from retriever_dist/ so examples/ is on the path)
 demo-basic-flow       = { cmd = "python -m examples.tutorial.a_flow_fundamentals.01_basic_flow", cwd = "retriever_dist" }
 demo-full-pipeline    = { cmd = "python -m examples.tutorial.a_flow_fundamentals.04_full_pipeline", cwd = "retriever_dist" }
@@ -287,7 +283,6 @@ demo-multirate        = { cmd = "python -m examples.tutorial.e_resource_and_sync
 demo-robotics-typing-catalog = { cmd = "python examples/advanced/robotics_typing_standard/type_catalog_demo.py", env = { PYTHONPATH = "." } }
 demo-robotics-typing-contract = { cmd = "python examples/advanced/robotics_typing_standard/compositional_contract_demo.py", env = { PYTHONPATH = "." } }
 demo-robotics-typing-boundary = "python examples/advanced/robotics_typing_standard/perception_to_control_boundary_demo.py"
-demo-tamp-tabletop    = { cmd = "python examples/advanced/tamp_tabletop_pick_place/app.py --sim pybullet-direct" }
 demo-synthetic-color-stepper = { cmd = "python examples/advanced/perception_debug/synthetic_color_stepper.py", env = { PYTHONPATH = "." } }
 demo-perception-record = { cmd = "python examples/advanced/perception_debug/record_replay_perception.py record --out logs/perception_debug.mcap --steps 12", env = { PYTHONPATH = "." } }
 demo-perception-replay = { cmd = "python examples/advanced/perception_debug/record_replay_perception.py replay --recording logs/perception_debug.mcap --steps 12", env = { PYTHONPATH = "." } }
