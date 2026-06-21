@@ -16,6 +16,7 @@ platforms = ["osx-arm64", "linux-64"]
 [pypi-dependencies]
 # Keep test tooling lightweight.
 pytest = ">=8"
+build = ">=1"
 pygments = "*"
 typing-extensions = "*"
 mcap = "*"
@@ -272,6 +273,7 @@ demo-highlevel-planning = { cmd = "python examples/experimental/closed_loop_plan
 docs-build = "mkdocs build --strict"
 docs-serve = "mkdocs serve --dev-addr 127.0.0.1:8001"
 test = { cmd = "python -m pytest tests -q", env = { PYTHONPATH = "." } }
+build = "python -m build"
 
 # Core runtime tutorial examples live in the main `retriever` repository.
 # Golden task aliases below are reserved for Golden-specific advanced examples.

@@ -9,6 +9,28 @@ build-backend = "hatchling.build"
 [tool.hatch.metadata]
 allow-direct-references = true
 
+[tool.hatch.build.targets.wheel]
+packages = ["src/retriever_typing"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/README.md",
+    "/LICENSE",
+    "/pyproject.toml",
+    "/src/retriever_typing",
+    "/docs",
+    "/examples",
+    "/notebooks/src",
+    "/tests",
+]
+exclude = [
+    "/site",
+    "/logs",
+    "/reports",
+    "/notebooks/generated",
+    "/experiments/*/results",
+]
+
 [project]
 name = "retriever-golden"
 version = "0.0.0"

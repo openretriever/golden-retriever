@@ -7,7 +7,7 @@ Scope: release-prep audit of GoldenRetriever for public-release readiness. This 
 - Current release-prep branch: `chore/remove-golden-src-20260621`.
 - This branch removes the legacy `src/golden_retriever` package and treats Golden as an examples/docs companion to the core `retriever` runtime.
 - Generated experiment outputs are treated as local artifacts unless explicitly promoted as release assets.
-- Public clean-clone checks now include `pixi run -e docs docs-build`, `pixi run -e golden-local test`, and `pixi run -e golden-local demo-perception-detection-flow`.
+- Public clean-clone checks now include `pixi run -e docs docs-build`, `pixi run -e golden-local test`, `pixi run -e golden-local demo-perception-detection-flow`, and `pixi run build`.
 - Refresh remote status before any public push from a new machine or branch.
 
 ## Release Blockers
@@ -16,7 +16,7 @@ Scope: release-prep audit of GoldenRetriever for public-release readiness. This 
    - Root `pyproject.toml`, `LICENSE`, `CONTRIBUTING.md`, and `SECURITY.md` now exist for the companion examples repo.
    - GitHub issue and PR templates now exist; add a `NOTICE` file only if Golden starts bundling third-party notices that require one.
    - A root Pixi `test` task now runs the tracked pytest suite through the `golden-local` environment.
-   - Package metadata for nested or optional packages is still not intended as a public distribution boundary.
+   - Package build now explicitly ships `src/retriever_typing` and excludes local/generated docs, reports, logs, and notebook outputs.
 
 2. Public onboarding depends on sibling development checkouts.
    - Root README and Pixi config now use the temporary `debug-retriever` package instead of a sibling checkout.

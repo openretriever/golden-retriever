@@ -114,6 +114,7 @@ Use these checks before opening a release branch or publishing docs:
 pixi run -e docs docs-build
 pixi run -e golden-local test
 pixi run -e golden-local demo-perception-detection-flow
+pixi run build
 ```
 
 ## Relationship To Core Retriever

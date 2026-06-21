@@ -32,4 +32,5 @@ For a quick release check from a clean clone:
 pixi run -e docs docs-build
 pixi run -e golden-local test
 pixi run -e golden-local demo-perception-detection-flow
+pixi run build
 ```
