@@ -13,10 +13,10 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='peter',
-    maintainer_email='tao.xavier@outlook.com',
-    description='TODO: Package description',
-    license='TODO: License declaration',
+    maintainer='OpenRetriever Maintainers',
+    maintainer_email='zlf0625@gmail.com',
+    description='ROS 2 Python pub-sub benchmark used by Golden Retriever experiments',
+    license='Apache-2.0',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
