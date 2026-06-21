@@ -36,6 +36,10 @@ pixi run benchmark-dora-suite
 # Results: experiments/benchmarks/results/dora_benchmark_results.csv
 ```
 
+The lower-level Dora latency helper may also create `benchmark_data.csv` inside
+`experiments/benchmarks/dora_benchmark/dora-rs/py-latency/`; that file is a
+local generated artifact and is not tracked.
+
 **ROS 2 (Python PubSub):**
 ```bash
 pixi run -e ros benchmark-ros-suite-build

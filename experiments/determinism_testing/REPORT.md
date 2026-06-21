@@ -33,9 +33,7 @@ This experiment demonstrates that Retriever satisfies functional determinism whi
 | Unique execution traces | **1** | 5 |
 | Unique gradient values | **1** | 5 |
 
-Retriever produces a **bitwise-identical** gradient and trace hash across all runs. Every pub/sub run produces a different trace and a different gradient.
-
-![Gradient histogram](results/gradient_histogram.png)
+Retriever produces a **bitwise-identical** gradient and trace hash across all runs. Every pub/sub run produces a different trace and a different gradient. The histogram and CSV outputs are generated locally by `pixi run -e torch determinism-plot` and are intentionally not tracked in the public repository.
 
 ### Gradient Verification (θ = 3.0)
 

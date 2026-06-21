@@ -80,7 +80,7 @@ This is why arrival-time semantics breaks gradient-based learning.
 
 ## Output
 
-Results saved to `experiments/determinism_testing/results/`:
+Results are generated locally under `experiments/determinism_testing/results/` and ignored by git:
 
 - `determinism_results.csv` - Per-run data
 - `gradient_histogram.png` - Main figure
