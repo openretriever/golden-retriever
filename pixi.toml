@@ -30,7 +30,7 @@ pymdown-extensions = ">=10"
 
 [feature.bundled_core.pypi-dependencies]
 # Temporary public/default path: use the debug PyPI package until the public
-# openretriever distribution is published.
+# pyretriever distribution is published.
 debug-retriever = { version = ">=0.1.4", extras = [
     "dora",
     "demo",
@@ -38,7 +38,7 @@ debug-retriever = { version = ">=0.1.4", extras = [
 
 [feature.runtime_core.pypi-dependencies]
 # Compatibility environment name retained for existing Golden launch commands.
-# Until the public openretriever distribution is published, this resolves
+# Until the public pyretriever distribution is published, this resolves
 # the same temporary runtime package as the default bundled-core path.
 debug-retriever = { version = ">=0.1.4", extras = [
     "dora",

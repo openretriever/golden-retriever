@@ -23,7 +23,7 @@ Scope: release-prep audit of GoldenRetriever for public-release readiness. This 
 
 2. Public onboarding no longer depends on sibling development checkouts.
    - Root README and Pixi config now use the temporary `debug-retriever` package instead of a sibling checkout.
-   - This should switch to the public core `openretriever` distribution once it is published.
+   - This should switch to the public core `pyretriever` distribution once it is published.
    - Public setup should continue to work from the repo itself, with editable-core guidance kept out of the default path.
 
 3. Machine-specific paths are not present in the active public surface.
@@ -48,7 +48,7 @@ Scope: release-prep audit of GoldenRetriever for public-release readiness. This 
 
 1. Enable GitHub Pages with source `GitHub Actions`.
 2. Keep the default branch set to `main`.
-3. After the core runtime publishes the `openretriever` distribution, replace `debug-retriever` in `pixi.toml` and setup docs.
+3. After the core runtime publishes the `pyretriever` distribution, replace `debug-retriever` in `pixi.toml` and setup docs.
 4. Add an optional `NOTICE` file only if future bundled assets or third-party code require one.
 5. Re-run the private-content scan, docs build, tests, and package build immediately before making the repository public.
 
