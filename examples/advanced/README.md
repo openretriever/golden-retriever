@@ -30,7 +30,8 @@ The concise perception, memory, language, and composition ladders use `golden-lo
 5. `state_management/`: reset behavior, older belief examples, and event-driven replanning.
 6. `functional_wiring/`: composing surfaced flows into larger pipelines.
 7. `core_composition/`: registry-backed pipeline composition.
-8. `multi_agent_communication/`: compact coordination/composition patterns.
+8. `closed_loop_planning/`: extracted design patterns for belief, monitoring, and replanning.
+9. `multi_agent_communication/`: compact coordination/composition patterns.
 
 Across these examples, prefer shared basic payloads plus structural composition. If a local stage needs grouped inputs or outputs, use composite `Flow[...]` typing first; only introduce a new named `Input` / `Output` envelope when that grouped boundary is itself a stable domain contract.
 
@@ -43,6 +44,7 @@ Across these examples, prefer shared basic payloads plus structural composition.
 - `state_management/README.md`: older state, reset, and belief-update examples.
 - `functional_wiring/README.md`: composition, fan-in/fan-out, and surfaced builders.
 - `core_composition/README.md`: registry-backed pipeline composition surfaces (`pixi run -e golden-local ...`).
+- `closed_loop_planning/README.md`: extracted belief, monitoring, and replanning patterns from the old prototype.
 - `robotics_typing_standard/README.md`: typed payload and data-spec demos.
 - `notebooks/README.md`: git-friendly notebook workflow for a small mechanics demo; keep the main runnable progression in the advanced example families above.
 

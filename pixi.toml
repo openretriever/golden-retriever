@@ -264,8 +264,6 @@ docs = { features = ["py311", "docs"] }
 golden-perception = { features = ["py311", "runtime_core", "golden", "cpu"] }
 
 [feature.vlm_planning.tasks]
-# demo-highlevel-planning = { cmd = "python examples/experimental/closed_loop_planning/pipelines/demo_highlevel_planning.py" }
-demo-highlevel-planning = { cmd = "python examples/experimental/closed_loop_planning/pipelines/demo_highlevel_planning.py", env = { RUST_LOG = "error" } }
 
 # -----------------------------------------------------------------------------
 # Tasks
