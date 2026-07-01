@@ -2,7 +2,7 @@
 
 GoldenRetriever keeps the public docs small and topic-based.
 
-Core runtime source for now: Golden demos use the temporary `debug-retriever` PyPI package until the public `pyretriever` distribution is published.
+Core runtime source for now: Golden demos import `retriever`; portable environments use the runtime package configured in `pixi.toml` until the public `pyretriever` distribution is published.
 
 ## Start Here
 

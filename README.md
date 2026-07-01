@@ -1,34 +1,46 @@
 # GoldenRetriever
 
-Advanced examples, system integrations, and research prototypes built on top of the core `retriever` runtime.
+Companion examples, system integrations, and research prototypes built on top of the core `retriever` runtime.
+
+**Links:** [Core runtime](https://github.com/openretriever/retriever) · [Core docs](https://openretriever.github.io/retriever/) · [Golden docs](https://openretriever.github.io/golden-retriever/) · [Website (coming soon)](#) · [Paper / arXiv (coming soon)](#) · [Discord (coming soon)](#)
+
+GoldenRetriever is the examples and integration repository. Keep core runtime API details in [`openretriever/retriever`](https://github.com/openretriever/retriever); use this repo for runnable perception, memory, language, composition, robotics typing, notebook, and system-integration examples.
+
+> Compatibility note: until the public `pyretriever` runtime package is published, the portable Golden environments resolve the temporary packaged runtime configured in `pixi.toml`. The Python import remains `retriever`.
 
 ## Setup
-
-### Default packaged core
 
 ```bash
 pixi install
 ```
 
-Use this for portable Golden examples. Until the public `pyretriever` distribution is published, the default environment resolves the core runtime from the temporary `debug-retriever` PyPI package.
-
-### Golden demo environments
+For the main Golden example environment:
 
 ```bash
 pixi install -e golden-local
 pixi run -e golden-local python -c "import retriever; print(retriever.__file__)"
 ```
 
-The `golden-local` and `golden-perception` names are retained for existing launch commands. For now they resolve the temporary `debug-retriever` runtime package.
+`golden-local` and `golden-perception` are retained as stable launch environments for existing demo commands.
 
 ## Recommended Launch Points
 
+Start with the short perception -> memory -> language -> composition ladder:
+
+```bash
+pixi run -e golden-local demo-perception-detection-flow
+pixi run -e golden-local demo-memory-belief-flow
+pixi run -e golden-local demo-language-caption-plan
+pixi run -e golden-local demo-language-grounded-reference
+pixi run -e golden-local demo-composable-pipelines
+```
+
+Then use topic-specific commands as needed:
+
 ```bash
 pixi run demo-robotics-typing-catalog
-pixi run -e golden-local demo-perception-detection-flow
 pixi run -e golden-local demo-perception-segmentation-flow
 pixi run -e golden-local demo-perception-pointing-flow
-pixi run -e golden-local demo-memory-belief-flow
 pixi run -e golden-local demo-memory-dropout-flow
 pixi run -e golden-local demo-memory-pointing-flow
 pixi run -e golden-perception demo-gemini-detection-flow
@@ -38,35 +50,36 @@ pixi run demo-perception-replay
 pixi run -e golden-local demo-detection-window-stats
 pixi run demo-perception-replay-to-belief
 pixi run demo-perception-belief-control
-pixi run -e golden-local demo-composable-pipelines
 pixi run demo-multi-agent-communication
 ```
-
-The `golden-local` and `golden-perception` launch points use the same temporary packaged runtime plus the Golden example features needed by those commands.
 
 Some heavier optional Pixi environments still resolve demo-only dependencies from Git repositories. Those dependencies are intentionally kept in `pixi.toml`, not the Python package metadata, so default docs and concise examples remain installable without cloning extra research stacks.
 
 ## Repository Layout
 
-- `src/retriever_typing`: typed robotics and event/data helpers used by several advanced demos.
 - `examples/advanced`: runnable advanced demos with concrete launch points. Start with `examples/advanced/README.md`.
+- `docs/examples`: public example-guide articles. Start with `docs/examples/README.md`.
+- `src/retriever_typing`: typed robotics and event/data helpers used by advanced demos.
+- `docs/robotics_typing_standard`: typed payload and data-profile notes for this repo.
 - `notebooks`: git-friendly notebook sources and generated notebook artifacts. Start with `notebooks/README.md`.
 - `examples/experimental`: heavier prototypes that are still valuable, but less polished.
-- `docs/robotics_typing_standard`: typed payload and data-profile notes for this repo.
-- `docs`: public topic-based docs. Start with `docs/README.md`; `mkdocs.yml` provides a hostable site map.
+- `docs`: public topic-based docs; `mkdocs.yml` provides a hostable site map.
 
 ## Example Families
 
 - `examples/advanced/perception_examples`: concise detection, segmentation, and pointing flows over one shared synthetic scene.
 - `examples/advanced/memory_examples`: concise belief and remembered-pointing flows over the same perception payloads.
+- `examples/advanced/language_examples`: caption, grounding, and primitive plan-text examples.
 - `examples/advanced/perception_debug`: synthetic perception, windowed stats, MCAP recording, and replay.
+- `examples/advanced/real_perception`: optional model-backed perception lanes with mock-first defaults.
+- `examples/advanced/real_memory`: optional real/mock memory flows built on detection and belief payloads.
 - `examples/advanced/state_management`: older internal state, reset behavior, and memory-oriented flows.
-- `examples/advanced/real_memory`: optional explicit real/mock memory flows built on the same detection and belief payloads.
-- `examples/advanced/functional_wiring`: flow composition, fan-in/fan-out, staged builders, and sync policies. These examples keep payloads simple and structural instead of inventing a new IO wrapper per stage.
-- `examples/advanced/core_composition`: registry-backed pipeline composition surfaces. The intended pattern is stable shared payloads plus structural rewiring, not pipeline-specific envelope classes.
+- `examples/advanced/functional_wiring`: flow composition, fan-in/fan-out, staged builders, and sync policies.
+- `examples/advanced/core_composition`: registry-backed pipeline composition surfaces.
 - `examples/advanced/multi_agent_communication`: a compact coordination/composition example.
+- `examples/advanced/closed_loop_planning`: extracted design patterns from the removed experimental prototype.
 
-For the end-to-end perception -> memory -> composition walkthrough, see `docs/examples/perception_and_memory_v1.md`. For the newer registry-backed composition surfaces, continue with `docs/examples/pipeline_composition_v1.md`.
+For the end-to-end perception -> memory -> composition walkthrough, see `docs/examples/perception_and_memory_v1.md`. For registry-backed composition surfaces, continue with `docs/examples/pipeline_composition_v1.md`.
 
 ## Typed Payload Demos
 
@@ -78,7 +91,7 @@ pixi run demo-robotics-typing-boundary
 
 For runnable type/data examples, start with `examples/advanced/robotics_typing_standard/README.md`.
 
-## Notebook workflow
+## Notebook Workflow
 
 ```bash
 pixi run notebook-to-ipynb-demo
@@ -92,8 +105,7 @@ pixi install -e golden-local
 pixi run -e golden-local demo-hub-notebook-source
 ```
 
-The Hub notebook reads published module refs from environment variables instead of hardcoding any private or organization-specific module names.
-
+The Hub notebook reads published module refs from environment variables instead of hardcoding private or organization-specific module names.
 
 ## Documentation Site
 
@@ -121,13 +133,12 @@ See `RELEASE.md` for the launch, docs deployment, and package boundary checklist
 
 ## Relationship To Core Retriever
 
-GoldenRetriever is the companion examples and system-integration repository. The core runtime, API reference, and backend implementation live in the main `retriever` repository:
-
+- PyPI distribution: `pyretriever`
+- Python import: `retriever`
 - Runtime repository: `https://github.com/openretriever/retriever`
 - Runtime docs: `https://openretriever.github.io/retriever/`
+- Golden repository: `https://github.com/openretriever/golden-retriever`
 - Golden docs target: `https://openretriever.github.io/golden-retriever/`
-
-Until the public `pyretriever` distribution is published, Golden uses the temporary `debug-retriever` runtime package for portable demo environments.
 
 ## Contributing And License
 
