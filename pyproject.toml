@@ -51,7 +51,7 @@ classifiers = [
 
 [project.urls]
 Homepage = "https://github.com/openretriever/golden-retriever"
-Documentation = "https://openretriever.github.io/golden-retriever/"
+Documentation = "https://retriever-space.pages.dev/"
 Repository = "https://github.com/openretriever/golden-retriever"
 Issues = "https://github.com/openretriever/golden-retriever/issues"
 
