@@ -144,7 +144,7 @@ What it shows:
 - a small cyclic dummy pipeline,
 - IR generation,
 - ASCII graph output,
-- `closed_loop_viz.html` export.
+- `/tmp/golden_retriever_closed_loop_viz.html` export.
 
 This stays in `examples/experimental` for now because it is a small visualization utility rather than a polished example family.
 
