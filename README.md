@@ -1,20 +1,24 @@
 <div align="center">
-  <a href="https://github.com/openretriever/golden-retriever"><img width="220px" height="auto" src="assets/retriever-illustrative.jpeg" alt="GoldenRetriever logo"></a>
+  <a href="https://github.com/openretriever/golden-retriever"><img width="400px" height="auto" src="assets/retriever-illustrative.jpeg" alt="GoldenRetriever logo"></a>
+</div>
 
-<h1>🐕 <span style="background: linear-gradient(45deg, #e96443 0%, #904e95 25%, #e65c00 50%, #f9d423 75%, #fc00ff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: bold;">GoldenRetriever</span></h1>
+# 🐕 <span style="background: linear-gradient(45deg, #e96443 0%, #904e95 25%, #e65c00 50%, #f9d423 75%, #fc00ff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: bold; font-size: 1.1em;">**GoldenRetriever**</span>
 
-<h3>Companion examples and system integrations for Retriever.</h3>
+## **Companion Examples and System Integrations for Retriever**
+
+<div align="center">
 
 <p>Advanced examples, system integrations, and research prototypes built on top of the core <code>retriever</code> runtime.</p>
 
 <p>
   <a href="https://github.com/openretriever/retriever"><img alt="Core runtime" src="https://img.shields.io/badge/Core-runtime-111827?style=for-the-badge&logo=github"></a>
-  <a href="https://openretriever.github.io/retriever/"><img alt="Core docs" src="https://img.shields.io/badge/Core-docs-0f766e?style=for-the-badge"></a>
-  <a href="https://openretriever.github.io/golden-retriever/"><img alt="Golden docs" src="https://img.shields.io/badge/Golden-docs-92400e?style=for-the-badge"></a>
-  <a href="http://retriever.systems"><img alt="Website" src="https://img.shields.io/badge/Website-retriever.systems-2563eb?style=for-the-badge"></a>
-  <a href="#"><img alt="Paper arXiv coming soon" src="https://img.shields.io/badge/Paper%20%2F%20arXiv-coming%20soon-64748b?style=for-the-badge"></a>
-  <a href="#"><img alt="Discord coming soon" src="https://img.shields.io/badge/Discord-coming%20soon-64748b?style=for-the-badge&logo=discord"></a>
+  <a href="https://docs.openretriever.org/"><img alt="Core docs" src="https://img.shields.io/badge/Core-docs-0f766e?style=for-the-badge"></a>
+  <a href="https://retriever-space.pages.dev/"><img alt="Golden docs" src="https://img.shields.io/badge/Golden-docs-92400e?style=for-the-badge"></a>
+  <a href="https://openretriever.org/"><img alt="Website" src="https://img.shields.io/badge/Website-openretriever.org-111827?style=for-the-badge"></a>
+  <img alt="Paper arXiv coming soon" src="https://img.shields.io/badge/Paper%20%2F%20arXiv-coming%20soon-64748b?style=for-the-badge">
+  <img alt="Discord coming soon" src="https://img.shields.io/badge/Discord-coming%20soon-64748b?style=for-the-badge&logo=discord">
 </p>
+
 </div>
 
 ---
