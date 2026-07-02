@@ -18,7 +18,7 @@ The 2-link arm uses **Inverse Kinematics (Jacobian Transpose Control)** to chase
 ## Usage
 
 ```bash
-pixi run python examples/advanced/mujoco_manipulation/app.py
+pixi run -e twist2 python examples/advanced/mujoco_manipulation/app.py
 ```
 
 By default, this example uses the **Dora** backend (`backend="dora"`) to demonstrate high-performance, Rust-based dataflow execution. You can switch back to `backend="multiprocessing"` in `app.py` for pure Python execution.

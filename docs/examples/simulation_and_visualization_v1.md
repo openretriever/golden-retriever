@@ -7,11 +7,11 @@ These examples are the current Golden paths for visual and simulator-oriented de
 | Lane | Command | What it shows |
 | --- | --- | --- |
 | Webcam + Rerun | `pixi run -e torch demo-webcam-rerun` | Webcam/mock perception, model outputs, Rerun logging, record/replay helpers. |
-| TWIST2 / MuJoCo | `pixi run -e torch demo-twist2-rerun` | Multi-rate simulator/policy/visualization loop. |
-| MuJoCo Manipulation | `pixi run python examples/advanced/mujoco_manipulation/app.py` | High-rate physics, slower controller, Rerun state logging. |
+| TWIST2 / MuJoCo | `pixi run -e twist2 demo-twist2-rerun` | Multi-rate simulator/policy/visualization loop. |
+| MuJoCo Manipulation | `pixi run -e twist2 python examples/advanced/mujoco_manipulation/app.py` | High-rate physics, slower controller, Rerun state logging. |
 | RoboSuite Lift | `pixi run demo-robosuite-mock` | Mock-safe robosuite wrapper and scripted Lift-policy contract. |
-| Hierarchical Physics | `pixi run python examples/advanced/hierarchical_physics_demo/app.py --demo both --duration 8` | Explicit clock -> sim -> viz layers plus HTML pipeline visualization. |
-| Web Command Interface | `pixi run python examples/advanced/web_command_interface/app.py` | Local browser-facing command/debug surface. |
+| Hierarchical Physics | `pixi run -e twist2 python examples/advanced/hierarchical_physics_demo/app.py --demo both --duration 8` | Explicit clock -> sim -> viz layers plus HTML pipeline visualization. |
+| Web Command Interface | `pixi run -e golden python examples/advanced/web_command_interface/app.py` | Local browser-facing command/debug surface. |
 | Pipeline HTML Viz | `pixi run python examples/experimental/visualization/visualize_pipeline.py` | Self-contained IR graph export to ASCII and HTML. |
 
 ## Webcam + Rerun
@@ -35,13 +35,13 @@ Source:
 ## TWIST2 / MuJoCo
 
 ```bash
-pixi run -e torch demo-twist2-rerun
+pixi run -e twist2 demo-twist2-rerun
 ```
 
 For native MuJoCo viewer support on machines configured for it:
 
 ```bash
-pixi run -e torch demo-twist2
+pixi run -e twist2 demo-twist2
 ```
 
 What it shows:
@@ -59,7 +59,7 @@ Source:
 ## MuJoCo Manipulation
 
 ```bash
-pixi run python examples/advanced/mujoco_manipulation/app.py
+pixi run -e twist2 python examples/advanced/mujoco_manipulation/app.py
 ```
 
 What it shows:
@@ -83,7 +83,7 @@ pixi run demo-robosuite-mock
 This is the default smoke path: it exercises the Retriever graph contract without requiring robosuite. For a real robosuite `Lift` run, install the optional dependency and run the real mode:
 
 ```bash
-python -m pip install -e ".[robosuite]"
+pixi run python -m pip install -e ".[robosuite]"
 pixi run demo-robosuite-lift
 ```
 
@@ -101,7 +101,7 @@ Source:
 ## Hierarchical Physics + HTML Pipeline Visualization
 
 ```bash
-pixi run python examples/advanced/hierarchical_physics_demo/app.py --demo both --duration 8
+pixi run -e twist2 python examples/advanced/hierarchical_physics_demo/app.py --demo both --duration 8
 ```
 
 What it shows:
@@ -119,7 +119,7 @@ Source:
 ## Web Command Interface
 
 ```bash
-pixi run python examples/advanced/web_command_interface/app.py
+pixi run -e golden python examples/advanced/web_command_interface/app.py
 ```
 
 What it shows:

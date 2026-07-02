@@ -11,7 +11,7 @@ pixi run demo-robosuite-mock
 For a real robosuite run, install the optional dependency into your active environment, then run:
 
 ```bash
-python -m pip install -e ".[robosuite]"
+pixi run python -m pip install -e ".[robosuite]"
 pixi run demo-robosuite-lift
 ```
 

@@ -14,10 +14,10 @@ Port of the [TWIST2 Humanoid Controller](https://github.com/amazon-far/TWIST2) t
 
 ```bash
 # Native MuJoCo viewer + Rerun (recommended)
-pixi run -e torch demo-twist2
+pixi run -e twist2 demo-twist2
 
 # Rerun only (headless, works everywhere)
-pixi run -e torch demo-twist2-rerun
+pixi run -e twist2 demo-twist2-rerun
 
 # Optional: disable auto-download and use only local files
 pixi run -e twist2 python examples/advanced/twist2_simulation/app.py --no-auto-download

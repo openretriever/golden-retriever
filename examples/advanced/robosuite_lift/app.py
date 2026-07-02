@@ -4,7 +4,7 @@ Run the mock-safe smoke test:
   pixi run demo-robosuite-mock
 
 Run against robosuite after installing the optional dependency:
-  python -m pip install -e ".[robosuite]"
+  pixi run python -m pip install -e ".[robosuite]"
   pixi run demo-robosuite-lift
 """
 
@@ -63,7 +63,7 @@ class LiftEnvFlow(Flow[LiftAction, LiftState]):
             except ImportError as exc:
                 raise RuntimeError(
                     "robosuite is not installed. Install the optional dependency with "
-                    '`python -m pip install -e ".[robosuite]"` or run '
+                    '`pixi run python -m pip install -e ".[robosuite]"` or run '
                     "`pixi run demo-robosuite-mock` for the mock-safe smoke test."
                 ) from exc
 

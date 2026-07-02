@@ -6,9 +6,9 @@ Each flow logs to Rerun and prints periodic status to stdout.
 Run:
 
 ```bash
-pixi run python examples/advanced/hierarchical_physics_demo/double_pendulum.py --duration 6
-pixi run python examples/advanced/hierarchical_physics_demo/three_body.py --duration 8
-pixi run python examples/advanced/hierarchical_physics_demo/app.py --demo both --duration 8
+pixi run -e twist2 python examples/advanced/hierarchical_physics_demo/double_pendulum.py --duration 6
+pixi run -e twist2 python examples/advanced/hierarchical_physics_demo/three_body.py --duration 8
+pixi run -e twist2 python examples/advanced/hierarchical_physics_demo/app.py --demo both --duration 8
 ```
 
 Notes:

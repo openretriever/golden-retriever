@@ -113,7 +113,7 @@ Use these optional lanes after the concise examples are clear:
 
 ```bash
 pixi run -e torch demo-webcam-rerun
-pixi run -e torch demo-twist2-rerun
+pixi run -e twist2 demo-twist2-rerun
 pixi run demo-robosuite-mock
 ```
 
