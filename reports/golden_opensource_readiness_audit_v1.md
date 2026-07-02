@@ -10,7 +10,7 @@ Scope: release-prep audit of GoldenRetriever for public-release readiness. This 
 - Generated experiment outputs are treated as local artifacts unless explicitly promoted as release assets.
 - Current local checks passed: `pixi run -e docs docs-build` and `pixi run test`.
 - Previous clean-clone release checks passed: `pixi run -e docs docs-build`, `pixi run -e golden-local test`, `pixi run -e golden-local demo-perception-detection-flow`, and `pixi run build`.
-- GitHub Pages docs deployment is wired through `.github/workflows/docs.yml`; the repository Pages source must be set to `GitHub Actions`.
+- Docs deployment is handled through the Cloudflare Pages project `retriever-space`; keep `.pages.dev` links until custom domains are active.
 - Refresh remote status before any public push from a new machine or branch.
 
 ## Release Status
@@ -46,7 +46,7 @@ Scope: release-prep audit of GoldenRetriever for public-release readiness. This 
 
 ## Remaining External Actions
 
-1. Enable GitHub Pages with source `GitHub Actions`.
+1. Deploy the MkDocs build through Cloudflare Pages project `retriever-space`.
 2. Keep the default branch set to `main`.
 3. After the core runtime publishes the `pyretriever` distribution, replace `debug-retriever` in `pixi.toml` and setup docs.
 4. Add an optional `NOTICE` file only if future bundled assets or third-party code require one.

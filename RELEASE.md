@@ -20,8 +20,9 @@ The same checks are wired in `.github/workflows/ci.yml`.
 Before making the repository public:
 
 - Confirm the default branch is `main`.
-- Enable GitHub Pages with source `GitHub Actions` so `.github/workflows/docs.yml` can deploy `site/`.
+- Deploy the MkDocs build through the configured Cloudflare Pages project `retriever-space`.
 - Confirm the repository URL is `https://github.com/openretriever/golden-retriever`.
+- Confirm the hosted examples/docs URL is `https://retriever-space.pages.dev/` until custom domains are active.
 
 ## Package Boundary
 
