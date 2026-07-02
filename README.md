@@ -92,13 +92,30 @@ Some heavier optional Pixi environments still resolve demo-only dependencies fro
 - `examples/advanced/perception_debug`: synthetic perception, windowed stats, MCAP recording, and replay.
 - `examples/advanced/real_perception`: optional model-backed perception lanes with mock-first defaults.
 - `examples/advanced/real_memory`: optional real/mock memory flows built on detection and belief payloads.
-- `examples/advanced/state_management`: older internal state, reset behavior, and memory-oriented flows.
+- `examples/advanced/state_management`: state, reset behavior, and memory-oriented flows.
 - `examples/advanced/functional_wiring`: flow composition, fan-in/fan-out, staged builders, and sync policies.
 - `examples/advanced/core_composition`: registry-backed pipeline composition surfaces.
 - `examples/advanced/multi_agent_communication`: a compact coordination/composition example.
 - `examples/advanced/closed_loop_planning`: extracted design patterns from the removed experimental prototype.
+- `examples/advanced/webcam_rerun`: webcam/model/Rerun visualization.
+- `examples/advanced/twist2_simulation`: MuJoCo/TWIST2 simulator integration.
+- `examples/advanced/mujoco_manipulation`: MuJoCo manipulation with Rerun logging.
+- `examples/advanced/hierarchical_physics_demo`: physics demos with HTML pipeline visualization.
+- `examples/advanced/web_command_interface`: local browser command interface.
 
 For the end-to-end perception -> memory -> composition walkthrough, see `docs/examples/perception_and_memory_v1.md`. For registry-backed composition surfaces, continue with `docs/examples/pipeline_composition_v1.md`.
+
+
+## Simulation And Visualization
+
+Use these optional lanes after the concise examples are clear:
+
+```bash
+pixi run -e torch demo-webcam-rerun
+pixi run -e torch demo-twist2-rerun
+```
+
+The current visual lanes cover webcam/Rerun perception, MuJoCo/TWIST2 simulation, MuJoCo manipulation, hierarchical physics with HTML pipeline visualization, and local browser command interfaces. See `docs/examples/simulation_and_visualization_v1.md` for the public guide.
 
 ## Typed Payload Demos
 
@@ -155,9 +172,9 @@ See `RELEASE.md` for the launch, docs deployment, and package boundary checklist
 - PyPI distribution: `pyretriever`
 - Python import: `retriever`
 - Runtime repository: `https://github.com/openretriever/retriever`
-- Runtime docs: `https://openretriever.github.io/retriever/`
+- Runtime docs: `https://openretriever-docs.pages.dev/`
 - Golden repository: `https://github.com/openretriever/golden-retriever`
-- Golden docs target: `https://openretriever.github.io/golden-retriever/`
+- Golden docs target: `https://retriever-space.pages.dev/`
 
 ## Contributing And License
 

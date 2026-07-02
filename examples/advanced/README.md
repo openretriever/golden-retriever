@@ -35,6 +35,22 @@ The concise perception, memory, language, and composition ladders use `golden-lo
 
 Across these examples, prefer shared basic payloads plus structural composition. If a local stage needs grouped inputs or outputs, use composite `Flow[...]` typing first; only introduce a new named `Input` / `Output` envelope when that grouped boundary is itself a stable domain contract.
 
+
+## Visualization and simulator lanes
+
+Use these after the concise Golden ladder is clear:
+
+```bash
+pixi run -e torch demo-webcam-rerun
+pixi run -e torch demo-twist2-rerun
+```
+
+- `webcam_rerun/`: webcam or mock perception with Rerun visualization and record/replay helpers.
+- `twist2_simulation/`: MuJoCo/TWIST2 simulator integration with Rerun and optional native viewer.
+- `web_command_interface/`: browser-facing command/debug surface.
+- `mujoco_manipulation/`: MuJoCo manipulation with Rerun logging.
+- `hierarchical_physics_demo/`: Rerun plus HTML pipeline visualization for physics demos.
+
 ## Best entry points by topic
 
 - `perception_examples/README.md`: the shortest path through detection, segmentation, and pointing.
