@@ -72,6 +72,7 @@ GoldenRetriever is intentionally separate from the core runtime docs. Use the co
     ```bash
     pixi run -e torch demo-webcam-rerun
     pixi run -e torch demo-twist2-rerun
+    pixi run demo-robosuite-mock
     ```
 
 === "Typing"

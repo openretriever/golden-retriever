@@ -9,6 +9,7 @@ These examples are the current Golden paths for visual and simulator-oriented de
 | Webcam + Rerun | `pixi run -e torch demo-webcam-rerun` | Webcam/mock perception, model outputs, Rerun logging, record/replay helpers. |
 | TWIST2 / MuJoCo | `pixi run -e torch demo-twist2-rerun` | Multi-rate simulator/policy/visualization loop. |
 | MuJoCo Manipulation | `pixi run python examples/advanced/mujoco_manipulation/app.py` | High-rate physics, slower controller, Rerun state logging. |
+| RoboSuite Lift | `pixi run demo-robosuite-mock` | Mock-safe robosuite wrapper and scripted Lift-policy contract. |
 | Hierarchical Physics | `pixi run python examples/advanced/hierarchical_physics_demo/app.py --demo both --duration 8` | Explicit clock -> sim -> viz layers plus HTML pipeline visualization. |
 | Web Command Interface | `pixi run python examples/advanced/web_command_interface/app.py` | Local browser-facing command/debug surface. |
 | Pipeline HTML Viz | `pixi run python examples/experimental/visualization/visualize_pipeline.py` | Self-contained IR graph export to ASCII and HTML. |
@@ -72,6 +73,30 @@ Source:
 
 - `examples/advanced/mujoco_manipulation/README.md`
 - `examples/advanced/mujoco_manipulation/app.py`
+
+## RoboSuite Lift Smoke Demo
+
+```bash
+pixi run demo-robosuite-mock
+```
+
+This is the default smoke path: it exercises the Retriever graph contract without requiring robosuite. For a real robosuite `Lift` run, install the optional dependency and run the real mode:
+
+```bash
+python -m pip install -e ".[robosuite]"
+pixi run demo-robosuite-lift
+```
+
+What it shows:
+
+- simulator/environment wrapper and policy as separate Flows,
+- slow policy updates coupled to faster simulator state with `Latest()`,
+- a mock path for CI/docs and a real robosuite path for configured machines.
+
+Source:
+
+- `examples/advanced/robosuite_lift/README.md`
+- `examples/advanced/robosuite_lift/app.py`
 
 ## Hierarchical Physics + HTML Pipeline Visualization
 

@@ -100,6 +100,7 @@ Some heavier optional Pixi environments still resolve demo-only dependencies fro
 - `examples/advanced/webcam_rerun`: webcam/model/Rerun visualization.
 - `examples/advanced/twist2_simulation`: MuJoCo/TWIST2 simulator integration.
 - `examples/advanced/mujoco_manipulation`: MuJoCo manipulation with Rerun logging.
+- `examples/advanced/robosuite_lift`: mock-safe robosuite Lift smoke demo.
 - `examples/advanced/hierarchical_physics_demo`: physics demos with HTML pipeline visualization.
 - `examples/advanced/web_command_interface`: local browser command interface.
 
@@ -113,9 +114,10 @@ Use these optional lanes after the concise examples are clear:
 ```bash
 pixi run -e torch demo-webcam-rerun
 pixi run -e torch demo-twist2-rerun
+pixi run demo-robosuite-mock
 ```
 
-The current visual lanes cover webcam/Rerun perception, MuJoCo/TWIST2 simulation, MuJoCo manipulation, hierarchical physics with HTML pipeline visualization, and local browser command interfaces. See `docs/examples/simulation_and_visualization_v1.md` for the public guide.
+The current visual lanes cover webcam/Rerun perception, MuJoCo/TWIST2 simulation, MuJoCo manipulation, a mock-safe robosuite Lift smoke demo, hierarchical physics with HTML pipeline visualization, and local browser command interfaces. See `docs/examples/simulation_and_visualization_v1.md` for the public guide.
 
 ## Typed Payload Demos
 

@@ -21,6 +21,7 @@ They follow one design rule throughout: start from a small shared payload vocabu
 - `examples/advanced/webcam_rerun/`: webcam/model/Rerun visualization path.
 - `examples/advanced/twist2_simulation/`: MuJoCo/TWIST2 simulator and Rerun path.
 - `examples/advanced/mujoco_manipulation/`: MuJoCo manipulation with Rerun logging.
+- `examples/advanced/robosuite_lift/`: mock-safe robosuite Lift smoke demo.
 - `examples/advanced/hierarchical_physics_demo/`: physics demos with Rerun and HTML pipeline visualization.
 - `examples/advanced/web_command_interface/`: local browser command surface.
 - `examples/experimental/visualization/`: small self-contained IR visualization utility.

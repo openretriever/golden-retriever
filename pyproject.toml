@@ -169,6 +169,11 @@ vlm_planning = [
     "typing",
 ]
 
+robosuite = [
+    "robosuite",
+]
+
+
 dev = [
     "black",
     "ruff",
