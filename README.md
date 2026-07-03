@@ -175,7 +175,7 @@ See `RELEASE.md` for the launch, docs deployment, and package boundary checklist
 
 ## Relationship To Core Retriever
 
-- PyPI distribution: `pyretriever`
+- PyPI distribution: `retriever-core`
 - Python import: `retriever`
 - Runtime repository: `https://github.com/openretriever/retriever`
 - Runtime docs: `https://openretriever-docs.pages.dev/`

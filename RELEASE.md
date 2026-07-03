@@ -30,7 +30,7 @@ The wheel intentionally ships the lightweight `retriever_typing` package. Heavy 
 
 ## Runtime Dependency
 
-When the public `pyretriever` distribution is published, update:
+When the public `retriever-core` distribution is published, update:
 
 - `pixi.toml` bundled/runtime core dependencies,
 - README setup text,

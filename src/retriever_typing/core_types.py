@@ -1,7 +1,7 @@
 """
 Core Types for Retriever Framework
 
-These are the fundamental types provided by pyretriever distribution.
+These are the fundamental types provided by the retriever-core distribution.
 External packages can register additional types using the registry system.
 """
 
