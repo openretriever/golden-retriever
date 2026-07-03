@@ -19,7 +19,7 @@ pixi run demo-perception-belief-control
 pixi run -e golden-local demo-composable-pipelines
 ```
 
-The concise perception, memory, language, and composition ladders use `golden-local` or `golden-perception` when they need the Golden example feature set. These environments currently resolve the temporary packaged Retriever runtime.
+The concise perception, memory, language, and composition ladders use `golden-local` or `golden-perception` when they need the Golden example feature set.
 
 ## Recommended progression
 
@@ -42,7 +42,7 @@ Use these after the concise Golden ladder is clear:
 
 ```bash
 pixi run -e torch demo-webcam-rerun
-pixi run -e torch demo-twist2-rerun
+pixi run -e twist2 demo-twist2-rerun
 ```
 
 - `webcam_rerun/`: webcam or mock perception with Rerun visualization and record/replay helpers.

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Dict
 
 from retriever.flow import Flow, Latest, Pipeline, Rate, Trigger, io
@@ -40,7 +41,8 @@ def main() -> None:
     print("\n--- Text Visualization (from IR) ---\n")
     print(generate_ascii_graph(ir))
 
-    output = "/tmp/golden_retriever_closed_loop_viz.html"
+    output = Path("out/golden_retriever_closed_loop_viz.html")
+    output.parent.mkdir(exist_ok=True)
     save_interactive_html(ir, output)
     print(f"\nHTML visualization written to {output}")
 

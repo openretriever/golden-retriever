@@ -8,7 +8,7 @@
   <div class="gr-action-grid">
     <a class="gr-action-card" href="examples/">
       <span>01</span>
-      <strong>Start with examples</strong>
+      <strong>Start after the core quickstart</strong>
       <small>Perception -> memory -> language -> composition.</small>
     </a>
     <a class="gr-action-card" href="examples/simulation_and_visualization_v1/">
@@ -24,7 +24,7 @@
   </div>
 </div>
 
-GoldenRetriever is intentionally separate from the core runtime docs. Use the core docs for `Flow`, clocks, sync policies, IR, and backend execution. Use this site when you want runnable robot-facing examples built on those primitives.
+GoldenRetriever is intentionally separate from the core runtime docs. Use the core visual quickstart first if you are new to Retriever; then use this site when you want runnable robot-facing examples built on those primitives.
 
 ## Recommended Path
 
@@ -32,7 +32,7 @@ GoldenRetriever is intentionally separate from the core runtime docs. Use the co
   <a class="gr-path-step" href="examples/perception_and_memory_v1/">
     <span>01</span>
     <strong>Perception and memory</strong>
-    <p>Detection, replay, belief, memory, and composed control over one small scene.</p>
+    <p>Detection, replay, belief, memory, and composed control over one small scene after the core quickstart is clear.</p>
     <code>pixi run -e golden-local demo-perception-detection-flow</code>
   </a>
   <a class="gr-path-step" href="examples/language_and_grounding_v1/">

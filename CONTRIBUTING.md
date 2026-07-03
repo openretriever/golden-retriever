@@ -24,7 +24,7 @@ pixi install -e golden-local
 pixi run -e golden-local demo-perception-detection-flow
 ```
 
-Until the public core `retriever` package is published, Golden resolves the temporary `debug-retriever` runtime package.
+Golden example environments should import the runtime as `retriever`; update docs when the packaged runtime dependency changes.
 
 ## Pull Requests
 

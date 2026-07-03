@@ -25,8 +25,6 @@
 
 GoldenRetriever is the examples and integration repository. Keep core runtime API details in [`openretriever/retriever`](https://github.com/openretriever/retriever); use this repo for runnable perception, memory, language, composition, robotics typing, notebook, and system-integration examples.
 
-> Compatibility note: until the public `pyretriever` runtime package is published, the portable Golden environments resolve the temporary packaged runtime configured in `pixi.toml`. The Python import remains `retriever`.
-
 ## Setup
 
 ```bash
@@ -44,7 +42,13 @@ pixi run -e golden-local python -c "import retriever; print(retriever.__file__)"
 
 ## Recommended Launch Points
 
-Start with the short perception -> memory -> language -> composition ladder:
+If you are new to Retriever, start with the core visual quickstart first:
+
+```bash
+pixi run demo-webcam-detection
+```
+
+Then use Golden for robot-facing example families. The shortest Golden ladder is perception -> memory -> language -> composition:
 
 ```bash
 pixi run -e golden-local demo-perception-detection-flow

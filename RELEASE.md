@@ -30,7 +30,7 @@ The wheel intentionally ships the lightweight `retriever_typing` package. Heavy 
 
 ## Runtime Dependency
 
-Golden currently uses the temporary `debug-retriever` package for portable demos. After the real public `pyretriever` distribution is published, update:
+When the public `pyretriever` distribution is published, update:
 
 - `pixi.toml` bundled/runtime core dependencies,
 - README setup text,
