@@ -63,3 +63,6 @@ install/
 log/
 
 retriever_dist/
+
+# Cloudflare local deploy state
+.wrangler/
