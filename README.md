@@ -25,6 +25,13 @@
 
 GoldenRetriever is the examples and integration repository. Keep core runtime API details in the [Retriever core docs](https://openretriever-docs.pages.dev/); use this repo for runnable perception, memory, language, composition, robotics typing, notebook, and system-integration examples.
 
+## Current Public Status
+
+- The core runtime package target is `retriever-core`; Python imports remain `retriever`.
+- During prerelease, Golden demo environments resolve the temporary `debug-retriever` package until `retriever-core==0.0.1` is published.
+- Public source URLs are staged for `openretriever/retriever` and `openretriever/golden-retriever`; use the hosted docs and release-status page until repository visibility flips.
+- Golden is not a first-launch PyPI package. Reusable applied types and examples are exposed through Retriever Hub and source docs.
+
 ## Setup
 
 ```bash
@@ -38,7 +45,7 @@ pixi install -e golden-local
 pixi run -e golden-local python -c "import retriever; print(retriever.__file__)"
 ```
 
-`golden-local` and `golden-perception` are retained as stable launch environments for existing demo commands. During prerelease they resolve the core runtime through the temporary `debug-retriever` package; after `retriever-core==0.0.1` is public, the environments should move to `retriever-core`. If you are validating unreleased core changes locally, set `RETRIEVER_CORE_SRC=<core-repo>/src` before running tests.
+`golden-local` and `golden-perception` are retained as stable launch environments for existing demo commands. If you are validating unreleased core changes locally, set `RETRIEVER_CORE_SRC=<core-repo>/src` before running tests.
 
 ## Recommended Launch Points
 

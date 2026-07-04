@@ -87,7 +87,6 @@ uvicorn = { version = "*", extras = ["standard"] }
 httpx = "*"
 pymongo = "*"
 pytorch_lightning = "*"
-pddlgym = { git = "https://github.com/linfeng-z/pddlgym.git" }
 protobuf = "==3.20.*"
 packaging = "*"
 Pillow = "*"

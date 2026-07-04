@@ -99,6 +99,7 @@ Run these from the GoldenRetriever repository after the core quickstart works an
     pixi run -e torch demo-webcam-rerun
     pixi run -e twist2 demo-twist2-rerun
     pixi run demo-robosuite-mock
+    pixi run demo-pipeline-html-viz
     ```
 
 === "Typing"
