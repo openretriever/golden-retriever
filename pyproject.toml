@@ -33,8 +33,9 @@ exclude = [
 
 # Local/future wheel metadata only. The first public launch distributes Golden
 # examples and type packs through Retriever Hub, not as a separate PyPI product.
+# Keep this name descriptive so it is not confused with a first-launch package.
 [project]
-name = "retriever-golden"
+name = "golden-retriever-examples"
 version = "0.0.0"
 description = "Advanced examples and system integrations built on the Retriever runtime."
 readme = "README.md"
