@@ -9,7 +9,7 @@
       <a href="https://openretriever.org/">Landing</a>
       <a href="https://openretriever-docs.pages.dev/">Core docs</a>
       <a href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/">Core quickstart</a>
-      <a href="https://openretriever.org/start/#source-release">Source status</a>
+      <a href="https://github.com/openretriever/golden-retriever">Source</a>
     </div>
   </div>
   <div class="gr-command-panel">
