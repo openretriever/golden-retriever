@@ -54,6 +54,7 @@ classifiers = [
 dependencies = [
     "retriever-core>=0.0.1",
     "numpy",
+    "pyarrow",
 ]
 
 [project.urls]
