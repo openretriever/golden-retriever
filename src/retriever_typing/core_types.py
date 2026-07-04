@@ -7,7 +7,7 @@ External packages can register additional types using the registry system.
 
 import numpy as np
 from dataclasses import dataclass
-from typing import List, Optional, Union, Tuple, Any
+from typing import Any, List, Literal, Optional, Tuple, Union
 from .registry import register_type
 
 
@@ -381,11 +381,14 @@ class Command:
         )
 
 
+StatusState = Literal["pending", "running", "completed", "failed", "cancelled"]
+
+
 @register_type(description="Execution status information")
 @dataclass
 class Status:
     """Execution status."""
-    state: str  # "pending", "running", "completed", "failed", "cancelled"
+    state: StatusState
     message: str = ""
     progress: Optional[float] = None  # Progress percentage (0-100)
     timestamp: Optional[float] = None

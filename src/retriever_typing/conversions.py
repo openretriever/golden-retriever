@@ -34,6 +34,14 @@ from .core_types import (
     Status,
     Timestamp,
 )
+from retriever.types.perception import (
+    BBox2D,
+    Detection2D,
+    DetectionBatch,
+    Image2D,
+    PointTarget2D,
+    SegmentationMask2D,
+)
 
 _arrow_converters: Dict[Type, Callable[[Any], pa.Array]] = {}
 _arrow_deserializers: Dict[Type, Callable[[pa.Array], Any]] = {}
@@ -64,6 +72,49 @@ def _decode_ndarray(payload: dict[str, Any]) -> np.ndarray:
 
 def _pack(payload: dict[str, Any]) -> pa.Array:
     return pa.array([json.dumps(payload)])
+
+
+def _header_dict(header: Optional[Header]) -> Optional[dict[str, Any]]:
+    if header is None:
+        return None
+    return {"stamp_ns": header.stamp_ns, "frame_id": header.frame_id, "source": header.source}
+
+
+def _header_from(data: Optional[dict[str, Any]]) -> Optional[Header]:
+    if data is None:
+        return None
+    return Header(
+        stamp_ns=data["stamp_ns"],
+        frame_id=data["frame_id"],
+        source=data.get("source", "unknown"),
+    )
+
+
+def _detection2d_dict(det: "Detection2D") -> dict[str, Any]:
+    return {
+        "label": det.label,
+        "bbox": {"x": det.bbox.x, "y": det.bbox.y, "width": det.bbox.width, "height": det.bbox.height},
+        "confidence": det.confidence,
+        "class_id": det.class_id,
+        "track_id": det.track_id,
+        "centroid_x": det.centroid_x,
+        "centroid_y": det.centroid_y,
+        "pixel_count": det.pixel_count,
+    }
+
+
+def _detection2d_from(data: dict[str, Any]) -> "Detection2D":
+    bbox = data["bbox"]
+    return Detection2D(
+        label=data["label"],
+        bbox=BBox2D(x=bbox["x"], y=bbox["y"], width=bbox["width"], height=bbox["height"]),
+        confidence=data.get("confidence"),
+        class_id=data.get("class_id"),
+        track_id=data.get("track_id"),
+        centroid_x=data.get("centroid_x"),
+        centroid_y=data.get("centroid_y"),
+        pixel_count=data.get("pixel_count"),
+    )
 
 
 def convert_to_arrow(obj: Any) -> pa.Array:
@@ -318,6 +369,67 @@ def convert_to_arrow(obj: Any) -> pa.Array:
             }
         )
 
+    # Perception typing standard (retriever.types.perception) with stable
+    # identifiers, mirroring the robotics.v1 contract above.
+    if isinstance(obj, Image2D):
+        return _pack(
+            {
+                "retriever_type": "perception.v1.Image2D",
+                "data": _encode_ndarray(obj.data),
+                "encoding": obj.encoding,
+                "header": _header_dict(obj.header),
+                "frame_index": obj.frame_index,
+            }
+        )
+    if isinstance(obj, BBox2D):
+        return _pack(
+            {
+                "retriever_type": "perception.v1.BBox2D",
+                "x": obj.x,
+                "y": obj.y,
+                "width": obj.width,
+                "height": obj.height,
+            }
+        )
+    if isinstance(obj, Detection2D):
+        return _pack(
+            {
+                "retriever_type": "perception.v1.Detection2D",
+                **_detection2d_dict(obj),
+            }
+        )
+    if isinstance(obj, DetectionBatch):
+        return _pack(
+            {
+                "retriever_type": "perception.v1.DetectionBatch",
+                "detections": [_detection2d_dict(det) for det in obj.detections],
+                "header": _header_dict(obj.header),
+                "frame_index": obj.frame_index,
+            }
+        )
+    if isinstance(obj, SegmentationMask2D):
+        return _pack(
+            {
+                "retriever_type": "perception.v1.SegmentationMask2D",
+                "mask": _encode_ndarray(obj.mask),
+                "header": _header_dict(obj.header),
+                "frame_index": obj.frame_index,
+                "label_map": {str(k): v for k, v in (obj.label_map or {}).items()},
+            }
+        )
+    if isinstance(obj, PointTarget2D):
+        return _pack(
+            {
+                "retriever_type": "perception.v1.PointTarget2D",
+                "label": obj.label,
+                "x_norm": obj.x_norm,
+                "y_norm": obj.y_norm,
+                "confidence": obj.confidence,
+                "header": _header_dict(obj.header),
+                "frame_index": obj.frame_index,
+            }
+        )
+
     if isinstance(obj, np.ndarray):
         return pa.array(obj.ravel().tolist())
     if isinstance(obj, (list, tuple)):
@@ -527,6 +639,39 @@ def _deserialize_by_type_name(type_name: str, data: dict[str, Any]) -> Any:
             positions=tuple(data["positions"]),
             velocities=tuple(data["velocities"]),
             efforts=tuple(data["efforts"]),
+        )
+    if type_name == "perception.v1.Image2D":
+        return Image2D(
+            data=_decode_ndarray(data["data"]),
+            encoding=data.get("encoding", "rgb8"),
+            header=_header_from(data.get("header")),
+            frame_index=data.get("frame_index"),
+        )
+    if type_name == "perception.v1.BBox2D":
+        return BBox2D(x=data["x"], y=data["y"], width=data["width"], height=data["height"])
+    if type_name == "perception.v1.Detection2D":
+        return _detection2d_from(data)
+    if type_name == "perception.v1.DetectionBatch":
+        return DetectionBatch(
+            detections=tuple(_detection2d_from(det) for det in data.get("detections", [])),
+            header=_header_from(data.get("header")),
+            frame_index=data.get("frame_index"),
+        )
+    if type_name == "perception.v1.SegmentationMask2D":
+        return SegmentationMask2D(
+            mask=_decode_ndarray(data["mask"]),
+            header=_header_from(data.get("header")),
+            frame_index=data.get("frame_index"),
+            label_map={int(k): v for k, v in (data.get("label_map") or {}).items()},
+        )
+    if type_name == "perception.v1.PointTarget2D":
+        return PointTarget2D(
+            label=data.get("label"),
+            x_norm=data.get("x_norm"),
+            y_norm=data.get("y_norm"),
+            confidence=data.get("confidence"),
+            header=_header_from(data.get("header")),
+            frame_index=data.get("frame_index"),
         )
     if type_name == "pickle":
         return pickle.loads(base64.b64decode(data["value"].encode("ascii")))
