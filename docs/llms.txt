@@ -41,3 +41,7 @@ Use the docs pages for stable public guidance; use source links when you need im
 - Use docs pages for public behavior and examples.
 - Do not treat experimental lanes as stable unless their page marks them as promoted.
 - Do not include private notes or local filesystem paths in public docs.
+
+## Source Release Status
+
+Anonymous GitHub requests currently return 404 until the OpenRetriever repositories are made public. Public docs should route source links to https://openretriever.org/start/#source-release until visibility is flipped. Collaborators can run the same commands from local checkouts.

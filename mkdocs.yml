@@ -1,9 +1,6 @@
 site_name: GoldenRetriever Examples
 site_description: Advanced examples and system integrations for Retriever.
 site_url: https://retriever-space.pages.dev/
-repo_url: https://github.com/openretriever/golden-retriever
-repo_name: openretriever/golden-retriever
-
 theme:
   name: material
   logo: assets/retriever-illustrative.jpeg
@@ -61,4 +58,4 @@ nav:
       - LeRobot Interop: robotics_typing_standard/08_lerobot_interop_and_dataset_profile.md
   - Core Docs: https://openretriever-docs.pages.dev/
   - Landing: https://openretriever.org/
-  - Core GitHub: https://github.com/openretriever/retriever
+  - Source Status: https://openretriever.org/start/#source-release

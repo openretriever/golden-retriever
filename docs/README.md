@@ -9,7 +9,7 @@
       <a href="https://openretriever.org/">Landing</a>
       <a href="https://openretriever-docs.pages.dev/">Core docs</a>
       <a href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/">Core quickstart</a>
-      <a href="https://github.com/openretriever/golden-retriever">Golden GitHub</a>
+      <a href="https://openretriever.org/start/#source-release">Source status</a>
     </div>
   </div>
   <div class="gr-command-panel">
@@ -22,7 +22,7 @@ pixi run -e golden-local demo-perception-detection-flow</code></pre>
 </div>
 
 !!! note "Prerequisite"
-    If you are new to Retriever, complete the [core visual quickstart](https://openretriever-docs.pages.dev/getting-started/visual-quickstart/) first. The command `pixi run demo-webcam-detection` belongs to `openretriever/retriever`, not this repository. Golden starts after that with `pixi run -e golden-local demo-perception-detection-flow`.
+    If you are new to Retriever, complete the [core visual quickstart](https://openretriever-docs.pages.dev/getting-started/visual-quickstart/) first. The command `pixi run demo-webcam-detection` belongs to `openretriever/retriever`, not this repository. Public GitHub clone access opens when repo visibility is flipped; until then, collaborators should use local checkouts. Golden starts after that with `pixi run -e golden-local demo-perception-detection-flow`.
 
 ## Recommended Path
 
@@ -80,7 +80,7 @@ pixi run -e golden-local demo-perception-detection-flow</code></pre>
 
 ## First Commands
 
-Run these from the GoldenRetriever repository after the core quickstart works. Expected outputs are small terminal summaries or visual windows depending on the lane; the mock-safe commands should not require robot hardware.
+Run these from the GoldenRetriever repository after the core quickstart works and once you have repository access. Expected outputs are small terminal summaries or visual windows depending on the lane; the mock-safe commands should not require robot hardware.
 
 === "Concise ladder"
 
@@ -113,7 +113,7 @@ Run these from the GoldenRetriever repository after the core quickstart works. E
 
 For human readers and AI agents, keep the source of truth split explicit:
 
-- Core runtime API details belong in `openretriever/retriever`.
+- Core runtime API details belong in `openretriever/retriever`; public source links are staged but currently open when repo visibility is flipped.
 - GoldenRetriever carries examples, tutorials, notebooks, robotics typing, and integration lanes.
 - Reusable Golden payloads should be loaded as Retriever Hub packs; a separate Golden PyPI package is not part of the first public launch path.
 - Heavy optional examples should stay clearly optional and mock-first where possible.
