@@ -3,7 +3,7 @@
 <div class="gr-hero gr-hero-split">
   <div class="gr-hero-copy">
     <p class="gr-eyebrow">Applied Retriever Hub module</p>
-    <h1>Load the first applied robotics Hub module after the core quickstart.</h1>
+    <h1>Run applied robotics examples as Retriever Hub modules.</h1>
     <p class="gr-lede">GoldenRetriever is the first applied robotics Hub module for the core <code>retriever</code> runtime: reusable robot-facing type packs plus maintained perception, memory, language, composition, visualization, simulator, and robosuite lanes.</p>
     <div class="gr-route-pills">
       <a href="https://openretriever.org/">Landing</a>
@@ -24,7 +24,7 @@
     If you are new to Retriever, complete the [core visual quickstart](https://openretriever-docs.pages.dev/getting-started/visual-quickstart/) first. The command `pixi run demo-webcam-detection` belongs to `openretriever/retriever`, not this repository. Golden starts after that with `pixi run demo-golden-hub-pack`, then the concise perception and memory ladder.
 
 !!! info "Runtime boundary"
-    The core runtime distribution is `retriever-core` and imports as `retriever`. Golden itself is not a second runtime package; reusable applied types and examples are exposed through Retriever Hub and source docs.
+    The core runtime distribution is `retriever-core` and imports as `retriever`. Golden itself is not a second runtime package; reusable applied types are Hub exports, and heavier examples stay in the source docs.
 
 ## Recommended Path
 

@@ -14,16 +14,17 @@ Design rule: start from standard payloads in Retriever core; put applied robotic
 
 ## Maintained Example Families
 
-| Family | What to use it for | First command or guide |
-| --- | --- | --- |
-| Perception | Detection, segmentation, and pointing over one synthetic scene. | `pixi run -e golden-local demo-perception-detection-flow` |
-| Memory | Belief updates, dropout memory, and remembered pointing. | `pixi run -e golden-local demo-memory-belief-flow` |
-| Language | Captions, grounded references, and primitive plan text. | `pixi run -e golden-local demo-language-caption-plan` |
-| Composition | Registry-backed composition and pipeline-as-Flow surfaces. | `pixi run -e golden-local demo-composable-pipelines` |
-| Webcam + Rerun | Webcam/mock perception with live visualization and replay helpers. | [Simulation and Visualization](simulation_and_visualization_v1.md) |
-| TWIST2 / MuJoCo | Multi-rate simulator, policy, and visualization loops. | `pixi run -e twist2 demo-twist2-rerun` |
-| RoboSuite Lift | Mock-safe robosuite wrapper and optional real robosuite mode. | `pixi run demo-robosuite-mock` |
-| Pipeline HTML Viz | Maintained promoted IR/HTML graph visualization utility. | `pixi run demo-pipeline-html-viz` |
+| Family | What to use it for | Core concept it demonstrates | First command or guide |
+| --- | --- | --- | --- |
+| Hub proof | Load Golden exports through Retriever Hub and the unified runtime registry. | Hub module + applied type pack | `pixi run demo-golden-hub-pack` |
+| Perception | Detection, segmentation, and pointing over one synthetic scene. | Flow I/O + typed perception payloads | `pixi run -e golden-local demo-perception-detection-flow` |
+| Memory | Belief updates, dropout memory, and remembered pointing. | Local Flow state + replayable inputs | `pixi run -e golden-local demo-memory-belief-flow` |
+| Language | Captions, grounded references, and primitive plan text. | Typed language payloads across stages | `pixi run -e golden-local demo-language-caption-plan` |
+| Composition | Registry-backed composition and pipeline-as-Flow surfaces. | Reusable graphs and Hub-style boundaries | `pixi run -e golden-local demo-composable-pipelines` |
+| Webcam + Rerun | Webcam/mock perception with live visualization and replay helpers. | Debugging and visualization | [Simulation and Visualization](simulation_and_visualization_v1.md) |
+| TWIST2 / MuJoCo | Multi-rate simulator, policy, and visualization loops. | Clocks and sync across simulator/policy rates | `pixi run -e twist2 demo-twist2-rerun` |
+| RoboSuite Lift | Mock-safe robosuite wrapper and optional real robosuite mode. | Environment-as-Flow and policy-as-Flow | `pixi run demo-robosuite-mock` |
+| Pipeline HTML Viz | Maintained promoted IR/HTML graph visualization utility. | IR validation and graph inspection | `pixi run demo-pipeline-html-viz` |
 
 ## Source Folders
 
