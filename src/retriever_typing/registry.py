@@ -13,19 +13,19 @@ first — same behavior the standalone registry had.
 
 from __future__ import annotations
 
-from typing import Dict, Optional, Type
+from typing import Any, Dict, Optional, Type
 
 from retriever.registry.types import (
     TypeInfo,
     TypeRegistry,
     get_global_registry,
-    get_type_info,
-    list_types,
     register_type,
 )
 from retriever.registry.types import find_types as _core_find_types
 from retriever.registry.types import get_registered_types as _core_get_registered_types
 from retriever.registry.types import get_type as _core_get_type
+from retriever.registry.types import get_type_info as _core_get_type_info
+from retriever.registry.types import list_types as _core_list_types
 
 _bootstrapped = False
 
@@ -45,6 +45,22 @@ def get_type(name: str) -> Type:
     except ValueError:
         _bootstrap()
         return _core_get_type(name)
+
+
+def get_type_info(name_or_type: str | Type[Any]) -> TypeInfo:
+    if isinstance(name_or_type, str):
+        try:
+            return _core_get_type_info(name_or_type)
+        except ValueError:
+            _bootstrap()
+            return _core_get_type_info(name_or_type)
+    _bootstrap()
+    return _core_get_type_info(name_or_type)
+
+
+def list_types(category: Optional[str] = None) -> Dict[str, TypeInfo]:
+    _bootstrap()
+    return _core_list_types(category=category)
 
 
 def get_registered_types(category: Optional[str] = None) -> Dict[str, TypeInfo]:

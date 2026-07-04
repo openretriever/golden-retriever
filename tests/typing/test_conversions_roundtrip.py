@@ -11,16 +11,11 @@ import pytest
 
 from retriever_typing import (
     Action,
-    BoundingBox,
     Command,
-    Detection,
-    DepthImage,
     Header,
     JointState,
-    PointCloud,
     PoseStamped,
     Quaternion,
-    RGBImage,
     SE3Pose,
     Status,
     Vector3,
@@ -39,59 +34,8 @@ def assert_array_identical(actual: np.ndarray, expected: np.ndarray) -> None:
     np.testing.assert_array_equal(actual, expected)
 
 
-@pytest.mark.parametrize(
-    "dtype",
-    [np.uint8, np.uint16, np.int32, np.float32, np.float64],
-)
-def test_rgb_image_roundtrip_preserves_dtype(dtype) -> None:
-    data = np.arange(2 * 3 * 3, dtype=dtype).reshape(2, 3, 3)
-    image = RGBImage(data=data, timestamp=1.25, camera_id="cam0")
-
-    result = roundtrip(image)
-
-    assert isinstance(result, RGBImage)
-    assert_array_identical(result.data, data)
-    assert result.timestamp == 1.25
-    assert result.camera_id == "cam0"
 
 
-def test_depth_image_roundtrip() -> None:
-    data = np.random.default_rng(0).uniform(0.5, 5.0, (4, 5)).astype(np.float32)
-    result = roundtrip(DepthImage(data=data, timestamp=None, camera_id="depth"))
-
-    assert isinstance(result, DepthImage)
-    assert_array_identical(result.data, data)
-    assert result.timestamp is None
-
-
-def test_point_cloud_roundtrip_with_and_without_colors() -> None:
-    points = np.random.default_rng(1).uniform(-1, 1, (10, 3)).astype(np.float32)
-    colors = np.random.default_rng(2).integers(0, 255, (10, 3)).astype(np.uint8)
-
-    with_colors = roundtrip(PointCloud(points=points, colors=colors, timestamp=0.5))
-    assert_array_identical(with_colors.points, points)
-    assert_array_identical(with_colors.colors, colors)
-
-    without_colors = roundtrip(PointCloud(points=points, colors=None, timestamp=0.5))
-    assert_array_identical(without_colors.points, points)
-    assert without_colors.colors is None
-
-
-def test_detection_roundtrip_with_optional_fields() -> None:
-    bbox = BoundingBox(x=1.0, y=2.0, width=3.0, height=4.0)
-    mask = np.zeros((4, 4), dtype=bool)
-    features = np.ones(8, dtype=np.float32)
-
-    full = roundtrip(Detection(label="cup", confidence=0.9, bbox=bbox, mask=mask, features=features))
-    assert full.label == "cup"
-    assert full.confidence == pytest.approx(0.9)
-    assert full.bbox == bbox
-    assert_array_identical(full.mask, mask)
-    assert_array_identical(full.features, features)
-
-    sparse = roundtrip(Detection(label="cup", confidence=0.9, bbox=bbox))
-    assert sparse.mask is None
-    assert sparse.features is None
 
 
 def test_action_command_status_roundtrip() -> None:

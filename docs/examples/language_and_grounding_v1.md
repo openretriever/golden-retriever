@@ -4,10 +4,10 @@ This guide adds one small language-facing ladder on top of the shared primitive
 Retriever type families.
 
 The rule stays the same as the rest of the advanced examples:
-- keep primitive shared payloads in core,
+- reuse generic standard payloads from core when they already fit,
+- keep applied robotics/planning bundles in Golden or Hub type packs,
 - use composite `Flow[...]` structure for local grouping,
-- keep model-specific request/response packets and domain bundles out of the
-  first teaching path.
+- keep model-specific request/response packets out of the first teaching path.
 
 ## 1. Caption to primitive plan text
 
@@ -54,7 +54,7 @@ These examples intentionally do **not** teach:
 - model-specific VLM request/response packets,
 - prompt orchestration metadata,
 - large domain plans,
-- Larger integrated planning bundles.
+- larger integrated planning bundles.
 
 Those belong in higher-level packages or later examples once the primitive type
 surface is already clear.

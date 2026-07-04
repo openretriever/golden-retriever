@@ -2,7 +2,7 @@
 
 These guides stay close to the runnable surfaces under `examples/advanced/`. They are applied examples, not the canonical core runtime manual. If you are new to Retriever, run the core visual quickstart first, then return here for robot-facing examples.
 
-They follow one design rule throughout: start from a small shared payload vocabulary from Retriever core, then use structural composition (including composite `Flow[...]` IO) before inventing new named envelopes.
+They follow one design rule throughout: start from the generic standard payloads in Retriever core, then put applied robotics/planning payloads in Golden type packs or local example modules before inventing new named envelopes.
 
 ## Start Here
 

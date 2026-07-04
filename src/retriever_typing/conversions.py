@@ -24,13 +24,8 @@ from .v1 import (
 )
 from .core_types import (
     Action,
-    BoundingBox,
     Command,
-    DepthImage,
-    Detection,
     ExecutionTimer,
-    PointCloud,
-    RGBImage,
     Status,
     Timestamp,
 )
@@ -123,60 +118,6 @@ def convert_to_arrow(obj: Any) -> pa.Array:
     if obj_type in _arrow_converters:
         return _arrow_converters[obj_type](obj)
 
-    if isinstance(obj, RGBImage):
-        return _pack(
-            {
-                "retriever_type": "RGBImage",
-                "data": _encode_ndarray(obj.data),
-                "timestamp": obj.timestamp,
-                "camera_id": obj.camera_id,
-            }
-        )
-    if isinstance(obj, DepthImage):
-        return _pack(
-            {
-                "retriever_type": "DepthImage",
-                "data": _encode_ndarray(obj.data),
-                "timestamp": obj.timestamp,
-                "camera_id": obj.camera_id,
-            }
-        )
-    if isinstance(obj, PointCloud):
-        return _pack(
-            {
-                "retriever_type": "PointCloud",
-                "points": _encode_ndarray(obj.points),
-                "colors": _encode_ndarray(obj.colors) if obj.colors is not None else None,
-                "timestamp": obj.timestamp,
-                "frame_id": obj.frame_id,
-            }
-        )
-    if isinstance(obj, BoundingBox):
-        return _pack(
-            {
-                "retriever_type": "BoundingBox",
-                "x": obj.x,
-                "y": obj.y,
-                "width": obj.width,
-                "height": obj.height,
-            }
-        )
-    if isinstance(obj, Detection):
-        return _pack(
-            {
-                "retriever_type": "Detection",
-                "label": obj.label,
-                "confidence": obj.confidence,
-                "bbox": {
-                    "x": obj.bbox.x,
-                    "y": obj.bbox.y,
-                    "width": obj.bbox.width,
-                    "height": obj.bbox.height,
-                },
-                "mask": _encode_ndarray(obj.mask) if obj.mask is not None else None,
-                "features": _encode_ndarray(obj.features) if obj.features is not None else None,
-            }
-        )
     if isinstance(obj, Action):
         return _pack(
             {
@@ -479,42 +420,6 @@ def convert_from_arrow(arrow_array: pa.Array, target_type: Optional[Type] = None
 
 
 def _deserialize_by_type_name(type_name: str, data: dict[str, Any]) -> Any:
-    if type_name == "RGBImage":
-        return RGBImage(
-            data=_decode_ndarray(data["data"]),
-            timestamp=data.get("timestamp"),
-            camera_id=data.get("camera_id", "default"),
-        )
-    if type_name == "DepthImage":
-        return DepthImage(
-            data=_decode_ndarray(data["data"]),
-            timestamp=data.get("timestamp"),
-            camera_id=data.get("camera_id", "default"),
-        )
-    if type_name == "PointCloud":
-        colors = _decode_ndarray(data["colors"]) if data.get("colors") else None
-        return PointCloud(
-            points=_decode_ndarray(data["points"]),
-            colors=colors,
-            timestamp=data.get("timestamp"),
-            frame_id=data.get("frame_id", "world"),
-        )
-    if type_name == "BoundingBox":
-        return BoundingBox(x=data["x"], y=data["y"], width=data["width"], height=data["height"])
-    if type_name == "Detection":
-        bbox_payload = data["bbox"]
-        return Detection(
-            label=data["label"],
-            confidence=data["confidence"],
-            bbox=BoundingBox(
-                x=bbox_payload["x"],
-                y=bbox_payload["y"],
-                width=bbox_payload["width"],
-                height=bbox_payload["height"],
-            ),
-            mask=_decode_ndarray(data["mask"]) if data.get("mask") else None,
-            features=_decode_ndarray(data["features"]) if data.get("features") else None,
-        )
     if type_name == "Action":
         return Action(
             type=data["type"],

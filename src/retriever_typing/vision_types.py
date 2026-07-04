@@ -1,53 +1,17 @@
 """
-Computer Vision Data Types
+Applied vision / language / interface types for the GoldenRetriever type pack.
 
-Types specifically for computer vision applications including 
-segmentation, detection enhancement, and multi-modal data.
+Standard perception payloads (images, detections, masks) live in
+`retriever.types.perception` — never redefine one here; compose them.
 """
 
 import numpy as np
 from dataclasses import dataclass
 from typing import Optional, Dict, Any, List
-from .core_types import Detection, RGBImage
+
+from retriever.types.perception import Detection2D
+
 from .registry import register_type
-
-
-# ============================================================================
-# Enhanced Image Types
-# ============================================================================
-
-@register_type(description="RGB-D image pair")
-@dataclass
-class RGBDImage:
-    """A single RGB-D image pair."""
-    rgb: np.ndarray  # HxWx3, uint8
-    depth: np.ndarray  # HxW, float32 meters
-    timestamp: Optional[float] = None
-    camera_id: str = "default"
-    
-    @property
-    def shape(self) -> tuple:
-        """Get RGB image shape."""
-        return self.rgb.shape
-
-
-# ============================================================================
-# Segmentation Types
-# ============================================================================
-
-@register_type(description="Segmentation mask")
-@dataclass
-class SegmentationMask:
-    """Segmentation mask result."""
-    mask: np.ndarray  # Binary or labeled mask
-    label: str
-    confidence: float
-    class_id: Optional[int] = None
-    
-    @property
-    def area(self) -> int:
-        """Get mask area (number of pixels)."""
-        return int(np.sum(self.mask > 0))
 
 
 # ============================================================================
@@ -105,7 +69,7 @@ class NLCommand:
 @dataclass
 class WebResponse:
     """Response from web application pipeline."""
-    detections: List[Detection]
+    detections: List[Detection2D]
     instruction: str
     timestamp: float
     success: bool = True

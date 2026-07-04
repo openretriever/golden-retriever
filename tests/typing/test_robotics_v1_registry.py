@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+import os
+import subprocess
+import sys
+from pathlib import Path
+
 from retriever_typing import (
     Header,
     JointState,
@@ -57,3 +62,27 @@ def test_v1_types_are_the_runtime_standard_types() -> None:
     for cls in (Header, Vector3, Quaternion, SE3Pose, PoseStamped,
                 Twist, TwistStamped, Wrench, WrenchStamped, JointState):
         assert cls is getattr(spatial, cls.__name__)
+
+
+def test_applied_type_registry_surfaces_bootstrap_in_fresh_process() -> None:
+    script = """
+from retriever_typing.registry import get_type_info, list_types
+info = get_type_info("WorldState")
+assert info.type_class.__name__ == "WorldState"
+assert "WorldState" in list_types()
+"""
+    repo_root = Path(__file__).resolve().parents[2]
+    env = os.environ.copy()
+    pythonpath = str(repo_root / "src")
+    if env.get("PYTHONPATH"):
+        pythonpath = pythonpath + os.pathsep + env["PYTHONPATH"]
+    env["PYTHONPATH"] = pythonpath
+    result = subprocess.run(
+        [sys.executable, "-c", script],
+        cwd=repo_root,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr

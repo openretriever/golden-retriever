@@ -4,16 +4,22 @@ GoldenRetriever is the public companion repository for advanced examples, system
 
 ## Required Validation
 
-Run these before a public launch, tag, or package publish:
+Run these before a public launch or docs promotion:
 
 ```bash
 pixi run test
 pixi run -e docs docs-build
 pixi run -e golden-local demo-perception-detection-flow
+```
+
+Build the optional local/future wheel artifact separately when checking package
+contents:
+
+```bash
 pixi run build
 ```
 
-The same checks are wired in `.github/workflows/ci.yml`.
+The same checks are wired in `.github/workflows/ci.yml` where configured.
 
 ## GitHub Settings
 
@@ -26,7 +32,7 @@ Before making the repository public:
 
 ## Package Boundary
 
-The wheel intentionally ships the lightweight `retriever_typing` package. Heavy examples, notebooks, benchmarks, generated outputs, and optional robot/model stacks remain source-checkout material or local artifacts.
+First public launch does not require publishing a `retriever-golden` PyPI package. Golden's applied robotics/planning payloads are exposed through the Retriever Hub module manifest, and the wheel remains an optional local/future artifact. If a wheel is published later, it should ship only the lightweight `retriever_typing` package; heavy examples, notebooks, benchmarks, generated outputs, and optional robot/model stacks remain source-checkout material or local artifacts.
 
 ## Runtime Dependency
 

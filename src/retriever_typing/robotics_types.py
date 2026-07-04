@@ -8,7 +8,10 @@ planning, and robot control.
 import numpy as np
 from dataclasses import dataclass
 from typing import Dict, List, Set, Optional, Tuple, Any
-from .core_types import Pose3, Action
+
+from retriever.types.spatial import SE3Pose
+
+from .core_types import Action
 from .registry import register_type
 
 
@@ -20,8 +23,8 @@ from .registry import register_type
 @dataclass
 class WorldState:
     """Represents the state of the world."""
-    object_poses: Dict[str, Pose3]
-    robot_pose: Pose3
+    object_poses: Dict[str, SE3Pose]
+    robot_pose: SE3Pose
     timestamp: Optional[float] = None
 
 
@@ -127,7 +130,7 @@ class TaskInstance:
 @dataclass
 class Trajectory:
     """A time-series of joint/base poses."""
-    poses: List[Pose3]
+    poses: List[SE3Pose]
     timestamps: Optional[List[float]] = None
     
     @property

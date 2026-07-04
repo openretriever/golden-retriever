@@ -15,6 +15,8 @@ from retriever_typing.v1 import JointState as PinnedJointState
 from retriever_typing.v1 import PoseStamped as PinnedPoseStamped
 from retriever_typing.v1 import SE3Pose as PinnedSE3Pose
 from retriever_typing import get_type
+from retriever_typing import get_type_info
+from retriever_typing import list_types
 
 
 def test_public_package_surface_matches_pinned_v1() -> None:
@@ -38,3 +40,10 @@ def test_public_surface_matches_registry_lookup() -> None:
     assert get_type("SE3Pose") is PublicSE3Pose
     assert get_type("Header") is PublicHeader
     assert get_type("JointState") is PublicJointState
+
+
+def test_public_root_exports_registry_metadata_helpers() -> None:
+    from retriever_typing import WorldState
+
+    assert get_type_info("WorldState").type_class is WorldState
+    assert list_types()["WorldState"].type_class is WorldState

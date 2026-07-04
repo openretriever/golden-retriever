@@ -9,8 +9,10 @@ fix the drift, not the reader.
 
 GoldenRetriever is the applied companion to the Retriever runtime
 (`retriever-core`): runnable perception / memory / language / simulation /
-visualization examples, plus `retriever_typing` — the typed robotics payload
-package published as `retriever-golden`.
+visualization examples, plus `retriever_typing` — a Hub-loadable applied
+robotics/planning type pack. The local build metadata still uses the
+`retriever-golden` package name, but a public PyPI wheel is not on the first
+launch path.
 
 - Python: **3.11+**. License: Apache-2.0.
 - Docs site: <https://retriever-space.pages.dev/>
@@ -35,7 +37,7 @@ pixi run -e golden-local demo-perception-detection-flow
 pixi run demo-robosuite-mock                       # simulation lane, mock mode
 pixi run demo-pi05-mock                            # pi0.5 policy lane, mock mode
 pixi run -e docs docs-build                        # mkdocs --strict
-pixi run build                                     # retriever-golden wheel
+pixi run build                                     # local retriever-golden wheel artifact
 ```
 
 Environments: `default` bundles the core runtime; `golden-local` = local
@@ -47,7 +49,7 @@ assuming one.
 
 | Area | Path |
 | --- | --- |
-| Typed payloads (`retriever-golden` wheel) | `src/retriever_typing/` |
+| Applied payloads (Hub type pack / local wheel) | `src/retriever_typing/` |
 | Arrow serialization (round-trip tested) | `src/retriever_typing/conversions.py` |
 | Spatial standard (re-exports `retriever.types.spatial` — same classes) | `src/retriever_typing/v1.py` |
 | Example lanes (learning ladder) | `examples/advanced/` |

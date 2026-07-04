@@ -17,6 +17,7 @@ from .registry import (
     find_types,
     get_registered_types,
     get_type,
+    get_type_info,
     list_types,
     register_type,
 )
@@ -41,13 +42,6 @@ def register_conversion(type_class, to_arrow, from_arrow):
 
 
 _CORE_TYPES = {
-    "RGBImage",
-    "DepthImage",
-    "PointCloud",
-    "BoundingBox",
-    "Detection",
-    "Pose3",
-    "Transform3",
     "Action",
     "Command",
     "Status",
@@ -56,8 +50,6 @@ _CORE_TYPES = {
 }
 
 _VISION_TYPES = {
-    "RGBDImage",
-    "SegmentationMask",
     "EnvironmentObservation",
     "VLMResponse",
     "NLCommand",
@@ -127,20 +119,11 @@ def __dir__():
 
 
 __all__ = [
-    "RGBImage",
-    "Detection",
-    "BoundingBox",
     "Action",
-    "DepthImage",
-    "PointCloud",
     "Command",
     "Status",
     "Timestamp",
     "ExecutionTimer",
-    "Pose3",
-    "Transform3",
-    "RGBDImage",
-    "SegmentationMask",
     "EnvironmentObservation",
     "VLMResponse",
     "NLCommand",
@@ -180,6 +163,7 @@ __all__ = [
     "register_type",
     "get_registered_types",
     "get_type",
+    "get_type_info",
     "list_types",
     "find_types",
     "TypeRegistry",

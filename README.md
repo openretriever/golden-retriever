@@ -170,7 +170,7 @@ pixi run -e golden-local demo-perception-detection-flow
 pixi run build
 ```
 
-See `RELEASE.md` for the launch, docs deployment, and package boundary checklist.
+See `RELEASE.md` for launch/docs validation and the optional package boundary checklist.
 
 ## Relationship To Core Retriever
 
