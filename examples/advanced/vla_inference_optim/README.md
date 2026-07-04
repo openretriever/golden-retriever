@@ -49,20 +49,20 @@ Both demos are configured to run with the `multiprocessing` backend.
 
 **Adapter Version:**
 ```bash
-pixi run python -m examples.advanced.vla_inference_optim.demo_buffer_adapter
+pixi run python -m examples.advanced.vla_inference_optim.demo_buffer_adapter --backend multiprocessing --duration 2
 ```
 
 **Explicit Buffer Version:**
 ```bash
-pixi run python -m examples.advanced.vla_inference_optim.demo_buffer_flow
+pixi run python -m examples.advanced.vla_inference_optim.demo_buffer_flow --backend multiprocessing --duration 2
 ```
 
 ### Visualizing the Pipeline
-Both scripts generate an **Interactive HTML Graph** upon startup:
+Both scripts validate the authored graph to IR for a terminal summary, then call the public `Pipeline.visualize(...)` API to write an **interactive HTML graph**:
 -   `vla_pipeline_adapter.html`
 -   `vla_pipeline_manual.html`
 
-Open these files in a web browser to inspect the node topology, clock domains (Rates), and data connections.
+Open these files in a web browser to inspect node topology, clock domains (Rates), and data connections. The examples no longer call the old `build_ir()` helper directly.
 
 ### Expected Output
 You should see logs indicating the "Fast-Forward" behavior, where the Sink executes actions with positive indices even immediately after a chunk arrives (compensating for latency).

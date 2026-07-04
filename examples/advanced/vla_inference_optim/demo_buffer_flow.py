@@ -206,6 +206,7 @@ class InputAdapter(Flow[VLAAdapterInput, VLAInput]):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--backend", default="dora", choices=["dora", "multiprocessing"])
+    parser.add_argument("--duration", type=float, default=120.0, help="Run duration in seconds.")
     args = parser.parse_args()
 
     # Set global default sync policy
@@ -235,22 +236,24 @@ def main():
         sink = VLAValidationSink() @ Rate(hz=50)
         pipe.connect(buffer, sink, sync=Latest())
 
-    # Visualization
+    # Validate to IR for the terminal summary, then use the public Pipeline
+    # visualization API for the interactive HTML artifact.
     try:
-        from retriever.ir.viz import generate_ascii_graph, save_interactive_html
+        from retriever.ir.viz import generate_ascii_graph
         print("\n" + "="*60)
         print("Pipeline Structure:")
         print("="*60)
-        ir = pipe.build_ir()
+        ir = pipe.validate()
         print(generate_ascii_graph(ir))
         print("="*60 + "\n")
-        save_interactive_html(ir, "vla_pipeline_manual.html")
+        html_path = pipe.visualize("vla_pipeline_manual.html")
+        print(f"Interactive graph: {html_path}")
     except ImportError:
         print("Visualization module not found.")
 
     try:
         # Run for 2 minutes
-        pipe.run(backend=args.backend, duration=120.)
+        pipe.run(backend=args.backend, duration=args.duration)
     except KeyboardInterrupt:
         pass
 

@@ -23,7 +23,7 @@ GoldenRetriever is not the core runtime. The runtime package is `retriever-core`
 
 ## Current Hub Type-Pack Direction
 
-The core runtime provides registry and Hub mechanics. GoldenRetriever already declares a Hub module manifest for applied types such as `WorldState`, `BeliefGraph`, `Skill`, `Plan`, `Trajectory`, and Arrow conversion helpers. The public `hub.use(...)` path becomes usable after the public `retriever-core` package and source repo are live.
+The core runtime provides registry and Hub mechanics. GoldenRetriever already declares a Hub module manifest for applied types such as `WorldState`, `BeliefGraph`, `Skill`, `Plan`, `Trajectory`, and Arrow conversion helpers. The public `hub.use(...)` path becomes usable after `retriever-core`, the Golden source repo, and the OpenRetriever Hub index are all live.
 
 Expected public reference after cutover:
 

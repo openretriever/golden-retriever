@@ -118,22 +118,7 @@ Source:
 
 These paths are useful, but they are secondary until each has a README, packaged task, and dependency story.
 
-### Web Command Interface
-
-```bash
-pixi run -e golden python examples/advanced/web_command_interface/app.py
-```
-
-What it shows:
-
-- a small browser-facing control surface,
-- command handling around a Retriever-style system boundary,
-- a useful pattern for local operator/debug UIs.
-
-Source:
-
-- `examples/advanced/web_command_interface/app.py`
-- `examples/advanced/web_command_interface/static/index.html`
+The browser command interface is intentionally not listed here yet; promote it after it has a README, a named Pixi task, and a concise dependency story.
 
 ### Self-Contained Pipeline HTML Viz
 

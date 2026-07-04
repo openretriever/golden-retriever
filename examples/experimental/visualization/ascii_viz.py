@@ -31,7 +31,7 @@ def build_demo_ir() -> IR:
     pipe.connect(perception, executor, map={"data": "data"}, sync=Latest())
     pipe.connect(executor, env, map={"data": "data"}, sync=Latest())
 
-    return pipe._build_ir()
+    return pipe.validate()
 
 
 def main() -> None:
