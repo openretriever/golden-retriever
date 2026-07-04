@@ -33,17 +33,19 @@ def test_registry_lookup_for_v1_types() -> None:
 
 
 def test_registry_metadata_for_representative_spatial_types() -> None:
+    """Spatial standard types carry the runtime's canonical registration —
+    the unified registry means Golden sees core's metadata, not a parallel copy."""
     registry = get_registered_types()
 
     pose_info = registry["PoseStamped"]
     assert pose_info.type_class is PoseStamped
-    assert pose_info.category == "robotics"
-    assert "robotics" in pose_info.tags
+    assert pose_info.category == "spatial"
     assert "pose" in pose_info.tags
+    assert pose_info.schema_name == "spatial/PoseStamped"
 
     joint_info = registry["JointState"]
     assert joint_info.type_class is JointState
-    assert joint_info.category == "robotics"
+    assert joint_info.category == "spatial"
     assert "joint" in joint_info.tags
 
 
