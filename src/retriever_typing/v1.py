@@ -1,166 +1,56 @@
-"""Canonical robotics typing standard v1."""
+"""Canonical robotics typing standard v1.
+
+There is exactly one class per standard spatial type across the ecosystem:
+the runtime's `retriever.types.spatial` payloads. This module re-exports
+them (so `retriever_typing.Header` *is* `retriever.types.spatial.Header`)
+and registers them in the `retriever_typing` registry with robotics
+metadata. The classes are `@io`-ready, so they can be used directly as Flow
+port payloads.
+
+Validators are re-exported from the runtime as well; keep new validation
+logic there, not here.
+"""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from math import sqrt
 from typing import Final
+
+from retriever.types.spatial import (
+    Header,
+    JointState,
+    PoseStamped,
+    Quaternion,
+    SE3Pose,
+    Twist,
+    TwistStamped,
+    Vector3,
+    Wrench,
+    WrenchStamped,
+    validate_header,
+    validate_joint_state,
+    validate_pose_stamped,
+    validate_quaternion,
+)
 
 from .registry import register_type
 
 _ROBOTICS_CATEGORY: Final[str] = "robotics"
 
-
-@register_type(
-    description="Header for stamped robotics payloads",
-    category=_ROBOTICS_CATEGORY,
-    tags=["robotics", "v1", "header", "metadata"],
+_V1_TYPES: Final[tuple[tuple[type, str, list[str]], ...]] = (
+    (Header, "Header for stamped robotics payloads", ["robotics", "v1", "header", "metadata"]),
+    (Vector3, "3D vector payload", ["robotics", "v1", "geometry", "vector"]),
+    (Quaternion, "Quaternion rotation payload", ["robotics", "v1", "geometry", "quaternion"]),
+    (SE3Pose, "SE(3) pose payload", ["robotics", "v1", "geometry", "pose"]),
+    (Twist, "Spatial velocity payload", ["robotics", "v1", "motion", "twist"]),
+    (Wrench, "Force and torque payload", ["robotics", "v1", "force", "wrench"]),
+    (JointState, "Joint state payload", ["robotics", "v1", "joint", "state"]),
+    (PoseStamped, "Timestamped pose payload", ["robotics", "v1", "pose", "stamped"]),
+    (TwistStamped, "Timestamped twist payload", ["robotics", "v1", "twist", "stamped"]),
+    (WrenchStamped, "Timestamped wrench payload", ["robotics", "v1", "wrench", "stamped"]),
 )
-@dataclass(frozen=True)
-class Header:
-    stamp_ns: int
-    frame_id: str
-    source: str = "unknown"
 
-
-@register_type(
-    description="3D vector payload",
-    category=_ROBOTICS_CATEGORY,
-    tags=["robotics", "v1", "geometry", "vector"],
-)
-@dataclass(frozen=True)
-class Vector3:
-    x: float
-    y: float
-    z: float
-
-
-@register_type(
-    description="Quaternion rotation payload",
-    category=_ROBOTICS_CATEGORY,
-    tags=["robotics", "v1", "geometry", "quaternion"],
-)
-@dataclass(frozen=True)
-class Quaternion:
-    x: float
-    y: float
-    z: float
-    w: float
-
-    def norm(self) -> float:
-        return sqrt(self.x * self.x + self.y * self.y + self.z * self.z + self.w * self.w)
-
-    def is_unit(self, tol: float = 1e-3) -> bool:
-        return abs(self.norm() - 1.0) <= tol
-
-
-@register_type(
-    description="SE(3) pose payload",
-    category=_ROBOTICS_CATEGORY,
-    tags=["robotics", "v1", "geometry", "pose"],
-)
-@dataclass(frozen=True)
-class SE3Pose:
-    position: Vector3
-    orientation: Quaternion
-
-
-@register_type(
-    description="Spatial velocity payload",
-    category=_ROBOTICS_CATEGORY,
-    tags=["robotics", "v1", "motion", "twist"],
-)
-@dataclass(frozen=True)
-class Twist:
-    linear: Vector3
-    angular: Vector3
-
-
-@register_type(
-    description="Force and torque payload",
-    category=_ROBOTICS_CATEGORY,
-    tags=["robotics", "v1", "force", "wrench"],
-)
-@dataclass(frozen=True)
-class Wrench:
-    force: Vector3
-    torque: Vector3
-
-
-@register_type(
-    description="Joint state payload",
-    category=_ROBOTICS_CATEGORY,
-    tags=["robotics", "v1", "joint", "state"],
-)
-@dataclass(frozen=True)
-class JointState:
-    names: tuple[str, ...]
-    positions: tuple[float, ...]
-    velocities: tuple[float, ...]
-    efforts: tuple[float, ...]
-
-    def is_aligned(self) -> bool:
-        n = len(self.names)
-        return (
-            len(self.positions) == n
-            and len(self.velocities) == n
-            and len(self.efforts) == n
-        )
-
-
-@register_type(
-    description="Timestamped pose payload",
-    category=_ROBOTICS_CATEGORY,
-    tags=["robotics", "v1", "pose", "stamped"],
-)
-@dataclass(frozen=True)
-class PoseStamped:
-    header: Header
-    pose: SE3Pose
-
-
-@register_type(
-    description="Timestamped twist payload",
-    category=_ROBOTICS_CATEGORY,
-    tags=["robotics", "v1", "twist", "stamped"],
-)
-@dataclass(frozen=True)
-class TwistStamped:
-    header: Header
-    twist: Twist
-
-
-@register_type(
-    description="Timestamped wrench payload",
-    category=_ROBOTICS_CATEGORY,
-    tags=["robotics", "v1", "wrench", "stamped"],
-)
-@dataclass(frozen=True)
-class WrenchStamped:
-    header: Header
-    wrench: Wrench
-
-
-def validate_header(header: Header) -> None:
-    if not header.frame_id:
-        raise ValueError("frame_id must be non-empty")
-    if header.stamp_ns <= 0:
-        raise ValueError("stamp_ns must be > 0")
-
-
-def validate_quaternion(q: Quaternion, tol: float = 1e-3) -> None:
-    if not q.is_unit(tol=tol):
-        raise ValueError("orientation quaternion must be unit-norm")
-
-
-def validate_pose_stamped(msg: PoseStamped) -> None:
-    validate_header(msg.header)
-    validate_quaternion(msg.pose.orientation)
-
-
-def validate_joint_state(msg: JointState) -> None:
-    if not msg.is_aligned():
-        raise ValueError("joint state arrays must align by length")
+for _cls, _description, _tags in _V1_TYPES:
+    register_type(description=_description, category=_ROBOTICS_CATEGORY, tags=_tags)(_cls)
 
 
 __all__ = [

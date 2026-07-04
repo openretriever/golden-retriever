@@ -262,13 +262,3 @@ def find_types(base_class: Optional[Type] = None,
 def get_global_registry() -> TypeRegistry:
     """Get the global type registry instance."""
     return _global_registry
-
-def convert_to_arrow(obj: Any) -> Any:
-    """Convert object to PyArrow format using registered converter."""
-    converter = _global_registry.get_arrow_converter(type(obj))
-    return converter(obj) if converter else obj
-
-def convert_from_arrow(arrow_obj: Any, target_type: Type) -> Any:
-    """Convert from PyArrow format to target type (placeholder implementation)."""
-    # TODO: Implement reverse conversion when needed
-    return arrow_obj
