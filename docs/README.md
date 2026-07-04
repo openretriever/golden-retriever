@@ -115,7 +115,7 @@ Run these from the GoldenRetriever repository after the core quickstart works an
 
 ## Public Boundary
 
-For human readers and AI agents, keep the source of truth split explicit:
+Keep the public source-of-truth split explicit:
 
 - Core runtime API details belong in `openretriever/retriever`; public source links are staged but currently open when repo visibility is flipped.
 - GoldenRetriever carries examples, tutorials, notebooks, robotics typing, and integration lanes.
