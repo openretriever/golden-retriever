@@ -1,30 +1,28 @@
 # GoldenRetriever Examples
 
-<div class="gr-hero">
-  <img src="assets/retriever-illustrative.jpeg" alt="GoldenRetriever logo" class="gr-hero-logo" />
-  <p class="gr-eyebrow">Companion examples for Retriever</p>
-  <h1>Move from runtime concepts to robot-facing examples.</h1>
-  <p class="gr-lede">GoldenRetriever is the examples and integration surface for the core <code>retriever</code> runtime: perception, memory, language, composition, notebooks, robotics typing, and selected simulator/visualization demos.</p>
-  <div class="gr-action-grid">
-    <a class="gr-action-card" href="examples/">
-      <span>01</span>
-      <strong>Start after the core quickstart</strong>
-      <small>Perception -> memory -> language -> composition.</small>
-    </a>
-    <a class="gr-action-card" href="examples/simulation_and_visualization_v1/">
-      <span>02</span>
-      <strong>See visual demos</strong>
-      <small>Webcam + Rerun, MuJoCo/TWIST2, and browser control surfaces.</small>
-    </a>
-    <a class="gr-action-card" href="robotics_typing_standard/">
-      <span>03</span>
-      <strong>Use typed payloads</strong>
-      <small>Robot payload contracts and data/event stream profiles.</small>
-    </a>
+<div class="gr-hero gr-hero-split">
+  <div class="gr-hero-copy">
+    <p class="gr-eyebrow">Applied examples for Retriever</p>
+    <h1>Run robot-facing examples after the core runtime quickstart.</h1>
+    <p class="gr-lede">GoldenRetriever is the companion examples surface for the core <code>retriever</code> runtime: concise perception, memory, language, composition, visualization, and simulator lanes.</p>
+    <div class="gr-route-pills">
+      <a href="https://openretriever.org/">Landing</a>
+      <a href="https://openretriever-docs.pages.dev/">Core docs</a>
+      <a href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/">Core quickstart</a>
+      <a href="https://github.com/openretriever/golden-retriever">Golden GitHub</a>
+    </div>
+  </div>
+  <div class="gr-command-panel">
+    <img src="assets/retriever-illustrative.jpeg" alt="GoldenRetriever logo" class="gr-hero-logo" />
+    <p class="gr-panel-label">First Golden command</p>
+    <pre><code>pixi install -e golden-local
+pixi run -e golden-local demo-perception-detection-flow</code></pre>
+    <p class="gr-panel-note">Expected result: a small terminal demo over the shared synthetic scene. No robot hardware required.</p>
   </div>
 </div>
 
-GoldenRetriever is intentionally separate from the core runtime docs. Use the core visual quickstart first if you are new to Retriever; then use this site when you want runnable robot-facing examples built on those primitives.
+!!! note "Prerequisite"
+    If you are new to Retriever, complete the [core visual quickstart](https://openretriever-docs.pages.dev/getting-started/visual-quickstart/) first. The command `pixi run demo-webcam-detection` belongs to `openretriever/retriever`, not this repository. Golden starts after that with `pixi run -e golden-local demo-perception-detection-flow`.
 
 ## Recommended Path
 
@@ -32,7 +30,7 @@ GoldenRetriever is intentionally separate from the core runtime docs. Use the co
   <a class="gr-path-step" href="examples/perception_and_memory_v1/">
     <span>01</span>
     <strong>Perception and memory</strong>
-    <p>Detection, replay, belief, memory, and composed control over one small scene after the core quickstart is clear.</p>
+    <p>Detection, replay, belief, memory, and composed control over one small scene.</p>
     <code>pixi run -e golden-local demo-perception-detection-flow</code>
   </a>
   <a class="gr-path-step" href="examples/language_and_grounding_v1/">
@@ -50,12 +48,34 @@ GoldenRetriever is intentionally separate from the core runtime docs. Use the co
   <a class="gr-path-step" href="examples/simulation_and_visualization_v1/">
     <span>04</span>
     <strong>Visualization</strong>
-    <p>Rerun, web UI, and simulator lanes for richer demos.</p>
-    <code>pixi run -e torch demo-webcam-rerun</code>
+    <p>Rerun, mock-safe robosuite, MuJoCo/TWIST2, and HTML pipeline views.</p>
+    <code>pixi run demo-robosuite-mock</code>
+  </a>
+</div>
+
+## What Belongs Here
+
+<div class="gr-action-grid">
+  <a class="gr-action-card" href="examples/">
+    <span>Examples</span>
+    <strong>Runnable applied lanes</strong>
+    <small>Perception, memory, language, composition, simulation, and visualization examples.</small>
+  </a>
+  <a class="gr-action-card" href="examples/simulation_and_visualization_v1/">
+    <span>Visual proof</span>
+    <strong>See richer demos</strong>
+    <small>Rerun, MuJoCo/TWIST2, robosuite mock, and generated pipeline HTML.</small>
+  </a>
+  <a class="gr-action-card" href="robotics_typing_standard/">
+    <span>Typed payloads</span>
+    <strong>Use stable interfaces</strong>
+    <small>Robot payload contracts and data/event stream profiles for reusable examples.</small>
   </a>
 </div>
 
 ## First Commands
+
+Run these from the GoldenRetriever repository after the core quickstart works. Expected outputs are small terminal summaries or visual windows depending on the lane; the mock-safe commands should not require robot hardware.
 
 === "Concise ladder"
 
@@ -84,6 +104,8 @@ GoldenRetriever is intentionally separate from the core runtime docs. Use the co
     ```
 
 ## Public Boundary
+
+For human readers and AI agents, keep the source of truth split explicit:
 
 - Core runtime API details belong in `openretriever/retriever`.
 - GoldenRetriever carries examples, tutorials, notebooks, robotics typing, and integration lanes.

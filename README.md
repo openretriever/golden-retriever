@@ -42,13 +42,12 @@ pixi run -e golden-local python -c "import retriever; print(retriever.__file__)"
 
 ## Recommended Launch Points
 
-If you are new to Retriever, start with the core visual quickstart first:
+If you are new to Retriever, start with the core visual quickstart in the core repository first:
 
-```bash
-pixi run demo-webcam-detection
-```
+- Core docs: https://openretriever-docs.pages.dev/getting-started/visual-quickstart/
+- Core repo: https://github.com/openretriever/retriever
 
-Then use Golden for robot-facing example families. The shortest Golden ladder is perception -> memory -> language -> composition:
+That core quickstart uses `pixi run demo-webcam-detection` from `openretriever/retriever`; it is not a GoldenRetriever task. Then use Golden for robot-facing example families. The shortest Golden ladder is perception -> memory -> language -> composition:
 
 ```bash
 pixi run -e golden-local demo-perception-detection-flow
@@ -100,7 +99,6 @@ Some heavier optional Pixi environments still resolve demo-only dependencies fro
 - `examples/advanced/functional_wiring`: flow composition, fan-in/fan-out, staged builders, and sync policies.
 - `examples/advanced/core_composition`: registry-backed pipeline composition surfaces.
 - `examples/advanced/multi_agent_communication`: a compact coordination/composition example.
-- `examples/advanced/closed_loop_planning`: extracted design patterns from the removed experimental prototype.
 - `examples/advanced/webcam_rerun`: webcam/model/Rerun visualization.
 - `examples/advanced/twist2_simulation`: MuJoCo/TWIST2 simulator integration.
 - `examples/advanced/mujoco_manipulation`: MuJoCo manipulation with Rerun logging.
@@ -110,6 +108,7 @@ Some heavier optional Pixi environments still resolve demo-only dependencies fro
 
 For the end-to-end perception -> memory -> composition walkthrough, see `docs/examples/perception_and_memory_v1.md`. For registry-backed composition surfaces, continue with `docs/examples/pipeline_composition_v1.md`.
 
+Design notes that are not runnable example families stay separate from the main path. `examples/advanced/closed_loop_planning` is an extracted pattern note, not a first-run demo.
 
 ## Simulation And Visualization
 

@@ -15,6 +15,8 @@ theme:
   features:
     - navigation.sections
     - navigation.indexes
+    - navigation.tabs
+    - navigation.tabs.sticky
     - navigation.top
     - content.code.copy
     - content.tabs.link
@@ -56,3 +58,6 @@ nav:
       - Hub Sharing Profile: robotics_typing_standard/03_hub_sharing_profile.md
       - Data and Event Streams: robotics_typing_standard/07_data_spec_eventstream_v1.md
       - LeRobot Interop: robotics_typing_standard/08_lerobot_interop_and_dataset_profile.md
+  - Core Docs: https://openretriever-docs.pages.dev/
+  - Landing: https://openretriever.org/
+  - Core GitHub: https://github.com/openretriever/retriever

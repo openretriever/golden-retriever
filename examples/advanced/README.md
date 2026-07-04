@@ -30,10 +30,13 @@ The concise perception, memory, language, and composition ladders use `golden-lo
 5. `state_management/`: reset behavior, older belief examples, and event-driven replanning.
 6. `functional_wiring/`: composing surfaced flows into larger pipelines.
 7. `core_composition/`: registry-backed pipeline composition.
-8. `closed_loop_planning/`: extracted design patterns for belief, monitoring, and replanning.
-9. `multi_agent_communication/`: compact coordination/composition patterns.
+8. `multi_agent_communication/`: compact coordination/composition patterns.
 
 Across these examples, prefer shared basic payloads plus structural composition. If a local stage needs grouped inputs or outputs, use composite `Flow[...]` typing first; only introduce a new named `Input` / `Output` envelope when that grouped boundary is itself a stable domain contract.
+
+## Design notes
+
+- `closed_loop_planning/`: extracted belief, monitoring, and replanning patterns from an older prototype. Keep it out of the first-run path because it is not a runnable example family.
 
 
 ## Visualization and simulator lanes

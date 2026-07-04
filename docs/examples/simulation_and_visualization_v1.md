@@ -11,8 +11,6 @@ These examples are the current Golden paths for visual and simulator-oriented de
 | MuJoCo Manipulation | `pixi run -e twist2 python examples/advanced/mujoco_manipulation/app.py` | High-rate physics, slower controller, Rerun state logging. |
 | RoboSuite Lift | `pixi run demo-robosuite-mock` | Mock-safe robosuite wrapper and scripted Lift-policy contract. |
 | Hierarchical Physics | `pixi run -e twist2 python examples/advanced/hierarchical_physics_demo/app.py --demo both --duration 8` | Explicit clock -> sim -> viz layers plus HTML pipeline visualization. |
-| Web Command Interface | `pixi run -e golden python examples/advanced/web_command_interface/app.py` | Local browser-facing command/debug surface. |
-| Pipeline HTML Viz | `pixi run python examples/experimental/visualization/visualize_pipeline.py` | Self-contained IR graph export to ASCII and HTML. |
 
 ## Webcam + Rerun
 
@@ -116,7 +114,11 @@ Source:
 - `examples/advanced/hierarchical_physics_demo/README.md`
 - `examples/advanced/hierarchical_physics_demo/app.py`
 
-## Web Command Interface
+## Utilities and experimental paths
+
+These paths are useful, but they are secondary until each has a README, packaged task, and dependency story.
+
+### Web Command Interface
 
 ```bash
 pixi run -e golden python examples/advanced/web_command_interface/app.py
@@ -133,7 +135,7 @@ Source:
 - `examples/advanced/web_command_interface/app.py`
 - `examples/advanced/web_command_interface/static/index.html`
 
-## Self-Contained Pipeline HTML Viz
+### Self-Contained Pipeline HTML Viz
 
 ```bash
 pixi run python examples/experimental/visualization/visualize_pipeline.py
