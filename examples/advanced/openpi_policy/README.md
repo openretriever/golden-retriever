@@ -1,5 +1,12 @@
 # OpenPI pi0.5 Policy Lane
 
+> **Status: experimental / target integration.** Only `--mode mock` runs today
+> (deterministic, no model, exercised by `pixi run demo-pi05-mock`). `--mode
+> remote` needs a live openpi policy server, and `--mode hub` needs the
+> `openretriever/pi05-policy` module published (see the packaging design below).
+> Treat this lane as the worked design for the first Hub extension module, not a
+> shipping integration yet.
+
 Wire [Physical Intelligence's openpi](https://github.com/Physical-Intelligence/openpi)
 pi0.5 vision-language-action model into a Retriever pipeline as an ordinary
 `Flow[PolicyObservation, ActionChunk]` — and, as the target end state, load it
