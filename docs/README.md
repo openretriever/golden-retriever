@@ -83,7 +83,7 @@ pixi run -e golden-local demo-perception-detection-flow</code></pre>
 
 ## First Commands
 
-Run these from the GoldenRetriever repository after the core quickstart works and once you have repository access. Expected outputs are small terminal summaries or visual windows depending on the lane; the mock-safe commands should not require robot hardware.
+Run these from the GoldenRetriever repository after the core quickstart works. Expected outputs are small terminal summaries or visual windows depending on the lane; the mock-safe commands should not require robot hardware.
 
 === "Concise ladder"
 
