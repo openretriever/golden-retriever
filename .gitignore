@@ -26,7 +26,6 @@ pixi.lock
 # Agent
 .claude/
 .specify/
-AGENTS.md
 
 # Artifacts
 logs/
