@@ -25,6 +25,8 @@ from retriever.registry.types import find_types as _core_find_types
 from retriever.registry.types import get_registered_types as _core_get_registered_types
 from retriever.registry.types import get_type as _core_get_type
 from retriever.registry.types import get_type_info as _core_get_type_info
+from retriever.registry.types import get_type_name as _core_get_type_name
+from retriever.registry.types import is_registered_type as _core_is_registered_type
 from retriever.registry.types import list_types as _core_list_types
 
 _bootstrapped = False
@@ -68,6 +70,21 @@ def get_registered_types(category: Optional[str] = None) -> Dict[str, TypeInfo]:
     return _core_get_registered_types(category)
 
 
+def is_registered_type(type_class: Type[Any]) -> bool:
+    _bootstrap()
+    return _core_is_registered_type(type_class)
+
+
+def get_type_name(type_class: Type[Any]) -> Optional[str]:
+    _bootstrap()
+    return _core_get_type_name(type_class)
+
+
+def get_arrow_converter(type_class: Type[Any]) -> Any:
+    _bootstrap()
+    return get_global_registry().get_arrow_converter(type_class)
+
+
 def find_types(
     base_class: Optional[Type] = None,
     category: Optional[str] = None,
@@ -90,10 +107,13 @@ __all__ = [
     "TypeInfo",
     "TypeRegistry",
     "find_types",
+    "get_arrow_converter",
     "get_global_registry",
     "get_registered_types",
     "get_type",
     "get_type_info",
+    "get_type_name",
+    "is_registered_type",
     "list_types",
     "register_type",
 ]

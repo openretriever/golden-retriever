@@ -16,7 +16,6 @@ def test_repo_manifest_loads_representative_hub_exports() -> None:
     script = """
 import tomllib
 from pathlib import Path
-from retriever.error import HubError
 from retriever.hub._loader import load_exports
 
 config = tomllib.loads(Path("pyproject.toml").read_text())
@@ -25,15 +24,7 @@ kwargs = {
     "namespace": "golden_manifest_smoke",
     "hub_meta": {"org": "openretriever", "name": "golden-retriever", "commit": "local"},
 }
-try:
-    exports = load_exports(Path("."), manifest["module"], manifest["exports"], **kwargs)
-except HubError as exc:
-    # Compatibility path until every test environment carries the public
-    # runtime loader with repo-root src-layout support. The manifest remains
-    # unchanged; only the module root moves to the package base.
-    if "Package directory" not in str(exc):
-        raise
-    exports = load_exports(Path("src"), manifest["module"], manifest["exports"], **kwargs)
+exports = load_exports(Path("."), manifest["module"], manifest["exports"], **kwargs)
 assert exports["WorldState"].__name__ == "WorldState"
 assert exports["Plan"].__name__ == "Plan"
 assert exports["convert_to_arrow"].__name__ == "convert_to_arrow"

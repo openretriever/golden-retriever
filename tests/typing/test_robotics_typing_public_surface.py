@@ -14,8 +14,11 @@ from retriever_typing.v1 import Header as PinnedHeader
 from retriever_typing.v1 import JointState as PinnedJointState
 from retriever_typing.v1 import PoseStamped as PinnedPoseStamped
 from retriever_typing.v1 import SE3Pose as PinnedSE3Pose
+from retriever_typing import get_arrow_converter
 from retriever_typing import get_type
 from retriever_typing import get_type_info
+from retriever_typing import get_type_name
+from retriever_typing import is_registered_type
 from retriever_typing import list_types
 
 
@@ -47,3 +50,9 @@ def test_public_root_exports_registry_metadata_helpers() -> None:
 
     assert get_type_info("WorldState").type_class is WorldState
     assert list_types()["WorldState"].type_class is WorldState
+
+
+def test_public_root_preserves_legacy_registry_helpers() -> None:
+    assert is_registered_type(PublicPoseStamped)
+    assert get_type_name(PublicPoseStamped) == "PoseStamped"
+    assert get_arrow_converter(PublicPoseStamped) is None

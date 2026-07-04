@@ -15,9 +15,12 @@ from importlib import import_module
 from .registry import (
     TypeRegistry,
     find_types,
+    get_arrow_converter,
     get_registered_types,
     get_type,
     get_type_info,
+    get_type_name,
+    is_registered_type,
     list_types,
     register_type,
 )
