@@ -1,6 +1,6 @@
 # Core Composition Surfaces v1
 
-This guide covers the newer registry-backed pipeline composition surfaces used by the Golden examples. Keep the examples on the packaged runtime path until the public core distribution replaces the temporary debug package.
+This guide covers the newer registry-backed pipeline composition surfaces used by the Golden examples. Keep the examples on the packaged runtime path; during prerelease that path may still resolve through the temporary `debug-retriever` package until the public `retriever-core` distribution replaces it.
 
 ## Runtime check
 
@@ -9,7 +9,7 @@ pixi install -e golden-local
 pixi run -e golden-local python -c "import retriever; print(retriever.__file__)"
 ```
 
-The printed path should resolve to the installed runtime package for this environment.
+The printed path should resolve to the installed runtime package for this environment. In prerelease environments it may show the temporary debug package; after public launch it should resolve to `retriever-core`.
 
 ## First runnable example
 

@@ -9,10 +9,12 @@ fix the drift, not the reader.
 
 GoldenRetriever is the applied companion to the Retriever runtime
 (`retriever-core`): runnable perception / memory / language / simulation /
-visualization examples, plus `retriever_typing` — a Hub-loadable applied
-robotics/planning type pack. The local build metadata still uses the
-`retriever-golden` package name, but a public PyPI wheel is not on the first
-launch path.
+visualization examples, plus `retriever_typing` — an applied
+robotics/planning type pack. The pack is intended to be Hub-loadable after
+the public `retriever-core` release and GitHub visibility cutover; prerelease
+Pixi environments still use the temporary `debug-retriever` runtime. The
+local build metadata still uses the `retriever-golden` package name, but a
+public PyPI wheel is not on the first launch path.
 
 - Python: **3.11+**. License: Apache-2.0.
 - Docs site: <https://retriever-space.pages.dev/>
@@ -32,18 +34,21 @@ launch path.
 ## Commands (verified)
 
 ```bash
-pixi run test                                      # 52+ tests, <5s
+pixi run test                                      # full Golden suite; currently 51 passed, 1 skipped
 pixi run -e golden-local demo-perception-detection-flow
 pixi run demo-robosuite-mock                       # simulation lane, mock mode
 pixi run demo-pi05-mock                            # pi0.5 policy lane, mock mode
 pixi run -e docs docs-build                        # mkdocs --strict
-pixi run build                                     # local retriever-golden wheel artifact
+pixi run build                                     # local retriever-golden wheel artifact; not first-launch PyPI path
 ```
 
-Environments: `default` bundles the core runtime; `golden-local` = local
-runtime + golden extras; heavier lanes (`torch`, `vlm`, `twist2`, ...) exist
-for specific examples — check `[environments]` in `pixi.toml` before
-assuming one.
+Environments: `default` and `golden-local` currently resolve the runtime
+through temporary `debug-retriever` until `retriever-core` is published;
+`golden-local` adds Golden extras. For prerelease core validation, set
+`RETRIEVER_CORE_SRC=<core-repo>/src` before running
+`pixi run test`. Heavier lanes (`torch`, `vlm`, `twist2`, ...) exist for
+specific examples — check `[environments]` in `pixi.toml` before assuming
+one.
 
 ## Layout
 

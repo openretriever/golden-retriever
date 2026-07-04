@@ -5,7 +5,7 @@ These examples exercise registry-backed pipeline composition surfaces.
 
 ## Runtime Requirement
 
-Use the Golden demo environment so the example feature set is available:
+Use the Golden demo environment so the example feature set is available. During prerelease this environment may still consume the temporary `debug-retriever` runtime; after `retriever-core==0.0.1` is public it should validate against `retriever-core`.
 
 ```bash
 pixi install -e golden-local

@@ -1,6 +1,6 @@
 # GoldenRetriever Examples
 
-> GoldenRetriever is the applied examples and integration surface for Retriever: perception, memory, language, composition, simulator/visualization demos, and Hub-loadable robotics type packs.
+> GoldenRetriever is the applied examples and integration surface for Retriever: perception, memory, language, composition, simulator/visualization demos, and planned Hub-loadable robotics type packs.
 
 Use this page when you want examples after understanding the core Retriever runtime.
 
@@ -18,13 +18,13 @@ Use this page when you want examples after understanding the core Retriever runt
 
 ## Core Boundary
 
-GoldenRetriever is not the core runtime. The runtime package is `retriever-core` and imports as `retriever`. GoldenRetriever owns applied examples and reusable robot-facing type packs.
+GoldenRetriever is not the core runtime. The runtime package is `retriever-core` and imports as `retriever`. During prerelease, Golden Pixi environments may still resolve the temporary `debug-retriever` package; use that only as a demo bridge until `retriever-core==0.0.1` is published. GoldenRetriever owns applied examples and reusable robot-facing type packs.
 
 ## Current Hub Type-Pack Direction
 
-The core runtime provides registry and Hub mechanics. GoldenRetriever provides applied types such as `WorldState`, `BeliefGraph`, `Skill`, `Plan`, `Trajectory`, and Arrow conversion helpers as a Hub-loadable pack.
+The core runtime provides registry and Hub mechanics. GoldenRetriever provides applied types such as `WorldState`, `BeliefGraph`, `Skill`, `Plan`, `Trajectory`, and Arrow conversion helpers. The Hub type-pack path is the release target after the public `retriever-core` package and source repo are live.
 
-Expected future reference:
+Expected public reference after cutover:
 
 ```python
 from retriever import hub
