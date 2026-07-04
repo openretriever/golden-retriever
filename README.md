@@ -1,5 +1,5 @@
 <div align="center">
-  <a href="https://github.com/openretriever/golden-retriever"><img width="400px" height="auto" src="assets/retriever-illustrative.jpeg" alt="GoldenRetriever logo"></a>
+  <a href="https://retriever-space.pages.dev/"><img width="400px" height="auto" src="assets/retriever-illustrative.jpeg" alt="GoldenRetriever logo"></a>
 </div>
 
 # 🐕 <span style="background: linear-gradient(45deg, #e96443 0%, #904e95 25%, #e65c00 50%, #f9d423 75%, #fc00ff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: bold; font-size: 1.1em;">**GoldenRetriever**</span>
@@ -11,7 +11,7 @@
 <p>Advanced examples, system integrations, and research prototypes built on top of the core <code>retriever</code> runtime.</p>
 
 <p>
-  <a href="https://github.com/openretriever/retriever"><img alt="Core runtime" src="https://img.shields.io/badge/Core-runtime-111827?style=for-the-badge&logo=github"></a>
+  <a href="https://openretriever-docs.pages.dev/"><img alt="Core runtime" src="https://img.shields.io/badge/Core-runtime-111827?style=for-the-badge"></a>
   <a href="https://openretriever-docs.pages.dev/"><img alt="Core docs" src="https://img.shields.io/badge/Core-docs-0f766e?style=for-the-badge"></a>
   <a href="https://retriever-space.pages.dev/"><img alt="Golden docs" src="https://img.shields.io/badge/Golden-docs-92400e?style=for-the-badge"></a>
   <a href="https://openretriever.org/"><img alt="Website" src="https://img.shields.io/badge/Website-openretriever.org-111827?style=for-the-badge"></a>
@@ -23,7 +23,7 @@
 
 ---
 
-GoldenRetriever is the examples and integration repository. Keep core runtime API details in [`openretriever/retriever`](https://github.com/openretriever/retriever); use this repo for runnable perception, memory, language, composition, robotics typing, notebook, and system-integration examples.
+GoldenRetriever is the examples and integration repository. Keep core runtime API details in the [Retriever core docs](https://openretriever-docs.pages.dev/); use this repo for runnable perception, memory, language, composition, robotics typing, notebook, and system-integration examples.
 
 ## Setup
 
@@ -45,7 +45,7 @@ pixi run -e golden-local python -c "import retriever; print(retriever.__file__)"
 If you are new to Retriever, start with the core visual quickstart in the core repository first:
 
 - Core docs: https://openretriever-docs.pages.dev/getting-started/visual-quickstart/
-- Core repo: https://github.com/openretriever/retriever
+- Core source: opens when `openretriever/retriever` visibility flips public. Until then, use the [source release status](https://openretriever.org/start/#source-release).
 
 That core quickstart uses `pixi run demo-webcam-detection` from `openretriever/retriever`; it is not a GoldenRetriever task. Then use Golden for robot-facing example families. The shortest Golden ladder is perception -> memory -> language -> composition:
 
@@ -177,9 +177,9 @@ See `RELEASE.md` for launch/docs validation and the optional package boundary ch
 
 - PyPI distribution: `retriever-core`
 - Python import: `retriever`
-- Runtime repository: `https://github.com/openretriever/retriever`
+- Runtime source: opens when `openretriever/retriever` visibility flips public.
 - Runtime docs: `https://openretriever-docs.pages.dev/`
-- Golden repository: `https://github.com/openretriever/golden-retriever`
+- Golden source: opens when `openretriever/golden-retriever` visibility flips public.
 - Golden docs target: `https://retriever-space.pages.dev/`
 
 ## Contributing And License
