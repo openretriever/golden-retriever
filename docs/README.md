@@ -119,6 +119,6 @@ Keep the public source-of-truth split explicit:
 
 - Core runtime API details belong in `openretriever/retriever`.
 - GoldenRetriever carries examples, tutorials, notebooks, robotics typing, and integration lanes.
-- Reusable Golden payloads should be loaded as Retriever Hub packs; a separate Golden PyPI package is not part of the first public launch path.
+- Reusable Golden payloads should be loaded as Retriever Hub packs; Golden is not a separate runtime package.
 - Heavy optional examples should stay clearly optional and mock-first where possible.
 - Removed or stale experimental prototypes should not be presented as the main path.

@@ -79,7 +79,7 @@ def main() -> None:
     print("Constructed WorldState:", sorted(world.object_poses.keys()))
     print("Constructed Plan skills:", [skill.name for skill in plan.skills])
     print("Arrow round-trip: Action OK")
-    print('Public path after launch: hub.use("openretriever/golden-retriever:WorldState")')
+    print('Hub reference: hub.use("openretriever/golden-retriever:WorldState")')
     print("Graph proof: run `pixi run demo-pipeline-html-viz` to validate and render an IR HTML artifact.")
 
 

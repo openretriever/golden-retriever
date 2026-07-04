@@ -32,14 +32,13 @@ Registry WorldState: _retriever_hub...WorldState
 Constructed WorldState: ['cup']
 Constructed Plan skills: ['pick']
 Arrow round-trip: Action OK
-Public path after launch: hub.use("openretriever/golden-retriever:WorldState")
+Hub reference: hub.use("openretriever/golden-retriever:WorldState")
 Graph proof: run `pixi run demo-pipeline-html-viz` to validate and render an IR HTML artifact.
 ```
 
-## Public Hub path after launch
+## Hub reference
 
-After `openretriever/golden-retriever` and the Hub index are public, users should
-load Golden exports the same way as any other Hub module:
+Golden exports load the same way as any other Hub module:
 
 ```python
 from retriever import hub
@@ -49,8 +48,7 @@ Plan = hub.use("openretriever/golden-retriever:Plan")
 convert_to_arrow = hub.use("openretriever/golden-retriever:convert_to_arrow")
 ```
 
-Golden does not need a separate first-launch PyPI package for this path. Users
-install the runtime once, then load domain packs through Hub.
+Golden does not need a separate runtime package for this path. Users install the runtime once, then load domain packs through Hub.
 
 ## What this proves
 

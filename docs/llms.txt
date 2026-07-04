@@ -19,13 +19,13 @@ Use this page when you want examples after understanding the core Retriever runt
 
 ## Core Boundary
 
-GoldenRetriever is not the core runtime. The runtime package is `retriever-core` and imports as `retriever`. Until `retriever-core==0.0.1` is published, Golden Pixi environments may use the current prerelease runtime bridge or a local `RETRIEVER_CORE_SRC` checkout. GoldenRetriever owns applied examples and reusable robot-facing type packs.
+GoldenRetriever is not the core runtime. The runtime package is `retriever-core` and imports as `retriever`. GoldenRetriever owns applied examples and reusable robot-facing type packs; use `RETRIEVER_CORE_SRC` only when validating unreleased runtime changes locally.
 
 ## Current Hub Type-Pack Direction
 
-The core runtime provides registry and Hub mechanics. GoldenRetriever already declares a Hub module manifest for applied types such as `WorldState`, `BeliefGraph`, `Skill`, `Plan`, `Trajectory`, and Arrow conversion helpers. The public `hub.use(...)` path becomes usable after `retriever-core`, the Golden source repo, and the OpenRetriever Hub index are all live.
+The core runtime provides registry and Hub mechanics. GoldenRetriever declares a Hub module manifest for applied types such as `WorldState`, `BeliefGraph`, `Skill`, `Plan`, `Trajectory`, and Arrow conversion helpers.
 
-Expected public reference after cutover:
+Hub reference:
 
 ```python
 from retriever import hub

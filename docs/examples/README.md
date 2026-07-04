@@ -40,7 +40,7 @@ Use source folders when you need implementation details after choosing a guide:
 - `examples/advanced/mujoco_manipulation/`
 - `examples/advanced/robosuite_lift/`
 - `examples/advanced/hierarchical_physics_demo/`
-- `examples/experimental/visualization/`
+- `examples/experimental/visualization/` — maintained lightweight pipeline HTML utility; keep it narrow until moved under `examples/advanced/`
 
 ## Scope Notes
 
