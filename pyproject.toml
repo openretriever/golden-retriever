@@ -48,6 +48,12 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
+# retriever-core provides the canonical standard types that
+# retriever_typing.v1 re-exports; publish retriever-core before this wheel.
+dependencies = [
+    "retriever-core>=0.0.1",
+    "numpy",
+]
 
 [project.urls]
 Homepage = "https://github.com/openretriever/golden-retriever"
