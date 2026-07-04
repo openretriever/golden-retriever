@@ -58,4 +58,4 @@ nav:
       - LeRobot Interop: robotics_typing_standard/08_lerobot_interop_and_dataset_profile.md
   - Core Docs: https://openretriever-docs.pages.dev/
   - Landing: https://openretriever.org/
-  - Source Status: https://openretriever.org/start/#source-release
+  - Source: https://github.com/openretriever/golden-retriever
