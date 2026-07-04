@@ -1,0 +1,42 @@
+# GoldenRetriever Examples
+
+> GoldenRetriever is the applied examples and integration surface for Retriever: perception, memory, language, composition, simulator/visualization demos, and Hub-loadable robotics type packs.
+
+Use this page when you want examples after understanding the core Retriever runtime.
+
+## Start Here
+
+- Golden overview: https://retriever-space.pages.dev/
+- Example guide overview: https://retriever-space.pages.dev/examples/
+- Perception and memory: https://retriever-space.pages.dev/examples/perception_and_memory_v1/
+- Language and grounding: https://retriever-space.pages.dev/examples/language_and_grounding_v1/
+- Pipeline composition: https://retriever-space.pages.dev/examples/pipeline_composition_v1/
+- Simulation and visualization: https://retriever-space.pages.dev/examples/simulation_and_visualization_v1/
+- Robotics typing overview: https://retriever-space.pages.dev/robotics_typing_standard/
+- Hub sharing profile: https://retriever-space.pages.dev/robotics_typing_standard/03_hub_sharing_profile/
+- Core docs: https://openretriever-docs.pages.dev/
+
+## Core Boundary
+
+GoldenRetriever is not the core runtime. The runtime package is `retriever-core` and imports as `retriever`. GoldenRetriever owns applied examples and reusable robot-facing type packs.
+
+## Current Hub Type-Pack Direction
+
+The core runtime provides registry and Hub mechanics. GoldenRetriever provides applied types such as `WorldState`, `BeliefGraph`, `Skill`, `Plan`, `Trajectory`, and Arrow conversion helpers as a Hub-loadable pack.
+
+Expected future reference:
+
+```python
+from retriever import hub
+
+WorldState = hub.use("openretriever/golden-retriever:WorldState")
+```
+
+If a source link is not yet publicly accessible, use the docs pages first; source visibility is the final public-release toggle.
+
+## Agent Guidance
+
+- Start from `AGENTS.md` in the GoldenRetriever repository.
+- Use docs pages for public behavior and examples.
+- Do not treat experimental lanes as stable unless their page marks them as promoted.
+- Do not include private notes or local filesystem paths in public docs.
