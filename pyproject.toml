@@ -61,6 +61,32 @@ Documentation = "https://retriever-space.pages.dev/"
 Repository = "https://github.com/openretriever/golden-retriever"
 Issues = "https://github.com/openretriever/golden-retriever/issues"
 
+# Retriever Hub module manifest: makes this repo hub-loadable so external
+# consumers can pull the applied type pack without a PyPI wheel:
+#   hub.use("openretriever/golden-retriever:WorldState")
+# Contract across versions is the registered schema, not class identity —
+# pin one ref per app. Standard types stay in retriever-core; these compose
+# them and never redefine one.
+[tool.retriever.module]
+module = "retriever_typing"
+min_retriever_version = "0.0.1"
+
+[tool.retriever.module.exports]
+WorldState = "retriever_typing.robotics_types:WorldState"
+RobotState = "retriever_typing.robotics_types:RobotState"
+BeliefGraph = "retriever_typing.robotics_types:BeliefGraph"
+Skill = "retriever_typing.robotics_types:Skill"
+Plan = "retriever_typing.robotics_types:Plan"
+StructuredPlan = "retriever_typing.robotics_types:StructuredPlan"
+TaskGoal = "retriever_typing.robotics_types:TaskGoal"
+Trajectory = "retriever_typing.robotics_types:Trajectory"
+ExecutionStatus = "retriever_typing.robotics_types:ExecutionStatus"
+Action = "retriever_typing.core_types:Action"
+Command = "retriever_typing.core_types:Command"
+Status = "retriever_typing.core_types:Status"
+convert_to_arrow = "retriever_typing.conversions:convert_to_arrow"
+convert_from_arrow = "retriever_typing.conversions:convert_from_arrow"
+
 [project.optional-dependencies]
 # Legacy/system stack (carried over from the current monorepo; expect to refine).
 golden = [
