@@ -309,6 +309,7 @@ demo-webcam-rerun = { cmd = "python examples/advanced/webcam_rerun/app.py", env 
 demo-pi05-mock = { cmd = "python -m examples.advanced.openpi_policy.app --mode mock --steps 8 --dt 0.1", env = { PYTHONPATH = "." } }
 demo-robosuite-mock = { cmd = "python -m examples.advanced.robosuite_lift.app --mode mock --steps 12 --dt 0.05", env = { PYTHONPATH = "." } }
 demo-robosuite-lift = { cmd = "python -m examples.advanced.robosuite_lift.app --mode robosuite --steps 80 --dt 0.05", env = { PYTHONPATH = "." } }
+demo-pipeline-html-viz = { cmd = "python examples/experimental/visualization/visualize_pipeline.py", env = { PYTHONPATH = "." } }
 demo-hierarchical-vla = { cmd = "python examples/advanced/hierarchical_vla/app.py --backend multiprocessing", env = { PYTHONPATH = "." } }
 demo-llm-streaming = { cmd = "python -m examples.advanced.llm_streaming_rl.app", env = { PYTHONPATH = "." } }
 demo-vlm-gridworld = { cmd = "python -m examples.advanced.vlm_gridworld.app", env = { PYTHONPATH = "." } }

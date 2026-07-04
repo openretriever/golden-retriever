@@ -138,7 +138,7 @@ Source:
 ### Self-Contained Pipeline HTML Viz
 
 ```bash
-pixi run python examples/experimental/visualization/visualize_pipeline.py
+pixi run demo-pipeline-html-viz
 ```
 
 What it shows:

@@ -28,7 +28,7 @@ They follow one design rule throughout: start from the generic standard payloads
 ## Experimental Utilities And Design Notes
 
 - `examples/advanced/web_command_interface/`: local browser command surface; keep it secondary until it has a README and a packaged task.
-- `examples/experimental/visualization/`: small self-contained IR visualization utility.
+- `examples/experimental/visualization/`: small self-contained IR visualization utility; run `pixi run demo-pipeline-html-viz`.
 - `examples/advanced/closed_loop_planning/`: extracted design patterns, not a runnable first-run example.
 
 ## Recommended Order

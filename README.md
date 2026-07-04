@@ -118,6 +118,7 @@ Use these optional lanes after the concise examples are clear:
 pixi run -e torch demo-webcam-rerun
 pixi run -e twist2 demo-twist2-rerun
 pixi run demo-robosuite-mock
+pixi run demo-pipeline-html-viz
 ```
 
 The current visual lanes cover webcam/Rerun perception, MuJoCo/TWIST2 simulation, MuJoCo manipulation, a mock-safe robosuite Lift smoke demo, hierarchical physics with HTML pipeline visualization, and local browser command interfaces. See `docs/examples/simulation_and_visualization_v1.md` for the public guide.

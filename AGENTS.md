@@ -10,8 +10,9 @@ fix the drift, not the reader.
 GoldenRetriever is the applied companion to the Retriever runtime
 (`retriever-core`): runnable perception / memory / language / simulation /
 visualization examples, plus `retriever_typing` — an applied
-robotics/planning type pack. The pack is intended to be Hub-loadable after
-the public `retriever-core` release and GitHub visibility cutover; prerelease
+robotics/planning type pack. The pack declares a Retriever Hub module
+manifest now; public `hub.use(...)` loading becomes usable after the
+public `retriever-core` release and GitHub visibility cutover. Prerelease
 Pixi environments still use the temporary `debug-retriever` runtime. The
 local build metadata still uses the `retriever-golden` package name, but a
 public PyPI wheel is not on the first launch path.
@@ -37,6 +38,7 @@ public PyPI wheel is not on the first launch path.
 pixi run test                                      # full Golden suite; currently 51 passed, 1 skipped
 pixi run -e golden-local demo-perception-detection-flow
 pixi run demo-robosuite-mock                       # simulation lane, mock mode
+pixi run demo-pipeline-html-viz                     # self-contained IR/HTML visualization
 pixi run demo-pi05-mock                            # pi0.5 policy lane, mock mode
 pixi run -e docs docs-build                        # mkdocs --strict
 pixi run build                                     # local retriever-golden wheel artifact; not first-launch PyPI path
