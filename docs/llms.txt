@@ -1,6 +1,6 @@
 # GoldenRetriever Examples
 
-> GoldenRetriever is the applied examples and integration surface for Retriever: perception, memory, language, composition, simulator/visualization demos, and planned Hub-loadable robotics type packs.
+> GoldenRetriever is the applied examples and integration surface for Retriever: perception, memory, language, composition, simulator/visualization demos, and Hub-loadable robotics type packs.
 
 Use this page when you want examples after understanding the core Retriever runtime.
 
@@ -22,7 +22,7 @@ GoldenRetriever is not the core runtime. The runtime package is `retriever-core`
 
 ## Current Hub Type-Pack Direction
 
-The core runtime provides registry and Hub mechanics. GoldenRetriever provides applied types such as `WorldState`, `BeliefGraph`, `Skill`, `Plan`, `Trajectory`, and Arrow conversion helpers. The Hub type-pack path is the release target after the public `retriever-core` package and source repo are live.
+The core runtime provides registry and Hub mechanics. GoldenRetriever already declares a Hub module manifest for applied types such as `WorldState`, `BeliefGraph`, `Skill`, `Plan`, `Trajectory`, and Arrow conversion helpers. The public `hub.use(...)` path becomes usable after the public `retriever-core` package and source repo are live.
 
 Expected public reference after cutover:
 
@@ -32,7 +32,7 @@ from retriever import hub
 WorldState = hub.use("openretriever/golden-retriever:WorldState")
 ```
 
-If a source link is not yet publicly accessible, use the docs pages first; source visibility is the final public-release toggle.
+Use the docs pages for stable public guidance; use source links when you need implementation details, issues, or contribution workflows.
 
 ## Agent Guidance
 

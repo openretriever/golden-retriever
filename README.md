@@ -81,7 +81,7 @@ Some heavier optional Pixi environments still resolve demo-only dependencies fro
 
 - `examples/advanced`: runnable advanced demos with concrete launch points. Start with `examples/advanced/README.md`.
 - `docs/examples`: public example-guide articles. Start with `docs/examples/README.md`.
-- `src/retriever_typing`: typed robotics and event/data helpers used by advanced demos; planned Hub type-pack surface after the public runtime/repo cutover.
+- `src/retriever_typing`: typed robotics and event/data helpers used by advanced demos; exposed through the Retriever Hub module manifest after the public runtime/repo cutover.
 - `docs/robotics_typing_standard`: typed payload and data-profile notes for this repo.
 - `notebooks`: git-friendly notebook sources and generated notebook artifacts. Start with `notebooks/README.md`.
 - `examples/experimental`: heavier prototypes that are still valuable, but less polished.
