@@ -305,6 +305,7 @@ demo-stateful-replanning = { cmd = "python examples/advanced/state_management/st
 demo-perception-replay-to-belief = { cmd = "python examples/advanced/state_management/perception_replay_to_belief.py --mode combined --steps 12", env = { PYTHONPATH = "." } }
 demo-perception-belief-control = { cmd = "python examples/advanced/functional_wiring/perception_belief_control_pipeline.py", env = { PYTHONPATH = "." } }
 demo-composable-pipelines = { cmd = "python examples/advanced/core_composition/composable_pipelines.py", env = { PYTHONPATH = "." } }
+demo-golden-hub-pack = { cmd = "python examples/advanced/core_composition/golden_hub_pack_smoke.py", env = { PYTHONPATH = "." } }
 demo-webcam-rerun = { cmd = "python examples/advanced/webcam_rerun/app.py", env = { PYTHONPATH = "." } }
 demo-pi05-mock = { cmd = "python -m examples.advanced.openpi_policy.app --mode mock --steps 8 --dt 0.1", env = { PYTHONPATH = "." } }
 demo-robosuite-mock = { cmd = "python -m examples.advanced.robosuite_lift.app --mode mock --steps 12 --dt 0.05", env = { PYTHONPATH = "." } }

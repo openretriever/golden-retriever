@@ -9,6 +9,7 @@ They follow one design rule throughout: start from the generic standard payloads
 - `perception_and_memory_v1.md`: concise perception, belief, replay, and composition ladder.
 - `language_and_grounding_v1.md`: concise caption, grounding, and primitive plan-text ladder.
 - `pipeline_composition_v1.md`: newer registry-backed composition surfaces.
+- `golden_hub_packs_v1.md`: source-checkout proof that Golden exports load as Hub packs.
 - `simulation_and_visualization_v1.md`: optional visual/simulator examples after the concise ladder.
 
 ## Maintained Example Families

@@ -66,6 +66,11 @@ pixi run -e golden-local demo-perception-detection-flow</code></pre>
     <strong>See richer demos</strong>
     <small>Rerun, MuJoCo/TWIST2, robosuite mock, and generated pipeline HTML.</small>
   </a>
+  <a class="gr-action-card" href="examples/golden_hub_packs_v1/">
+    <span>Hub packs</span>
+    <strong>Load reusable payloads</strong>
+    <small>Smoke the Golden Hub manifest, registry visibility, and conversion helpers.</small>
+  </a>
   <a class="gr-action-card" href="robotics_typing_standard/">
     <span>Typed payloads</span>
     <strong>Use stable interfaces</strong>
@@ -85,6 +90,7 @@ Run these from the GoldenRetriever repository after the core quickstart works. E
     pixi run -e golden-local demo-language-caption-plan
     pixi run -e golden-local demo-language-grounded-reference
     pixi run -e golden-local demo-composable-pipelines
+    pixi run demo-golden-hub-pack
     ```
 
 === "Visualization"

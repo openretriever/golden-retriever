@@ -11,6 +11,7 @@ Use this page when you want examples after understanding the core Retriever runt
 - Perception and memory: https://retriever-space.pages.dev/examples/perception_and_memory_v1/
 - Language and grounding: https://retriever-space.pages.dev/examples/language_and_grounding_v1/
 - Pipeline composition: https://retriever-space.pages.dev/examples/pipeline_composition_v1/
+- Golden Hub packs: https://retriever-space.pages.dev/examples/golden_hub_packs_v1/
 - Simulation and visualization: https://retriever-space.pages.dev/examples/simulation_and_visualization_v1/
 - Robotics typing overview: https://retriever-space.pages.dev/robotics_typing_standard/
 - Hub sharing profile: https://retriever-space.pages.dev/robotics_typing_standard/03_hub_sharing_profile/
