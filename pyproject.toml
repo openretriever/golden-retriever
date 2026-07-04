@@ -31,6 +31,8 @@ exclude = [
     "/experiments/*/results",
 ]
 
+# Local/future wheel metadata only. The first public launch distributes Golden
+# examples and type packs through Retriever Hub, not as a separate PyPI product.
 [project]
 name = "retriever-golden"
 version = "0.0.0"

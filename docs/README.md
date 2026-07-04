@@ -4,7 +4,7 @@
   <div class="gr-hero-copy">
     <p class="gr-eyebrow">Applied examples for Retriever</p>
     <h1>Run robot-facing examples after the core runtime quickstart.</h1>
-    <p class="gr-lede">GoldenRetriever is the companion examples surface for the core <code>retriever</code> runtime: concise perception, memory, language, composition, visualization, and simulator lanes.</p>
+    <p class="gr-lede">GoldenRetriever is the companion examples and Hub pack surface for the core <code>retriever</code> runtime: concise perception, memory, language, composition, visualization, simulator lanes, and reusable robot-facing type packs.</p>
     <div class="gr-route-pills">
       <a href="https://openretriever.org/">Landing</a>
       <a href="https://openretriever-docs.pages.dev/">Core docs</a>
@@ -109,5 +109,6 @@ For human readers and AI agents, keep the source of truth split explicit:
 
 - Core runtime API details belong in `openretriever/retriever`.
 - GoldenRetriever carries examples, tutorials, notebooks, robotics typing, and integration lanes.
+- Reusable Golden payloads should be loaded as Retriever Hub packs; a separate Golden PyPI package is not part of the first public launch path.
 - Heavy optional examples should stay clearly optional and mock-first where possible.
 - Removed or stale experimental prototypes should not be presented as the main path.

@@ -32,7 +32,7 @@ Before making the repository public:
 
 ## Package Boundary
 
-First public launch does not require publishing a `retriever-golden` PyPI package. Golden's applied robotics/planning payloads are exposed through the Retriever Hub module manifest in `pyproject.toml`, and the wheel remains an optional local/future artifact. If a wheel is published later, it should ship only the lightweight `retriever_typing` package; heavy examples, notebooks, benchmarks, generated outputs, and optional robot/model stacks remain source-checkout material or local artifacts.
+First public launch does not require publishing a separate Golden PyPI package. Golden's applied robotics/planning payloads are exposed through the Retriever Hub module manifest in `pyproject.toml`, and any wheel remains an optional local/future artifact. If a wheel is published later, it should ship only the lightweight compatibility/type-pack surface; heavy examples, notebooks, benchmarks, generated outputs, and optional robot/model stacks remain source-checkout material or local artifacts.
 
 ## Runtime Dependency
 

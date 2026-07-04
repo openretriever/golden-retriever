@@ -14,8 +14,8 @@ robotics/planning type pack. The pack declares a Retriever Hub module
 manifest now; public `hub.use(...)` loading becomes usable after the
 public `retriever-core` release and GitHub visibility cutover. Prerelease
 Pixi environments still use the temporary `debug-retriever` runtime. The
-local build metadata still uses the `retriever-golden` package name, but a
-public PyPI wheel is not on the first launch path.
+local build metadata remains for wheel smoke tests, but a public Golden
+PyPI wheel is not on the first launch path.
 
 - Python: **3.11+**. License: Apache-2.0.
 - Docs site: <https://retriever-space.pages.dev/>
@@ -41,7 +41,7 @@ pixi run demo-robosuite-mock                       # simulation lane, mock mode
 pixi run demo-pipeline-html-viz                     # self-contained IR/HTML visualization
 pixi run demo-pi05-mock                            # pi0.5 policy lane, mock mode
 pixi run -e docs docs-build                        # mkdocs --strict
-pixi run build                                     # local retriever-golden wheel artifact; not first-launch PyPI path
+pixi run build                                     # local wheel artifact; not first-launch PyPI path
 ```
 
 Environments: `default` and `golden-local` currently resolve the runtime

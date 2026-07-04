@@ -13,7 +13,7 @@ import os
 import csv
 import numpy as np
 
-from retriever.flow import Flow, flow_io, Rate, Trigger, Pipeline, Latest
+from retriever.flow import Flow, io, Rate, Trigger, Pipeline, Latest
 
 # NOTE: SIZES defines the number of uint64 elements in the payload.
 # Since each uint64 is 8 bytes, the actual payload size in bytes is: Element Count * 8.
@@ -37,7 +37,7 @@ p.add_argument("--duration", type=float, default=120.0)
 args = p.parse_args()
 
 
-@flow_io
+@io
 @dataclass
 class RandomSequence:
     data: np.ndarray
@@ -49,7 +49,7 @@ class SourceFlow(Flow[None, RandomSequence]):
         self.i = 0
         self.j = 0
 
-    def run(self, _):
+    def step(self, _):
         random_data = np.array(
             np.random.randint(255, size=SIZES[self.i], dtype=np.uint64)
         )
@@ -73,7 +73,7 @@ class SinkFlow(Flow[RandomSequence, None]):
         self.current_size = 0
         self.n = 0
 
-    def run(self, input: RandomSequence):
+    def step(self, input: RandomSequence):
         t_received = time.perf_counter_ns()
         length = len(input.data) * 8  # As it is Uint64
         if length != self.current_size:
