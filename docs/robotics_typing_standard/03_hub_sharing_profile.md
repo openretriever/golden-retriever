@@ -1,6 +1,6 @@
 # Hub Sharing Profile (v1)
 
-This profile defines the minimum typing requirements for shareable robotics flows.
+This profile defines the minimum typing requirements for shareable robotics flows in GoldenRetriever Hub modules. Core runtime Hub mechanics live in the Retriever docs: https://openretriever-docs.pages.dev/ecosystem/.
 
 ## 1. Default Policy
 

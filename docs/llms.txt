@@ -1,8 +1,8 @@
-# GoldenRetriever Examples
+# GoldenRetriever Hub Module
 
-> GoldenRetriever is the applied examples and integration surface for Retriever: perception, memory, language, composition, simulator/visualization demos, and Hub-loadable robotics type packs.
+> GoldenRetriever is the first applied robotics Hub module for Retriever: Hub-loadable robotics type packs plus maintained perception, memory, language, composition, simulator/visualization, and robosuite demos.
 
-Use this page when you want examples after understanding the core Retriever runtime.
+Use this page after the core Retriever quickstart when you want applied examples or reusable robot-facing type packs.
 
 ## Start Here
 
@@ -12,6 +12,7 @@ Use this page when you want examples after understanding the core Retriever runt
 - Language and grounding: https://retriever-space.pages.dev/examples/language_and_grounding_v1/
 - Pipeline composition: https://retriever-space.pages.dev/examples/pipeline_composition_v1/
 - Golden Hub packs: https://retriever-space.pages.dev/examples/golden_hub_packs_v1/
+- Core visual quickstart: https://openretriever-docs.pages.dev/getting-started/visual-quickstart/
 - Simulation and visualization: https://retriever-space.pages.dev/examples/simulation_and_visualization_v1/
 - Robotics typing overview: https://retriever-space.pages.dev/robotics_typing_standard/
 - Hub sharing profile: https://retriever-space.pages.dev/robotics_typing_standard/03_hub_sharing_profile/
@@ -19,7 +20,7 @@ Use this page when you want examples after understanding the core Retriever runt
 
 ## Core Boundary
 
-GoldenRetriever is not the core runtime. The runtime package is `retriever-core` and imports as `retriever`. GoldenRetriever owns applied examples and reusable robot-facing type packs; use `RETRIEVER_CORE_SRC` only when validating unreleased runtime changes locally.
+GoldenRetriever is not the core runtime. The runtime package is `retriever-core` and imports as `retriever`. GoldenRetriever owns applied examples and reusable robot-facing type packs.
 
 ## Current Hub Type-Pack Direction
 

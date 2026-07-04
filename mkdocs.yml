@@ -1,5 +1,5 @@
-site_name: GoldenRetriever Examples
-site_description: Advanced examples and system integrations for Retriever.
+site_name: GoldenRetriever Hub Module
+site_description: Applied robotics examples and type packs for Retriever Hub.
 site_url: https://retriever-space.pages.dev/
 theme:
   name: material
@@ -44,10 +44,10 @@ nav:
   - Overview: README.md
   - Example Guides:
       - Overview: examples/README.md
+      - Golden Hub Packs: examples/golden_hub_packs_v1.md
       - Perception and Memory: examples/perception_and_memory_v1.md
       - Language and Grounding: examples/language_and_grounding_v1.md
       - Pipeline Composition: examples/pipeline_composition_v1.md
-      - Golden Hub Packs: examples/golden_hub_packs_v1.md
       - Simulation and Visualization: examples/simulation_and_visualization_v1.md
   - Robotics Typing:
       - Overview: robotics_typing_standard/README.md

@@ -1,9 +1,13 @@
-# Golden Hub Packs v1
+# GoldenRetriever Hub Module v1
 
-GoldenRetriever is the example and type-pack catalog for Retriever. The core
+GoldenRetriever is the first applied robotics Hub module for Retriever. The core
 runtime package is `retriever-core` and imports as `retriever`; Golden's reusable
 robot-facing payloads are exposed through the Retriever Hub module manifest in
 `pyproject.toml`.
+
+## Core boundary
+
+Start with the core visual quickstart if you are new to Retriever: https://openretriever-docs.pages.dev/getting-started/visual-quickstart/. The core runtime provides Flow, Pipeline, registry, IR, and Hub mechanics; Golden provides applied robot-facing payloads and maintained examples.
 
 ## Fast proof from source checkout
 

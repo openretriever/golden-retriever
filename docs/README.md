@@ -1,10 +1,10 @@
-# GoldenRetriever Examples
+# GoldenRetriever Hub Module
 
 <div class="gr-hero gr-hero-split">
   <div class="gr-hero-copy">
-    <p class="gr-eyebrow">Applied examples for Retriever</p>
-    <h1>Run robot-facing examples after the core runtime quickstart.</h1>
-    <p class="gr-lede">GoldenRetriever is the companion examples and Hub pack surface for the core <code>retriever</code> runtime: concise perception, memory, language, composition, visualization, simulator lanes, and reusable robot-facing type packs.</p>
+    <p class="gr-eyebrow">Applied Retriever Hub module</p>
+    <h1>Load the first applied robotics Hub module after the core quickstart.</h1>
+    <p class="gr-lede">GoldenRetriever is the first applied robotics Hub module for the core <code>retriever</code> runtime: reusable robot-facing type packs plus maintained perception, memory, language, composition, visualization, simulator, and robosuite lanes.</p>
     <div class="gr-route-pills">
       <a href="https://openretriever.org/">Landing</a>
       <a href="https://openretriever-docs.pages.dev/">Core docs</a>
@@ -15,41 +15,46 @@
   <div class="gr-command-panel">
     <img src="assets/retriever-illustrative.jpeg" alt="GoldenRetriever logo" class="gr-hero-logo" />
     <p class="gr-panel-label">First Golden command</p>
-    <pre><code>pixi install -e golden-local
-pixi run -e golden-local demo-perception-detection-flow</code></pre>
-    <p class="gr-panel-note">Expected result: a small terminal demo over the shared synthetic scene. No robot hardware required.</p>
+    <pre><code>pixi run demo-golden-hub-pack</code></pre>
+    <p class="gr-panel-note">Expected result: the Golden Hub manifest loads, exported types register, and Arrow helpers round-trip locally.</p>
   </div>
 </div>
 
 !!! note "Prerequisite"
-    If you are new to Retriever, complete the [core visual quickstart](https://openretriever-docs.pages.dev/getting-started/visual-quickstart/) first. The command `pixi run demo-webcam-detection` belongs to `openretriever/retriever`, not this repository. Golden starts after that with `pixi run -e golden-local demo-perception-detection-flow`.
+    If you are new to Retriever, complete the [core visual quickstart](https://openretriever-docs.pages.dev/getting-started/visual-quickstart/) first. The command `pixi run demo-webcam-detection` belongs to `openretriever/retriever`, not this repository. Golden starts after that with `pixi run demo-golden-hub-pack`, then the concise perception and memory ladder.
 
 !!! info "Runtime boundary"
-    The core runtime distribution is `retriever-core` and imports as `retriever`. Golden itself is not a second runtime package; reusable applied types and examples are exposed through Retriever Hub and source docs. Use `RETRIEVER_CORE_SRC` only when validating unreleased runtime changes locally.
+    The core runtime distribution is `retriever-core` and imports as `retriever`. Golden itself is not a second runtime package; reusable applied types and examples are exposed through Retriever Hub and source docs.
 
 ## Recommended Path
 
 <div class="gr-path-grid">
-  <a class="gr-path-step" href="examples/perception_and_memory_v1/">
+  <a class="gr-path-step" href="examples/golden_hub_packs_v1/">
     <span>01</span>
+    <strong>Golden Hub proof</strong>
+    <p>Load Golden exports through the runtime Hub loader and verify registry/Arrow behavior.</p>
+    <code>pixi run demo-golden-hub-pack</code>
+  </a>
+  <a class="gr-path-step" href="examples/perception_and_memory_v1/">
+    <span>02</span>
     <strong>Perception and memory</strong>
     <p>Detection, replay, belief, memory, and composed control over one small scene.</p>
     <code>pixi run -e golden-local demo-perception-detection-flow</code>
   </a>
   <a class="gr-path-step" href="examples/language_and_grounding_v1/">
-    <span>02</span>
+    <span>03</span>
     <strong>Language and grounding</strong>
     <p>Captioning, grounded references, and primitive plan-text examples.</p>
     <code>pixi run -e golden-local demo-language-caption-plan</code>
   </a>
   <a class="gr-path-step" href="examples/pipeline_composition_v1/">
-    <span>03</span>
+    <span>04</span>
     <strong>Composition</strong>
     <p>Registry-backed composition and reusable pipeline surfaces.</p>
     <code>pixi run -e golden-local demo-composable-pipelines</code>
   </a>
   <a class="gr-path-step" href="examples/simulation_and_visualization_v1/">
-    <span>04</span>
+    <span>05</span>
     <strong>Visualization</strong>
     <p>Rerun, mock-safe robosuite, MuJoCo/TWIST2, and HTML pipeline views.</p>
     <code>pixi run demo-robosuite-mock</code>
@@ -88,12 +93,12 @@ Run these from the GoldenRetriever repository after the core quickstart works. E
 === "Concise ladder"
 
     ```bash
+    pixi run demo-golden-hub-pack
     pixi run -e golden-local demo-perception-detection-flow
     pixi run -e golden-local demo-memory-belief-flow
     pixi run -e golden-local demo-language-caption-plan
     pixi run -e golden-local demo-language-grounded-reference
     pixi run -e golden-local demo-composable-pipelines
-    pixi run demo-golden-hub-pack
     ```
 
 === "Visualization"

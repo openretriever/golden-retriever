@@ -4,11 +4,11 @@
 
 # 🐕 <span style="background: linear-gradient(45deg, #e96443 0%, #904e95 25%, #e65c00 50%, #f9d423 75%, #fc00ff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: bold; font-size: 1.1em;">**GoldenRetriever**</span>
 
-## **Companion Examples and System Integrations for Retriever**
+## **The First Applied Robotics Hub Module for Retriever**
 
 <div align="center">
 
-<p>Advanced examples, system integrations, and research prototypes built on top of the core <code>retriever</code> runtime.</p>
+<p>GoldenRetriever is the first applied robotics Hub module for the core <code>retriever</code> runtime: maintained examples, reusable robot-facing type packs, and simulator/visualization lanes.</p>
 
 <p>
   <a href="https://openretriever-docs.pages.dev/"><img alt="Core runtime" src="https://img.shields.io/badge/Core-runtime-111827?style=for-the-badge"></a>
@@ -23,13 +23,12 @@
 
 ---
 
-GoldenRetriever is the examples and integration repository. Keep core runtime API details in the [Retriever core docs](https://openretriever-docs.pages.dev/); use this repo for runnable perception, memory, language, composition, robotics typing, notebook, and system-integration examples.
+GoldenRetriever is the applied robotics Hub module and companion example catalog for Retriever. Keep core runtime API details in the [Retriever core docs](https://openretriever-docs.pages.dev/); use this repo for runnable perception, memory, language, composition, robotics typing, notebook, simulation, and visualization examples.
 
 ## Project Boundary
 
 - The core runtime distribution is `retriever-core`; Python imports remain `retriever`.
 - GoldenRetriever is not a second runtime package. It is the examples, integration, and Hub-loadable applied type-pack surface for Retriever.
-- If you are validating unreleased core runtime changes locally, set `RETRIEVER_CORE_SRC=<core-repo>/src` before running tests or Hub-pack smokes.
 
 ## Setup
 
@@ -44,7 +43,7 @@ pixi install -e golden-local
 pixi run -e golden-local python -c "import retriever; print(retriever.__file__)"
 ```
 
-`golden-local` and `golden-perception` are retained as stable launch environments for existing demo commands. If you are validating unreleased core changes locally, set `RETRIEVER_CORE_SRC=<core-repo>/src` before running tests or Hub-pack smokes.
+`golden-local` and `golden-perception` are retained as stable launch environments for existing demo commands.
 
 ## Recommended Launch Points
 
@@ -53,9 +52,10 @@ If you are new to Retriever, start with the core visual quickstart in the core r
 - Core docs: https://openretriever-docs.pages.dev/getting-started/visual-quickstart/
 - Core source: https://github.com/openretriever/retriever
 
-That core quickstart uses `pixi run demo-webcam-detection` from `openretriever/retriever`; it is not a GoldenRetriever task. Then use Golden for robot-facing example families. The shortest Golden ladder is perception -> memory -> language -> composition:
+That core quickstart uses `pixi run demo-webcam-detection` from `openretriever/retriever`; it is not a GoldenRetriever task. Then use Golden for robot-facing Hub-pack proof and example families. First prove the module boundary, then follow the concise perception -> memory -> language -> composition ladder:
 
 ```bash
+pixi run demo-golden-hub-pack
 pixi run -e golden-local demo-perception-detection-flow
 pixi run -e golden-local demo-memory-belief-flow
 pixi run -e golden-local demo-language-caption-plan
@@ -87,10 +87,9 @@ Some heavier optional Pixi environments still resolve demo-only dependencies fro
 
 - `examples/advanced`: runnable advanced demos with concrete launch points. Start with `examples/advanced/README.md`.
 - `docs/examples`: public example-guide articles. Start with `docs/examples/README.md`.
-- `src/retriever_typing`: typed robotics and event/data helpers used by advanced demos; exposed through the Retriever Hub module manifest after the public runtime/repo cutover.
+- `src/retriever_typing`: typed robotics and event/data helpers used by advanced demos and exposed through the Retriever Hub module manifest.
 - `docs/robotics_typing_standard`: typed payload and data-profile notes for this repo.
 - `notebooks`: git-friendly notebook sources and generated notebook artifacts. Start with `notebooks/README.md`.
-- `examples/experimental`: heavier prototypes that are still valuable, but less polished.
 - `docs`: public topic-based docs; `mkdocs.yml` provides a hostable site map.
 
 ## Example Families
@@ -110,7 +109,6 @@ Some heavier optional Pixi environments still resolve demo-only dependencies fro
 - `examples/advanced/mujoco_manipulation`: MuJoCo manipulation with Rerun logging.
 - `examples/advanced/robosuite_lift`: mock-safe robosuite Lift smoke demo.
 - `examples/advanced/hierarchical_physics_demo`: physics demos with HTML pipeline visualization.
-- `examples/advanced/web_command_interface`: local browser command interface.
 
 For the end-to-end perception -> memory -> composition walkthrough, see `docs/examples/perception_and_memory_v1.md`. For registry-backed composition surfaces, continue with `docs/examples/pipeline_composition_v1.md`.
 
@@ -127,7 +125,7 @@ pixi run demo-robosuite-mock
 pixi run demo-pipeline-html-viz
 ```
 
-The current visual lanes cover webcam/Rerun perception, MuJoCo/TWIST2 simulation, MuJoCo manipulation, a mock-safe robosuite Lift smoke demo, hierarchical physics with HTML pipeline visualization, and local browser command interfaces. See `docs/examples/simulation_and_visualization_v1.md` for the public guide.
+The current visual lanes cover webcam/Rerun perception, MuJoCo/TWIST2 simulation, MuJoCo manipulation, a mock-safe robosuite Lift smoke demo, hierarchical physics with HTML pipeline visualization, and the promoted pipeline HTML utility. See `docs/examples/simulation_and_visualization_v1.md` for the public guide.
 
 ## Typed Payload Demos
 

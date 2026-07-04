@@ -1,15 +1,15 @@
 # Example Guides
 
-GoldenRetriever is the applied examples surface for Retriever. Use these guides after the core visual quickstart, when you want robot-facing perception, memory, language, composition, simulation, visualization, and reusable type-pack examples.
+GoldenRetriever is the first applied robotics Hub module for Retriever. Use these guides after the core visual quickstart when you want Hub-pack proof, robot-facing perception, memory, language, composition, simulation, visualization, and reusable type-pack examples. Back to core docs: https://openretriever-docs.pages.dev/
 
 Design rule: start from standard payloads in Retriever core; put applied robotics/planning payloads in Golden type packs or local example modules only when that boundary is reusable.
 
 ## Recommended Path
 
-1. [Perception and Memory](perception_and_memory_v1.md) — detection, belief, replay, and composed control over one small scene.
-2. [Language and Grounding](language_and_grounding_v1.md) — captioning, grounded references, and primitive plan text.
-3. [Pipeline Composition](pipeline_composition_v1.md) — registry-backed composition and reusable pipeline surfaces.
-4. [Golden Hub Packs](golden_hub_packs_v1.md) — source-checkout proof that Golden exports load as Hub packs.
+1. [Golden Hub Packs](golden_hub_packs_v1.md) — source-checkout proof that Golden exports load as Hub packs.
+2. [Perception and Memory](perception_and_memory_v1.md) — detection, belief, replay, and composed control over one small scene.
+3. [Language and Grounding](language_and_grounding_v1.md) — captioning, grounded references, and primitive plan text.
+4. [Pipeline Composition](pipeline_composition_v1.md) — registry-backed composition and reusable pipeline surfaces.
 5. [Simulation and Visualization](simulation_and_visualization_v1.md) — webcam/Rerun, MuJoCo/TWIST2, mock-safe robosuite, and HTML pipeline views.
 
 ## Maintained Example Families
@@ -23,7 +23,7 @@ Design rule: start from standard payloads in Retriever core; put applied robotic
 | Webcam + Rerun | Webcam/mock perception with live visualization and replay helpers. | [Simulation and Visualization](simulation_and_visualization_v1.md) |
 | TWIST2 / MuJoCo | Multi-rate simulator, policy, and visualization loops. | `pixi run -e twist2 demo-twist2-rerun` |
 | RoboSuite Lift | Mock-safe robosuite wrapper and optional real robosuite mode. | `pixi run demo-robosuite-mock` |
-| Pipeline HTML Viz | Small deterministic IR/HTML graph visualization utility. | `pixi run demo-pipeline-html-viz` |
+| Pipeline HTML Viz | Maintained promoted IR/HTML graph visualization utility. | `pixi run demo-pipeline-html-viz` |
 
 ## Source Folders
 
@@ -40,7 +40,7 @@ Use source folders when you need implementation details after choosing a guide:
 - `examples/advanced/mujoco_manipulation/`
 - `examples/advanced/robosuite_lift/`
 - `examples/advanced/hierarchical_physics_demo/`
-- `examples/experimental/visualization/` — maintained lightweight pipeline HTML utility; keep it narrow until moved under `examples/advanced/`
+- Pipeline HTML visualization currently lives in `examples/experimental/visualization/`, but is promoted through the public `demo-pipeline-html-viz` task and docs page.
 
 ## Scope Notes
 

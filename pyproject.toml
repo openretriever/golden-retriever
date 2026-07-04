@@ -37,7 +37,7 @@ exclude = [
 [project]
 name = "golden-retriever-examples"
 version = "0.0.0"
-description = "Advanced examples and system integrations built on the Retriever runtime."
+description = "Applied robotics examples and Hub-distributed type packs for Retriever."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "Apache-2.0" }

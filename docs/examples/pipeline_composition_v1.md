@@ -1,6 +1,6 @@
 # Core Composition Surfaces v1
 
-This guide covers the registry-backed pipeline composition surfaces used by the Golden examples. Keep the examples on the packaged runtime path; use a local `RETRIEVER_CORE_SRC` checkout only when validating unreleased runtime changes.
+This guide covers the registry-backed pipeline composition surfaces used by the Golden examples. Keep the examples on the packaged runtime path and treat this page as the public composition lane.
 
 ## Runtime check
 
@@ -9,7 +9,7 @@ pixi install -e golden-local
 pixi run -e golden-local python -c "import retriever; print(retriever.__file__)"
 ```
 
-The printed path should resolve to the `retriever` runtime package used by this environment. If you set `RETRIEVER_CORE_SRC`, it should point at that local checkout; otherwise it should resolve to the installed runtime distribution.
+The printed path should resolve to the `retriever` runtime package used by this environment.
 
 ## First runnable example
 

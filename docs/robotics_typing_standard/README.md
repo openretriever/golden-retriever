@@ -1,6 +1,6 @@
 # Robotics Typing Standard
 
-This folder is the GoldenRetriever reference pack for typed robotics payloads, compositional flow contracts, and event/data profiles.
+This folder is the GoldenRetriever Hub-module reference pack for typed robotics payloads, compositional flow contracts, and event/data profiles. Core runtime types and mechanics live in the Retriever docs: https://openretriever-docs.pages.dev/concepts/standard-types/.
 
 ## Start Here
 
