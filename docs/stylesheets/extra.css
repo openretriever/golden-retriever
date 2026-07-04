@@ -182,7 +182,8 @@
 }
 
 .gr-action-grid,
-.gr-path-grid {
+.gr-path-grid,
+.gr-demo-grid {
   display: grid;
   gap: 1rem;
 }
@@ -197,8 +198,14 @@
   margin: 1rem 0 2rem;
 }
 
+.gr-demo-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 1rem 0 2rem;
+}
+
 .gr-action-card,
-.gr-path-step {
+.gr-path-step,
+.gr-demo-card {
   border: 1px solid var(--gr-border);
   border-radius: 1.1rem;
   background: rgba(255, 255, 255, 0.95);
@@ -211,14 +218,16 @@
 }
 
 .gr-action-card:hover,
-.gr-path-step:hover {
+.gr-path-step:hover,
+.gr-demo-card:hover {
   border-color: rgba(249, 115, 22, 0.45);
   box-shadow: 0 20px 40px rgba(249, 115, 22, 0.12);
   transform: translateY(-2px);
 }
 
 .gr-action-card span,
-.gr-path-step span {
+.gr-path-step span,
+.gr-demo-card span {
   color: var(--gr-orange);
   display: block;
   font-size: 0.72rem;
@@ -230,18 +239,23 @@
 
 .gr-action-card strong,
 .gr-path-step strong,
+.gr-demo-card strong,
 .gr-action-card small,
-.gr-path-step p {
+.gr-path-step p,
+.gr-demo-card p {
   display: block;
 }
 
 .gr-action-card strong,
-.gr-path-step strong {
+.gr-path-step strong,
+.gr-demo-card strong {
   color: var(--gr-ink);
 }
 
 .gr-action-card small,
-.gr-path-step p {
+.gr-path-step p,
+.gr-demo-card p,
+.gr-demo-card dd {
   color: var(--gr-muted);
 }
 
@@ -250,16 +264,60 @@
   margin: 0.45rem 0 0.8rem;
 }
 
+.gr-demo-card {
+  display: block;
+}
+
+.gr-demo-card-primary {
+  background:
+    radial-gradient(circle at 88% 10%, rgba(15, 118, 110, 0.10), transparent 14rem),
+    radial-gradient(circle at 8% 10%, rgba(249, 115, 22, 0.14), transparent 12rem),
+    rgba(255, 255, 255, 0.98);
+}
+
+.gr-demo-card p {
+  font-size: 0.86rem;
+  margin: 0.55rem 0 0.8rem;
+}
+
+.gr-demo-card dl {
+  border-top: 1px solid rgba(241, 216, 173, 0.8);
+  display: grid;
+  gap: 0.42rem 0.75rem;
+  grid-template-columns: 7.8rem minmax(0, 1fr);
+  margin: 0.9rem 0 0;
+  padding-top: 0.85rem;
+}
+
+.gr-demo-card dt {
+  color: #8a4c00;
+  font-size: 0.68rem;
+  font-weight: 820;
+  letter-spacing: 0.12em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.gr-demo-card dd {
+  font-size: 0.78rem;
+  margin: 0;
+}
+
 @media screen and (max-width: 1100px) {
   .gr-path-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .gr-demo-grid {
+    grid-template-columns: 1fr;
   }
 }
 
 @media screen and (max-width: 760px) {
   .gr-hero-split,
   .gr-action-grid,
-  .gr-path-grid {
+  .gr-path-grid,
+  .gr-demo-grid {
     grid-template-columns: 1fr;
   }
 

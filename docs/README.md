@@ -61,6 +61,75 @@
   </a>
 </div>
 
+## Demo Gallery
+
+Pick one demo by the artifact you want to see. The commands below are the
+current promoted Golden surface: mock-safe first, richer simulator/model lanes
+only when their optional environment is installed.
+
+<div class="gr-demo-grid">
+  <a class="gr-demo-card gr-demo-card-primary" href="examples/golden_hub_packs_v1/">
+    <span>Hub proof</span>
+    <strong>Load Golden as a Retriever Hub module</strong>
+    <p>Proves the extension boundary before any robot demo: manifest load, runtime registry visibility, exported type pack, and Arrow conversion helpers.</p>
+    <dl>
+      <dt>Command</dt><dd><code>pixi run demo-golden-hub-pack</code></dd>
+      <dt>Expected artifact</dt><dd>Terminal summary: exports, registry lookup, constructed payloads, Arrow round-trip.</dd>
+      <dt>Dependency level</dt><dd>Source checkout only; no robot, camera, model, or simulator.</dd>
+    </dl>
+  </a>
+  <a class="gr-demo-card" href="examples/perception_and_memory_v1/">
+    <span>Concise ladder</span>
+    <strong>Perception -> memory over one scene</strong>
+    <p>Shows the applied example story without hardware: detections feed belief state and remembered pointing over a small synthetic scene.</p>
+    <dl>
+      <dt>Command</dt><dd><code>pixi run -e golden-local demo-perception-detection-flow</code></dd>
+      <dt>Expected artifact</dt><dd>Small terminal trace of detections or memory updates.</dd>
+      <dt>Dependency level</dt><dd>Mock/local path; no camera or robot required.</dd>
+    </dl>
+  </a>
+  <a class="gr-demo-card" href="examples/language_and_grounding_v1/">
+    <span>Language</span>
+    <strong>Caption, ground, and sketch a plan</strong>
+    <p>Connects simple language payloads to grounded references and primitive plan text, after perception/memory are clear.</p>
+    <dl>
+      <dt>Command</dt><dd><code>pixi run -e golden-local demo-language-caption-plan</code></dd>
+      <dt>Expected artifact</dt><dd>Terminal caption/plan text over the shared scene.</dd>
+      <dt>Dependency level</dt><dd>Mock/local path; model-backed lanes stay optional.</dd>
+    </dl>
+  </a>
+  <a class="gr-demo-card" href="examples/pipeline_composition_v1/">
+    <span>Composition</span>
+    <strong>Reuse a pipeline as a module</strong>
+    <p>Demonstrates registry-backed composition and reusable pipeline surfaces before heavier robot integrations.</p>
+    <dl>
+      <dt>Command</dt><dd><code>pixi run -e golden-local demo-composable-pipelines</code></dd>
+      <dt>Expected artifact</dt><dd>Terminal proof that composed surfaces run as one reusable unit.</dd>
+      <dt>Dependency level</dt><dd>Source checkout only.</dd>
+    </dl>
+  </a>
+  <a class="gr-demo-card" href="examples/simulation_and_visualization_v1/">
+    <span>Visual proof</span>
+    <strong>Render graphs, Rerun, and simulator lanes</strong>
+    <p>Keeps visual demos explicit: mock-safe robosuite, generated HTML pipeline views, and optional MuJoCo/TWIST2/Rerun paths.</p>
+    <dl>
+      <dt>Command</dt><dd><code>pixi run demo-pipeline-html-viz</code></dd>
+      <dt>Expected artifact</dt><dd>Self-contained HTML graph under <code>out/</code>; robosuite mock prints a simulator-policy trace.</dd>
+      <dt>Dependency level</dt><dd>HTML and robosuite mock are lightweight; MuJoCo/TWIST2 is optional.</dd>
+    </dl>
+  </a>
+  <a class="gr-demo-card" href="robotics_typing_standard/">
+    <span>Interfaces</span>
+    <strong>Check robot-facing payload contracts</strong>
+    <p>Use this when you need stable type boundaries for reusable examples, datasets, or future Hub modules.</p>
+    <dl>
+      <dt>Command</dt><dd><code>pixi run demo-robotics-typing-catalog</code></dd>
+      <dt>Expected artifact</dt><dd>Terminal catalog of available standard and applied payload types.</dd>
+      <dt>Dependency level</dt><dd>Source checkout only.</dd>
+    </dl>
+  </a>
+</div>
+
 ## What Belongs Here
 
 <div class="gr-action-grid">
