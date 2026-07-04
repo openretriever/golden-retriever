@@ -10,6 +10,8 @@ Run these before a public launch or docs promotion:
 pixi run test
 pixi run -e docs docs-build
 pixi run -e golden-local demo-perception-detection-flow
+pixi run demo-robosuite-mock
+pixi run demo-pipeline-html-viz
 ```
 
 Build the optional local/future wheel artifact separately when checking package
@@ -20,6 +22,14 @@ pixi run build
 ```
 
 The same checks are wired in `.github/workflows/ci.yml` where configured.
+
+Before the public Hub index and `retriever-core==0.0.1` wheel are live, run the Hub-pack smoke against a local core checkout when validating the final cutover:
+
+```bash
+RETRIEVER_CORE_SRC=<core-repo>/src PYTHONPATH=<core-repo>/src:. pixi run -e golden-local demo-golden-hub-pack
+```
+
+Do not add this Hub-pack smoke as a required remote CI gate until the public runtime wheel and Hub index are available to CI.
 
 ## GitHub Settings
 

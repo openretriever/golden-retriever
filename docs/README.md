@@ -25,7 +25,7 @@ pixi run -e golden-local demo-perception-detection-flow</code></pre>
     If you are new to Retriever, complete the [core visual quickstart](https://openretriever-docs.pages.dev/getting-started/visual-quickstart/) first. The command `pixi run demo-webcam-detection` belongs to `openretriever/retriever`, not this repository. Public GitHub clone access opens when repo visibility is flipped; until then, collaborators should use local checkouts. Golden starts after that with `pixi run -e golden-local demo-perception-detection-flow`.
 
 !!! info "Current public status"
-    The core runtime package target is `retriever-core` and imports as `retriever`. During prerelease, Golden demo environments use the temporary `debug-retriever` bridge until `retriever-core==0.0.1` is published. Golden itself is not a first-launch PyPI package; reusable applied types and examples are exposed through Retriever Hub and source docs.
+    The core runtime package target is `retriever-core` and imports as `retriever`. Until `retriever-core==0.0.1` is published, Golden demo environments may use the current prerelease runtime bridge or a local `RETRIEVER_CORE_SRC` checkout. Golden itself is not a first-launch PyPI package; reusable applied types and examples are exposed through Retriever Hub and source docs.
 
 ## Recommended Path
 

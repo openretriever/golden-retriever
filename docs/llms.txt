@@ -19,7 +19,7 @@ Use this page when you want examples after understanding the core Retriever runt
 
 ## Core Boundary
 
-GoldenRetriever is not the core runtime. The runtime package is `retriever-core` and imports as `retriever`. During prerelease, Golden Pixi environments may still resolve the temporary `debug-retriever` package; use that only as a demo bridge until `retriever-core==0.0.1` is published. GoldenRetriever owns applied examples and reusable robot-facing type packs.
+GoldenRetriever is not the core runtime. The runtime package is `retriever-core` and imports as `retriever`. Until `retriever-core==0.0.1` is published, Golden Pixi environments may use the current prerelease runtime bridge or a local `RETRIEVER_CORE_SRC` checkout. GoldenRetriever owns applied examples and reusable robot-facing type packs.
 
 ## Current Hub Type-Pack Direction
 

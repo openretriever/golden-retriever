@@ -26,5 +26,9 @@ jobs:
         run: pixi run -e docs docs-build
       - name: Golden smoke demo
         run: pixi run -e golden-local demo-perception-detection-flow
+      - name: RoboSuite mock smoke
+        run: pixi run demo-robosuite-mock
+      - name: Pipeline HTML visualization smoke
+        run: pixi run demo-pipeline-html-viz
       - name: Package build
         run: pixi run build

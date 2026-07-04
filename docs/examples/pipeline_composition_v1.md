@@ -1,6 +1,6 @@
 # Core Composition Surfaces v1
 
-This guide covers the newer registry-backed pipeline composition surfaces used by the Golden examples. Keep the examples on the packaged runtime path; during prerelease that path may still resolve through the temporary `debug-retriever` package until the public `retriever-core` distribution replaces it.
+This guide covers the newer registry-backed pipeline composition surfaces used by the Golden examples. Keep the examples on the packaged runtime path; until `retriever-core==0.0.1` is published, use the configured Golden environment or a local `RETRIEVER_CORE_SRC` checkout for unreleased runtime changes.
 
 ## Runtime check
 

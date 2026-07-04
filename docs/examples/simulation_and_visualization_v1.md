@@ -114,13 +114,9 @@ Source:
 - `examples/advanced/hierarchical_physics_demo/README.md`
 - `examples/advanced/hierarchical_physics_demo/app.py`
 
-## Utilities and experimental paths
+## Self-Contained Pipeline HTML Viz
 
-These paths are useful, but they are secondary until each has a README, packaged task, and dependency story.
-
-The browser command interface is intentionally not listed here yet; promote it after it has a README, a named Pixi task, and a concise dependency story.
-
-### Self-Contained Pipeline HTML Viz
+Use this when you want a small deterministic graph artifact without simulator, camera, robot, or model dependencies.
 
 ```bash
 pixi run demo-pipeline-html-viz
@@ -133,7 +129,7 @@ What it shows:
 - ASCII graph output,
 - HTML export written under `out/`.
 
-This stays in `examples/experimental` for now because it is a small visualization utility rather than a polished example family.
+This is intentionally lightweight: a graph-visualization utility rather than a full simulator example family.
 
 ## Current Scope
 
