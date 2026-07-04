@@ -25,12 +25,11 @@
 
 GoldenRetriever is the examples and integration repository. Keep core runtime API details in the [Retriever core docs](https://openretriever-docs.pages.dev/); use this repo for runnable perception, memory, language, composition, robotics typing, notebook, and system-integration examples.
 
-## Current Public Status
+## Project Boundary
 
-- The core runtime package target is `retriever-core`; Python imports remain `retriever`.
-- Until `retriever-core==0.0.1` is published, Golden demo environments may use the current prerelease runtime bridge or a local `RETRIEVER_CORE_SRC` checkout.
-- Public source URLs are staged for `openretriever/retriever` and `openretriever/golden-retriever`; use the hosted docs and release-status page until repository visibility flips.
-- Golden is not a first-launch PyPI package. Reusable applied types and examples are exposed through Retriever Hub and source docs.
+- The core runtime distribution is `retriever-core`; Python imports remain `retriever`.
+- GoldenRetriever is not a second runtime package. It is the examples, integration, and Hub-loadable applied type-pack surface for Retriever.
+- If you are validating unreleased core runtime changes locally, set `RETRIEVER_CORE_SRC=<core-repo>/src` before running tests or Hub-pack smokes.
 
 ## Setup
 
@@ -52,7 +51,7 @@ pixi run -e golden-local python -c "import retriever; print(retriever.__file__)"
 If you are new to Retriever, start with the core visual quickstart in the core repository first:
 
 - Core docs: https://openretriever-docs.pages.dev/getting-started/visual-quickstart/
-- Core source: opens when `openretriever/retriever` visibility flips public. Until then, use the [source release status](https://openretriever.org/start/#source-release).
+- Core source: https://github.com/openretriever/retriever
 
 That core quickstart uses `pixi run demo-webcam-detection` from `openretriever/retriever`; it is not a GoldenRetriever task. Then use Golden for robot-facing example families. The shortest Golden ladder is perception -> memory -> language -> composition:
 
@@ -184,10 +183,10 @@ See `RELEASE.md` for launch/docs validation and the optional package boundary ch
 
 - PyPI distribution: `retriever-core`
 - Python import: `retriever`
-- Runtime source: opens when `openretriever/retriever` visibility flips public.
+- Runtime source: `https://github.com/openretriever/retriever`
 - Runtime docs: `https://openretriever-docs.pages.dev/`
-- Golden source: opens when `openretriever/golden-retriever` visibility flips public.
-- Golden docs target: `https://retriever-space.pages.dev/`
+- Golden source: `https://github.com/openretriever/golden-retriever`
+- Golden docs: `https://retriever-space.pages.dev/`
 
 ## Contributing And License
 

@@ -22,10 +22,10 @@ pixi run -e golden-local demo-perception-detection-flow</code></pre>
 </div>
 
 !!! note "Prerequisite"
-    If you are new to Retriever, complete the [core visual quickstart](https://openretriever-docs.pages.dev/getting-started/visual-quickstart/) first. The command `pixi run demo-webcam-detection` belongs to `openretriever/retriever`, not this repository. Public GitHub clone access opens when repo visibility is flipped; until then, collaborators should use local checkouts. Golden starts after that with `pixi run -e golden-local demo-perception-detection-flow`.
+    If you are new to Retriever, complete the [core visual quickstart](https://openretriever-docs.pages.dev/getting-started/visual-quickstart/) first. The command `pixi run demo-webcam-detection` belongs to `openretriever/retriever`, not this repository. Golden starts after that with `pixi run -e golden-local demo-perception-detection-flow`.
 
-!!! info "Current public status"
-    The core runtime package target is `retriever-core` and imports as `retriever`. Until `retriever-core==0.0.1` is published, Golden demo environments may use the current prerelease runtime bridge or a local `RETRIEVER_CORE_SRC` checkout. Golden itself is not a first-launch PyPI package; reusable applied types and examples are exposed through Retriever Hub and source docs.
+!!! info "Runtime boundary"
+    The core runtime distribution is `retriever-core` and imports as `retriever`. Golden itself is not a second runtime package; reusable applied types and examples are exposed through Retriever Hub and source docs. Use `RETRIEVER_CORE_SRC` only when validating unreleased runtime changes locally.
 
 ## Recommended Path
 
@@ -117,7 +117,7 @@ Run these from the GoldenRetriever repository after the core quickstart works an
 
 Keep the public source-of-truth split explicit:
 
-- Core runtime API details belong in `openretriever/retriever`; public source links are staged but currently open when repo visibility is flipped.
+- Core runtime API details belong in `openretriever/retriever`.
 - GoldenRetriever carries examples, tutorials, notebooks, robotics typing, and integration lanes.
 - Reusable Golden payloads should be loaded as Retriever Hub packs; a separate Golden PyPI package is not part of the first public launch path.
 - Heavy optional examples should stay clearly optional and mock-first where possible.

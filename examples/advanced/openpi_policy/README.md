@@ -47,27 +47,20 @@ Retriever Hub loads one module per git repository: the repo's
 `openretriever/hub-index` makes it discoverable (see the core docs:
 *Ecosystem → Publishing*).
 
-**Recommended: a dedicated `openretriever/pi05-policy` repo.**
+**Recommended path: prototype here, promote the heavy policy to a dedicated Hub repo.**
 
-- Exports (all sharing this lane's typed contract):
-  - `Pi05Policy` — remote/websocket flow (light deps: `openpi-client`, numpy)
-  - `MockPi05Policy` — deterministic mock for CI and offline development
-  - `Pi05LocalPolicy` — optional, imports full `openpi` for on-box inference
-- Hub loads modules by repo tarball, so heavy extras stay optional and the
-  import stays side-effect-free (no weights download at import).
-- Index entry, `modules/openretriever/pi05-policy.toml` in
-  `openretriever/hub-index`:
+GoldenRetriever already acts as a lightweight Hub pack for applied robot payload
+contracts. Keep those reusable contracts here; move heavyweight VLA policy
+loading into a focused module when it is ready to publish.
 
-```toml
-[module]
-repo = "https://github.com/openretriever/pi05-policy"
-description = "pi0.5 (openpi) policy flows: remote client, local, and mock"
-author = "openretriever"
-license = "Apache-2.0"
-tags = ["policy", "vla", "manipulation", "openpi"]
-```
+A dedicated `openretriever/pi05-policy` module can export:
 
-- Usage anywhere, including this example's `--mode hub`:
+- `Pi05Policy` — remote/websocket flow (light deps: `openpi-client`, numpy)
+- `MockPi05Policy` — deterministic mock for CI and offline development
+- `Pi05LocalPolicy` — optional, imports full `openpi` for on-box inference
+
+That split keeps Golden's public examples small while making the production
+policy reusable through the same Hub API:
 
 ```python
 from retriever import hub
@@ -75,14 +68,9 @@ Pi05Policy = hub.use("openretriever/pi05-policy:Pi05Policy")
 policy = Pi05Policy(host="gpu-box", port=8000) @ Trigger("image")
 ```
 
-**Alternative considered: keep the module inside this (golden-retriever)
-repo.** The Hub currently treats the repo root as the module root, so Golden
-itself would have to become the hub module — dragging its full dependency
-surface into `[tool.retriever.module]` dependency checks. Workable, but a
-dedicated repo keeps the module small, versionable, and honest about its
-dependencies. If in-repo modules become common, the cleaner fix is adding
-subdirectory support to the Hub (`[module] repo = ... , path = "modules/pi05"`)
-— a small core feature worth considering.
+The key packaging rule is import safety: Hub modules should not download weights
+or initialize hardware at import time. Heavy dependencies belong behind optional
+extras or remote-client flows.
 
 ## References
 
