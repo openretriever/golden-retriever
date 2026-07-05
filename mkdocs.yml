@@ -1,5 +1,5 @@
-site_name: Golden Examples for Retriever
-site_description: "Golden reference examples for Retriever: maintained robot-facing examples, reusable type packs, visualization lanes, and Hub-pack candidates."
+site_name: Retriever Golden Examples
+site_description: "Applied reference examples for Retriever: maintained robot-facing examples, reusable type packs, visualization lanes, and Hub-pack candidates."
 site_url: https://retriever-space.pages.dev/
 repo_url: https://github.com/openretriever/golden-retriever
 repo_name: openretriever/golden-retriever

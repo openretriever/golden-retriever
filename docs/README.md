@@ -1,8 +1,8 @@
 <div class="gr-reference-hero gr-reference-hero-tight">
   <div>
-    <p class="gr-eyebrow">Track G after the core quickstart</p>
-    <h1>Golden examples make Retriever concrete.</h1>
-    <p class="gr-lede">Use GoldenRetriever after you have run the core Retriever visual quickstart. Golden is the maintained applied layer for robot-facing examples, reusable payload packs, simulator and visualization lanes, and candidates for future Retriever Hub packs.</p>
+    <p class="gr-eyebrow">Track G: applied examples</p>
+    <h1>Run applied Retriever examples after the core quickstart.</h1>
+    <p class="gr-lede">GoldenRetriever is the maintained applied reference layer for Retriever: robot-facing examples, reusable payload packs, simulator and visualization lanes, and candidates for future Retriever Hub packs. Learn Flow, clocks, sync, replay, and execution in the core docs; use Golden when you want runnable robot-facing examples.</p>
   </div>
   <div class="gr-command-strip">
     <span>First Golden proof</span>
@@ -12,17 +12,17 @@
 </div>
 
 <div class="gr-route-pills gr-route-pills-inline">
-  <a href="https://openretriever.org/">Retriever home</a>
-  <a href="https://openretriever.org/start/">Builder start path</a>
+  <a href="https://openretriever.org/start/">Start path</a>
   <a href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/">Core visual quickstart</a>
   <a href="https://openretriever-docs.pages.dev/">Core runtime docs</a>
-  <a href="examples/">Golden examples</a>
+  <a href="examples/">Open Golden examples</a>
+  <a href="https://openretriever.org/">Retriever home</a>
   <a href="hub/">Hub packs</a>
   <a href="robotics_typing_standard/">Robot type packs</a>
 </div>
 
 !!! note "Golden is not a second runtime"
-    Install and learn the runtime once. The Python import package is `retriever`; the public runtime distribution target is `retriever-core`. Golden provides maintained examples and pack candidates on top of that runtime, not another Flow/Pipeline implementation.
+    Install and learn the runtime once. The Python import package is `retriever`; the public runtime distribution target is `retriever-core`. Golden provides applied examples and pack candidates on top of that runtime, not another Flow/Pipeline implementation.
 
 ## Where Golden Fits
 

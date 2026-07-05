@@ -11,7 +11,7 @@
   <a href="../llms.txt">Agent map</a>
 </div>
 
-GoldenRetriever is the maintained applied examples layer for Retriever. Use this catalog after the core visual quickstart when you want concrete robot-facing paths: Hub-pack proof, perception, memory, language, composition, simulation, visualization, and reusable type-pack examples.
+GoldenRetriever is Track G in the Retriever ecosystem: the maintained applied examples layer. Use this catalog after the core visual quickstart when you want concrete robot-facing paths: Hub-pack proof, perception, memory, language, composition, simulation, visualization, and reusable type-pack examples.
 
 Boundary rule: runtime mechanics stay in core Retriever; robot-facing payloads, maintained examples, and reusable pack candidates live here. Export through Retriever Hub only after the pack is import-safe, versioned, smoke-tested, and documented.
 

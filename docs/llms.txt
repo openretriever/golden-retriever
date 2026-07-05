@@ -1,6 +1,6 @@
 # Golden Examples for Retriever
 
-GoldenRetriever is the maintained reference examples and type-pack layer for Retriever. Use it after the core Retriever visual quickstart when you want maintained robot-facing examples, reusable robot payload packs, simulator/visualization lanes, expected artifacts, and Retriever Hub pack candidates.
+GoldenRetriever is Track G in the Retriever ecosystem: the maintained applied examples and type-pack layer for Retriever. Use it after the core Retriever visual quickstart when you want maintained robot-facing examples, reusable robot payload packs, simulator/visualization lanes, expected artifacts, and Retriever Hub pack candidates.
 
 ## Public Surfaces
 

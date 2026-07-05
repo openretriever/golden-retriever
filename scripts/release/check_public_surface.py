@@ -77,8 +77,8 @@ DOC_MARKERS = {
         "demo-pipeline-html-viz",
     ),
     "docs/README.md": (
-        "Track G after the core quickstart",
-        "Golden examples make Retriever concrete",
+        "Track G: applied examples",
+        "Run applied Retriever examples after the core quickstart",
         "Core runtime",
         "Applied layer",
         "Recommended Route",
