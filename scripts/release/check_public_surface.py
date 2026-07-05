@@ -42,6 +42,9 @@ REQUIRED_TASKS = (
     "demo-golden-hub-pack",
     "demo-robosuite-mock",
     "demo-pipeline-html-viz",
+    "demo-robotics-data-eventstream",
+    "demo-robotics-data-join",
+    "demo-robotics-lerobot-bridge",
     "public-surface-check",
 )
 
@@ -91,6 +94,16 @@ DOC_MARKERS = {
         "Sitemap: https://retriever-space.pages.dev/sitemap.xml",
         "Agent map: https://retriever-space.pages.dev/llms.txt",
     ),
+    "docs/robotics_typing_standard/07_data_spec_eventstream_v1.md": (
+        "demo-robotics-data-eventstream",
+        "demo-robotics-data-join",
+        "deterministic ordering",
+    ),
+    "docs/robotics_typing_standard/08_lerobot_interop_and_dataset_profile.md": (
+        "demo-robotics-lerobot-bridge",
+        "LeRobot-style records",
+        "stable metadata",
+    ),
     "docs/llms.txt": (
         "Golden Examples for Retriever",
         "demo-golden-hub-pack",
@@ -126,6 +139,21 @@ SMOKE_CHECKS = (
         "smoke:demo-pipeline-html-viz",
         [sys.executable, "examples/experimental/visualization/visualize_pipeline.py"],
         ("HTML visualization written to out/golden_retriever_closed_loop_viz.html",),
+    ),
+    (
+        "smoke:demo-robotics-data-eventstream",
+        [sys.executable, "examples/advanced/robotics_typing_standard/data_spec_eventstream_demo.py"],
+        ("Deterministic merged order:", "Processing-time profile:"),
+    ),
+    (
+        "smoke:demo-robotics-data-join",
+        [sys.executable, "examples/advanced/robotics_typing_standard/multi_stream_join_demo.py"],
+        ("Exact join:", "Latest-before join", "Window join"),
+    ),
+    (
+        "smoke:demo-robotics-lerobot-bridge",
+        [sys.executable, "examples/advanced/robotics_typing_standard/lerobot_bridge_demo.py"],
+        ("Canonical rows:", "LeRobot records:", "Roundtrip rows:"),
     ),
 )
 

@@ -126,8 +126,9 @@ pixi run demo-golden-hub-pack
 pixi run -e golden-local demo-perception-detection-flow
 pixi run demo-robosuite-mock
 pixi run demo-pipeline-html-viz
-pixi run public-surface-check
 ```
+
+If you are editing docs or promoted examples, run `pixi run public-surface-check` before publishing.
 
 ## Continue
 
