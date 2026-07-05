@@ -49,8 +49,9 @@ pixi run -e golden-local python -c "import retriever; print('retriever import OK
 
 Use Golden after the core runtime quickstart. The path is: learn `Flow` and visual debugging in core, prove the Retriever Hub extension boundary, then walk the robot-facing example ladder.
 
-If you are new to Retriever, start with the core visual quickstart in the core repository first:
+If you are new to Retriever, start with the builder route and core visual quickstart first:
 
+- Builder start path: https://openretriever.org/start/
 - Core docs: https://openretriever-docs.pages.dev/getting-started/visual-quickstart/
 - Core source: https://github.com/openretriever/retriever
 

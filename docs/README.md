@@ -1,18 +1,19 @@
 <div class="gr-reference-hero gr-reference-hero-tight">
   <div>
     <p class="gr-eyebrow">After the Retriever core quickstart</p>
-    <h1>Golden reference examples for robot-facing Retriever systems.</h1>
-    <p class="gr-lede">GoldenRetriever is the maintained examples and type-pack layer for Retriever. Learn <code>Flow</code>, clocks, sync policies, debugging, and Hub mechanics in the core docs first; then come here for perception, memory, language, simulator, visualization, and reusable robotics payload examples.</p>
+    <h1>Run Retriever on robot-facing examples.</h1>
+    <p class="gr-lede">GoldenRetriever is the maintained examples and type-pack layer for Retriever. Learn <code>Flow</code>, clocks, sync policies, debugging, and Hub mechanics in the core docs first; then use this site for perception, memory, language, simulator, visualization, and reusable robotics payload examples.</p>
   </div>
   <div class="gr-command-strip">
     <span>First Golden proof</span>
     <code>pixi run demo-golden-hub-pack</code>
-    <p>Loads Golden payload exports through Retriever Hub without robot, camera, model, simulator, or network dependencies.</p>
+    <p>Loads Golden robot payload exports through Retriever Hub without robot, camera, model, simulator, or network dependencies.</p>
   </div>
 </div>
 
 <div class="gr-route-pills gr-route-pills-inline">
   <a href="https://openretriever.org/">Retriever home</a>
+  <a href="https://openretriever.org/start/">Builder start path</a>
   <a href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/">Core visual quickstart</a>
   <a href="https://openretriever-docs.pages.dev/">Core runtime docs</a>
   <a href="examples/">Golden examples</a>
@@ -23,6 +24,26 @@
 
 !!! note "Golden is not a second runtime"
     Install and learn the runtime once; Python imports use `retriever`. The public PyPI target is `retriever-core`, while release-prep source checkouts use the documented Pixi environments. Golden is the official maintained examples-and-packs surface on top of that runtime. Runtime semantics stay in the core Retriever docs; robot-facing examples, reusable payload packs, notebooks, simulator wrappers, and pack candidates live here.
+
+## Retriever Ecosystem
+
+<div class="gr-layer-map gr-layer-map-compact">
+  <div>
+    <span>Front door</span>
+    <strong><a href="https://openretriever.org/start/">openretriever.org/start</a></strong>
+    <p>Use this to choose the shortest path: install, visual quickstart, core docs, Hub, examples, or source.</p>
+  </div>
+  <div>
+    <span>Runtime</span>
+    <strong><a href="https://openretriever-docs.pages.dev/">Core Retriever docs</a></strong>
+    <p>Owns Flow, Pipeline, clocks, sync policies, stepping, replay, IR, execution, and Hub mechanics.</p>
+  </div>
+  <div>
+    <span>Applied layer</span>
+    <strong><a href="examples/">Golden examples</a></strong>
+    <p>Owns maintained robot-facing examples, reusable payload packs, simulator/visualization lanes, and pack candidates.</p>
+  </div>
+</div>
 
 ## Recommended Route
 

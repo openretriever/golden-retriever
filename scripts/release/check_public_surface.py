@@ -77,8 +77,9 @@ DOC_MARKERS = {
         "demo-pipeline-html-viz",
     ),
     "docs/README.md": (
-        "Golden reference examples for robot-facing Retriever systems",
+        "Run Retriever on robot-facing examples",
         "After the Retriever core quickstart",
+        "Retriever Ecosystem",
         "Recommended Route",
         "Command Matrix",
         "Example Result Shapes",
@@ -91,7 +92,7 @@ DOC_MARKERS = {
         "Agent map: https://retriever-space.pages.dev/llms.txt",
     ),
     "docs/llms.txt": (
-        "Golden Reference Examples",
+        "Golden Examples for Retriever",
         "demo-golden-hub-pack",
         "demo-robosuite-mock",
         "demo-pipeline-html-viz",

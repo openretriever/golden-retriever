@@ -41,7 +41,7 @@ pixi run -e docs docs-build
 python3 -m http.server 8782 --bind 127.0.0.1 --directory site
 ```
 
-Open `http://127.0.0.1:8782/`, `http://127.0.0.1:8782/hub/`, `http://127.0.0.1:8782/llms.txt`, and `http://127.0.0.1:8782/robots.txt`. The home page should show `Golden Reference Examples`, `Recommended Route`, `Command Matrix`, `Example Result Shapes`, and the Retriever ecosystem map.
+Open `http://127.0.0.1:8782/`, `http://127.0.0.1:8782/hub/`, `http://127.0.0.1:8782/llms.txt`, and `http://127.0.0.1:8782/robots.txt`. The home page should show `Golden Examples for Retriever`, `Recommended Route`, `Command Matrix`, `Example Result Shapes`, and the Retriever ecosystem map.
 
 ## Post-Deploy Content Check
 
@@ -49,7 +49,7 @@ After deploying the Golden docs site, verify the live page reflects the referenc
 
 ```bash
 html=$(curl -fsSL https://retriever-space.pages.dev/)
-printf '%s' "$html" | grep -q 'Golden Reference Examples'
+printf '%s' "$html" | grep -q 'Golden Examples for Retriever'
 printf '%s' "$html" | grep -q 'Recommended Route'
 printf '%s' "$html" | grep -q 'Example Result Shapes'
 printf '%s' "$html" | grep -q 'What Belongs Where'
@@ -59,7 +59,7 @@ legacy_subtitle='first app''lied robotics Hub'' module'
 ! printf '%s' "$html" | grep -q "$legacy_subtitle"
 curl -fsSL https://retriever-space.pages.dev/robots.txt | grep -q 'Sitemap: https://retriever-space.pages.dev/sitemap.xml'
 curl -fsSL https://retriever-space.pages.dev/robots.txt | grep -q 'Agent map: https://retriever-space.pages.dev/llms.txt'
-curl -fsSL https://retriever-space.pages.dev/llms.txt | grep -q 'Golden Reference Examples'
+curl -fsSL https://retriever-space.pages.dev/llms.txt | grep -q 'Golden Examples for Retriever'
 ```
 
 If a custom Golden domain is bound later, run the same checks against that hostname before advertising it.

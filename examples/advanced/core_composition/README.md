@@ -5,7 +5,7 @@ These examples exercise registry-backed pipeline composition surfaces.
 
 ## Runtime Requirement
 
-Use the Golden demo environment so the example feature set and optional dependencies are available. It should import the `retriever` runtime from the installed `retriever-core` distribution unless you intentionally set `RETRIEVER_CORE_SRC` for local runtime validation.
+Use the Golden demo environment so the example feature set and optional dependencies are available. During release preparation this environment uses the documented source-checkout runtime path; set `RETRIEVER_CORE_SRC` only when you intentionally want to validate against a different local core checkout. After `retriever-core` is published, the same import remains `retriever`.
 
 ```bash
 pixi install -e golden-local

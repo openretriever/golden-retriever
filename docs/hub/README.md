@@ -2,6 +2,7 @@
 
 <div class="gr-route-pills gr-route-pills-inline">
   <a href="https://openretriever.org/">Retriever home</a>
+  <a href="https://openretriever.org/start/">Start path</a>
   <a href="https://openretriever-docs.pages.dev/">Core docs</a>
   <a href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/">Visual quickstart</a>
   <a href="https://github.com/openretriever/retriever">Core source</a>
@@ -25,6 +26,15 @@ GoldenRetriever
 ```
 
 The current v1 Golden Hub contract is intentionally small and stable: robot-facing types plus conversion helpers. That gives downstream examples a common vocabulary without turning Golden into a second runtime package or forcing users to copy example code.
+
+## Core Hub vs Golden packs
+
+| Surface | Responsibility |
+| --- | --- |
+| Core Retriever docs | Hub reference syntax, loader behavior, publishing rules, cache expectations, and generic module boundaries. |
+| GoldenRetriever | Applied robot payload packs, example-backed export catalog, and promotion candidates that prove the Hub boundary on real robot-facing examples. |
+
+Use the core docs to learn the protocol. Use Golden to see what a maintained, example-backed pack should look like before depending on it from a robot project.
 
 
 ## Pack lifecycle

@@ -36,7 +36,7 @@
 }
 
 .md-grid {
-  max-width: 76rem;
+  max-width: 80rem;
 }
 
 .md-main {
@@ -120,23 +120,23 @@
     radial-gradient(circle at 4% 10%, rgba(249, 115, 22, 0.12), transparent 16rem),
     var(--gr-card);
   box-shadow: var(--gr-shadow);
-  margin: 0.25rem 0 1rem;
+  margin: 0.15rem 0 1rem;
   overflow: hidden;
 }
 
 .gr-reference-hero {
   align-items: center;
   display: grid;
-  gap: 1rem;
-  grid-template-columns: minmax(0, 1.55fr) minmax(220px, 0.45fr);
-  padding: 1rem;
+  gap: 0.9rem;
+  grid-template-columns: minmax(0, 1.35fr) minmax(230px, 0.65fr);
+  padding: 0.95rem;
 }
 
 .md-typeset .gr-reference-hero h1 {
   color: var(--gr-ink);
-  font-size: clamp(1.48rem, 2.15vw, 2.05rem);
-  line-height: 1.06;
-  margin: 0 0 0.65rem;
+  font-size: clamp(1.35rem, 1.85vw, 1.82rem);
+  line-height: 1.08;
+  margin: 0 0 0.55rem;
   max-width: 48rem;
 }
 
@@ -146,24 +146,24 @@
   border-radius: 0.95rem;
   background: #fffdfa;
   color: var(--gr-ink);
-  padding: 0.82rem;
+  padding: 0.72rem;
 }
 
 .md-typeset .gr-command-strip code {
   background: #17130d;
   color: #fff7ed;
   display: block;
-  font-size: 0.72rem;
+  font-size: 0.69rem;
   overflow-x: auto;
-  padding: 0.58rem 0.65rem;
+  padding: 0.52rem 0.58rem;
   white-space: nowrap;
 }
 
 .gr-command-strip p,
 .gr-panel-note {
   color: var(--gr-muted);
-  font-size: 0.78rem;
-  margin: 0.65rem 0 0;
+  font-size: 0.75rem;
+  margin: 0.55rem 0 0;
 }
 
 .gr-route-pills {

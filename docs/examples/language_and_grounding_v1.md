@@ -2,6 +2,7 @@
 
 <div class="gr-route-pills gr-route-pills-inline">
   <a href="https://openretriever.org/">Retriever home</a>
+  <a href="https://openretriever.org/start/">Start path</a>
   <a href="https://openretriever-docs.pages.dev/">Core docs</a>
   <a href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/">Visual quickstart</a>
   <a href="https://github.com/openretriever/retriever">Core source</a>

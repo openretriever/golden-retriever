@@ -1,10 +1,11 @@
-# Golden Reference Examples
+# Golden Examples for Retriever
 
-GoldenRetriever is the maintained reference examples layer for Retriever. Use it after the core Retriever visual quickstart when you want maintained robot-facing examples, reusable type packs, simulator/visualization lanes, expected artifacts, and Retriever Hub pack candidates.
+GoldenRetriever is the maintained reference examples and type-pack layer for Retriever. Use it after the core Retriever visual quickstart when you want maintained robot-facing examples, reusable robot payload packs, simulator/visualization lanes, expected artifacts, and Retriever Hub pack candidates.
 
 ## Public Surfaces
 
 - Retriever home: https://openretriever.org/
+- Builder start path: https://openretriever.org/start/
 - Core runtime docs: https://openretriever-docs.pages.dev/
 - Core visual quickstart: https://openretriever-docs.pages.dev/getting-started/visual-quickstart/
 - Core debugging guide: https://openretriever-docs.pages.dev/tutorials/debug-and-visualize/
@@ -23,10 +24,11 @@ The core runtime imports as `retriever`; the public PyPI target is `retriever-co
 
 ## Canonical Path
 
-1. Start in core docs with the visual quickstart.
-2. In Golden, run `pixi run demo-golden-hub-pack` to prove the Hub extension boundary.
-3. Continue to the example catalog for perception, memory, language, composition, simulation, visualization, and type-pack examples.
-4. Promote source examples into Hub packs only when they are import-safe, versioned, smoke-tested, documented, and useful outside this repository.
+1. Start at openretriever.org if the user needs routing.
+2. Start in core docs with the visual quickstart if the user has not run Retriever before.
+3. In Golden, run `pixi run demo-golden-hub-pack` to prove the Hub extension boundary.
+4. Continue to the example catalog for perception, memory, language, composition, simulation, visualization, and type-pack examples.
+5. Promote source examples into Hub packs only when they are import-safe, versioned, smoke-tested, documented, and useful outside this repository.
 
 ## Current Retriever Hub Pack Surface
 

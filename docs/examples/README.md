@@ -2,6 +2,7 @@
 
 <div class="gr-route-pills gr-route-pills-inline">
   <a href="https://openretriever.org/">Retriever home</a>
+  <a href="https://openretriever.org/start/">Start path</a>
   <a href="https://openretriever-docs.pages.dev/">Core docs</a>
   <a href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/">Visual quickstart</a>
   <a href="https://github.com/openretriever/retriever">Core source</a>
@@ -14,6 +15,8 @@
 GoldenRetriever is the maintained reference examples layer for Retriever. Use these guides after the core visual quickstart when you want concrete robot-facing paths: Hub-pack proof, perception, memory, language, composition, simulation, visualization, and reusable type-pack examples.
 
 Boundary rule: runtime mechanics stay in core Retriever; robot-facing payloads, maintained examples, and reusable pack candidates live here. Export through Retriever Hub only after the pack is import-safe, versioned, smoke-tested, and documented.
+
+If this is your first Retriever run, start with the core visual quickstart first. Golden assumes you already understand why a Flow has local state, why clocks are explicit, and why graph/replay artifacts matter.
 
 ## Where This Page Fits
 
