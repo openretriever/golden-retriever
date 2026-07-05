@@ -5,9 +5,7 @@
   <a href="https://openretriever.org/start/">Start path</a>
   <a href="https://openretriever-docs.pages.dev/">Core docs</a>
   <a href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/">Visual quickstart</a>
-  <a href="https://github.com/openretriever/retriever">Core source</a>
   <a href="/">Golden overview</a>
-  <a href="https://github.com/openretriever/golden-retriever">Golden source</a>
   <a href="../llms.txt">Golden agent map</a>
 </div>
 

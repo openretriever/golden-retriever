@@ -16,8 +16,8 @@ GoldenRetriever is Track G in the Retriever ecosystem: the maintained applied ex
 - Golden Hub reference: https://retriever-space.pages.dev/hub/
 - Golden export catalog: https://retriever-space.pages.dev/hub/export_catalog_v1/
 - Golden pack roadmap: https://retriever-space.pages.dev/hub/pack_roadmap_v1/
-- Golden source: https://github.com/openretriever/golden-retriever
-- Core source: https://github.com/openretriever/retriever
+- Golden source target: `openretriever/golden-retriever` once public visibility is enabled.
+- Core source target: `openretriever/retriever` once public visibility is enabled.
 
 ## Boundary
 

@@ -1,14 +1,14 @@
 :root {
   --gr-ink: #17130d;
   --gr-muted: #6f665b;
-  --gr-soft: #fff7ed;
+  --gr-soft: #fff8f1;
   --gr-card: rgba(255, 255, 255, 0.96);
   --gr-border: rgba(249, 115, 22, 0.22);
   --gr-border-strong: rgba(249, 115, 22, 0.38);
   --gr-orange: #f97316;
   --gr-orange-dark: #c2410c;
   --gr-green: #0f766e;
-  --gr-shadow: 0 16px 42px rgba(111, 68, 13, 0.08);
+  --gr-shadow: 0 14px 34px rgba(111, 68, 13, 0.065);
 }
 
 [data-md-color-scheme="default"] {
@@ -22,7 +22,7 @@
 
 .md-header,
 .md-tabs {
-  background: linear-gradient(90deg, #7c2d12 0%, #ea580c 55%, #f97316 100%);
+  background: linear-gradient(90deg, #2a2017 0%, #b45309 58%, #f97316 100%);
 }
 
 .md-header__title,
@@ -43,7 +43,7 @@
   background:
     radial-gradient(circle at 12% 0%, rgba(249, 115, 22, 0.12), transparent 24rem),
     radial-gradient(circle at 85% 4%, rgba(15, 118, 110, 0.08), transparent 22rem),
-    linear-gradient(180deg, #fff7ed 0%, #ffffff 20rem);
+    linear-gradient(180deg, #fff8f1 0%, #ffffff 18rem);
 }
 
 .md-typeset h1,
@@ -129,12 +129,12 @@
   display: grid;
   gap: 0.9rem;
   grid-template-columns: minmax(0, 1.35fr) minmax(230px, 0.65fr);
-  padding: 0.95rem;
+  padding: 0.82rem;
 }
 
 .md-typeset .gr-reference-hero h1 {
   color: var(--gr-ink);
-  font-size: clamp(1.35rem, 1.85vw, 1.82rem);
+  font-size: clamp(1.28rem, 1.72vw, 1.72rem);
   line-height: 1.08;
   margin: 0 0 0.55rem;
   max-width: 48rem;
@@ -146,7 +146,7 @@
   border-radius: 0.95rem;
   background: #fffdfa;
   color: var(--gr-ink);
-  padding: 0.72rem;
+  padding: 0.66rem;
 }
 
 .md-typeset .gr-command-strip code {
@@ -271,6 +271,10 @@
 .gr-result-grid,
 .gr-artifact-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.gr-result-grid-three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .gr-fit-grid,
@@ -438,6 +442,7 @@
   }
 
   .gr-result-grid,
+  .gr-result-grid-three,
   .gr-demo-grid,
   .gr-artifact-grid {
     grid-template-columns: 1fr;
@@ -454,6 +459,7 @@
   .gr-path-grid-five,
   .gr-fit-grid,
   .gr-result-grid,
+  .gr-result-grid-three,
   .gr-demo-grid,
   .gr-purpose-grid,
   .gr-artifact-grid,

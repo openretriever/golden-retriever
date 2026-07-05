@@ -1,8 +1,8 @@
 <div class="gr-reference-hero gr-reference-hero-tight">
   <div>
-    <p class="gr-eyebrow">Track G: applied examples</p>
-    <h1>Run applied Retriever examples after the core quickstart.</h1>
-    <p class="gr-lede">GoldenRetriever is the maintained applied reference layer for Retriever: robot-facing examples, reusable payload packs, simulator and visualization lanes, and candidates for future Retriever Hub packs. Learn Flow, clocks, sync, replay, and execution in the core docs; use Golden when you want runnable robot-facing examples.</p>
+    <p class="gr-eyebrow">Applied Retriever reference</p>
+    <h1>Golden examples start where the core quickstart ends.</h1>
+    <p class="gr-lede">GoldenRetriever is the maintained applied layer for Retriever: robot-facing examples, reusable payload packs, simulator and visualization lanes, and candidates for future Retriever Hub packs. Learn the runtime once in the core docs; use Golden to see those ideas as runnable robot systems.</p>
   </div>
   <div class="gr-command-strip">
     <span>First Golden proof</span>
@@ -12,11 +12,11 @@
 </div>
 
 <div class="gr-route-pills gr-route-pills-inline">
-  <a href="https://openretriever.org/start/">Start path</a>
-  <a href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/">Core visual quickstart</a>
-  <a href="https://openretriever-docs.pages.dev/">Core runtime docs</a>
-  <a href="examples/">Open Golden examples</a>
   <a href="https://openretriever.org/">Retriever home</a>
+  <a href="https://openretriever.org/start/">Builder start path</a>
+  <a href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/">Core visual quickstart</a>
+  <a href="https://openretriever-docs.pages.dev/tutorials/debug-and-visualize/">Core debug guide</a>
+  <a href="examples/">Golden examples</a>
   <a href="hub/">Hub packs</a>
   <a href="robotics_typing_standard/">Robot type packs</a>
 </div>
@@ -24,21 +24,21 @@
 !!! note "Golden is not a second runtime"
     Install and learn the runtime once. The Python import package is `retriever`; the public runtime distribution target is `retriever-core`. Golden provides applied examples and pack candidates on top of that runtime, not another Flow/Pipeline implementation.
 
-## Where Golden Fits
+## How The Retriever Surfaces Fit
 
 <div class="gr-layer-map gr-layer-map-compact">
   <div>
     <span>01 Front door</span>
     <strong><a href="https://openretriever.org/start/">openretriever.org/start</a></strong>
-    <p>Choose the shortest route: install, visual quickstart, core docs, Golden examples, Hub, or source.</p>
+    <p>Choose the shortest path: install, visual quickstart, core docs, Golden examples, Hub, or source checkout once public code visibility is enabled.</p>
   </div>
   <div>
     <span>02 Core runtime</span>
     <strong><a href="https://openretriever-docs.pages.dev/">Retriever docs</a></strong>
-    <p>Learn Flow, Pipeline, clocks, sync policies, stepping, replay, IR, execution, and Hub mechanics.</p>
+    <p>Learn Flow, Pipeline, clocks, sync policies, stepping, replay, IR, execution, graph rendering, and Hub mechanics.</p>
   </div>
   <div>
-    <span>03 Applied layer</span>
+    <span>03 Applied reference</span>
     <strong><a href="examples/">Golden examples</a></strong>
     <p>Run robot-facing examples, type packs, simulator wrappers, visualization lanes, and reusable pack candidates.</p>
   </div>
@@ -46,42 +46,55 @@
 
 ## Recommended Route
 
-<div class="gr-path-grid gr-path-grid-four">
+<div class="gr-path-grid gr-path-grid-five">
   <a class="gr-path-step" href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/">
     <span>00</span>
-    <strong>Run the core visual quickstart</strong>
-    <p>Start with the lightweight webcam/mock visual graph so Flow, stepping, graph inspection, and replay are clear.</p>
+    <strong>Run core first</strong>
+    <p>Start with the lightweight mock/webcam visual graph so Flow, stepping, graph inspection, and replay are clear.</p>
     <code>pixi run demo-webcam-detection-mock</code>
   </a>
   <a class="gr-path-step" href="examples/golden_hub_packs_v1/">
     <span>01</span>
     <strong>Prove the Golden boundary</strong>
-    <p>Load Golden's manifest-declared robot payloads through Retriever Hub instead of treating Golden as a runtime fork.</p>
+    <p>Load manifest-declared robot payloads through Retriever Hub instead of treating Golden as a runtime fork.</p>
     <code>pixi run demo-golden-hub-pack</code>
   </a>
-  <a class="gr-path-step" href="examples/">
+  <a class="gr-path-step" href="examples/perception_and_memory_v1/">
     <span>02</span>
-    <strong>Pick an example lane</strong>
-    <p>Choose perception, memory, language, composition, simulation, visualization, or robot typing by command and expected artifact.</p>
+    <strong>Walk the example ladder</strong>
+    <p>Use perception, memory, language, and composition examples over small deterministic robot-facing payloads.</p>
     <code>pixi run -e golden-local demo-perception-detection-flow</code>
   </a>
-  <a class="gr-path-step" href="hub/pack_roadmap_v1/">
+  <a class="gr-path-step" href="examples/simulation_and_visualization_v1/">
     <span>03</span>
+    <strong>Inspect visual systems</strong>
+    <p>Move to Rerun, mock-safe robosuite, simulator lanes, and self-contained HTML graph artifacts.</p>
+    <code>pixi run demo-pipeline-html-viz</code>
+  </a>
+  <a class="gr-path-step" href="hub/pack_roadmap_v1/">
+    <span>04</span>
     <strong>Promote reusable packs</strong>
     <p>Move examples into Hub-loadable packs only when imports, versions, smokes, dependency tiers, and docs are stable.</p>
     <code>hub.use("openretriever/golden-retriever:WorldState")</code>
   </a>
 </div>
 
-## Start With These Artifacts
+## Start With These Results
 
-<div class="gr-result-grid">
+<div class="gr-result-grid gr-result-grid-three">
   <div class="gr-result-card">
     <span>Hub proof</span>
     <strong>Terminal export summary</strong>
     <pre><code>pixi run demo-golden-hub-pack
 # Golden pack exports: WorldState, BeliefGraph, Skill, Plan, ...
 # Arrow round-trip: Action OK</code></pre>
+  </div>
+  <div class="gr-result-card">
+    <span>Simulator proof</span>
+    <strong>Mock-safe environment trace</strong>
+    <pre><code>pixi run demo-robosuite-mock
+# [mock step=01] object_height=...
+# reward=... done=False</code></pre>
   </div>
   <div class="gr-result-card">
     <span>Graph proof</span>
