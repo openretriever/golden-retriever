@@ -1,37 +1,19 @@
-# Golden Hub Proof v1
+# Golden Hub Proof
 
-<div class="gr-route-pills gr-route-pills-inline">
-  <a href="/">Golden overview</a>
-  <a href="/examples/">Examples</a>
-  <a href="/hub/">Hub packs</a>
-  <a href="/robotics_typing_standard/">Robot type packs</a>
-  <a href="/llms.txt">Agent map</a>
-</div>
+GoldenRetriever is the maintained applied examples layer for packs loaded through Retriever Hub. Golden exports robot-facing payloads and conversion helpers from a local manifest today; the same reference shape is what downstream projects use when the pack is indexed.
 
+## What this page proves
 
-GoldenRetriever is the maintained reference examples layer for packs loaded through Retriever Hub. The core runtime imports as `retriever`; the public PyPI target is `retriever-core` once the core 0.0.1 release is live. Golden's current manifest-declared Hub surface is the reusable robot-facing type pack and conversion helpers declared in `pyproject.toml`.
-
-## Core boundary
-
-Start with the core visual quickstart if you are new to Retriever. The core runtime provides Flow, Pipeline, registry, IR, and Hub mechanics; Golden provides robot-facing payloads and maintained examples.
-
-
-For the exact current export list, see [Hub Export Catalog](../hub/export_catalog_v1.md). For source examples that are candidates for future Hub packs, see [Pack Roadmap](../hub/pack_roadmap_v1.md).
-
-## Fast local proof
-
-Run these from the GoldenRetriever repository:
+This is the smallest Golden check: it proves that a project outside the core runtime can expose reusable robot payloads through Retriever Hub.
 
 ```bash
 pixi run demo-golden-hub-pack
 pixi run demo-pipeline-html-viz
 ```
 
-No Golden wheel is required for this source-checkout path. Install the Retriever runtime once, then load Golden's robot-facing payloads through the local Hub manifest. The public reference shape is the same `hub.use("openretriever/golden-retriever:Export")` string used by indexed Hub packs; source checkout is the launch-safe proof until a public index entry is enabled.
+The Hub-pack smoke command does four things without network access:
 
-The Hub-pack smoke command does four things locally without network access:
-
-1. reads the local `[tool.retriever.module]` manifest,
+1. reads the `[tool.retriever.module]` manifest,
 2. loads representative exports through the runtime Hub loader,
 3. checks that robot-facing types such as `WorldState` are visible through the unified registry,
 4. round-trips a lightweight `Action` payload through the exported Arrow helpers.
@@ -50,9 +32,9 @@ Retriever Hub reference: hub.use("openretriever/golden-retriever:WorldState")
 Graph proof: run `pixi run demo-pipeline-html-viz` to validate and render an IR HTML artifact.
 ```
 
-## Hub reference
+## Hub reference shape
 
-Golden exports use the same reference shape as any other Retriever Hub pack:
+Golden exports use the same reference shape as any Retriever Hub pack:
 
 ```python
 from retriever import hub
@@ -62,18 +44,10 @@ Plan = hub.use("openretriever/golden-retriever:Plan")
 convert_to_arrow = hub.use("openretriever/golden-retriever:convert_to_arrow")
 ```
 
-Golden does not need a separate runtime package for this path. Users install the runtime once, then load domain packs through Hub. Source examples are promoted to Hub packs only after they are import-safe, versioned, smoke-tested, and documented.
+Users install the runtime once, then load domain packs through Hub. Golden stays useful because its examples prove that boundary with robot-facing payloads.
 
-## What this proves
+## Continue
 
-This page is intentionally narrower than a full robot demo. It proves the
-public extension boundary:
-
-- the manifest can be loaded from a standard `src/` layout,
-- Golden exports appear as Hub-loaded objects,
-- robot-facing payloads register in the runtime registry,
-- conversion helpers are exported with the pack,
-- graph validation and visualization remain runtime-owned.
-
-For richer examples, continue with perception, memory, language, composition,
-and simulation lanes in the Example Guides section.
+- For the exact export list, see [Golden Pack Export Catalog](../hub/export_catalog_v1.md).
+- For pack maturity rules, see [Pack Maturity Guide](../hub/pack_roadmap_v1.md).
+- For richer examples, continue with perception, memory, language, composition, and simulation lanes in the Example Catalog.

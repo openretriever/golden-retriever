@@ -1,50 +1,43 @@
-# Hub Sharing Profile (v1)
+# Hub Sharing Profile
 
-<div class="gr-route-pills gr-route-pills-inline">
-  <a href="/">Golden overview</a>
-  <a href="/examples/">Examples</a>
-  <a href="/hub/">Hub packs</a>
-  <a href="/robotics_typing_standard/">Robot type packs</a>
-  <a href="/llms.txt">Agent map</a>
-</div>
+Golden examples can become Retriever Hub packs only after their imports, type contracts, dependency story, and smoke checks are stable. This page defines the minimum profile for robot-facing flows and payload packs.
 
+## Default Policy
 
-This profile defines the minimum typing requirements for shareable robotics flows in GoldenRetriever packs. Core runtime Hub mechanics stay in the Retriever core docs; this page focuses on Golden sharing requirements.
+Tuple input/output is allowed when the routing contract is explicit and each tuple element is an approved I/O payload.
 
-## 1. Default Policy
+Required for robot-facing boundaries:
 
-Tuple input/output is allowed with constraints.
+- stamped metadata where frame, time, or source matters,
+- deterministic qualified routing for composite I/O,
+- small smoke command that can run without hardware,
+- dependency tier label for optional simulator, camera, model, or robot integrations.
 
-Required:
-- each tuple element is an approved IO type,
-- collision-safe qualified routing is resolvable,
-- stamped boundary messages carry frame/time/source metadata where applicable.
+## Compatibility Levels
 
-## 2. Required Metadata for Robotics Boundary Types
+| Level | Meaning | Use |
+| --- | --- | --- |
+| `core` | Internal-only payloads with no robot boundary guarantees. | Small local examples. |
+| `robotics_v1` | Stamped boundary payloads plus validation checks. | Default for Golden robot-facing packs. |
+| `strict_single_io` | Disallows tuple I/O for teams that require one input and one output envelope. | Conservative production integrations. |
 
-For messages crossing process/network boundaries:
-- timestamp (`stamp_ns`),
-- frame id (`frame_id`),
-- source id (`source`).
+## Suggested Pack Contents
 
-## 3. Compatibility Levels
+A shareable robotics pack should include:
 
-- `profile=core`: allows unstamped internal-only messages.
-- `profile=robotics_v1` (recommended): requires stamped boundary types and validation checks.
-- `profile=strict_single_io`: optional strict mode for teams that disallow tuple IO.
+- declared input/output type signatures,
+- routing or alias map for composite I/O,
+- profile metadata such as `core` or `robotics_v1`,
+- import examples for both convenience and pinned paths,
+- smoke command and expected terminal output,
+- dependency tier notes for optional integrations.
 
-## 4. Validation Checklist
+## Promotion Checklist
 
-Flow package should pass:
-- tuple signature normalization checks,
-- ambiguous unqualified access checks,
-- arity/type checks for tuple outputs,
-- stamped metadata presence checks for boundary ports.
-
-## 5. Suggested Artifact Contents
-
-A shareable flow bundle should include:
-- declared input/output typing signature,
-- routing/alias map for composite I/O,
-- profile metadata (`core` or `robotics_v1`),
-- minimal executable verification logs.
+| Check | Why |
+| --- | --- |
+| `pixi run demo-golden-hub-pack` passes | The pack is visible through the Hub manifest and registry. |
+| Type imports work from a clean environment | Users can load the pack without repo-specific path tricks. |
+| Public docs name the first command | A new user knows how to verify the pack. |
+| Optional dependencies are labeled | Camera/simulator/model paths do not block the mock-safe route. |
+| Public surface check passes | The docs, tasks, and expected artifacts stay aligned. |

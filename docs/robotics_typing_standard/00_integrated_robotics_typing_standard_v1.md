@@ -1,101 +1,61 @@
-# Golden Robot Type-Pack Profile v1
+# Robot Type-Pack Overview
 
-<div class="gr-route-pills gr-route-pills-inline">
-  <a href="/">Golden overview</a>
-  <a href="/examples/">Examples</a>
-  <a href="/hub/">Hub packs</a>
-  <a href="/robotics_typing_standard/">Robot type packs</a>
-  <a href="/llms.txt">Agent map</a>
+Golden's robot type pack is a small applied profile on top of Retriever. It gives examples a shared language for robot state, beliefs, plans, commands, trajectories, and event streams without turning Golden into a second runtime.
+
+## Why This Exists
+
+Robot examples often pass values named `pose`, `velocity`, or `force`, but those values are unsafe to compose unless the boundary also says what frame, time, source, and units they belong to. The type pack makes those assumptions explicit at the reusable edges of a graph.
+
+<div class="gr-fit-grid">
+  <div class="gr-fit-card">
+    <span>Readable</span>
+    <strong>Keep examples ordinary</strong>
+    <p>Flows still use normal Python payload classes. The extra structure lives at boundaries where ambiguity would hurt.</p>
+  </div>
+  <div class="gr-fit-card">
+    <span>Composable</span>
+    <strong>Avoid silent collisions</strong>
+    <p>Composite inputs support deterministic qualified access, so two sources can both have a <code>pose</code> field without guessing.</p>
+  </div>
+  <div class="gr-fit-card">
+    <span>Reusable</span>
+    <strong>Prepare Hub packs</strong>
+    <p>Examples can graduate into Hub-loadable packs only when their payloads, imports, and smoke tests are stable.</p>
+  </div>
 </div>
 
-Golden owns this robot-facing profile; core Retriever owns the runtime, clocks, Flow/Pipeline semantics, standard type registry, and Hub loading mechanics. Use these pages when you need reusable robotics payloads or dataset/event profiles on top of the core runtime.
+## Payload Families
 
+| Family | Types | Use |
+| --- | --- | --- |
+| Spatial values | `Vector3`, `Quaternion`, `SE3Pose`, `Twist`, `Wrench`, `JointState` | Geometry, velocity, force, and joint-level state. |
+| Stamped boundaries | `Header`, `PoseStamped`, `TwistStamped`, `WrenchStamped` | Carry frame, time, and source at graph boundaries. |
+| Robot task state | `WorldState`, `RobotState`, `BeliefGraph` | Keep perception and memory examples on a shared schema. |
+| Planning/execution | `Skill`, `Plan`, `StructuredPlan`, `TaskGoal`, `Trajectory`, `ExecutionStatus` | Connect language, planning, and control-facing examples. |
+| Data streams | `Event`, `EventBuffer`, `MultiStreamBuffer`, manifests | Record, join, replay, and export multi-stream runs. |
 
-## 1. Problem
+## Authoring Pattern
 
-Robotics pipelines often pass values that look simple (`pose`, `velocity`, `force`) but are semantically incomplete unless we also track:
-- reference frame (`base_link`, `map`, `camera_color_optical_frame`, ...),
-- timestamp,
-- units,
-- source lineage.
+```python
+from retriever_typing import PoseStamped, get_type
+from retriever_typing.robotics_types import WorldState, Plan
 
-Without this metadata in type contracts, composed flows silently mix incompatible signals.
+pose_type = get_type("PoseStamped")
+```
 
-## 2. Design Objectives
+Use stamped payloads at graph, process, dataset, or robot boundaries. Inside a small local Flow, it is fine to convert to leaner internal values once frame and time have already been resolved.
 
-1. Keep authoring readable.
-- `Flow[(Observation, Plan), (Action, Progress)]` should be valid and explicit.
+## Boundary Walkthrough
 
-2. Make signal meaning first-class.
-- Typed payloads include frame/timestamp where needed.
+The promoted boundary demo follows this path:
 
-3. Make compositional routing deterministic.
-- Unique unqualified field access is allowed.
-- Ambiguous unqualified access must raise.
-- Qualified access (`A.field`) is always valid.
+1. perception emits a camera-frame `PoseStamped`,
+2. normalization emits a base-frame `PoseStamped`,
+3. control emits a typed command payload,
+4. serialization round-trips the command with stable type identity.
 
-4. Prepare for shareable flow artifacts.
-- Hub/registry-ready profile includes minimal metadata requirements.
+```bash
+pixi run demo-robotics-typing-boundary
+```
 
-## 3. Applied Type-Pack Families
-
-Golden v1 keeps these robot-facing payload families reusable across examples:
-- Geometry: `Vector3`, `Quaternion`, `SE3Pose`.
-- Motion: `Twist`, `Wrench`.
-- Joint-level: `JointState`.
-- Stamped wrappers: `PoseStamped`, `TwistStamped`, `WrenchStamped`.
-
-Stamped wrappers carry:
-- timestamp (`stamp_ns`),
-- frame id (`frame_id`),
-- source id (`source`).
-
-Access surfaces:
-- preferred import: `from retriever_typing import PoseStamped`
-- pinned import: `from retriever_typing.v1 import PoseStamped`
-- convenience import: `from retriever_typing import PoseStamped`
-- registry lookup: `from retriever_typing import get_type`
-
-## 4. Compositional Flow Typing Model
-
-Supported signature forms:
-- `Flow[(A, B), C]`
-- `Flow[tuple[A, B], C]`
-- `Flow[A, (C, D)]`
-- `Flow[(A, B), (C, D)]`
-
-Normalized semantics are the same regardless of tuple-literal vs `tuple[...]` style.
-
-## 5. Collision Contract
-
-Given input composite `(A, B)`:
-- If `field` exists in only one source: `inp.field` is valid.
-- If `field` exists in both sources: `inp.field` must raise ambiguity.
-- Qualified reads/writes are always valid:
-  - `inp.A.field`, `inp.B.field`
-  - `_get_signal("A.field")`, `_set_signal("B.field", value)`
-
-No implicit broadcast writes are allowed for ambiguous names.
-
-## 6. Recommended Authoring Pattern
-
-- Keep flow constructors light (`__init__` stores config).
-- Keep heavy runtime setup in `init` / worker-side hooks.
-- Use stamped payloads at boundaries; internal nodes can downcast to leaner types when safe.
-
-## 7. Expected Outcomes
-
-- Safer cross-team composition.
-- Fewer frame/unit mistakes.
-- Cleaner migration path toward strict shareable-flow typing checks.
-
-## 8. Boundary Walkthrough
-
-Representative example flow:
-1. perception emits `PoseStamped` in `camera_color_optical_frame`,
-2. normalization emits `PoseStamped` in `base_link`,
-3. controller emits `TwistStamped` in `base_link`,
-4. logging/replay path serializes the typed command with stable type identity.
-
-Reference demo:
-- `examples/advanced/robotics_typing_standard/perception_to_control_boundary_demo.py`
+Source: `examples/advanced/robotics_typing_standard/perception_to_control_boundary_demo.py`.

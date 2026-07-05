@@ -5,7 +5,6 @@
   <a href="/examples/">Examples</a>
   <a href="/hub/">Hub packs</a>
   <a href="/robotics_typing_standard/">Robot type packs</a>
-  <a href="/llms.txt">Agent map</a>
 </div>
 
 GoldenRetriever is Track G in the Retriever ecosystem: the maintained applied examples layer. Use this catalog after the core visual quickstart when you want concrete robot-facing paths: Hub-pack proof, perception, memory, language, composition, simulation, visualization, and reusable type-pack examples.
@@ -47,21 +46,20 @@ Boundary rule: runtime mechanics stay in core Retriever; robot-facing payloads, 
   </a>
 </div>
 
-## Agent-Safe Public Surface
+## First Verified Commands
 
-Use this sequence when an agent, CI job, or new user needs high-signal proof without optional hardware or model dependencies:
+Use this sequence when a new user needs high-signal proof without optional hardware or model dependencies:
 
 | Command | Expected result | Why it comes first |
 | --- | --- | --- |
-| `pixi run demo-golden-hub-pack` | Prints Golden pack exports, registry lookup, constructed payloads, and Arrow round-trip. | Proves Golden extends Retriever through a manifest instead of becoming a second runtime package. |
+| `pixi run demo-golden-hub-pack` | Prints Golden pack exports, registry lookup, constructed payloads, and Arrow round-trip. | Shows Golden extending Retriever through a manifest instead of becoming a second runtime package. |
 | `pixi run -e golden-local demo-perception-detection-flow` | Steps a deterministic synthetic perception graph to completion. | Proves the concise example ladder runs before heavier integrations. |
 | `pixi run demo-robosuite-mock` | Prints `[mock step=...]` simulator-policy trace lines. | Proves environment-as-Flow and policy-as-Flow without robosuite installed. |
 | `pixi run demo-pipeline-html-viz` | Prints an ASCII graph and writes `out/golden_retriever_closed_loop_viz.html`. | Proves IR validation and graph inspection on a closed-loop example. |
-| `pixi run public-surface-check` | Prints PASS/FAIL lines for promoted paths, tasks, docs markers, and short runtime smokes. | Prevents the public surface from drifting while heavier lanes evolve. |
 
 Optional camera, model-backed, MuJoCo, TWIST2, and real robosuite lanes should be selected only after the mock-safe path is green.
 
-## Example Results You Should Recognize
+## Example Results
 
 <div class="gr-artifact-grid gr-artifact-grid-compact">
   <figure class="gr-figure-card gr-figure-card-wide">

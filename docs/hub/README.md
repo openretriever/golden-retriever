@@ -5,7 +5,6 @@
   <a href="/examples/">Examples</a>
   <a href="/hub/">Hub packs</a>
   <a href="/robotics_typing_standard/">Robot type packs</a>
-  <a href="/llms.txt">Agent map</a>
 </div>
 
 
@@ -62,7 +61,7 @@ See [Export Catalog](export_catalog_v1.md) for the exact exports declared in `py
 
 ## Promotion candidates
 
-See [Pack Roadmap](pack_roadmap_v1.md). The short version: promote source examples into Hub packs only when they are import-safe, have serializable construction config, and have a documented smoke command.
+See [Pack Maturity Guide](pack_roadmap_v1.md). The short version: promote source examples into Hub packs only when they are import-safe, have serializable construction config, and have a documented smoke command.
 
 
 ## What stays source-only

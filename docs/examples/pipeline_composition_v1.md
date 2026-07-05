@@ -1,13 +1,5 @@
 # Pipeline Composition
 
-<div class="gr-route-pills gr-route-pills-inline">
-  <a href="/">Golden overview</a>
-  <a href="/examples/">Examples</a>
-  <a href="/hub/">Hub packs</a>
-  <a href="/robotics_typing_standard/">Robot type packs</a>
-  <a href="/llms.txt">Agent map</a>
-</div>
-
 Use this page when a single Flow is no longer enough and you want a reusable robot pipeline: perception into belief, belief into planning, planning into control, or any similar applied graph.
 
 The core Retriever docs teach the runtime model. This Golden page shows how the same ideas appear in robot-facing examples that can be tested and reused.

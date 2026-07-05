@@ -1,13 +1,5 @@
 # Perception, Memory, and Composition v1
 
-<div class="gr-route-pills gr-route-pills-inline">
-  <a href="/">Golden overview</a>
-  <a href="/examples/">Examples</a>
-  <a href="/hub/">Hub packs</a>
-  <a href="/robotics_typing_standard/">Robot type packs</a>
-  <a href="/llms.txt">Agent map</a>
-</div>
-
 
 This guide walks one concrete GoldenRetriever progression from a minimal synthetic perception loop to a composed perception -> belief -> control pipeline.
 
@@ -54,7 +46,7 @@ pixi run demo-perception-replay
 
 This gives you a stable artifact you can feed into later stages.
 
-## 4. Compare with the older state-management surfaces
+## 4. State handling patterns
 
 Start with the smallest stateful examples:
 
@@ -118,9 +110,9 @@ pixi run -e golden-local demo-stateful-replanning
 
 This example keeps state inside the replanner and emits plan updates only when obstacle events occur or clear.
 
-## 9. Next: newer core composition surfaces
+## 9. Registry-backed composition
 
-To explore the newer registry-backed composition surfaces, run:
+To explore registry-backed composition surfaces, run:
 
 ```bash
 pixi run -e golden-local demo-composable-pipelines

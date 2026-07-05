@@ -1,70 +1,50 @@
-# Robot Data Profile + EventStream v1 (`retriever_typing.data`)
+# Data and Event Streams
 
-<div class="gr-route-pills gr-route-pills-inline">
-  <a href="/">Golden overview</a>
-  <a href="/examples/">Examples</a>
-  <a href="/hub/">Hub packs</a>
-  <a href="/robotics_typing_standard/">Robot type packs</a>
-  <a href="/llms.txt">Agent map</a>
-</div>
+Golden's data profile is for collection, replay, joins, and dataset export. It is not a replacement for the core Retriever scheduler. It gives applied examples a deterministic event-time record format when a run needs to become evidence.
 
-Golden owns this robot-facing profile; core Retriever owns the runtime, clocks, Flow/Pipeline semantics, standard type registry, and Hub loading mechanics. Use these pages when you need reusable robotics payloads or dataset/event profiles on top of the core runtime.
-
-
-## Goal
-
-Define a reusable, deterministic data contract for collection/replay/export workflows without changing default core runtime behavior.
-
-Canonical package:
-- `retriever_typing.data`
-- pinned path: `retriever_typing.data.v1`
-
-## Core contracts
-
-- `Event[T]`
-  - immutable event record with deterministic ordering key:
-  - `(event_time_ns, ingest_time_ns, stream_id, seq)`
-- `EventRef`, `LineageRef`
-  - explicit source lineage for derived/joined events.
-- `StreamId`, `ClockDomain`, `SchemaRef`
-  - stable stream identity and schema metadata.
-- `EventBuffer[T]`, `MultiStreamBuffer`
-  - immutable stream buffers.
-- `JoinPolicy`, `WatermarkPolicy`, `WindowPolicy`
-  - explicit policy objects for alignment/pruning/sampling.
-
-## Deterministic multi-stream operators
-
-Event-time profile (normative):
-- `align_exact`
-- `align_latest_before(max_delta_ns)`
-- `align_window(window_ns)`
-- `merge_sorted`
-- `watermark_prune`
-
-Processing-time compatibility profile:
-- `latest`
-- `hold`
-- `window_agg`
-
-## Minimal runtime impact
-
-This page does not modify core Retriever scheduler/runtime behavior.
-
-Interop is opt-in via:
-- `from_runtime_event_buffer(...)`
-- `to_runtime_event_buffer(...)`
-
-## Example imports
+## Core Contracts
 
 ```python
-from retriever_typing.data import Event, EventBuffer, align_latest_before, WindowPolicy
-from retriever_typing.data.v1 import EventBuffer as PinnedEventBuffer
+from retriever_typing.data import Event, EventBuffer, align_latest_before
 ```
 
-## Acceptance checks
+| Contract | Role |
+| --- | --- |
+| `Event[T]` | Immutable value with `event_time_ns`, `ingest_time_ns`, `stream_id`, `seq`, payload, schema, frame, units, and lineage. |
+| `EventBuffer[T]` | Immutable ordered collection with `sorted()`, `latest_value()`, and window helpers. |
+| `MultiStreamBuffer` | Named collection of stream buffers. |
+| `EventRef` / `LineageRef` | Explicit source references for derived events. |
+| `StreamId`, `ClockDomain`, `SchemaRef` | Stable stream identity and schema metadata. |
 
-- import contract works for both convenience and pinned paths,
-- mixed-stream merges are deterministic,
-- join/window semantics are stable and test-covered,
-- no dependency from `src/retriever_typing` back into legacy system packages.
+## Deterministic Operators
+
+| Operator | Use |
+| --- | --- |
+| `merge_sorted` | Merge streams by `(event_time_ns, ingest_time_ns, stream_id, seq)`. |
+| `align_exact` | Join events only at matching event times. |
+| `align_latest_before(max_delta_ns)` | Join the most recent upstream event before the target time. |
+| `align_window(window_ns)` | Gather a bounded event-time window for aggregation. |
+| `watermark_prune` | Drop events older than a deterministic watermark. |
+
+## Runtime Boundary
+
+The data profile is opt-in. It does not change default Retriever runtime scheduling.
+
+Use these helpers only at conversion boundaries:
+
+```python
+from retriever_typing.data import from_runtime_event_buffer, to_runtime_event_buffer
+```
+
+## Run The Demos
+
+```bash
+python examples/advanced/robotics_typing_standard/data_spec_eventstream_demo.py
+python examples/advanced/robotics_typing_standard/multi_stream_join_demo.py
+```
+
+Expected result: deterministic ordering, join/window output, and lineage that points back to source events.
+
+## When To Use This
+
+Use the data profile when you need replayable evidence, dataset export, or stable multi-stream joins. For a small one-off Flow that only consumes its latest input, keep the payload simple and stay with the core runtime APIs.

@@ -1,68 +1,60 @@
-# Robot Flow Composition Profile (v1)
+# Flow Composition Contract
 
-<div class="gr-route-pills gr-route-pills-inline">
-  <a href="/">Golden overview</a>
-  <a href="/examples/">Examples</a>
-  <a href="/hub/">Hub packs</a>
-  <a href="/robotics_typing_standard/">Robot type packs</a>
-  <a href="/llms.txt">Agent map</a>
-</div>
+Reusable robot graphs often need more than one input: state, goal, detections, plan, controller feedback, or a simulator observation. This page defines the Golden contract for composing those typed payloads without relying on ambiguous field names.
 
-Golden owns this robot-facing profile; core Retriever owns the runtime, clocks, Flow/Pipeline semantics, standard type registry, and Hub loading mechanics. Use these pages when you need reusable robotics payloads or dataset/event profiles on top of the core runtime.
+## Runnable Check
 
+```bash
+pixi run demo-robotics-typing-contract
+```
 
-## 1. Supported Signatures
+Expected result: unique field access succeeds, ambiguous unqualified access raises, and qualified access remains deterministic.
 
-Equivalent accepted forms:
-- `Flow[(A, B), C]`
-- `Flow[tuple[A, B], C]`
-- `Flow[A, (C, D)]`
-- `Flow[(A, B), (C, D)]`
+## Supported Signatures
 
-## 2. Input Routing Semantics
+Retriever Flow authoring should stay readable. These forms normalize to the same composite I/O model:
 
-For composite input `(A, B)`, define:
-- alias map: `A`, `B` (or deterministic suffixed aliases on conflict),
-- unqualified map: `field -> [aliases]`,
-- qualified map: `Alias.field -> (Alias, field)`.
+```python
+Flow[(A, B), C]
+Flow[tuple[A, B], C]
+Flow[A, (C, D)]
+Flow[(A, B), (C, D)]
+```
 
-Access rules:
-- `inp.field` succeeds only when `field` maps to one alias.
-- `inp.field` raises ambiguity when `field` maps to multiple aliases.
-- `inp.A.field` / `inp.B.field` always valid when field exists.
+## Input Routing Rules
 
-## 3. Signal API Rules
+For a composite input `(A, B)`, the runtime view has two maps:
 
-- `_get_signal("field")`
-  - succeeds if unique;
-  - raises ambiguity if multi-source.
-- `_get_signal("A.field")`
-  - always explicit and valid if present.
+| Map | Example | Meaning |
+| --- | --- | --- |
+| Alias map | `A`, `B` | Stable names for the input payloads. |
+| Unqualified map | `pose -> [A]` | Short access is allowed only when one source owns the field. |
+| Qualified map | `A.pose` | Explicit access is always deterministic when the field exists. |
 
-Same for:
-- `_set_signal(...)`
-- `_has_signal(...)`
+Rules:
 
-No implicit broadcast on ambiguous unqualified names.
+- `inp.field` succeeds only when exactly one input source has `field`.
+- `inp.field` raises ambiguity when multiple sources have that field.
+- `inp.A.field` and `inp.B.field` stay valid when the field exists.
+- `_get_signal("A.field")`, `_set_signal("A.field", value)`, and `_has_signal("A.field")` follow the same explicit rule.
 
-## 4. Duplicate Type Name Policy
-
-If two source types share the same class name, aliases are deterministic:
-- `Name__1`, `Name__2`, ... by declaration order.
-
-Qualified access uses aliases.
-
-## 5. Output Routing Semantics
+## Output Routing Rules
 
 For output tuple `(C, D)`:
-- result arity must match declared output arity,
-- each tuple element must type-match its declared slot,
-- downstream ports use normalized alias map identical to input policy.
 
-## 6. Negative Cases
+- result arity must match the declared output arity,
+- each tuple element must match its declared slot,
+- downstream ports use the same normalized alias policy.
 
-Must raise at runtime (and ideally validate ahead of execution):
-- mixed tuple with `None` element in composite contract,
-- ambiguous unqualified read/write/has,
+## Why This Matters
+
+The failure mode is common in robot systems: camera perception, state estimation, and simulation can all expose something called `pose`. Golden's contract makes the simple case short and the ambiguous case explicit instead of silently choosing one source.
+
+## Negative Cases
+
+A public pack should fail early for:
+
+- ambiguous unqualified reads, writes, or existence checks,
 - output tuple arity mismatch,
-- output element type mismatch.
+- output element type mismatch,
+- mixed composite contracts that include `None` as a payload element.

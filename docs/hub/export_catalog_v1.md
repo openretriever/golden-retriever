@@ -1,13 +1,5 @@
 # Golden Pack Export Catalog v1
 
-<div class="gr-route-pills gr-route-pills-inline">
-  <a href="/">Golden overview</a>
-  <a href="/examples/">Examples</a>
-  <a href="/hub/">Hub packs</a>
-  <a href="/robotics_typing_standard/">Robot type packs</a>
-  <a href="/llms.txt">Agent map</a>
-</div>
-
 
 This page is generated from the current public boundary in `pyproject.toml`: Golden exposes robot-facing payloads and conversion helpers through `[tool.retriever.module.exports]`, and Retriever Hub loads that manifest.
 

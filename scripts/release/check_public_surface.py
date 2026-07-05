@@ -62,7 +62,7 @@ DOC_MARKERS = {
         "Retriever Hub Packs",
         "Retriever Hub reference shape",
         "hub.use(\"openretriever/golden-retriever:WorldState\")",
-        "Pack Roadmap",
+        "Pack Maturity Guide",
     ),
     "docs/hub/export_catalog_v1.md": (
         "Golden Pack Export Catalog v1",
@@ -71,8 +71,8 @@ DOC_MARKERS = {
         "convert_from_arrow",
     ),
     "docs/hub/pack_roadmap_v1.md": (
-        "Retriever Hub Pack Roadmap v1",
-        "golden.perception.synthetic_color",
+        "Pack Maturity Guide",
+        "Good Candidate Shapes",
         "import-safe",
         "demo-pipeline-html-viz",
     ),
@@ -82,7 +82,7 @@ DOC_MARKERS = {
         "Core runtime",
         "Applied reference",
         "Recommended Route",
-        "Start With These Results",
+        "First Results To Recognize",
         "What Belongs Here",
         "Robot Type Packs",
         "Hub packs",

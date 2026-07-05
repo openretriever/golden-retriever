@@ -16,7 +16,6 @@
   <a href="examples/">Golden examples</a>
   <a href="hub/">Hub packs</a>
   <a href="robotics_typing_standard/">Robot type packs</a>
-  <a href="llms.txt">Agent map</a>
 </div>
 
 !!! note "Golden is not a second runtime"
@@ -28,7 +27,7 @@
   <div>
     <span>01 Front door</span>
     <strong>OpenRetriever front door</strong>
-    <p>Choose the shortest path: install, visual quickstart, core docs, Golden examples, Hub, or source checkout once public code visibility is enabled.</p>
+    <p>Choose the shortest path: install, visual quickstart, core docs, Golden examples, Hub, or source.</p>
   </div>
   <div>
     <span>02 Core runtime</span>
@@ -77,7 +76,7 @@
   </a>
 </div>
 
-## Start With These Results
+## First Results To Recognize
 
 <div class="gr-result-grid gr-result-grid-three">
   <div class="gr-result-card">

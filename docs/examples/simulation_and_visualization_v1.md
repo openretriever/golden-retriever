@@ -1,25 +1,17 @@
 # Simulation and Visualization Examples
 
-<div class="gr-route-pills gr-route-pills-inline">
-  <a href="/">Golden overview</a>
-  <a href="/examples/">Examples</a>
-  <a href="/hub/">Hub packs</a>
-  <a href="/robotics_typing_standard/">Robot type packs</a>
-  <a href="/llms.txt">Agent map</a>
-</div>
 
-
-These examples are the current Golden paths for visual and simulator-oriented demos. They are optional lanes after the concise perception -> memory -> language ladder.
+These examples are the Golden paths for visual and simulator-oriented demos. Start with the mock-safe checks, then move into webcam, Rerun, MuJoCo, TWIST2, or robosuite only when those dependencies are available.
 
 ## Quick Map
 
-| Lane | Command | What it shows |
-| --- | --- | --- |
-| Webcam + Rerun | `pixi run -e torch demo-webcam-rerun` | Webcam/mock perception, model outputs, Rerun logging, record/replay helpers. |
-| TWIST2 / MuJoCo | `pixi run -e twist2 demo-twist2-rerun` | Multi-rate simulator/policy/visualization loop. |
-| MuJoCo Manipulation | Source-only: `pixi run -e twist2 python examples/advanced/mujoco_manipulation/app.py` | High-rate physics, slower controller, Rerun state logging. Not a promoted named task yet. |
-| RoboSuite Lift | `pixi run demo-robosuite-mock` | Mock-safe robosuite wrapper and scripted Lift-policy contract. |
-| Hierarchical Physics | Source-only: `pixi run -e twist2 python examples/advanced/hierarchical_physics_demo/app.py --demo both --duration 8` | Explicit clock -> sim -> viz layers plus HTML pipeline visualization. Not a promoted named task yet. |
+| Lane | First command | Status | What it shows |
+| --- | --- | --- | --- |
+| Webcam + Rerun | `pixi run -e torch demo-webcam-rerun` | Optional camera/model lane | Webcam/mock perception, model outputs, Rerun logging, record/replay helpers. |
+| TWIST2 / MuJoCo | `pixi run -e twist2 demo-twist2-rerun` | Optional simulator lane | Multi-rate simulator/policy/visualization loop. |
+| MuJoCo Manipulation | `pixi run -e twist2 python examples/advanced/mujoco_manipulation/app.py` | Source launch file | High-rate physics, slower controller, Rerun state logging. |
+| RoboSuite Lift | `pixi run demo-robosuite-mock` | Mock-safe first | Robosuite wrapper and scripted Lift-policy contract. |
+| Hierarchical Physics | `pixi run -e twist2 python examples/advanced/hierarchical_physics_demo/app.py --demo both --duration 8` | Source launch file | Explicit clock -> sim -> viz layers plus HTML pipeline visualization. |
 
 ## Safe First Visual Checks
 
@@ -79,9 +71,9 @@ Source:
 - `examples/advanced/twist2_simulation/README.md`
 - `examples/advanced/twist2_simulation/app.py`
 
-## MuJoCo Manipulation Source Reference
+## MuJoCo Manipulation
 
-This lane has a concrete launch file, but it is source-only until it receives a named Pixi task and public smoke coverage. Use it after the promoted visual checks pass.
+Use this lane after the promoted visual checks pass and the TWIST2/MuJoCo environment is available.
 
 ```bash
 pixi run -e twist2 python examples/advanced/mujoco_manipulation/app.py
@@ -99,7 +91,7 @@ Source:
 - `examples/advanced/mujoco_manipulation/README.md`
 - `examples/advanced/mujoco_manipulation/app.py`
 
-## RoboSuite Lift Smoke Demo
+## RoboSuite Lift
 
 ```bash
 pixi run demo-robosuite-mock
@@ -108,9 +100,7 @@ pixi run demo-robosuite-mock
 This is the default smoke path: it exercises the Retriever graph contract without requiring robosuite. For a real robosuite `Lift` run, install the optional dependency and run the real mode:
 
 ```bash
-# --no-deps: base deps resolve from the pixi env; retriever-core is not on
-# PyPI until the core runtime publishes (drop the flag after that release).
-pixi run python -m pip install --no-deps -e ".[robosuite]" robosuite
+pixi run python -m pip install -e ".[robosuite]" robosuite
 pixi run demo-robosuite-lift
 ```
 
@@ -125,9 +115,9 @@ Source:
 - `examples/advanced/robosuite_lift/README.md`
 - `examples/advanced/robosuite_lift/app.py`
 
-## Hierarchical Physics Source Reference
+## Hierarchical Physics
 
-This lane is useful for design inspection, but it is source-only until it receives a named Pixi task and stable public smoke coverage. The promoted lightweight graph artifact remains `pixi run demo-pipeline-html-viz`.
+Use this lane for design inspection after the lightweight graph artifact works. The promoted quick graph check remains `pixi run demo-pipeline-html-viz`.
 
 ```bash
 pixi run -e twist2 python examples/advanced/hierarchical_physics_demo/app.py --demo both --duration 8
@@ -162,6 +152,6 @@ What it shows:
 
 This is intentionally lightweight: a graph-visualization utility rather than a full simulator example family.
 
-## Current Scope
+## How To Choose
 
-This page only lists examples that exist in the current repository and have concrete launch files. Keep new simulator lanes out of the public front door until they have a runnable command, dependency story, and README.
+Use mock-safe checks for first-run confidence, Rerun for visual debugging, simulator lanes for rate and environment integration, and source launch files when you are inspecting implementation patterns rather than following the shortest path.

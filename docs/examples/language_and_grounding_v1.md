@@ -1,13 +1,5 @@
 # Language and Grounding v1
 
-<div class="gr-route-pills gr-route-pills-inline">
-  <a href="/">Golden overview</a>
-  <a href="/examples/">Examples</a>
-  <a href="/hub/">Hub packs</a>
-  <a href="/robotics_typing_standard/">Robot type packs</a>
-  <a href="/llms.txt">Agent map</a>
-</div>
-
 
 This guide adds one small language-facing ladder on top of the shared primitive
 Retriever type families.
