@@ -4,7 +4,7 @@ description: Choose Golden robot payloads for examples, datasets, and Hub packs.
 ---
 <p class="kicker">Applied robotics payloads</p>
 
-Golden keeps robot-facing payloads out of the core runtime. Use this page when an example needs a stable shape for robot state, perception output, belief, plans, trajectories, commands, execution status, or recorded events.
+Golden keeps robot-facing payloads layered above the core runtime. Use this page as a selection guide first: choose the smallest payload that preserves the robot boundary you care about, then open the detailed field reference only when you need exact fields.
 
 <div class="proof-strip">
   <div>
@@ -20,6 +20,12 @@ Golden keeps robot-facing payloads out of the core runtime. Use this page when a
 </div>
 
 ## Pick The Smallest Useful Payload
+
+<div class="surface-map">
+  <p class="kicker">How to read this page</p>
+  <p>Start with the boundary, not the type name. Spatial values stay small; values that cross process, replay, dataset, or robot boundaries become stamped; planning and memory use task-level payloads.</p>
+  <div class="code-chip-list"><code>local math -> Vector3 / SE3Pose</code><code>graph boundary -> PoseStamped</code><code>scene memory -> BeliefGraph</code><code>planner handoff -> Plan / Trajectory</code></div>
+</div>
 
 <div class="choice-grid">
   <div class="choice-card"><span>Geometry</span><strong>Pose, velocity, force</strong><p>Use <code>Vector3</code>, <code>Quaternion</code>, <code>SE3Pose</code>, <code>Twist</code>, and <code>Wrench</code> when a Flow only needs spatial values.</p></div>
@@ -42,7 +48,7 @@ Golden keeps robot-facing payloads out of the core runtime. Use this page when a
 
 ## Import And Registry Shape
 
-Use direct imports when authoring code. Use registry lookup when loading manifests, validating Hub packs, or replaying dataset records.
+Use direct imports when authoring code. Use registry lookup only at package boundaries: manifests, Hub packs, validation tools, and replay/dataset readers.
 
 ```python
 from retriever_typing import PoseStamped, SE3Pose, get_type
@@ -68,7 +74,7 @@ assert pose_cls is PoseStamped
 </div>
 
 <details class="reference-details">
-  <summary>Detailed field reference</summary>
+  <summary>Detailed field reference for implementers</summary>
   <div>
 
 <div class="type-grid type-grid-compact">

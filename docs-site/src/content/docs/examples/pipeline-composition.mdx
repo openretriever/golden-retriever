@@ -2,23 +2,33 @@
 title: Pipeline Composition
 description: Registry-backed composition and reusable pipeline surfaces.
 ---
-Composition examples show how Golden turns small pieces into reusable robot-facing graphs without inventing a second runtime.
+<p class="kicker">Runnable composition lane</p>
 
-```bash
-pixi run -e golden-local demo-composable-pipelines
-```
+Composition examples show how Golden turns small typed pieces into reusable robot-facing graphs without inventing a second runtime. Use this page after the core Flow and Pipeline concepts are clear.
 
-## First Runnable Example
+<div class="proof-strip">
+  <div>
+    <p class="kicker">First runnable example</p>
+    <p>Run the public composition smoke before reading the contracts.</p>
+    <pre><code>pixi run -e golden-local demo-composable-pipelines</code></pre>
+  </div>
+  <div>
+    <strong>Expected result</strong>
+    <p>The example composes typed modules, resolves registry-backed payloads, and keeps the resulting graph inspectable through the IR and visualization path.</p>
+  </div>
+</div>
 
-That command demonstrates three public capabilities:
+## What This Demonstrates
 
-1. composing typed Flow modules into a larger graph,
-2. using registry-backed payloads instead of ad hoc dicts,
-3. keeping the same graph inspectable through the runtime IR and visualization path.
+<div class="rule-grid">
+  <div class="rule-card"><span>Compose</span><strong>Typed modules become a graph</strong><p>Examples can start from small Flows and still expose a single runnable pipeline boundary.</p></div>
+  <div class="rule-card"><span>Share</span><strong>Payloads stay registry-backed</strong><p>Robot state, belief, plans, and commands use named payloads instead of ad hoc dict glue.</p></div>
+  <div class="rule-card"><span>Inspect</span><strong>The graph remains visible</strong><p>The same composition can be rendered as runtime IR or a browser HTML graph artifact.</p></div>
+</div>
 
-## Why This Is Separate From Older Wiring Examples
+## Public Boundary
 
-Older source folders may still be useful as implementation references, but this page is the public composition lane. A composition example belongs here only when it has a named task, expected output, dependency story, and docs page.
+This is the public composition lane. A composition example belongs here only when it has a named task, expected output, dependency story, and docs page. Older source folders can remain implementation references without becoming launch paths.
 
 <div class="card-grid">
   <a class="info-card" href="/examples/simulation-visualization/"><strong>Render the graph</strong><span>Use the HTML visualization lane to inspect the composed pipeline.</span></a>

@@ -7,7 +7,7 @@ export default defineConfig({
   site: 'https://retriever-space.pages.dev',
   integrations: [
     starlight({
-      title: 'Golden Retriever',
+      title: 'Golden Retriever Reference',
       description: 'Applied robot examples, reusable payload packs, and Hub-pack candidates for Retriever.',
       logo: {
         src: './src/assets/retriever-illustrative.jpeg',
@@ -26,7 +26,7 @@ export default defineConfig({
           ],
         },
         {
-          label: 'Examples',
+          label: 'Runnable Examples',
           items: [
             { label: 'Perception and Memory', slug: 'examples/perception-memory' },
             { label: 'Language and Grounding', slug: 'examples/language-grounding' },
@@ -35,21 +35,21 @@ export default defineConfig({
           ],
         },
         {
-          label: 'Hub Packs',
+          label: 'Applied Reference',
           items: [
-            { label: 'Golden Pack Boundary', slug: 'hub' },
-            { label: 'Current Export Catalog', slug: 'hub/export-catalog' },
-            { label: 'Pack Maturity Guide', slug: 'hub/pack-roadmap' },
-          ],
-        },
-        {
-          label: 'Robot Type Packs',
-          items: [
-            { label: 'Overview', slug: 'robot-type-packs' },
+            { label: 'Robot Type Packs', slug: 'robot-type-packs' },
             { label: 'Payload Catalog', slug: 'robot-type-packs/type-catalog' },
             { label: 'Flow Contracts', slug: 'robot-type-packs/flow-contracts' },
             { label: 'Data and Event Streams', slug: 'robot-type-packs/data-event-streams' },
             { label: 'LeRobot Dataset Export', slug: 'robot-type-packs/lerobot-export' },
+          ],
+        },
+        {
+          label: 'Pack Promotion',
+          items: [
+            { label: 'Golden Pack Boundary', slug: 'hub' },
+            { label: 'Current Export Catalog', slug: 'hub/export-catalog' },
+            { label: 'Pack Maturity Guide', slug: 'hub/pack-roadmap' },
           ],
         },
       ],

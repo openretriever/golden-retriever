@@ -120,7 +120,7 @@ DOC_MARKERS = {
     "docs-site/src/content/docs/robot-type-packs/index.mdx": (
         "Robot Type Packs",
         "Payload catalog",
-        "What Golden Owns",
+        "What Golden Provides",
         "demo-robotics-typing-catalog",
     ),
     "docs-site/src/content/docs/robot-type-packs/type-catalog.mdx": (

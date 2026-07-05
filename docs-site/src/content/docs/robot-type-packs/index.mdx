@@ -4,7 +4,7 @@ description: Reusable robot payload packs for Golden examples.
 ---
 <p class="kicker">Applied payload layer</p>
 
-Core Retriever teaches Flow, Pipeline, clocks, sync policies, execution, IR, replay, and Hub loading. Golden keeps the robot-facing vocabulary on top of that runtime: world state, belief, skills, plans, trajectories, stamped spatial values, event buffers, dataset records, and export profiles.
+Core Retriever teaches Flow, Pipeline, clocks, sync policies, execution, IR, replay, and Hub loading. Golden adds the robot-facing vocabulary on top of that runtime: world state, belief, skills, plans, trajectories, stamped spatial values, event buffers, dataset records, and export profiles.
 
 <div class="surface-map">
   <strong>Use this section when a reusable robot example needs a stable payload boundary.</strong>
@@ -26,9 +26,9 @@ pixi run demo-robotics-typing-contract
 pixi run demo-robotics-typing-boundary
 ```
 
-Expected result: terminal output showing stamped spatial payloads, composite I/O access rules, and a perception-to-control boundary that preserves frame, time, and source metadata.
+Expected result: terminal output that constructs stamped spatial payloads, checks composite I/O access rules, and preserves frame, time, and source metadata across a perception-to-control boundary.
 
-## What Golden Owns
+## What Golden Provides
 
 | Area | Golden provides | Core Retriever provides |
 | --- | --- | --- |

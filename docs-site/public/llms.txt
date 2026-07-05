@@ -16,7 +16,7 @@ GoldenRetriever is the maintained applied reference layer for Retriever: robot-f
 
 ## Boundary
 
-The core runtime imports as `retriever`; the public runtime distribution target is `retriever-core`. GoldenRetriever is not a second runtime package. Golden owns maintained robot-facing examples, reusable type packs, robotics typing references, simulator/visualization lanes, notebooks, and Hub-pack candidates.
+The core runtime imports as `retriever`; the public runtime distribution target is `retriever-core`. GoldenRetriever is not a second runtime package. Golden maintains robot-facing examples, reusable type packs, robotics typing references, simulator/visualization lanes, notebooks, and Hub-pack candidates.
 
 ## Canonical Path
 
@@ -49,6 +49,18 @@ pixi run public-surface-check
 
 Expected artifacts: Hub export/registry/Arrow terminal proof, exit-zero synthetic perception flow, `[mock step=...]` robosuite trace lines, `out/golden_retriever_closed_loop_viz.html`, and PASS lines from the public-surface guardrail.
 
+## Agent Decision Table
+
+| If the user asks for... | Start with | Do not start with |
+| --- | --- | --- |
+| A safe Golden smoke | `pixi run demo-golden-hub-pack` | camera, simulator, model, or network setup |
+| Example behavior | `pixi run -e golden-local demo-perception-detection-flow` | optional model-backed lanes |
+| Simulator integration | `pixi run demo-robosuite-mock` | real robosuite until the mock trace works |
+| Graph visualization | `pixi run demo-pipeline-html-viz` | screenshots or stale generated HTML |
+| Type-pack reuse | `pixi run demo-robotics-typing-catalog` | ad hoc dict payloads or source-only imports |
+
+If a safe command fails, fix the example, task, docs, or public-surface check together. Do not add a new undocumented command as a workaround.
+
 ## Optional Lanes
 
 Only start these when the user explicitly asks for the relevant environment:
@@ -65,3 +77,5 @@ Only start these when the user explicitly asks for the relevant environment:
 - Use hosted docs for public behavior and the source checkout for runnable examples.
 - Do not treat source examples as Retriever Hub packs unless `pyproject.toml` exports them.
 - Keep public docs limited to public source paths, hosted docs, and public URLs.
+- Prefer mock/smoke commands before optional hardware, simulator, model, GPU, or network dependencies.
+- When editing examples, update the matching Pixi task, docs page, expected output, and public-surface check in the same change.

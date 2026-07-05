@@ -29,26 +29,60 @@ template: splash
 <strong>Golden is not a second runtime.</strong> Install and learn Retriever once. The Python import package is <code>retriever</code>; Golden provides applied examples and pack candidates on top of that runtime. If you need Flow, Pipeline, clocks, sync, or replay semantics, use the core runtime docs; otherwise stay on this Golden path.
 </div>
 
-## Recommended Route
+## Quick Start
 
-<div class="path-grid">
-  <a class="path-card" href="/examples/golden-hub-proof/"><span>00</span><strong>Prove Golden boundary</strong><p>Load manifest-declared robot payloads through Retriever Hub with no robot, camera, simulator, model, or network dependency.</p><code>pixi run demo-golden-hub-pack</code></a>
-  <a class="path-card" href="/examples/perception-memory/"><span>01</span><strong>Walk the ladder</strong><p>Run perception and memory over deterministic robot-facing payloads.</p><code>pixi run -e golden-local demo-perception-detection-flow</code></a>
-  <a class="path-card" href="/robot-type-packs/"><span>02</span><strong>Pick payloads</strong><p>Choose the smallest robot type that preserves frame, time, source, belief, plan, or trajectory semantics.</p><code>pixi run demo-robotics-typing-catalog</code></a>
-  <a class="path-card" href="/examples/simulation-visualization/"><span>03</span><strong>Inspect visual systems</strong><p>Move to mock-safe simulator lanes, Rerun streams, and HTML graph artifacts.</p><code>pixi run demo-pipeline-html-viz</code></a>
+Run the smallest Golden proof before choosing a heavier example lane.
+
+```bash
+pixi run demo-golden-hub-pack
+```
+
+<details class="explain-details">
+  <summary>What does this do?</summary>
+  <div>
+    <p>The command loads the Golden robot payload pack through Retriever Hub, constructs representative payloads, and round-trips a command through Arrow helpers. It requires no robot, camera, simulator, model, network service, or GUI.</p>
+  </div>
+</details>
+
+## Why Golden Retriever
+
+<div class="check-list">
+  <p><strong>Applied layer, not another runtime.</strong> Core Retriever owns Flow, Pipeline, clocks, sync, IR, replay, and execution. Golden owns robot-facing examples and payload-pack candidates.</p>
+  <p><strong>Mock-safe first.</strong> The first commands should work before camera, simulator, GPU, model, or robot dependencies enter the loop.</p>
+  <p><strong>Expected artifacts.</strong> Each promoted lane should say what output to recognize: terminal proof, mock trace, HTML graph, Rerun stream, or dataset/export artifact.</p>
+  <p><strong>Pack promotion path.</strong> Useful examples can mature into Hub-loadable packs once their imports, tasks, docs, and smoke tests are stable.</p>
 </div>
 
 ## How The Retriever Surfaces Fit
 
-<div class="layer-grid">
-  <div class="info-card"><strong>Core Retriever</strong><span>Flow, Pipeline, clocks, sync policies, IR, runtime execution, graph rendering, replay, and Hub loading mechanics.</span></div>
-  <div class="info-card"><strong>Golden Retriever</strong><span>Applied robot examples, reusable payload packs, simulator lanes, visualization demos, and candidate Hub packs.</span></div>
-  <div class="info-card"><strong>Retriever Hub</strong><span>The packaging boundary: load stable Flows, type packs, and conversion helpers without depending on source-tree layout.</span></div>
+| Surface | Owns | Start here when... |
+| --- | --- | --- |
+| Core Retriever | Flow, Pipeline, clocks, sync policies, IR, execution, replay, graph rendering, and Hub loading mechanics. | You need to understand or debug the runtime model. |
+| Golden Retriever | Applied robot examples, reusable payload packs, simulator lanes, visualization demos, and pack candidates. | You want runnable robot-facing examples after the core quickstart. |
+| Retriever Hub | The packaging boundary for stable Flows, type packs, and conversion helpers. | You want reuse without depending on source-tree layout. |
+
+## Guides
+
+<div class="card-grid">
+  <a class="info-card" href="/examples/golden-hub-proof/"><strong>First Golden proof</strong><span>Load the Golden payload pack through Retriever Hub.</span></a>
+  <a class="info-card" href="/examples/"><strong>Example catalog</strong><span>Pick a lane by expected artifact and dependency level.</span></a>
+  <a class="info-card" href="/robot-type-packs/"><strong>Robot type packs</strong><span>Choose payloads for world state, belief, plans, trajectories, and events.</span></a>
+  <a class="info-card" href="/examples/simulation-visualization/"><strong>Visualization lanes</strong><span>Inspect HTML graphs, mock simulator traces, and optional Rerun streams.</span></a>
 </div>
+
+## Common Patterns
+
+| Need | Start with | Avoid first |
+| --- | --- | --- |
+| Safe Golden smoke | `pixi run demo-golden-hub-pack` | Camera, simulator, model, or network setup. |
+| Example behavior | `pixi run -e golden-local demo-perception-detection-flow` | Optional model-backed lanes. |
+| Simulator integration | `pixi run demo-robosuite-mock` | Real robosuite before the mock trace works. |
+| Graph visualization | `pixi run demo-pipeline-html-viz` | Screenshots or stale generated HTML. |
+| Type-pack reuse | `pixi run demo-robotics-typing-catalog` | Ad hoc dict payloads or source-only imports. |
 
 ## For AI Agents And Fast Audits
 
-Start from [`/llms.txt`](/llms.txt), then run the smoke sequence before editing examples:
+Start from [`/llms.txt`](/llms.txt), then run the safe smoke sequence before editing examples:
 
 ```bash
 pixi run demo-golden-hub-pack
@@ -57,7 +91,7 @@ pixi run demo-pipeline-html-viz
 pixi run public-surface-check
 ```
 
-Treat these as public-contract checks: if one fails, fix the example, task, or docs together instead of adding another undocumented launch path.
+If one fails, fix the example, task, docs, or public-surface check together. Do not add another undocumented command as a workaround.
 
 ## First Results To Recognize
 
