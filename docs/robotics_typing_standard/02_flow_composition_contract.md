@@ -1,12 +1,11 @@
 # Robot Flow Composition Profile (v1)
 
 <div class="gr-route-pills gr-route-pills-inline">
-  <a href="https://openretriever.org/">Retriever home</a>
-  <a href="https://openretriever.org/start/">Start path</a>
-  <a href="https://openretriever-docs.pages.dev/">Core docs</a>
-  <a href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/">Visual quickstart</a>
   <a href="/">Golden overview</a>
-  <a href="../llms.txt">Golden agent map</a>
+  <a href="/examples/">Examples</a>
+  <a href="/hub/">Hub packs</a>
+  <a href="/robotics_typing_standard/">Robot type packs</a>
+  <a href="/llms.txt">Agent map</a>
 </div>
 
 Golden owns this robot-facing profile; core Retriever owns the runtime, clocks, Flow/Pipeline semantics, standard type registry, and Hub loading mechanics. Use these pages when you need reusable robotics payloads or dataset/event profiles on top of the core runtime.

@@ -1,12 +1,11 @@
 # Golden Hub Proof v1
 
 <div class="gr-route-pills gr-route-pills-inline">
-  <a href="https://openretriever.org/">Retriever home</a>
-  <a href="https://openretriever.org/start/">Start path</a>
-  <a href="https://openretriever-docs.pages.dev/">Core docs</a>
-  <a href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/">Visual quickstart</a>
   <a href="/">Golden overview</a>
-  <a href="../llms.txt">Golden agent map</a>
+  <a href="/examples/">Examples</a>
+  <a href="/hub/">Hub packs</a>
+  <a href="/robotics_typing_standard/">Robot type packs</a>
+  <a href="/llms.txt">Agent map</a>
 </div>
 
 
@@ -14,7 +13,7 @@ GoldenRetriever is the maintained reference examples layer for packs loaded thro
 
 ## Core boundary
 
-Start with the core visual quickstart if you are new to Retriever: https://openretriever-docs.pages.dev/getting-started/visual-quickstart/. The core runtime provides Flow, Pipeline, registry, IR, and Hub mechanics; Golden provides robot-facing payloads and maintained examples.
+Start with the core visual quickstart if you are new to Retriever. The core runtime provides Flow, Pipeline, registry, IR, and Hub mechanics; Golden provides robot-facing payloads and maintained examples.
 
 
 For the exact current export list, see [Hub Export Catalog](../hub/export_catalog_v1.md). For source examples that are candidates for future Hub packs, see [Pack Roadmap](../hub/pack_roadmap_v1.md).

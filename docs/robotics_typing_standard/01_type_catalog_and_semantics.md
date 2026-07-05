@@ -1,95 +1,70 @@
-# Robot Type Catalog and Semantics (v1)
+# Robot Type Catalog
 
 <div class="gr-route-pills gr-route-pills-inline">
-  <a href="https://openretriever.org/">Retriever home</a>
-  <a href="https://openretriever.org/start/">Start path</a>
-  <a href="https://openretriever-docs.pages.dev/">Core docs</a>
-  <a href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/">Visual quickstart</a>
   <a href="/">Golden overview</a>
-  <a href="../llms.txt">Golden agent map</a>
+  <a href="/examples/">Examples</a>
+  <a href="/hub/">Hub packs</a>
+  <a href="/robotics_typing_standard/">Robot type packs</a>
+  <a href="/llms.txt">Agent map</a>
 </div>
 
-Golden owns this robot-facing profile; core Retriever owns the runtime, clocks, Flow/Pipeline semantics, standard type registry, and Hub loading mechanics. Use these pages when you need reusable robotics payloads or dataset/event profiles on top of the core runtime.
+Golden's type pack gives robot examples a shared vocabulary: poses, twists, wrenches, joint state, timestamps, plans, skills, and execution status. Use these types when examples need to agree on payload meaning without pulling in a simulator or ROS message package.
 
+## Quick Import
 
-Preferred module:
-- `retriever_typing`
+```python
+from retriever_typing import PoseStamped, SE3Pose, get_type
 
-Pinned implementation module:
-- `retriever_typing.v1`
+pose_type = get_type("PoseStamped")
+```
 
-Compatibility/registry access:
-- `from retriever_typing import PoseStamped, SE3Pose`
-- `from retriever_typing import get_type`
-- `get_type("PoseStamped")`
+| Surface | Value |
+| --- | --- |
+| Preferred module | `retriever_typing` |
+| Pinned implementation | `retriever_typing.v1` |
+| Lookup style | `get_type("PoseStamped")` |
 
-## 1. Core Geometry Types
+## Geometry Types
 
-## `Vector3`
-- Fields: `x`, `y`, `z`
-- Unit depends on context:
-  - position vector: meters
-  - angular velocity: rad/s
-  - force: newtons
+| Type | Fields | Meaning |
+| --- | --- | --- |
+| `Vector3` | `x`, `y`, `z` | Generic 3D vector. Units depend on context: meters for position, radians/sec for angular velocity, newtons for force. |
+| `Quaternion` | `x`, `y`, `z`, `w` | Right-handed rotation quaternion. Boundary checks should keep the norm near 1.0. |
+| `SE3Pose` | `position: Vector3`, `orientation: Quaternion` | Rigid 3D pose. Use with a stamped wrapper when frame or time matters. |
 
-## `Quaternion`
-- Fields: `x`, `y`, `z`, `w`
-- Semantics: right-handed rotation quaternion
-- Constraint: norm should be approximately 1.0
+## Motion and Force Types
 
-## `SE3Pose`
-- Fields: `position: Vector3`, `orientation: Quaternion`
-- Semantics: rigid transform in 3D.
+| Type | Fields | Meaning |
+| --- | --- | --- |
+| `Twist` | `linear: Vector3`, `angular: Vector3` | Spatial velocity: linear m/s and angular rad/s. |
+| `Wrench` | `force: Vector3`, `torque: Vector3` | Spatial force: newtons and newton-meters. |
 
-## 2. Motion and Force Types
+## Joint State
 
-## `Twist`
-- Fields:
-  - `linear: Vector3` (m/s)
-  - `angular: Vector3` (rad/s)
+| Type | Fields | Contract |
+| --- | --- | --- |
+| `JointState` | `names`, `positions`, `velocities`, `efforts` | Arrays align by index and have the same length. |
 
-## `Wrench`
-- Fields:
-  - `force: Vector3` (N)
-  - `torque: Vector3` (N*m)
+Use `JointState` for compact examples where a full robot description is unnecessary but joint-level state still needs a stable schema.
 
-## 3. Joint Type
+## Stamped Wrappers
 
-## `JointState`
-- Fields:
-  - `names: tuple[str, ...]`
-  - `positions: tuple[float, ...]`
-  - `velocities: tuple[float, ...]`
-  - `efforts: tuple[float, ...]`
-- Contract: all arrays align by index and length.
+| Type | Fields | Use when |
+| --- | --- | --- |
+| `Header` | `stamp_ns`, `frame_id`, `source` | A value needs time, frame, and provenance. |
+| `PoseStamped` | `header`, `pose` | A pose belongs to a frame at a specific timestamp. |
+| `TwistStamped` | `header`, `twist` | A velocity estimate belongs to a frame and source. |
+| `WrenchStamped` | `header`, `wrench` | A force/torque estimate belongs to a frame and source. |
 
-## 4. Stamped Wrappers
+## Validation Policy
 
-## `Header`
-- Fields:
-  - `stamp_ns: int`
-  - `frame_id: str`
-  - `source: str`
+Boundary nodes should reject or normalize values before passing them into reusable flows:
 
-## `PoseStamped`
-- Fields: `header`, `pose`
+- `frame_id` is non-empty when a frame matters.
+- `stamp_ns` is monotonic per source where ordering matters.
+- `Quaternion` norm is close to 1.0.
+- `JointState` arrays have aligned lengths.
 
-## `TwistStamped`
-- Fields: `header`, `twist`
+## Future Extensions
 
-## `WrenchStamped`
-- Fields: `header`, `wrench`
-
-## 5. Validation Policy (v1)
-
-Required checks at boundary nodes:
-- non-empty `frame_id`,
-- monotonic `stamp_ns` per source,
-- quaternion near unit norm,
-- aligned `JointState` array lengths.
-
-## 6. Optional Extensions (v2+)
-
-- Covariance-bearing types (`PoseWithCovariance`, `TwistWithCovariance`).
-- Explicit unit wrapper metadata for non-SI systems.
-- Frame graph provenance for transform lookup/debugging.
+The v1 catalog intentionally stays small. Later packs can add covariance-bearing poses/twists, explicit unit metadata for non-SI systems, and frame-graph provenance for transform debugging.

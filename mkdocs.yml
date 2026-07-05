@@ -40,22 +40,14 @@ markdown_extensions:
 
 nav:
   - Overview: README.md
-  - Retriever Path:
-      - Retriever Home: https://openretriever.org/
-      - Builder Start Path: https://openretriever.org/start/
-      - Core Visual Quickstart: https://openretriever-docs.pages.dev/getting-started/visual-quickstart/
-      - Core Runtime Docs: https://openretriever-docs.pages.dev/
-      - Core Debugging Guide: https://openretriever-docs.pages.dev/tutorials/debug-and-visualize/
-      - First Golden Proof: examples/golden_hub_packs_v1.md
-      - Golden Example Catalog: examples/README.md
   - Examples:
       - Example Catalog: examples/README.md
+      - First Golden Proof: examples/golden_hub_packs_v1.md
       - Perception and Memory: examples/perception_and_memory_v1.md
       - Language and Grounding: examples/language_and_grounding_v1.md
       - Pipeline Composition: examples/pipeline_composition_v1.md
       - Simulation and Visualization: examples/simulation_and_visualization_v1.md
   - Hub Packs:
-      - Core Hub Concepts: https://openretriever-docs.pages.dev/ecosystem/
       - Golden Pack Boundary: hub/README.md
       - Current Export Catalog: hub/export_catalog_v1.md
       - Pack Promotion Roadmap: hub/pack_roadmap_v1.md

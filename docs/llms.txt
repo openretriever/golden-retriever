@@ -4,11 +4,7 @@ GoldenRetriever is Track G in the Retriever ecosystem: the maintained applied ex
 
 ## Public Surfaces
 
-- Retriever home: https://openretriever.org/
-- Builder start path: https://openretriever.org/start/
-- Core runtime docs: https://openretriever-docs.pages.dev/
-- Core visual quickstart: https://openretriever-docs.pages.dev/getting-started/visual-quickstart/
-- Core debugging guide: https://openretriever-docs.pages.dev/tutorials/debug-and-visualize/
+- Retriever core docs: https://openretriever-docs.pages.dev/
 - Golden overview: https://retriever-space.pages.dev/
 - Golden Hub proof: https://retriever-space.pages.dev/examples/golden_hub_packs_v1/
 - Golden example catalog: https://retriever-space.pages.dev/examples/
@@ -16,8 +12,6 @@ GoldenRetriever is Track G in the Retriever ecosystem: the maintained applied ex
 - Golden Hub reference: https://retriever-space.pages.dev/hub/
 - Golden export catalog: https://retriever-space.pages.dev/hub/export_catalog_v1/
 - Golden pack roadmap: https://retriever-space.pages.dev/hub/pack_roadmap_v1/
-- Golden source target: `openretriever/golden-retriever` once public visibility is enabled.
-- Core source target: `openretriever/retriever` once public visibility is enabled.
 
 ## Boundary
 
@@ -25,11 +19,10 @@ The core runtime imports as `retriever`; the public PyPI target is `retriever-co
 
 ## Canonical Path
 
-1. Start at openretriever.org if the user needs routing.
-2. Start in core docs with the visual quickstart if the user has not run Retriever before.
-3. In Golden, run `pixi run demo-golden-hub-pack` to prove the Hub extension boundary.
-4. Continue to the example catalog for perception, memory, language, composition, simulation, visualization, and type-pack examples.
-5. Promote source examples into Hub packs only when they are import-safe, versioned, smoke-tested, documented, and useful outside this repository.
+1. Start in Retriever core docs if the user has not run Retriever before.
+2. In Golden, run `pixi run demo-golden-hub-pack` to prove the Hub extension boundary.
+3. Continue to the example catalog for perception, memory, language, composition, simulation, visualization, and type-pack examples.
+4. Promote source examples into Hub packs only when they are import-safe, versioned, smoke-tested, documented, and useful outside this repository.
 
 ## Current Retriever Hub Pack Surface
 
@@ -61,7 +54,7 @@ Only start these when the user explicitly asks for the relevant environment:
 
 - Webcam/Rerun: `pixi run -e torch demo-webcam-rerun`
 - TWIST2/MuJoCo: `pixi run -e twist2 demo-twist2-rerun`
-- Robosuite mock + HTML graph visualization: https://retriever-space.pages.dev/examples/simulation_and_visualization_v1/
+- Robosuite mock + HTML graph visualization: use the Golden simulation and visualization guide.
 - Real robosuite Lift: install the optional robosuite dependency first, then run `pixi run demo-robosuite-lift`
 - Model-backed perception/memory: use the documented optional model-backed examples after the mock path is green.
 

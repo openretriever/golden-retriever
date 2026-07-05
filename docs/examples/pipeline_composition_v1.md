@@ -1,58 +1,68 @@
-# Core Composition Surfaces v1
+# Pipeline Composition
 
 <div class="gr-route-pills gr-route-pills-inline">
-  <a href="https://openretriever.org/">Retriever home</a>
-  <a href="https://openretriever.org/start/">Start path</a>
-  <a href="https://openretriever-docs.pages.dev/">Core docs</a>
-  <a href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/">Visual quickstart</a>
   <a href="/">Golden overview</a>
-  <a href="../llms.txt">Golden agent map</a>
+  <a href="/examples/">Examples</a>
+  <a href="/hub/">Hub packs</a>
+  <a href="/robotics_typing_standard/">Robot type packs</a>
+  <a href="/llms.txt">Agent map</a>
 </div>
 
+Use this page when a single Flow is no longer enough and you want a reusable robot pipeline: perception into belief, belief into planning, planning into control, or any similar applied graph.
 
-This guide covers the registry-backed pipeline composition surfaces used by the Golden examples layer. Keep the examples on the packaged runtime path and treat this page as the public composition lane.
+The core Retriever docs teach the runtime model. This Golden page shows how the same ideas appear in robot-facing examples that can be tested and reused.
 
-## Runtime check
+## Run the Example
 
 ```bash
 pixi install -e golden-local
-pixi run -e golden-local python -c "import retriever; print('retriever import OK')"
-```
-
-This verifies that the Golden environment can import the core `retriever` runtime without requiring path-specific setup in public docs.
-
-## First runnable example
-
-```bash
 pixi run -e golden-local demo-composable-pipelines
 ```
 
-That example, `examples/advanced/core_composition/composable_pipelines.py`, demonstrates three capabilities that are not shown in Golden's older `functional_wiring/` folder:
+Expected result: the command builds a small registered pipeline, swaps one stage, wraps the pipeline as a Flow, and prints a compact summary. It should not require a robot, simulator, camera, or network service.
 
-1. register a pipeline by name with explicit surfaced input/output selectors
-2. replace one named internal stage after the pipeline is built
-3. wrap the registered pipeline back into a larger graph via `build_pipeline_flow(...)`
+## What It Demonstrates
 
-## Why this is separate from `functional_wiring/`
+<div class="gr-fit-grid">
+  <div class="gr-fit-card">
+    <span>Register</span>
+    <strong>Name a reusable pipeline</strong>
+    <p>Give a multi-stage graph a stable name so examples and future Hub packs can refer to it without copying wiring code.</p>
+  </div>
+  <div class="gr-fit-card">
+    <span>Swap</span>
+    <strong>Replace an internal stage</strong>
+    <p>Keep the public pipeline boundary fixed while changing one implementation detail, such as a detector, memory updater, or planner.</p>
+  </div>
+  <div class="gr-fit-card">
+    <span>Wrap</span>
+    <strong>Use a pipeline as a Flow</strong>
+    <p>Embed a reusable pipeline inside a larger graph when it becomes one logical robot subsystem.</p>
+  </div>
+</div>
 
-Golden's existing `functional_wiring/` examples are still the right starting point for explicit graph construction. The new composition surface sits one level higher:
+## When To Use This
 
-- `functional_wiring/` keeps subgraph construction explicit and local
-- `core_composition/` exercises registry-backed reuse and pipeline-as-flow composition
+Use explicit Flow wiring first when you are learning Retriever or debugging one graph. Use registered composition when a pipeline boundary is reused across examples, notebooks, or future Hub packs.
 
-Use the older folder first if you are learning the runtime. Use the newer folder when you want reusable named pipeline building blocks.
+| Situation | Preferred surface |
+| --- | --- |
+| Learning how values move through a graph | Explicit Flow wiring |
+| Debugging one example locally | Explicit Flow wiring plus graph visualization |
+| Reusing the same subgraph across examples | Registered pipeline composition |
+| Publishing a stable reusable boundary | Hub pack candidate after import/version/smoke checks |
 
-Do not treat this layer as a license to invent pipeline-specific envelope types. The preferred pattern is still: shared primitive payloads first, composite `Flow[...]` typing for local structure, named envelopes only when the boundary is reused and semantically stable.
+## Source Pointer
 
-## Related examples
+The runnable example lives in `examples/advanced/core_composition/composable_pipelines.py`.
 
-- `examples/advanced/perception_debug/detection_window_stats.py`: add a temporal aggregation stage to a deterministic perception pipeline
-- `examples/advanced/state_management/stateful_replanning.py`: add internal planner memory and change-only event emission
-- `examples/advanced/functional_wiring/perception_belief_control_pipeline.py`: compose a belief stage into downstream control without relying on the registry-backed layer
+Related Golden examples:
 
-## Notebook version
+- `examples/advanced/perception_debug/detection_window_stats.py`: temporal aggregation in a perception pipeline.
+- `examples/advanced/state_management/stateful_replanning.py`: planner memory and change-only events.
+- `examples/advanced/functional_wiring/perception_belief_control_pipeline.py`: explicit belief-to-control graph wiring.
 
-If you want the same composition path in notebook form, build and run the Hub-first notebook:
+## Notebook Path
 
 ```bash
 pixi run notebook-to-ipynb-hub
@@ -60,4 +70,4 @@ pixi install -e golden-local
 pixi run -e golden-local demo-hub-notebook-source
 ```
 
-The notebook lives at `notebooks/src/hub_demo.py` and stays parameterized by environment variables so the repo does not hardcode any private or organization-specific Hub refs.
+The notebook source is `notebooks/src/hub_demo.py`. It stays parameterized so public docs do not hardcode private or organization-specific Hub references.

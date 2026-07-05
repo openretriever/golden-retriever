@@ -12,13 +12,11 @@
 </div>
 
 <div class="gr-route-pills gr-route-pills-inline">
-  <a href="https://openretriever.org/">Retriever home</a>
-  <a href="https://openretriever.org/start/">Builder start path</a>
-  <a href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/">Core visual quickstart</a>
-  <a href="https://openretriever-docs.pages.dev/tutorials/debug-and-visualize/">Core debug guide</a>
+  <a href="https://openretriever-docs.pages.dev/">Retriever core docs</a>
   <a href="examples/">Golden examples</a>
   <a href="hub/">Hub packs</a>
   <a href="robotics_typing_standard/">Robot type packs</a>
+  <a href="llms.txt">Agent map</a>
 </div>
 
 !!! note "Golden is not a second runtime"
@@ -29,12 +27,12 @@
 <div class="gr-layer-map gr-layer-map-compact">
   <div>
     <span>01 Front door</span>
-    <strong><a href="https://openretriever.org/start/">openretriever.org/start</a></strong>
+    <strong>OpenRetriever front door</strong>
     <p>Choose the shortest path: install, visual quickstart, core docs, Golden examples, Hub, or source checkout once public code visibility is enabled.</p>
   </div>
   <div>
     <span>02 Core runtime</span>
-    <strong><a href="https://openretriever-docs.pages.dev/">Retriever docs</a></strong>
+    <strong>Retriever core docs</strong>
     <p>Learn Flow, Pipeline, clocks, sync policies, stepping, replay, IR, execution, graph rendering, and Hub mechanics.</p>
   </div>
   <div>
@@ -47,12 +45,12 @@
 ## Recommended Route
 
 <div class="gr-path-grid gr-path-grid-five">
-  <a class="gr-path-step" href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/">
+  <div class="gr-path-step">
     <span>00</span>
     <strong>Run core first</strong>
     <p>Start with the lightweight mock/webcam visual graph so Flow, stepping, graph inspection, and replay are clear.</p>
     <code>pixi run demo-webcam-detection-mock</code>
-  </a>
+  </div>
   <a class="gr-path-step" href="examples/golden_hub_packs_v1/">
     <span>01</span>
     <strong>Prove the Golden boundary</strong>

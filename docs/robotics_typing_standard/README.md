@@ -1,16 +1,15 @@
 # Robot Type-Pack Profile
 
 <div class="gr-route-pills gr-route-pills-inline">
-  <a href="https://openretriever.org/">Retriever home</a>
-  <a href="https://openretriever.org/start/">Start path</a>
-  <a href="https://openretriever-docs.pages.dev/">Core docs</a>
-  <a href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/">Visual quickstart</a>
   <a href="/">Golden overview</a>
-  <a href="../llms.txt">Golden agent map</a>
+  <a href="/examples/">Examples</a>
+  <a href="/hub/">Hub packs</a>
+  <a href="/robotics_typing_standard/">Robot type packs</a>
+  <a href="/llms.txt">Agent map</a>
 </div>
 
 
-This folder is GoldenRetriever's robot-facing type-pack profile: typed robotics payloads, compositional flow contracts, and event/data profiles built on the core Retriever type and runtime model. Core standard types and runtime mechanics live in the Retriever docs: https://openretriever-docs.pages.dev/concepts/standard-types/.
+This folder is GoldenRetriever's robot-facing type-pack profile: typed robotics payloads, compositional flow contracts, and event/data profiles built on the core Retriever type and runtime model. Core standard types and runtime mechanics stay in the Retriever core docs; this page focuses on Golden robot-facing type packs.
 
 ## Start Here
 

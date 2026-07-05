@@ -731,3 +731,117 @@
   }
 }
 /* End Golden docs core-aligned shell v1 */
+
+/* Golden docs readability polish v2 */
+@media screen and (min-width: 76.25em) {
+  .md-sidebar--primary .md-nav > .md-nav__title {
+    display: none;
+  }
+
+  .md-content__inner {
+    padding-left: 1.7rem;
+    padding-right: 1.7rem;
+  }
+}
+
+.md-main__inner {
+  column-gap: 1.8rem;
+}
+
+.md-sidebar__scrollwrap::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.58);
+}
+
+.md-sidebar__scrollwrap::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.md-nav__link {
+  border-radius: 0.42rem;
+  color: #475467;
+  margin: 0.05rem 0;
+}
+
+.md-nav__item .md-nav__link--active {
+  background: rgba(234, 88, 12, 0.075);
+  color: #c2410c;
+}
+
+.md-typeset h1 {
+  font-size: clamp(1.95rem, 2.4vw, 2.55rem);
+  letter-spacing: -0.055em;
+  line-height: 1.04;
+  margin-bottom: 1.25rem;
+}
+
+.md-typeset h2 {
+  border-top: 1px solid rgba(226, 232, 240, 0.85);
+  font-size: clamp(1.28rem, 1.55vw, 1.55rem);
+  letter-spacing: -0.035em;
+  margin-top: 2rem;
+  padding-top: 1.35rem;
+}
+
+.md-typeset h3 {
+  font-size: 1.05rem;
+}
+
+.md-typeset .gr-route-pills {
+  gap: 0.42rem;
+  margin: 0.35rem 0 1.45rem;
+}
+
+.md-typeset .gr-route-pills a {
+  border-color: rgba(203, 213, 225, 0.9) !important;
+  color: #475467 !important;
+  font-size: 0.68rem;
+  font-weight: 720;
+  padding: 0.30rem 0.55rem;
+}
+
+.md-typeset .gr-route-pills a:first-child {
+  color: #9a3412 !important;
+}
+
+.md-typeset .gr-route-pills a:hover {
+  color: #c2410c !important;
+}
+
+.md-typeset table:not([class]) {
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 0.75rem;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.md-typeset table:not([class]) th {
+  background: #f8fafc;
+  color: #101828;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.md-typeset table:not([class]) td {
+  vertical-align: top;
+}
+
+.md-typeset .gr-fit-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.md-typeset .gr-fit-card {
+  border-radius: 0.9rem;
+  padding: 0.95rem;
+}
+
+.md-typeset pre {
+  margin: 0.8rem 0 1.1rem;
+}
+
+@media screen and (max-width: 980px) {
+  .md-typeset .gr-fit-grid {
+    grid-template-columns: 1fr;
+  }
+}
+/* End Golden docs readability polish v2 */
