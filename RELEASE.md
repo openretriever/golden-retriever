@@ -1,6 +1,6 @@
 # GoldenRetriever Release Checklist
 
-GoldenRetriever is the public reference-layer repository for Retriever examples, robot type packs, simulator/visualization lanes, and future Retriever Hub packs.
+GoldenRetriever is the public maintained reference examples repository for Retriever examples, robot type packs, simulator/visualization lanes, and future Retriever Hub packs.
 
 ## Required Validation
 
@@ -20,7 +20,7 @@ contents:
 pixi run build
 ```
 
-The same checks are wired in `.github/workflows/ci.yml`. `public-surface-check` is the guardrail that keeps `behavior_1k` removed while retaining the robosuite mock and HTML visualization examples.
+The same checks are wired in `.github/workflows/ci.yml`. `public-surface-check` is the guardrail that keeps `examples/experimental/behavior_1k` absent from the release tree while retaining the robosuite mock and HTML visualization examples.
 
 Before the public Hub index and `retriever-core==0.0.1` wheel are live, run the Hub-pack smoke against a local core checkout when validating the final cutover:
 
@@ -41,7 +41,7 @@ pixi run -e docs docs-build
 python3 -m http.server 8782 --bind 127.0.0.1 --directory site
 ```
 
-Open `http://127.0.0.1:8782/`, `http://127.0.0.1:8782/hub/`, `http://127.0.0.1:8782/llms.txt`, and `http://127.0.0.1:8782/robots.txt`. The home page should show `Golden examples for Retriever`, `Recommended Path`, `Demo Gallery`, `Example Results To Recognize`, and the Retriever ecosystem map.
+Open `http://127.0.0.1:8782/`, `http://127.0.0.1:8782/hub/`, `http://127.0.0.1:8782/llms.txt`, and `http://127.0.0.1:8782/robots.txt`. The home page should show `Golden Reference Examples`, `Recommended Path`, `Demo Gallery`, `Example Results To Recognize`, and the Retriever ecosystem map.
 
 ## Post-Deploy Content Check
 
@@ -49,7 +49,7 @@ After deploying the Golden docs site, verify the live page reflects the referenc
 
 ```bash
 html=$(curl -fsSL https://retriever-space.pages.dev/)
-printf '%s' "$html" | grep -q 'Golden examples for Retriever'
+printf '%s' "$html" | grep -q 'Golden Reference Examples'
 printf '%s' "$html" | grep -q 'Recommended Path'
 printf '%s' "$html" | grep -q 'Example Results To Recognize'
 printf '%s' "$html" | grep -q 'Retriever Ecosystem Map'
@@ -59,7 +59,7 @@ legacy_subtitle='first app''lied robotics Hub'' module'
 ! printf '%s' "$html" | grep -q "$legacy_subtitle"
 curl -fsSL https://retriever-space.pages.dev/robots.txt | grep -q 'Sitemap: https://retriever-space.pages.dev/sitemap.xml'
 curl -fsSL https://retriever-space.pages.dev/robots.txt | grep -q 'Agent map: https://retriever-space.pages.dev/llms.txt'
-curl -fsSL https://retriever-space.pages.dev/llms.txt | grep -q 'GoldenRetriever Examples'
+curl -fsSL https://retriever-space.pages.dev/llms.txt | grep -q 'Golden Reference Examples'
 ```
 
 If a custom Golden domain is bound later, run the same checks against that hostname before advertising it.

@@ -34,7 +34,9 @@ REQUIRED_PATHS = (
     "docs/robots.txt",
 )
 
-REMOVED_PATHS: tuple[str, ...] = ()
+REMOVED_PATHS: tuple[str, ...] = (
+    "examples/experimental/behavior_1k",
+)
 
 REQUIRED_TASKS = (
     "demo-golden-hub-pack",
