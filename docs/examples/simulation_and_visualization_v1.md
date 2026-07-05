@@ -19,9 +19,9 @@ These examples are the current Golden paths for visual and simulator-oriented de
 | --- | --- | --- |
 | Webcam + Rerun | `pixi run -e torch demo-webcam-rerun` | Webcam/mock perception, model outputs, Rerun logging, record/replay helpers. |
 | TWIST2 / MuJoCo | `pixi run -e twist2 demo-twist2-rerun` | Multi-rate simulator/policy/visualization loop. |
-| MuJoCo Manipulation | `pixi run -e twist2 python examples/advanced/mujoco_manipulation/app.py` | High-rate physics, slower controller, Rerun state logging. |
+| MuJoCo Manipulation | Source-only: `pixi run -e twist2 python examples/advanced/mujoco_manipulation/app.py` | High-rate physics, slower controller, Rerun state logging. Not a promoted named task yet. |
 | RoboSuite Lift | `pixi run demo-robosuite-mock` | Mock-safe robosuite wrapper and scripted Lift-policy contract. |
-| Hierarchical Physics | `pixi run -e twist2 python examples/advanced/hierarchical_physics_demo/app.py --demo both --duration 8` | Explicit clock -> sim -> viz layers plus HTML pipeline visualization. |
+| Hierarchical Physics | Source-only: `pixi run -e twist2 python examples/advanced/hierarchical_physics_demo/app.py --demo both --duration 8` | Explicit clock -> sim -> viz layers plus HTML pipeline visualization. Not a promoted named task yet. |
 
 ## Safe First Visual Checks
 
@@ -81,7 +81,9 @@ Source:
 - `examples/advanced/twist2_simulation/README.md`
 - `examples/advanced/twist2_simulation/app.py`
 
-## MuJoCo Manipulation
+## MuJoCo Manipulation Source Reference
+
+This lane has a concrete launch file, but it is source-only until it receives a named Pixi task and public smoke coverage. Use it after the promoted visual checks pass.
 
 ```bash
 pixi run -e twist2 python examples/advanced/mujoco_manipulation/app.py
@@ -125,7 +127,9 @@ Source:
 - `examples/advanced/robosuite_lift/README.md`
 - `examples/advanced/robosuite_lift/app.py`
 
-## Hierarchical Physics + HTML Pipeline Visualization
+## Hierarchical Physics Source Reference
+
+This lane is useful for design inspection, but it is source-only until it receives a named Pixi task and stable public smoke coverage. The promoted lightweight graph artifact remains `pixi run demo-pipeline-html-viz`.
 
 ```bash
 pixi run -e twist2 python examples/advanced/hierarchical_physics_demo/app.py --demo both --duration 8

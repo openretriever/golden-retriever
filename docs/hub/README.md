@@ -16,8 +16,8 @@ GoldenRetriever is the maintained reference examples layer and proving ground fo
 ## Mental model
 
 ```text
-retriever-core
-  Flow, Pipeline, clocks, sync policies, IR, runtime, Hub loader
+Retriever core runtime
+  import package `retriever`; Flow, Pipeline, clocks, sync policies, IR, runtime, Hub loader
 
 GoldenRetriever
   robot-facing payloads, example pipelines, simulator wrappers,
@@ -55,7 +55,7 @@ See [Export Catalog](export_catalog_v1.md) for the exact exports declared in `py
 
 ## Promotion candidates
 
-See [Pack Roadmap](module_roadmap_v1.md). The short version: promote source examples into Hub packs only when they are import-safe, have serializable construction config, and have a documented smoke command.
+See [Pack Roadmap](pack_roadmap_v1.md). The short version: promote source examples into Hub packs only when they are import-safe, have serializable construction config, and have a documented smoke command.
 
 
 ## What stays source-only

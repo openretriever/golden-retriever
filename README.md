@@ -26,7 +26,7 @@ GoldenRetriever is the maintained reference examples layer for Retriever. Keep r
 
 ## Project Boundary
 
-- The core runtime distribution is `retriever-core`; Python imports remain `retriever`.
+- The core runtime imports as `retriever`; the public PyPI target is `retriever-core` once the core 0.0.1 release is live. During release prep, use the documented Pixi environments from source checkouts.
 - GoldenRetriever is not a second runtime package. It is the examples-and-packs layer on top of Retriever: examples, robot type packs, integration patterns, notebooks, simulator wrappers, and visualization lanes.
 - The current manifest-declared surface is the robot-facing type pack plus conversion helpers declared in `pyproject.toml` and loaded through Retriever Hub. Source examples become Hub packs only after they are import-safe, versioned, smoke-tested, and documented.
 
@@ -204,7 +204,7 @@ See `RELEASE.md` for launch/docs validation and the optional package boundary ch
 
 ## Relationship To Core Retriever
 
-- PyPI distribution: `retriever-core`
+- PyPI distribution target: `retriever-core`
 - Python import: `retriever`
 - Retriever landing: `https://openretriever.org/`
 - Runtime source: `https://github.com/openretriever/retriever`

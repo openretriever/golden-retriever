@@ -13,13 +13,13 @@ GoldenRetriever is the maintained reference examples layer for Retriever. Use it
 - Golden example catalog: https://retriever-space.pages.dev/examples/
 - Golden Hub reference: https://retriever-space.pages.dev/hub/
 - Golden export catalog: https://retriever-space.pages.dev/hub/export_catalog_v1/
-- Golden pack roadmap: https://retriever-space.pages.dev/hub/module_roadmap_v1/
+- Golden pack roadmap: https://retriever-space.pages.dev/hub/pack_roadmap_v1/
 - Golden source: https://github.com/openretriever/golden-retriever
 - Core source: https://github.com/openretriever/retriever
 
 ## Boundary
 
-The runtime package is `retriever-core` and imports as `retriever`. GoldenRetriever is not a second runtime package. Golden owns maintained robot-facing examples, reusable type packs, robotics typing references, simulator/visualization lanes, notebooks, and Hub-pack candidates.
+The core runtime imports as `retriever`; the public PyPI target is `retriever-core` once the core runtime release is live. GoldenRetriever is not a second runtime package. Golden owns maintained robot-facing examples, reusable type packs, robotics typing references, simulator/visualization lanes, notebooks, and Hub-pack candidates.
 
 ## Canonical Path
 

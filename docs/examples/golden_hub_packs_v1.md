@@ -11,17 +11,14 @@
 </div>
 
 
-GoldenRetriever is the maintained reference examples layer for packs loaded through Retriever Hub. The core
-runtime package is `retriever-core` and imports as `retriever`; Golden's current
-manifest-declared Hub surface is the reusable robot-facing type pack and conversion
-helpers declared in `pyproject.toml`.
+GoldenRetriever is the maintained reference examples layer for packs loaded through Retriever Hub. The core runtime imports as `retriever`; the public PyPI target is `retriever-core` once the core 0.0.1 release is live. Golden's current manifest-declared Hub surface is the reusable robot-facing type pack and conversion helpers declared in `pyproject.toml`.
 
 ## Core boundary
 
 Start with the core visual quickstart if you are new to Retriever: https://openretriever-docs.pages.dev/getting-started/visual-quickstart/. The core runtime provides Flow, Pipeline, registry, IR, and Hub mechanics; Golden provides robot-facing payloads and maintained examples.
 
 
-For the exact current export list, see [Hub Export Catalog](../hub/export_catalog_v1.md). For source examples that are candidates for future Hub packs, see [Pack Roadmap](../hub/module_roadmap_v1.md).
+For the exact current export list, see [Hub Export Catalog](../hub/export_catalog_v1.md). For source examples that are candidates for future Hub packs, see [Pack Roadmap](../hub/pack_roadmap_v1.md).
 
 ## Fast local proof
 

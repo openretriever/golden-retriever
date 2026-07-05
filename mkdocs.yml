@@ -62,7 +62,7 @@ nav:
   - Retriever Hub Packs:
       - Pack Boundary: hub/README.md
       - Current Export Catalog: hub/export_catalog_v1.md
-      - Pack Promotion Roadmap: hub/module_roadmap_v1.md
+      - Pack Promotion Roadmap: hub/pack_roadmap_v1.md
   - Robot Type Packs:
       - Overview: robotics_typing_standard/README.md
       - Integrated Standard: robotics_typing_standard/00_integrated_robotics_typing_standard_v1.md
