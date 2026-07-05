@@ -1,11 +1,13 @@
-# MuJoCo Manipulation Example
+# MuJoCo Manipulation Example (Optional Golden Lane)
 
-This example demonstrates **Unified Robotics Control** using `retriever`:
+This is an optional simulator lane for users who already understand the core Retriever runtime and want a robot-control example with mismatched rates. Start with `demo-golden-hub-pack`, `demo-perception-detection-flow`, and `demo-pipeline-html-viz` before using this path.
 
-1.  **High-Fidelity Physics**: `MujocoEnvFlow` runs at **1000 Hz**.
-2.  **Controller**: `ControllerFlow` runs at **50 Hz** (typical for RL/inference).
-3.  **Visualization**: `RerunLoggerFlow` logs to **Rerun** at **30 Hz**.
-4.  **Unified Execution**: `retriever.connect(..., sync=Latest())` handles the asynchronous coupling automatically.
+This example demonstrates unified robotics control using `retriever`:
+
+1. **High-fidelity physics**: `MujocoEnvFlow` runs at 1000 Hz.
+2. **Controller**: `ControllerFlow` runs at 50 Hz, typical for RL/inference.
+3. **Visualization**: `RerunLoggerFlow` logs to Rerun at 30 Hz.
+4. **Explicit coupling**: Retriever sync policies make the physics/controller/logger handoff inspectable instead of hiding it inside callbacks.
 
 ## Task: Reach and Chase 🎯
 

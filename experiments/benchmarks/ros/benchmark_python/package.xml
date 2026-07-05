@@ -4,7 +4,7 @@
   <name>benchmark_python</name>
   <version>0.0.0</version>
   <description>ROS Python benchmarking for Retriever</description>
-  <maintainer email="zlf0625@gmail.com">OpenRetriever Maintainers</maintainer>
+  <maintainer email="maintainers@openretriever.org">OpenRetriever Maintainers</maintainer>
   <license>Apache-2.0</license>
 
   <export>

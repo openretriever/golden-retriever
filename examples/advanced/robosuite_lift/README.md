@@ -8,12 +8,15 @@ The default path is mock-safe, so docs and smoke tests do not require robosuite:
 pixi run demo-robosuite-mock
 ```
 
-For a real robosuite run, install the optional dependency into your active environment, then run:
+For a real robosuite run from a source checkout, install the optional dependency without asking pip to resolve the base package dependencies, then run:
 
 ```bash
-pixi run python -m pip install -e ".[robosuite]"
+# --no-deps: the Pixi environment supplies base deps; install robosuite explicitly.
+pixi run python -m pip install --no-deps -e ".[robosuite]" robosuite
 pixi run demo-robosuite-lift
 ```
+
+Drop `--no-deps` only after the core runtime package is published and resolvable from PyPI in the target environment.
 
 ## Graph
 

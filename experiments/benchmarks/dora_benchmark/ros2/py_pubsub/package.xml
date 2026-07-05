@@ -4,7 +4,7 @@
   <name>py_pubsub</name>
   <version>0.0.0</version>
   <description>ROS 2 Python pub-sub benchmark used by Golden Retriever experiments</description>
-  <maintainer email="zlf0625@gmail.com">OpenRetriever Maintainers</maintainer>
+  <maintainer email="maintainers@openretriever.org">OpenRetriever Maintainers</maintainer>
   <license>Apache-2.0</license>
 
   <exec_depend>rclpy</exec_depend>

@@ -1,4 +1,4 @@
-# Public metadata for GoldenRetriever, the companion examples and system-demo
+# Public metadata for GoldenRetriever, the reference examples and system-demo
 # repository for the core Retriever runtime. The heavy optional stacks remain
 # opt-in so the default public path stays documentation- and example-first.
 
@@ -37,7 +37,7 @@ exclude = [
 [project]
 name = "golden-retriever-examples"
 version = "0.0.0"
-description = "Applied robotics examples and Hub-distributed type packs for Retriever."
+description = "Robot-facing reference examples and Hub-distributed type packs for Retriever."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "Apache-2.0" }

@@ -1,6 +1,17 @@
-# Robotics Typing Standard
+# Robot Type-Pack Profile
 
-This folder is the GoldenRetriever Hub-module reference pack for typed robotics payloads, compositional flow contracts, and event/data profiles. Core runtime types and mechanics live in the Retriever docs: https://openretriever-docs.pages.dev/concepts/standard-types/.
+<div class="gr-route-pills gr-route-pills-inline">
+  <a href="https://openretriever.org/">Retriever home</a>
+  <a href="https://openretriever-docs.pages.dev/">Core docs</a>
+  <a href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/">Visual quickstart</a>
+  <a href="https://github.com/openretriever/retriever">Core source</a>
+  <a href="/">Golden overview</a>
+  <a href="https://github.com/openretriever/golden-retriever">Golden source</a>
+  <a href="../llms.txt">Golden agent map</a>
+</div>
+
+
+This folder is GoldenRetriever's robot-facing type-pack profile: typed robotics payloads, compositional flow contracts, and event/data profiles built on the core Retriever type and runtime model. Core standard types and runtime mechanics live in the Retriever docs: https://openretriever-docs.pages.dev/concepts/standard-types/.
 
 ## Start Here
 

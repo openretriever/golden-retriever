@@ -1,15 +1,26 @@
 # Core Composition Surfaces v1
 
-This guide covers the registry-backed pipeline composition surfaces used by the Golden examples. Keep the examples on the packaged runtime path and treat this page as the public composition lane.
+<div class="gr-route-pills gr-route-pills-inline">
+  <a href="https://openretriever.org/">Retriever home</a>
+  <a href="https://openretriever-docs.pages.dev/">Core docs</a>
+  <a href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/">Visual quickstart</a>
+  <a href="https://github.com/openretriever/retriever">Core source</a>
+  <a href="/">Golden overview</a>
+  <a href="https://github.com/openretriever/golden-retriever">Golden source</a>
+  <a href="../llms.txt">Golden agent map</a>
+</div>
+
+
+This guide covers the registry-backed pipeline composition surfaces used by the Golden examples layer. Keep the examples on the packaged runtime path and treat this page as the public composition lane.
 
 ## Runtime check
 
 ```bash
 pixi install -e golden-local
-pixi run -e golden-local python -c "import retriever; print(retriever.__file__)"
+pixi run -e golden-local python -c "import retriever; print('retriever import OK')"
 ```
 
-The printed path should resolve to the `retriever` runtime package used by this environment.
+This verifies that the Golden environment can import the core `retriever` runtime without requiring path-specific setup in public docs.
 
 ## First runnable example
 
@@ -50,4 +61,4 @@ pixi install -e golden-local
 pixi run -e golden-local demo-hub-notebook-source
 ```
 
-The notebook lives at `notebooks/src/hub_demo.py` and stays parameterized by environment variables so the repo does not hardcode any private or organization-specific published module refs.
+The notebook lives at `notebooks/src/hub_demo.py` and stays parameterized by environment variables so the repo does not hardcode any private or organization-specific Hub refs.

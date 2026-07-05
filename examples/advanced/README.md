@@ -1,8 +1,28 @@
 # Advanced Examples
 
-This folder collects runnable GoldenRetriever demos that build on top of the core `retriever` runtime.
+This folder collects runnable GoldenRetriever examples that build on top of the core `retriever` runtime. Treat it as the source-checkout companion to the public Golden docs, not as a separate runtime package.
 
 ## Start Here
+
+If you are new to Retriever, run the core visual quickstart first from `openretriever/retriever`. Then return here and prove that Golden extends the runtime through Retriever Hub before entering the applied example ladder.
+
+```bash
+# In openretriever/retriever first:
+pixi run demo-webcam-detection-mock
+
+# In openretriever/golden-retriever next:
+pixi run demo-golden-hub-pack
+pixi run -e golden-local demo-perception-detection-flow
+pixi run demo-pipeline-html-viz
+```
+
+The first Golden command loads the current manifest-declared type pack and Arrow helpers through Retriever Hub. The second starts the concise applied ladder. The third writes a graph artifact so users can see the pipeline boundary instead of only reading code.
+
+Public guides for this folder live in the [Golden example catalog](../../docs/examples/README.md). Agent-oriented routing lives in [`docs/llms.txt`](../../docs/llms.txt). Keep new source examples out of the first-run path until they have a named Pixi task, expected output, and dependency level.
+
+## Concise Golden Ladder
+
+After the Hub proof is green, run the maintained mock-safe ladder:
 
 ```bash
 pixi run -e golden-local demo-perception-detection-flow
@@ -39,15 +59,15 @@ Across these examples, prefer shared basic payloads plus structural composition.
 - `closed_loop_planning/`: extracted belief, monitoring, and replanning patterns from an older prototype. Keep it out of the first-run path because it is not a runnable example family.
 
 
-## Visualization and simulator lanes
+## Optional Visualization and Simulator Lanes
 
-Use these after the concise Golden ladder is clear:
+Use these after the concise Golden ladder is clear. They are useful robot-facing references, but they are not the first-run contract because some depend on camera, simulator, viewer, or platform-specific packages.
 
 ```bash
+pixi run demo-pipeline-html-viz
+pixi run demo-robosuite-mock
 pixi run -e torch demo-webcam-rerun
 pixi run -e twist2 demo-twist2-rerun
-pixi run demo-robosuite-mock
-pixi run demo-pipeline-html-viz
 ```
 
 - `webcam_rerun/`: webcam or mock perception with Rerun visualization and record/replay helpers.
@@ -69,7 +89,7 @@ pixi run demo-pipeline-html-viz
 - `closed_loop_planning/README.md`: extracted belief, monitoring, and replanning patterns from the old prototype.
 - `robosuite_lift/README.md`: mock-safe robosuite smoke demo and optional real-mode setup.
 - `robotics_typing_standard/README.md`: typed payload and data-spec demos.
-- `notebooks/README.md`: git-friendly notebook workflow for a small mechanics demo; keep the main runnable progression in the advanced example families above.
+- `../../notebooks/README.md` (repo root): git-friendly notebook workflow for a small mechanics demo; keep the main runnable progression in the advanced example families above.
 
 ## Integrated walkthrough
 

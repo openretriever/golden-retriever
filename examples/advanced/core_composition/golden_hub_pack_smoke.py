@@ -1,4 +1,4 @@
-"""Golden Hub pack smoke test.
+"""Golden Retriever Hub pack smoke test.
 
 This source-checkout demo exercises the same manifest shape that public
 ``hub.use("openretriever/golden-retriever:WorldState")`` will use after the
@@ -32,8 +32,8 @@ def _load_local_exports() -> dict[str, object]:
     try:
         return load_exports(Path("."), manifest["module"], manifest["exports"], **kwargs)
     except HubError as exc:
-        # Compatibility path for older local runtimes that do not yet search
-        # repo-root src/ layouts. The public runtime supports the repo root.
+        # Temporary compatibility for the debug-retriever package used before
+        # retriever-core is published; current core supports repo-root src/.
         if "Package directory" not in str(exc):
             raise
         return load_exports(Path("src"), manifest["module"], manifest["exports"], **kwargs)
@@ -50,7 +50,7 @@ def main() -> None:
         "convert_to_arrow",
         "convert_from_arrow",
     ]
-    print("Golden Hub exports:", ", ".join(selected))
+    print("Golden pack exports:", ", ".join(selected))
 
     WorldState = exports["WorldState"]
     Skill = exports["Skill"]

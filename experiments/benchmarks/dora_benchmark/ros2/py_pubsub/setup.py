@@ -16,7 +16,7 @@ setup(
 
 
     maintainer='OpenRetriever Maintainers',
-    maintainer_email='zlf0625@gmail.com',
+    maintainer_email='maintainers@openretriever.org',
     description='ROS 2 Python pub-sub benchmark used by Golden Retriever experiments',
     license='Apache-2.0',
     tests_require=['pytest'],

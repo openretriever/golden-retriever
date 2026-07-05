@@ -1,32 +1,36 @@
-# GoldenRetriever Hub Module
+# GoldenRetriever Examples
 
-> GoldenRetriever is the first applied robotics Hub module for Retriever: Hub-loadable robotics type packs plus maintained perception, memory, language, composition, simulator/visualization, and robosuite demos.
+GoldenRetriever is the applied examples layer for Retriever. Use it after the core Retriever visual quickstart when you want maintained robot-facing examples, reusable type packs, simulator/visualization lanes, expected artifacts, and Retriever Hub pack candidates.
 
-Use this page after the core Retriever quickstart when you want applied examples or reusable robot-facing type packs.
+## Public Surfaces
 
-## Start Here
-
-- Golden overview: https://retriever-space.pages.dev/
-- Example guide overview: https://retriever-space.pages.dev/examples/
-- Perception and memory: https://retriever-space.pages.dev/examples/perception_and_memory_v1/
-- Language and grounding: https://retriever-space.pages.dev/examples/language_and_grounding_v1/
-- Pipeline composition: https://retriever-space.pages.dev/examples/pipeline_composition_v1/
-- Golden Hub packs: https://retriever-space.pages.dev/examples/golden_hub_packs_v1/
+- Retriever home: https://openretriever.org/
+- Core runtime docs: https://openretriever-docs.pages.dev/
 - Core visual quickstart: https://openretriever-docs.pages.dev/getting-started/visual-quickstart/
-- Simulation and visualization: https://retriever-space.pages.dev/examples/simulation_and_visualization_v1/
-- Robotics typing overview: https://retriever-space.pages.dev/robotics_typing_standard/
-- Hub sharing profile: https://retriever-space.pages.dev/robotics_typing_standard/03_hub_sharing_profile/
-- Core docs: https://openretriever-docs.pages.dev/
+- Core debugging guide: https://openretriever-docs.pages.dev/tutorials/debug-and-visualize/
+- Golden overview: https://retriever-space.pages.dev/
+- Golden Hub proof: https://retriever-space.pages.dev/examples/golden_hub_packs_v1/
+- Golden example catalog: https://retriever-space.pages.dev/examples/
+- Golden Hub reference: https://retriever-space.pages.dev/hub/
+- Golden export catalog: https://retriever-space.pages.dev/hub/export_catalog_v1/
+- Golden pack roadmap: https://retriever-space.pages.dev/hub/module_roadmap_v1/
+- Golden source: https://github.com/openretriever/golden-retriever
+- Core source: https://github.com/openretriever/retriever
 
-## Core Boundary
+## Boundary
 
-GoldenRetriever is not the core runtime. The runtime package is `retriever-core` and imports as `retriever`. GoldenRetriever owns applied examples and reusable robot-facing type packs.
+The runtime package is `retriever-core` and imports as `retriever`. GoldenRetriever is not a second runtime package. Golden owns maintained robot-facing examples, reusable type packs, robotics typing references, simulator/visualization lanes, notebooks, and Hub-pack candidates.
 
-## Current Hub Type-Pack Direction
+## Canonical Path
 
-The core runtime provides registry and Hub mechanics. GoldenRetriever declares a Hub module manifest for applied types such as `WorldState`, `BeliefGraph`, `Skill`, `Plan`, `Trajectory`, and Arrow conversion helpers.
+1. Start in core docs with the visual quickstart.
+2. In Golden, run `pixi run demo-golden-hub-pack` to prove the Hub extension boundary.
+3. Continue to the example catalog for perception, memory, language, composition, simulation, visualization, and type-pack examples.
+4. Promote source examples into Hub packs only when they are import-safe, versioned, smoke-tested, documented, and useful outside this repository.
 
-Hub reference:
+## Current Retriever Hub Pack Surface
+
+The current manifest-declared Golden pack surface is the robot-facing type pack declared in `pyproject.toml`: `WorldState`, `RobotState`, `BeliefGraph`, `Skill`, `Plan`, `StructuredPlan`, `TaskGoal`, `Trajectory`, `ExecutionStatus`, `Action`, `Command`, `Status`, `convert_to_arrow`, and `convert_from_arrow`.
 
 ```python
 from retriever import hub
@@ -34,15 +38,32 @@ from retriever import hub
 WorldState = hub.use("openretriever/golden-retriever:WorldState")
 ```
 
-Use the docs pages for stable public guidance; use source links when you need implementation details, issues, or contribution workflows.
+## Agent First Path
+
+Run this sequence from a GoldenRetriever source checkout when you need a safe public smoke pass:
+
+```bash
+pixi run demo-golden-hub-pack
+pixi run -e golden-local demo-perception-detection-flow
+pixi run demo-robosuite-mock
+pixi run demo-pipeline-html-viz
+pixi run public-surface-check
+```
+
+Expected artifacts: Hub export/registry/Arrow terminal proof, exit-zero synthetic perception flow, `[mock step=...]` robosuite trace lines, `out/golden_retriever_closed_loop_viz.html`, and PASS lines from the public-surface guardrail.
+
+## Optional Lanes
+
+Only start these when the user explicitly asks for the relevant environment:
+
+- Webcam/Rerun: `pixi run -e torch demo-webcam-rerun`
+- TWIST2/MuJoCo: `pixi run -e twist2 demo-twist2-rerun`
+- Real robosuite Lift: install the optional robosuite dependency first, then run `pixi run demo-robosuite-lift`
+- Model-backed perception/memory: use the documented optional model-backed examples after the mock path is green.
 
 ## Agent Guidance
 
 - Start from `AGENTS.md` in the GoldenRetriever repository.
-- Use docs pages for public behavior and examples.
-- Do not treat experimental lanes as stable unless their page marks them as promoted.
-- Do not include private notes or local filesystem paths in public docs.
-
-## Source Guidance
-
-Use hosted docs for navigation and source checkouts for runnable examples, tests, and Hub-pack proof commands.
+- Use hosted docs for public behavior and the source checkout for runnable examples.
+- Do not treat source examples as Retriever Hub packs unless `pyproject.toml` exports them.
+- Keep public docs limited to public source paths, hosted docs, and public URLs.

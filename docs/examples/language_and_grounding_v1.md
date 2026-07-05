@@ -1,11 +1,22 @@
 # Language and Grounding v1
 
+<div class="gr-route-pills gr-route-pills-inline">
+  <a href="https://openretriever.org/">Retriever home</a>
+  <a href="https://openretriever-docs.pages.dev/">Core docs</a>
+  <a href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/">Visual quickstart</a>
+  <a href="https://github.com/openretriever/retriever">Core source</a>
+  <a href="/">Golden overview</a>
+  <a href="https://github.com/openretriever/golden-retriever">Golden source</a>
+  <a href="../llms.txt">Golden agent map</a>
+</div>
+
+
 This guide adds one small language-facing ladder on top of the shared primitive
 Retriever type families.
 
 The rule stays the same as the rest of the advanced examples:
 - reuse generic standard payloads from core when they already fit,
-- keep applied robotics/planning bundles in Golden or Hub type packs,
+- keep robot-facing planning bundles in Golden or Hub type packs,
 - use composite `Flow[...]` structure for local grouping,
 - keep model-specific request/response packets out of the first teaching path.
 

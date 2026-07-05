@@ -1,4 +1,17 @@
-# Integrated Robotics Typing Standard v1
+# Golden Robot Type-Pack Profile v1
+
+<div class="gr-route-pills gr-route-pills-inline">
+  <a href="https://openretriever.org/">Retriever home</a>
+  <a href="https://openretriever-docs.pages.dev/">Core docs</a>
+  <a href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/">Visual quickstart</a>
+  <a href="https://github.com/openretriever/retriever">Core source</a>
+  <a href="/">Golden overview</a>
+  <a href="https://github.com/openretriever/golden-retriever">Golden source</a>
+  <a href="../llms.txt">Golden agent map</a>
+</div>
+
+Golden owns this robot-facing profile; core Retriever owns the runtime, clocks, Flow/Pipeline semantics, standard type registry, and Hub loading mechanics. Use these pages when you need reusable robotics payloads or dataset/event profiles on top of the core runtime.
+
 
 ## 1. Problem
 
@@ -26,9 +39,9 @@ Without this metadata in type contracts, composed flows silently mix incompatibl
 4. Prepare for shareable flow artifacts.
 - Hub/registry-ready profile includes minimal metadata requirements.
 
-## 3. Canonical Type Families
+## 3. Applied Type-Pack Families
 
-v1 standardizes these payload families:
+Golden v1 keeps these robot-facing payload families reusable across examples:
 - Geometry: `Vector3`, `Quaternion`, `SE3Pose`.
 - Motion: `Twist`, `Wrench`.
 - Joint-level: `JointState`.
@@ -39,7 +52,7 @@ Stamped wrappers carry:
 - frame id (`frame_id`),
 - source id (`source`).
 
-Canonical access surfaces:
+Access surfaces:
 - preferred import: `from retriever_typing import PoseStamped`
 - pinned import: `from retriever_typing.v1 import PoseStamped`
 - convenience import: `from retriever_typing import PoseStamped`

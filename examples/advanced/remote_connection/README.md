@@ -1,6 +1,6 @@
-# Remote Connection Example
+# Remote Connection Example (Advanced Distributed Lane)
 
-This example demonstrates how to distribute a Retriever pipeline across multiple computers using the **Dora** backend.
+This example demonstrates how to distribute a Retriever pipeline across multiple computers using the **Dora** backend. It is an advanced integration reference, not a first-run Golden path. Run the core visual quickstart, `demo-golden-hub-pack`, and local Golden examples before attempting multi-machine execution.
 
 ## Scenario
 
@@ -9,9 +9,10 @@ This example demonstrates how to distribute a Retriever pipeline across multiple
 
 ## Prerequisites
 
-1.  **Dora installed** on both machines.
-2.  **Retriever installed** on both machines.
-3.  **Network connectivity** between machines.
+1. **Dora installed** on both machines.
+2. **Retriever installed** on both machines.
+3. **Network connectivity** between machines.
+4. A local Retriever graph that already runs in one process before deployment is split across machines.
 
 ## Setup
 

@@ -1,6 +1,17 @@
 # Hub Sharing Profile (v1)
 
-This profile defines the minimum typing requirements for shareable robotics flows in GoldenRetriever Hub modules. Core runtime Hub mechanics live in the Retriever docs: https://openretriever-docs.pages.dev/ecosystem/.
+<div class="gr-route-pills gr-route-pills-inline">
+  <a href="https://openretriever.org/">Retriever home</a>
+  <a href="https://openretriever-docs.pages.dev/">Core docs</a>
+  <a href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/">Visual quickstart</a>
+  <a href="https://github.com/openretriever/retriever">Core source</a>
+  <a href="/">Golden overview</a>
+  <a href="https://github.com/openretriever/golden-retriever">Golden source</a>
+  <a href="../llms.txt">Golden agent map</a>
+</div>
+
+
+This profile defines the minimum typing requirements for shareable robotics flows in GoldenRetriever packs. Core runtime Hub mechanics live in the Retriever docs: https://openretriever-docs.pages.dev/ecosystem/.
 
 ## 1. Default Policy
 

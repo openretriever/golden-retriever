@@ -1,6 +1,12 @@
 # Robotics Typing Standard Demos
 
-These examples accompany `docs/robotics_typing_standard/`.
+These examples accompany `docs/robotics_typing_standard/` and the current Golden Hub type pack. Use them when you need applied robot payload contracts after the core Retriever type model is clear.
+
+Start with the manifest proof:
+
+```bash
+pixi run demo-golden-hub-pack
+```
 
 ## Files
 - `type_catalog_demo.py`
@@ -23,10 +29,18 @@ Pinned implementation path:
 - `retriever_typing.v1`
 
 ## Run
+
+Prefer the named Pixi tasks for the promoted checks:
+
 ```bash
-python examples/advanced/robotics_typing_standard/type_catalog_demo.py
-python examples/advanced/robotics_typing_standard/compositional_contract_demo.py
-python examples/advanced/robotics_typing_standard/perception_to_control_boundary_demo.py
+pixi run demo-robotics-typing-catalog
+pixi run demo-robotics-typing-contract
+pixi run demo-robotics-typing-boundary
+```
+
+Additional source-level demos can be run directly when you need the data/event profile details:
+
+```bash
 python examples/advanced/robotics_typing_standard/data_spec_eventstream_demo.py
 python examples/advanced/robotics_typing_standard/multi_stream_join_demo.py
 python examples/advanced/robotics_typing_standard/lerobot_bridge_demo.py

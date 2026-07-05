@@ -12,10 +12,10 @@ GoldenRetriever is the applied companion to the Retriever runtime
 visualization examples, plus `retriever_typing` — an applied
 robotics/planning type pack. The pack declares a Retriever Hub module
 manifest now; public `hub.use(...)` loading becomes usable after the
-public `retriever-core` release and GitHub visibility cutover. Prerelease
-Pixi environments still use the temporary `debug-retriever` runtime. The
-local build metadata remains for wheel smoke tests, but a public Golden
-PyPI wheel is not on the first launch path.
+public `retriever-core` release and GitHub visibility cutover. Until that
+cutover, Pixi owns the runtime dependency details. The local build metadata
+remains for wheel smoke tests, but a public Golden PyPI wheel is not on the
+first launch path.
 
 - Python: **3.11+**. License: Apache-2.0.
 - Docs site: <https://retriever-space.pages.dev/>
@@ -35,17 +35,18 @@ PyPI wheel is not on the first launch path.
 ## Commands (verified)
 
 ```bash
-pixi run test                                      # full Golden suite; currently 51 passed, 1 skipped
+pixi run test                                      # full Golden suite
 pixi run -e golden-local demo-perception-detection-flow
 pixi run demo-robosuite-mock                       # simulation lane, mock mode
 pixi run demo-pipeline-html-viz                     # self-contained IR/HTML visualization
+pixi run public-surface-check                     # current-tree public surface guardrail
 pixi run demo-pi05-mock                            # pi0.5 policy lane, mock mode
 pixi run -e docs docs-build                        # mkdocs --strict
 pixi run build                                     # local wheel artifact; not first-launch PyPI path
 ```
 
 Environments: `default` and `golden-local` currently resolve the runtime
-through temporary `debug-retriever` until `retriever-core` is published;
+through the Pixi dependency table until `retriever-core` is published;
 `golden-local` adds Golden extras. For prerelease core validation, set
 `RETRIEVER_CORE_SRC=<core-repo>/src` before running
 `pixi run test`. Heavier lanes (`torch`, `vlm`, `twist2`, ...) exist for

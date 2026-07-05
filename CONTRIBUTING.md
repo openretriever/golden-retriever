@@ -1,6 +1,6 @@
 # Contributing
 
-GoldenRetriever is the companion examples and system-integration repository for the core Retriever runtime.
+GoldenRetriever is the robot-facing reference examples and system-integration repository for the core Retriever runtime.
 
 Keep contributions small and example-first:
 
@@ -35,4 +35,4 @@ Include:
 - any optional hardware/model dependency required;
 - screenshots or short logs for visual demos when relevant.
 
-Do not include private notes, private repository names, local filesystem paths, credentials, or unpublished model/data artifacts.
+Do not include non-public notes, repository names, local filesystem paths, credentials, or unpublished model/data artifacts.

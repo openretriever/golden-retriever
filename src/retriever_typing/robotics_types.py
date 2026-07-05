@@ -192,7 +192,7 @@ class ObjectSymbol:
 @dataclass
 class Observation:
     """A collection of images from multiple sensors at a single timestep."""
-    images: Dict[str, Any]  # e.g., {"front_camera": RGBDImage(...)}
+    images: Dict[str, Any]  # e.g., {"front_camera": Image2D(...), "wrist_camera": Image2D(...)}
     timestamp: Optional[float] = None
     frame_id: str = "world"
 

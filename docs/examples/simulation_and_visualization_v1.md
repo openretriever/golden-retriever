@@ -1,5 +1,16 @@
 # Simulation and Visualization Examples
 
+<div class="gr-route-pills gr-route-pills-inline">
+  <a href="https://openretriever.org/">Retriever home</a>
+  <a href="https://openretriever-docs.pages.dev/">Core docs</a>
+  <a href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/">Visual quickstart</a>
+  <a href="https://github.com/openretriever/retriever">Core source</a>
+  <a href="/">Golden overview</a>
+  <a href="https://github.com/openretriever/golden-retriever">Golden source</a>
+  <a href="../llms.txt">Golden agent map</a>
+</div>
+
+
 These examples are the current Golden paths for visual and simulator-oriented demos. They are optional lanes after the concise perception -> memory -> language ladder.
 
 ## Quick Map
@@ -11,6 +22,22 @@ These examples are the current Golden paths for visual and simulator-oriented de
 | MuJoCo Manipulation | `pixi run -e twist2 python examples/advanced/mujoco_manipulation/app.py` | High-rate physics, slower controller, Rerun state logging. |
 | RoboSuite Lift | `pixi run demo-robosuite-mock` | Mock-safe robosuite wrapper and scripted Lift-policy contract. |
 | Hierarchical Physics | `pixi run -e twist2 python examples/advanced/hierarchical_physics_demo/app.py --demo both --duration 8` | Explicit clock -> sim -> viz layers plus HTML pipeline visualization. |
+
+## Safe First Visual Checks
+
+Start with the two commands that do not require a camera, robot, model key, MuJoCo, TWIST2, or robosuite install:
+
+```bash
+pixi run demo-robosuite-mock
+pixi run demo-pipeline-html-viz
+```
+
+Expected results:
+
+- `demo-robosuite-mock` prints `[mock step=...]` lines showing object height, gripper height, reward, and done state.
+- `demo-pipeline-html-viz` prints an ASCII graph and writes `out/golden_retriever_closed_loop_viz.html`.
+
+Use the richer Rerun and simulator lanes after these pass on the same checkout.
 
 ## Webcam + Rerun
 
@@ -81,7 +108,9 @@ pixi run demo-robosuite-mock
 This is the default smoke path: it exercises the Retriever graph contract without requiring robosuite. For a real robosuite `Lift` run, install the optional dependency and run the real mode:
 
 ```bash
-pixi run python -m pip install -e ".[robosuite]"
+# --no-deps: base deps resolve from the pixi env; retriever-core is not on
+# PyPI until the core runtime publishes (drop the flag after that release).
+pixi run python -m pip install --no-deps -e ".[robosuite]" robosuite
 pixi run demo-robosuite-lift
 ```
 
@@ -127,7 +156,7 @@ What it shows:
 - a small cyclic dummy pipeline,
 - IR generation,
 - ASCII graph output,
-- HTML export written under `out/`.
+- HTML export written to `out/golden_retriever_closed_loop_viz.html`.
 
 This is intentionally lightweight: a graph-visualization utility rather than a full simulator example family.
 

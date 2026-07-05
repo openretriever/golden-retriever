@@ -1,5 +1,16 @@
 # Perception, Memory, and Composition v1
 
+<div class="gr-route-pills gr-route-pills-inline">
+  <a href="https://openretriever.org/">Retriever home</a>
+  <a href="https://openretriever-docs.pages.dev/">Core docs</a>
+  <a href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/">Visual quickstart</a>
+  <a href="https://github.com/openretriever/retriever">Core source</a>
+  <a href="/">Golden overview</a>
+  <a href="https://github.com/openretriever/golden-retriever">Golden source</a>
+  <a href="../llms.txt">Golden agent map</a>
+</div>
+
+
 This guide walks one concrete GoldenRetriever progression from a minimal synthetic perception loop to a composed perception -> belief -> control pipeline.
 
 ## 1. Start with the concise perception ladder
@@ -135,7 +146,7 @@ pixi run -e golden-local demo-language-grounded-reference
 
 These use the canonical core language primitives directly and keep structural composition explicit.
 
-For the dedicated walkthrough, continue with `docs/examples/language_and_grounding_v1.md`.
+For the dedicated walkthrough, continue with [Language and Grounding](language_and_grounding_v1.md).
 
 ## 11. Optional: explicit real-model backends
 
