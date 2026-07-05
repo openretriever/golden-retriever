@@ -1,13 +1,13 @@
 <div class="gr-reference-hero gr-reference-hero-tight">
   <div>
-    <p class="gr-eyebrow">Golden examples for Retriever</p>
-    <h1>Run applied robot examples after the core runtime quickstart.</h1>
-    <p class="gr-lede">Retriever core teaches Flow, Pipeline, clocks, sync, IR, execution, record/replay, and Hub loading. GoldenRetriever is the applied examples layer after that: robot-facing examples, reusable type packs, simulator and visualization lanes, and Hub-pack candidates.</p>
+    <p class="gr-eyebrow">Golden reference examples for Retriever</p>
+    <h1>Robot-facing examples, type packs, and visual demos for Retriever.</h1>
+    <p class="gr-lede">Learn the runtime once in Retriever core. Then use Golden for maintained examples that make the runtime concrete: perception, memory, language, simulator wrappers, reusable robot payloads, graph visualization, and Hub-pack candidates.</p>
   </div>
   <div class="gr-command-strip">
-    <span>First Golden command</span>
+    <span>First Golden proof</span>
     <code>pixi run demo-golden-hub-pack</code>
-    <p>Run this from a GoldenRetriever checkout after the core visual quickstart works.</p>
+    <p>Run from a GoldenRetriever checkout after the core visual quickstart works.</p>
   </div>
 </div>
 
@@ -23,15 +23,15 @@
 </div>
 
 !!! note "Golden is not a second runtime"
-    Install and learn the runtime once: `retriever-core`, imported as `retriever`. Golden carries maintained robot-facing examples and packs on top of that same runtime. Runtime mechanics stay in the core Retriever docs; reusable example code and pack candidates live here.
+    Install and learn the runtime once: `retriever-core`, imported as `retriever`. Golden is the official examples-and-packs surface on top of that runtime. Runtime mechanics stay in the core Retriever docs; robot-facing examples, reusable payload packs, and pack candidates live here.
 
 ## Recommended Path
 
 <div class="gr-path-grid gr-path-grid-four">
   <a class="gr-path-step" href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/">
     <span>00</span>
-    <strong>Start in core</strong>
-    <p>Run the mock visual graph, then the webcam/Rerun path. This teaches Flow, stepping, graph inspection, and replay without robot dependencies.</p>
+    <strong>Start in Retriever core</strong>
+    <p>Run the mock visual graph, then the webcam/Rerun path. This teaches Flow, stepping, graph inspection, and replay before robot dependencies enter.</p>
     <code>pixi run demo-webcam-detection-mock</code>
   </a>
   <a class="gr-path-step" href="examples/golden_hub_packs_v1/">
@@ -42,8 +42,8 @@
   </a>
   <a class="gr-path-step" href="examples/">
     <span>02</span>
-    <strong>Run applied examples</strong>
-    <p>Choose perception, memory, language, composition, simulation, visualization, or robot typing examples with named commands and expected outputs.</p>
+    <strong>Choose Golden examples</strong>
+    <p>Pick perception, memory, language, composition, simulation, visualization, or robot typing examples with named commands and expected outputs.</p>
     <code>pixi run -e golden-local demo-perception-detection-flow</code>
   </a>
   <a class="gr-path-step" href="hub/module_roadmap_v1/">
@@ -54,11 +54,11 @@
   </a>
 </div>
 
-## What Golden Adds
+## What Golden Adds To Retriever
 
 <div class="gr-purpose-grid">
   <div class="gr-purpose-card">
-    <span>Applied graphs</span>
+    <span>Reference examples</span>
     <strong>Robot-facing examples after the core demos</strong>
     <p>Golden turns the core runtime model into maintained examples for perception, memory, language, planning-style payloads, simulator wrappers, and controllers connected as typed Flows.</p>
   </div>
@@ -167,7 +167,7 @@ Arrow round-trip: Action OK</code></pre>
   </div>
   <div>
     <span>Golden examples</span>
-    <strong>GoldenRetriever</strong>
+    <strong>Golden reference examples</strong>
     <p>Maintained robot-facing examples, type packs, simulator/visualization lanes, notebooks, and Hub-pack candidates.</p>
   </div>
 </div>

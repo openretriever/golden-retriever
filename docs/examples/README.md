@@ -1,4 +1,4 @@
-# Example Guides
+# Golden Example Catalog
 
 <div class="gr-route-pills gr-route-pills-inline">
   <a href="https://openretriever.org/">Retriever home</a>
@@ -11,7 +11,7 @@
 </div>
 
 
-GoldenRetriever is the maintained examples layer for Retriever. Use these guides after the core visual quickstart when you want concrete robot-facing paths: Hub-pack proof, perception, memory, language, composition, simulation, visualization, and reusable type-pack examples.
+GoldenRetriever is the maintained reference examples layer for Retriever. Use these guides after the core visual quickstart when you want concrete robot-facing paths: Hub-pack proof, perception, memory, language, composition, simulation, visualization, and reusable type-pack examples.
 
 Boundary rule: runtime mechanics stay in core Retriever; robot-facing payloads, maintained examples, and reusable pack candidates live here. Export through Retriever Hub only after the pack is import-safe, versioned, smoke-tested, and documented.
 
@@ -24,7 +24,7 @@ Boundary rule: runtime mechanics stay in core Retriever; robot-facing payloads, 
 
 ## Recommended Path
 
-1. [Golden Pack Proof](golden_hub_packs_v1.md) — local proof that Golden exports load through the Retriever Hub manifest.
+1. [Golden Hub Proof](golden_hub_packs_v1.md) — local proof that Golden exports load through the Retriever Hub manifest.
 2. [Hub Export Catalog](../hub/export_catalog_v1.md) — exact current downloadable surface declared in `pyproject.toml`.
 3. [Perception and Memory](perception_and_memory_v1.md) — detection, belief, replay, and composed control over one small scene.
 4. [Language and Grounding](language_and_grounding_v1.md) — captioning, grounded references, and primitive plan text.

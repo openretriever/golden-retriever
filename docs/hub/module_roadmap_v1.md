@@ -11,7 +11,7 @@
 </div>
 
 
-Golden is the applied examples layer for Retriever Hub pack candidates, but not every example should be pack-loadable immediately. The rule is simple: promote examples into Hub packs only when they are import-safe, versioned, smoke-tested, and useful outside this repo.
+Golden is the maintained reference examples layer for Retriever Hub pack candidates, but not every example should be pack-loadable immediately. The rule is simple: promote examples into Hub packs only when they are import-safe, versioned, smoke-tested, and useful outside this repo.
 
 ## Promotion rule
 

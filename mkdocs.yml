@@ -1,5 +1,5 @@
-site_name: GoldenRetriever Examples
-site_description: "GoldenRetriever is the applied examples layer for Retriever: robot-facing examples, reusable type packs, visualization lanes, and Hub pack candidates."
+site_name: Golden Reference Examples
+site_description: "Golden reference examples for Retriever: maintained robot-facing examples, reusable type packs, visualization lanes, and Hub-pack candidates."
 site_url: https://retriever-space.pages.dev/
 repo_url: https://github.com/openretriever/golden-retriever
 repo_name: openretriever/golden-retriever
@@ -45,25 +45,25 @@ markdown_extensions:
 
 nav:
   - Overview: README.md
-  - Core Runtime:
+  - Retriever Core:
       - Retriever Home: https://openretriever.org/
       - Core Runtime Docs: https://openretriever-docs.pages.dev/
       - Core Visual Quickstart: https://openretriever-docs.pages.dev/getting-started/visual-quickstart/
       - Core Debugging Guide: https://openretriever-docs.pages.dev/tutorials/debug-and-visualize/
       - Retriever Hub Concepts: https://openretriever-docs.pages.dev/ecosystem/
       - Core Source: https://github.com/openretriever/retriever
-  - Examples:
+  - Golden Examples:
       - Hub Proof: examples/golden_hub_packs_v1.md
       - Example Catalog: examples/README.md
       - Perception and Memory: examples/perception_and_memory_v1.md
       - Language and Grounding: examples/language_and_grounding_v1.md
       - Pipeline Composition: examples/pipeline_composition_v1.md
       - Simulation and Visualization: examples/simulation_and_visualization_v1.md
-  - Hub Packs:
+  - Retriever Hub Packs:
       - Pack Boundary: hub/README.md
       - Current Export Catalog: hub/export_catalog_v1.md
       - Pack Promotion Roadmap: hub/module_roadmap_v1.md
-  - Robot Types:
+  - Robot Type Packs:
       - Overview: robotics_typing_standard/README.md
       - Integrated Standard: robotics_typing_standard/00_integrated_robotics_typing_standard_v1.md
       - Type Catalog: robotics_typing_standard/01_type_catalog_and_semantics.md
@@ -72,4 +72,3 @@ nav:
       - Data and Event Streams: robotics_typing_standard/07_data_spec_eventstream_v1.md
       - LeRobot Interop: robotics_typing_standard/08_lerobot_interop_and_dataset_profile.md
   - Agent Map: llms.txt
-  - Golden Source: https://github.com/openretriever/golden-retriever

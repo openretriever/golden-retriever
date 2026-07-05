@@ -11,7 +11,7 @@
 </div>
 
 
-GoldenRetriever is the applied examples layer and proving ground for Retriever Hub packs. It shows how a repository outside the runtime exposes reusable robot-facing payloads through Retriever Hub while keeping heavier examples as source-level reference lanes until they are ready for stable pack contracts.
+GoldenRetriever is the maintained reference examples layer and proving ground for Retriever Hub packs. It shows how a repository outside the runtime exposes reusable robot-facing payloads through Retriever Hub while keeping heavier examples as source-level reference lanes until they are ready for stable pack contracts.
 
 ## Mental model
 

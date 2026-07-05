@@ -4,11 +4,11 @@
 
 # 🐕 <span style="background: linear-gradient(45deg, #e96443 0%, #904e95 25%, #e65c00 50%, #f9d423 75%, #fc00ff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: bold; font-size: 1.1em;">**GoldenRetriever**</span>
 
-## **Reference Examples and Type Packs for Retriever**
+## **Golden Reference Examples and Type Packs for Retriever**
 
 <div align="center">
 
-<p>GoldenRetriever is the reference layer for the core <code>retriever</code> runtime: maintained examples, reusable robot-facing type packs, simulator/visualization lanes, and candidates for Retriever Hub packs.</p>
+<p>GoldenRetriever is the maintained reference examples layer for the core <code>retriever</code> runtime: maintained examples, reusable robot-facing type packs, simulator/visualization lanes, and candidates for Retriever Hub packs.</p>
 
 <p>
   <a href="https://github.com/openretriever/retriever"><img alt="Core runtime" src="https://img.shields.io/badge/Core-runtime-111827?style=for-the-badge"></a>
@@ -22,12 +22,12 @@
 
 ---
 
-GoldenRetriever is the reference layer for Retriever. Keep runtime mechanics in the [Retriever core docs](https://openretriever-docs.pages.dev/); use this repo for maintained robot-facing examples, reusable type packs loaded through Retriever Hub, notebooks, simulation, visualization, and promotion candidates for future Hub-distributed packs.
+GoldenRetriever is the maintained reference examples layer for Retriever. Keep runtime mechanics in the [Retriever core docs](https://openretriever-docs.pages.dev/); use this repo for maintained robot-facing examples, reusable type packs loaded through Retriever Hub, notebooks, simulation, visualization, and promotion candidates for future Hub-distributed packs.
 
 ## Project Boundary
 
 - The core runtime distribution is `retriever-core`; Python imports remain `retriever`.
-- GoldenRetriever is not a second runtime package. It is the reference layer on top of Retriever: examples, robot type packs, integration patterns, notebooks, simulator wrappers, and visualization lanes.
+- GoldenRetriever is not a second runtime package. It is the examples-and-packs layer on top of Retriever: examples, robot type packs, integration patterns, notebooks, simulator wrappers, and visualization lanes.
 - The current manifest-declared surface is the robot-facing type pack plus conversion helpers declared in `pyproject.toml` and loaded through Retriever Hub. Source examples become Hub packs only after they are import-safe, versioned, smoke-tested, and documented.
 
 ## Setup

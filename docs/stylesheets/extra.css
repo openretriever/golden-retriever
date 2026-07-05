@@ -726,3 +726,40 @@
 .md-typeset .gr-result-card pre {
   max-height: 9rem;
 }
+
+/* Golden integration pass: compact first screen and make examples primary. */
+.gr-reference-hero-tight {
+  align-items: center;
+  grid-template-columns: minmax(0, 1.6fr) minmax(220px, 0.4fr);
+  padding: 0.95rem;
+}
+
+.md-typeset .gr-reference-hero-tight h1 {
+  font-size: clamp(1.45rem, 2.05vw, 1.95rem);
+  max-width: 46rem;
+}
+
+.gr-reference-hero-tight .gr-lede {
+  font-size: 0.92rem;
+  max-width: 48rem;
+}
+
+.gr-command-strip {
+  padding: 0.78rem;
+}
+
+.md-typeset .gr-command-strip code {
+  font-size: 0.72rem;
+  padding: 0.58rem 0.65rem;
+}
+
+.gr-purpose-card,
+.gr-demo-card,
+.gr-result-card,
+.gr-path-step {
+  border-color: rgba(249, 115, 22, 0.22);
+}
+
+.md-typeset .gr-reference-hero + .gr-route-pills-inline {
+  margin-top: -0.15rem;
+}

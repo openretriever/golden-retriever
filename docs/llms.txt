@@ -1,6 +1,6 @@
-# GoldenRetriever Examples
+# Golden Reference Examples
 
-GoldenRetriever is the applied examples layer for Retriever. Use it after the core Retriever visual quickstart when you want maintained robot-facing examples, reusable type packs, simulator/visualization lanes, expected artifacts, and Retriever Hub pack candidates.
+GoldenRetriever is the maintained reference examples layer for Retriever. Use it after the core Retriever visual quickstart when you want maintained robot-facing examples, reusable type packs, simulator/visualization lanes, expected artifacts, and Retriever Hub pack candidates.
 
 ## Public Surfaces
 

@@ -1,4 +1,4 @@
-# Golden Pack Proof v1
+# Golden Hub Proof v1
 
 <div class="gr-route-pills gr-route-pills-inline">
   <a href="https://openretriever.org/">Retriever home</a>
@@ -11,7 +11,7 @@
 </div>
 
 
-GoldenRetriever is the applied examples layer for packs loaded through Retriever Hub. The core
+GoldenRetriever is the maintained reference examples layer for packs loaded through Retriever Hub. The core
 runtime package is `retriever-core` and imports as `retriever`; Golden's current
 manifest-declared Hub surface is the reusable robot-facing type pack and conversion
 helpers declared in `pyproject.toml`.
