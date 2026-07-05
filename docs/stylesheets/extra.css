@@ -1083,8 +1083,12 @@
   padding: 1.05rem 1.1rem;
 }
 
-.md-typeset .gr-compact-hero h1 {
+.gr-compact-title {
+  color: var(--gr-ink);
+  display: block;
   font-size: clamp(1.45rem, 1.75vw, 1.9rem) !important;
+  font-weight: 820;
+  letter-spacing: -0.045em;
   line-height: 1.08;
   margin: 0 0 0.55rem;
 }

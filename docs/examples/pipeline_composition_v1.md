@@ -23,7 +23,7 @@ Expected result: the command builds a small registered pipeline, swaps one stage
   </div>
   <div class="gr-fit-card">
     <span>Swap</span>
-    <strong>Replace an internal stage</strong>
+    <strong>Swap a pipeline stage</strong>
     <p>Keep the public pipeline boundary fixed while changing one implementation detail, such as a detector, memory updater, or planner.</p>
   </div>
   <div class="gr-fit-card">
@@ -62,4 +62,4 @@ pixi install -e golden-local
 pixi run -e golden-local demo-hub-notebook-source
 ```
 
-The notebook source is `notebooks/src/hub_demo.py`. It stays parameterized so public docs do not hardcode private or organization-specific Hub references.
+The notebook source is `notebooks/src/hub_demo.py`. It stays parameterized so public docs keep Hub references generic and portable.

@@ -2,7 +2,7 @@
 
 <div class="gr-compact-hero">
   <p class="gr-eyebrow">Applied payload layer</p>
-  <h1>Reusable robot types for Golden examples.</h1>
+  <p class="gr-compact-title">Reusable robot types for Golden examples.</p>
   <p>Core Retriever teaches the runtime. Golden keeps the robot-facing payload vocabulary that examples can share: world state, belief, skills, plans, stamped spatial values, event buffers, and dataset/export profiles.</p>
 </div>
 
@@ -51,3 +51,4 @@ Expected result: terminal output showing stamped spatial payloads, composite I/O
 2. [Flow composition contract](02_flow_composition_contract.md) for reusable graph wiring rules.
 3. [Data and event streams](07_data_spec_eventstream_v1.md) for record/replay/export semantics.
 4. [LeRobot interop](08_lerobot_interop_and_dataset_profile.md) when dataset interchange matters.
+5. [Sharing profile](03_hub_sharing_profile.md) when a source example is ready to become a Hub-loadable pack.

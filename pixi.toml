@@ -280,6 +280,9 @@ build = "python -m build"
 demo-robotics-typing-catalog = { cmd = "python examples/advanced/robotics_typing_standard/type_catalog_demo.py", env = { PYTHONPATH = "." } }
 demo-robotics-typing-contract = { cmd = "python examples/advanced/robotics_typing_standard/compositional_contract_demo.py", env = { PYTHONPATH = "." } }
 demo-robotics-typing-boundary = "python examples/advanced/robotics_typing_standard/perception_to_control_boundary_demo.py"
+demo-robotics-data-eventstream = { cmd = "python examples/advanced/robotics_typing_standard/data_spec_eventstream_demo.py", env = { PYTHONPATH = "." } }
+demo-robotics-data-join = { cmd = "python examples/advanced/robotics_typing_standard/multi_stream_join_demo.py", env = { PYTHONPATH = "." } }
+demo-robotics-lerobot-bridge = { cmd = "python examples/advanced/robotics_typing_standard/lerobot_bridge_demo.py", env = { PYTHONPATH = "." } }
 demo-synthetic-color-stepper = { cmd = "python examples/advanced/perception_debug/synthetic_color_stepper.py", env = { PYTHONPATH = "." } }
 demo-perception-record = { cmd = "python examples/advanced/perception_debug/record_replay_perception.py record --out logs/perception_debug.mcap --steps 12", env = { PYTHONPATH = "." } }
 demo-perception-replay = { cmd = "python examples/advanced/perception_debug/record_replay_perception.py replay --recording logs/perception_debug.mcap --steps 12", env = { PYTHONPATH = "." } }
@@ -298,6 +301,7 @@ demo-gemini-pointing-flow = { cmd = "python -m examples.advanced.real_perception
 demo-owl-sam-segmentation-flow = { cmd = "python -m examples.advanced.real_perception.owl_sam_segmentation_flow --backend mock --steps 1 --dt 0.2", env = { PYTHONPATH = "." } }
 demo-belief-from-real-detections = { cmd = "python -m examples.advanced.real_memory.belief_from_real_detections --backend mock --steps 4 --dt 0.2", env = { PYTHONPATH = "." } }
 demo-grounded-reference-memory = { cmd = "python -m examples.advanced.real_memory.grounded_reference_memory --backend mock --steps 3 --dt 0.2", env = { PYTHONPATH = "." } }
+demo-belief-updater-local-state = { cmd = "python examples/advanced/state_management/belief_updater_internal.py", env = { PYTHONPATH = "." } }
 demo-belief-updater-internal = { cmd = "python examples/advanced/state_management/belief_updater_internal.py", env = { PYTHONPATH = "." } }
 demo-belief-updater-explicit = { cmd = "python examples/advanced/state_management/belief_updater_explicit.py --steps 12 --dt 0.1", env = { PYTHONPATH = "." } }
 demo-stateful-replanning = { cmd = "python examples/advanced/state_management/stateful_replanning.py --steps 10 --dt 0.2", env = { PYTHONPATH = "." } }

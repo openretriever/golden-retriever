@@ -55,7 +55,7 @@ Mapping principles:
 ## Run The Demo
 
 ```bash
-python examples/advanced/robotics_typing_standard/lerobot_bridge_demo.py
+pixi run demo-robotics-lerobot-bridge
 ```
 
 Expected result: event rows become LeRobot-style records and round-trip back through the bridge with stable metadata.

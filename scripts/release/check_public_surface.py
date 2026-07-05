@@ -65,7 +65,7 @@ DOC_MARKERS = {
         "Pack Maturity Guide",
     ),
     "docs/hub/export_catalog_v1.md": (
-        "Golden Pack Export Catalog v1",
+        "Golden Pack Export Catalog",
         "WorldState",
         "convert_to_arrow",
         "convert_from_arrow",

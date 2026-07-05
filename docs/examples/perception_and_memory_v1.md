@@ -52,7 +52,7 @@ Start with the smallest stateful examples:
 
 ```bash
 pixi run demo-stateful-reset
-pixi run demo-belief-updater-internal
+pixi run demo-belief-updater-local-state
 pixi run demo-belief-updater-explicit
 ```
 
@@ -102,7 +102,7 @@ This keeps the same deterministic synthetic camera source, but adds a windowed a
 
 ## 8. Add one more memory surface: stateful replanning
 
-To see internal planner memory without bringing in a full robot stack, run:
+To see planner state without bringing in a full robot stack, run:
 
 ```bash
 pixi run -e golden-local demo-stateful-replanning
@@ -119,8 +119,8 @@ pixi run -e golden-local demo-composable-pipelines
 ```
 
 That example demonstrates:
-- surfaced input injection into a named internal stage
-- replacing an internal stage after pipeline construction
+- surfaced input injection into a named stage
+- replacing a stage after pipeline construction
 - wrapping a registered pipeline back into a larger graph via `build_pipeline_flow(...)`
 
 Again, the point is to keep payloads stable while changing structure around them.

@@ -39,8 +39,8 @@ from retriever_typing.data import from_runtime_event_buffer, to_runtime_event_bu
 ## Run The Demos
 
 ```bash
-python examples/advanced/robotics_typing_standard/data_spec_eventstream_demo.py
-python examples/advanced/robotics_typing_standard/multi_stream_join_demo.py
+pixi run demo-robotics-data-eventstream
+pixi run demo-robotics-data-join
 ```
 
 Expected result: deterministic ordering, join/window output, and lineage that points back to source events.

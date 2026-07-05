@@ -56,6 +56,7 @@ Use this sequence when a new user needs high-signal proof without optional hardw
 | `pixi run -e golden-local demo-perception-detection-flow` | Steps a deterministic synthetic perception graph to completion. | Proves the concise example ladder runs before heavier integrations. |
 | `pixi run demo-robosuite-mock` | Prints `[mock step=...]` simulator-policy trace lines. | Proves environment-as-Flow and policy-as-Flow without robosuite installed. |
 | `pixi run demo-pipeline-html-viz` | Prints an ASCII graph and writes `out/golden_retriever_closed_loop_viz.html`. | Proves IR validation and graph inspection on a closed-loop example. |
+| `pixi run public-surface-check` | Runs the promoted docs/task/smoke guardrail. | Use this after editing docs or examples to catch drift before publishing. |
 
 Optional camera, model-backed, MuJoCo, TWIST2, and real robosuite lanes should be selected only after the mock-safe path is green.
 

@@ -1,7 +1,8 @@
-# Golden Pack Export Catalog v1
+# Golden Pack Export Catalog
 
+This is the current public export surface for Golden's Hub-loadable robot payload pack. It is intentionally small: use it when another project needs reusable robot-facing payloads and conversion helpers without importing every Golden example.
 
-This page is generated from the current public boundary in `pyproject.toml`: Golden exposes robot-facing payloads and conversion helpers through `[tool.retriever.module.exports]`, and Retriever Hub loads that manifest.
+The source of truth is `[tool.retriever.module.exports]` in `pyproject.toml`, and Retriever Hub loads that manifest.
 
 ## Module declaration
 

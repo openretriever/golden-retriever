@@ -53,7 +53,6 @@ nav:
       - Pack Maturity Guide: hub/pack_roadmap_v1.md
   - Robot Type Packs:
       - Overview: robotics_typing_standard/README.md
-      - Type-Pack Overview: robotics_typing_standard/00_integrated_robotics_typing_standard_v1.md
       - Type Catalog: robotics_typing_standard/01_type_catalog_and_semantics.md
       - Flow Contracts: robotics_typing_standard/02_flow_composition_contract.md
       - Sharing Profile: robotics_typing_standard/03_hub_sharing_profile.md
