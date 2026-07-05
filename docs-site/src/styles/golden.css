@@ -1,4 +1,8 @@
 :root {
+  --gold-surface: #fffaf0;
+  --gold-surface-strong: #fff3d6;
+  --gold-line: #f0dfbd;
+  --gold-shadow: rgba(120, 83, 9, 0.06);
   --sl-color-accent-low: #fff6d8;
   --sl-color-accent: #d99a16;
   --sl-color-accent-high: #5f3b05;
@@ -17,10 +21,31 @@
 }
 
 :root[data-theme='dark'] {
+  --gold-surface: #21170c;
+  --gold-surface-strong: #34230f;
+  --gold-line: #5f3f17;
+  --gold-shadow: rgba(0, 0, 0, 0.28);
   --sl-color-accent-low: #3f2b09;
   --sl-color-accent: #fbbf24;
   --sl-color-accent-high: #fef3c7;
   --sl-color-text-accent: #facc15;
+}
+
+:root[data-theme='light'] body {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(217, 154, 22, 0.10), transparent 26rem),
+    radial-gradient(circle at 95% 12%, rgba(250, 204, 21, 0.09), transparent 24rem),
+    linear-gradient(180deg, #fffdf7 0%, #fffaf0 48%, #fffdf7 100%);
+}
+
+:root[data-theme='light'] .header {
+  background: rgba(255, 253, 247, 0.88);
+  backdrop-filter: blur(18px);
+}
+
+:root[data-theme='light'] .sidebar-pane,
+:root[data-theme='light'] .right-sidebar-panel {
+  background: linear-gradient(180deg, rgba(255, 250, 240, 0.70), rgba(255, 253, 247, 0.96));
 }
 
 /* Keep Golden structurally close to core docs, but shift the surface toward warm gold. */
@@ -112,7 +137,7 @@
   background: var(--sl-color-bg-nav);
   color: inherit;
   text-decoration: none;
-  box-shadow: 0 8px 26px rgba(120, 83, 9, 0.045);
+  box-shadow: 0 8px 26px var(--gold-shadow);
 }
 
 .action-card:hover,
@@ -388,7 +413,7 @@ details.reference-details > div {
   border: 1px solid var(--sl-color-gray-5);
   border-radius: 24px;
   background: var(--sl-color-bg-nav);
-  box-shadow: 0 18px 54px rgba(120, 83, 9, 0.07);
+  box-shadow: 0 18px 54px var(--gold-shadow);
 }
 
 .artifact-card-header {
