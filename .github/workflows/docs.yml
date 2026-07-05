@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+      - chore/remove-behavior-1k-v1
+      - release/golden-history-filter-current-v1
     paths:
       - docs/**
       - mkdocs.yml

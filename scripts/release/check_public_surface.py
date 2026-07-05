@@ -96,6 +96,7 @@ DOC_MARKERS = {
         "demo-golden-hub-pack",
         "demo-robosuite-mock",
         "demo-pipeline-html-viz",
+        "https://retriever-space.pages.dev/examples/simulation_and_visualization_v1/",
         "Do not treat source examples as Retriever Hub packs unless `pyproject.toml` exports them.",
     ),
 }

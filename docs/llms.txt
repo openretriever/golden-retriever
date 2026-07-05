@@ -12,6 +12,7 @@ GoldenRetriever is Track G in the Retriever ecosystem: the maintained applied ex
 - Golden overview: https://retriever-space.pages.dev/
 - Golden Hub proof: https://retriever-space.pages.dev/examples/golden_hub_packs_v1/
 - Golden example catalog: https://retriever-space.pages.dev/examples/
+- Golden simulation and visualization guide: https://retriever-space.pages.dev/examples/simulation_and_visualization_v1/
 - Golden Hub reference: https://retriever-space.pages.dev/hub/
 - Golden export catalog: https://retriever-space.pages.dev/hub/export_catalog_v1/
 - Golden pack roadmap: https://retriever-space.pages.dev/hub/pack_roadmap_v1/
@@ -60,6 +61,7 @@ Only start these when the user explicitly asks for the relevant environment:
 
 - Webcam/Rerun: `pixi run -e torch demo-webcam-rerun`
 - TWIST2/MuJoCo: `pixi run -e twist2 demo-twist2-rerun`
+- Robosuite mock + HTML graph visualization: https://retriever-space.pages.dev/examples/simulation_and_visualization_v1/
 - Real robosuite Lift: install the optional robosuite dependency first, then run `pixi run demo-robosuite-lift`
 - Model-backed perception/memory: use the documented optional model-backed examples after the mock path is green.
 
