@@ -63,7 +63,7 @@ one.
 | Example lanes (learning ladder) | `examples/advanced/` |
 | Heavier prototypes | `examples/experimental/` |
 | Tests | `tests/typing/`, `tests/examples/` |
-| Docs (Starlight → retriever-space.pages.dev) | `docs-site/`, with source/reference Markdown in `docs/` |
+| Docs (Starlight -> retriever-space.pages.dev) | `docs-site/` |
 
 ## Pitfalls that actually bite
 

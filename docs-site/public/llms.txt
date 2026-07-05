@@ -1,4 +1,4 @@
-# Golden Retriever Reference
+# Golden Retriever
 
 GoldenRetriever is the maintained applied reference layer for Retriever: robot-facing examples, reusable payload packs, simulator and visualization lanes, expected artifacts, and Retriever Hub pack candidates. Use it after the core Retriever visual quickstart when you want runnable robot-facing examples rather than runtime concepts alone.
 

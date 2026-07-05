@@ -1,62 +1,65 @@
 :root {
-  --sl-color-accent-low: #fff4e6;
+  --sl-color-accent-low: #fff3e8;
   --sl-color-accent: #f97316;
   --sl-color-accent-high: #7c2d12;
   --sl-color-text-accent: #c2410c;
   --sl-font: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --sl-font-mono: "SFMono-Regular", "Cascadia Code", "Liberation Mono", Menlo, monospace;
+  --sl-content-width: 58rem;
 }
 
 :root[data-theme='dark'] {
-  --sl-color-accent-low: #3d1f0f;
+  --sl-color-accent-low: #4a1f0f;
   --sl-color-accent: #fb923c;
   --sl-color-accent-high: #ffedd5;
   --sl-color-text-accent: #fdba74;
 }
 
+/* Keep Golden visually close to the core Retriever docs: white surface, orange accent. */
 .hero-panel,
 .golden-panel {
   margin: 1rem 0 2.5rem;
-  padding: clamp(1.4rem, 4vw, 3rem);
-  border: 1px solid var(--sl-color-gray-5);
-  border-radius: 28px;
+  padding: clamp(1.35rem, 3.6vw, 2.8rem);
+  border: 1px solid color-mix(in srgb, var(--sl-color-accent) 20%, var(--sl-color-gray-5));
+  border-radius: 26px;
   background:
-    radial-gradient(circle at 12% 10%, rgba(249, 115, 22, 0.18), transparent 30rem),
-    radial-gradient(circle at 88% 20%, rgba(245, 158, 11, 0.12), transparent 24rem),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(255, 247, 237, 0.70));
-  box-shadow: 0 24px 80px rgba(124, 45, 18, 0.10);
+    radial-gradient(circle at 12% 8%, rgba(249, 115, 22, 0.13), transparent 30rem),
+    radial-gradient(circle at 86% 18%, rgba(245, 158, 11, 0.10), transparent 24rem),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(255, 247, 237, 0.58));
+  box-shadow: 0 18px 56px rgba(124, 45, 18, 0.08);
 }
 
 :root[data-theme='dark'] .hero-panel,
 :root[data-theme='dark'] .golden-panel {
   background:
-    radial-gradient(circle at 12% 10%, rgba(251, 146, 60, 0.22), transparent 30rem),
-    radial-gradient(circle at 88% 20%, rgba(245, 158, 11, 0.12), transparent 24rem),
+    radial-gradient(circle at 12% 8%, rgba(251, 146, 60, 0.20), transparent 30rem),
+    radial-gradient(circle at 86% 18%, rgba(245, 158, 11, 0.10), transparent 24rem),
     linear-gradient(135deg, rgba(25, 18, 12, 0.96), rgba(35, 24, 17, 0.84));
 }
 
 .hero-panel h1 {
   margin-top: 0.35rem;
-  max-width: 920px;
-  font-size: clamp(2.1rem, 6.6vw, 4.8rem);
-  line-height: 0.95;
-  letter-spacing: -0.068em;
+  max-width: 860px;
+  font-size: clamp(2rem, 6vw, 4.5rem);
+  line-height: 0.96;
+  letter-spacing: -0.064em;
 }
 
 .eyebrow,
 .kicker {
   margin: 0;
   color: var(--sl-color-text-accent);
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 850;
   letter-spacing: 0.16em;
   text-transform: uppercase;
 }
 
 .lede {
-  max-width: 790px;
+  max-width: 780px;
   color: var(--sl-color-gray-2);
-  font-size: clamp(1.05rem, 2vw, 1.28rem);
+  font-size: clamp(1.02rem, 1.8vw, 1.24rem);
+  line-height: 1.62;
 }
 
 .action-grid,
@@ -65,7 +68,9 @@
 .result-grid,
 .path-grid,
 .layer-grid,
-.type-grid {
+.type-grid,
+.choice-grid,
+.rule-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
   gap: 1rem;
@@ -76,12 +81,22 @@
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
 }
 
+.choice-grid {
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.rule-grid {
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
 .action-card,
 .info-card,
 .command-card,
 .result-card,
 .path-card,
-.type-card {
+.type-card,
+.choice-card,
+.rule-card {
   display: block;
   padding: 1.05rem;
   border: 1px solid var(--sl-color-gray-5);
@@ -89,12 +104,13 @@
   background: var(--sl-color-bg-nav);
   color: inherit;
   text-decoration: none;
-  box-shadow: 0 10px 34px rgba(124, 45, 18, 0.06);
+  box-shadow: 0 8px 26px rgba(15, 23, 42, 0.045);
 }
 
 .action-card:hover,
 .info-card:hover,
-.path-card:hover {
+.path-card:hover,
+.choice-card:hover {
   border-color: var(--sl-color-accent);
   transform: translateY(-1px);
 }
@@ -104,7 +120,9 @@
 .command-card strong,
 .result-card strong,
 .path-card strong,
-.type-card strong {
+.type-card strong,
+.choice-card strong,
+.rule-card strong {
   display: block;
   margin-bottom: 0.35rem;
   color: var(--sl-color-white);
@@ -116,18 +134,22 @@
 :root[data-theme='light'] .command-card strong,
 :root[data-theme='light'] .result-card strong,
 :root[data-theme='light'] .path-card strong,
-:root[data-theme='light'] .type-card strong {
+:root[data-theme='light'] .type-card strong,
+:root[data-theme='light'] .choice-card strong,
+:root[data-theme='light'] .rule-card strong {
   color: #111827;
 }
 
 .path-card span,
 .result-card span,
-.type-card span {
+.type-card span,
+.choice-card span,
+.rule-card span {
   display: inline-block;
   margin-bottom: 0.7rem;
   color: var(--sl-color-text-accent);
   font-family: var(--sl-font-mono);
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 850;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -173,7 +195,8 @@
   font-size: 0.95rem;
 }
 
-.inline-command {
+.inline-command,
+.reference-strip {
   margin: 1rem 0;
   padding: 1rem;
   border: 1px solid var(--sl-color-gray-5);
@@ -185,7 +208,8 @@
 .inline-command code,
 .command-card code,
 .result-card code,
-.path-card code {
+.path-card code,
+.choice-card code {
   white-space: pre-wrap;
 }
 
@@ -208,31 +232,30 @@
   .two-col { grid-template-columns: 1fr; }
 }
 
-/* Polished reference-page pass: keep Golden close to the core Retriever docs. */
 .sl-markdown-content > h1,
 main h1 {
   max-width: 56rem;
-  font-size: clamp(2.05rem, 4.6vw, 3.45rem);
-  line-height: 0.98;
-  letter-spacing: -0.062em;
+  font-size: clamp(2rem, 3.8vw, 3rem);
+  line-height: 1;
+  letter-spacing: -0.055em;
 }
 
 .sl-markdown-content > p:first-of-type {
   max-width: 58rem;
   color: var(--sl-color-gray-2);
-  font-size: 1.05rem;
-  line-height: 1.75;
+  font-size: 1.03rem;
+  line-height: 1.7;
 }
 
 .sl-markdown-content table {
   overflow: hidden;
   border: 1px solid var(--sl-color-gray-5);
   border-radius: 18px;
-  box-shadow: 0 12px 34px rgba(124, 45, 18, 0.045);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.04);
 }
 
 .sl-markdown-content th {
-  background: color-mix(in srgb, var(--sl-color-accent-low) 58%, var(--sl-color-bg-nav));
+  background: color-mix(in srgb, var(--sl-color-accent-low) 52%, var(--sl-color-bg-nav));
   color: var(--sl-color-white);
   font-weight: 780;
 }
@@ -253,57 +276,38 @@ main h1 {
 .info-card span,
 .command-card p,
 .result-card p,
-.path-card p {
+.path-card p,
+.choice-card p,
+.rule-card p {
   margin: 0;
   color: var(--sl-color-gray-2);
   line-height: 1.58;
 }
 
-.inline-command strong {
-  display: block;
-  margin-bottom: 0.45rem;
-  color: var(--sl-color-white);
-  font-size: 1rem;
-}
-
-:root[data-theme='light'] .inline-command strong {
-  color: #111827;
-}
-
-.inline-command pre {
-  margin: 0.45rem 0 0.65rem;
-  padding: 0.85rem 1rem;
-  border: 1px solid var(--sl-color-gray-5);
-  border-radius: 14px;
-  background: var(--sl-color-bg) !important;
+.reference-strip pre,
+.result-card pre {
+  margin: 0.75rem 0 0;
   overflow-x: auto;
 }
 
-.inline-command p {
-  margin: 0.35rem 0 0;
-  color: var(--sl-color-gray-2);
-  font-size: 0.95rem;
-}
-
-.command-card code {
-  display: block;
-  margin: 0.55rem 0 0.55rem;
-  padding: 0.75rem 0.85rem;
+details.reference-details {
+  margin: 1.25rem 0;
   border: 1px solid var(--sl-color-gray-5);
-  border-radius: 14px;
-  background: var(--sl-color-bg);
+  border-radius: 18px;
+  background: var(--sl-color-bg-nav);
 }
 
-.boundary-note strong {
+details.reference-details summary {
+  cursor: pointer;
+  padding: 0.9rem 1rem;
   color: var(--sl-color-white);
+  font-weight: 780;
 }
 
-:root[data-theme='light'] .boundary-note strong {
+:root[data-theme='light'] details.reference-details summary {
   color: #111827;
 }
 
-@media (min-width: 72rem) {
-  .sl-markdown-content {
-    font-size: 1.02rem;
-  }
+details.reference-details > div {
+  padding: 0 1rem 1rem;
 }

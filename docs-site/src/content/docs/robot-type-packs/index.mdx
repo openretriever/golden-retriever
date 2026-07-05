@@ -7,7 +7,7 @@ description: Reusable robot payload packs for Golden examples.
 Core Retriever teaches the runtime. Golden keeps the robot-facing vocabulary that examples can share: world state, belief, skills, plans, stamped spatial values, event buffers, dataset records, and export profiles.
 
 <div class="card-grid">
-  <a class="info-card" href="/robot-type-packs/type-catalog/"><strong>Type catalog</strong><span>Choose payloads for robot state, observations, plans, trajectories, status, and stamped values.</span></a>
+  <a class="info-card" href="/robot-type-packs/type-catalog/"><strong>Payload catalog</strong><span>Choose payloads for robot state, observations, plans, trajectories, status, and stamped values.</span></a>
   <a class="info-card" href="/robot-type-packs/flow-contracts/"><strong>Flow contracts</strong><span>Wire robot payloads through reusable Flows without dict glue or hidden field collisions.</span></a>
   <a class="info-card" href="/robot-type-packs/data-event-streams/"><strong>Data and event streams</strong><span>Record, join, window, replay, and export event streams without losing timing/provenance.</span></a>
 </div>
@@ -33,9 +33,9 @@ Expected result: terminal output showing stamped spatial payloads, composite I/O
 
 ## Continue
 
-| Goal | Page |
-| --- | --- |
-| Pick the right type | [Robot Type Catalog](/robot-type-packs/type-catalog/) |
-| Compose payloads through Flows | [Flow Composition Contracts](/robot-type-packs/flow-contracts/) |
-| Record and replay data | [Data and Event Streams](/robot-type-packs/data-event-streams/) |
-| Export dataset-style records | [LeRobot Dataset Export](/robot-type-packs/lerobot-export/) |
+<div class="card-grid">
+  <a class="info-card" href="/robot-type-packs/type-catalog/"><strong>Pick the right type</strong><span>Start from the smallest payload that preserves frame, time, source, and action semantics.</span></a>
+  <a class="info-card" href="/robot-type-packs/flow-contracts/"><strong>Compose payloads through Flows</strong><span>Keep robot-facing examples reusable by using typed I/O boundaries.</span></a>
+  <a class="info-card" href="/robot-type-packs/data-event-streams/"><strong>Record and replay data</strong><span>Use event buffers and event-time joins before dataset export.</span></a>
+  <a class="info-card" href="/robot-type-packs/lerobot-export/"><strong>Export dataset-style records</strong><span>Bridge Golden event profiles to dataset-friendly records with lineage.</span></a>
+</div>

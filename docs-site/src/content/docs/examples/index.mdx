@@ -11,6 +11,15 @@ Golden examples are the applied continuation after the core Retriever quickstart
   <a href="/robot-type-packs/">Robot type packs</a>
 </div>
 
+## Choose By Goal
+
+<div class="choice-grid">
+  <a class="choice-card" href="/examples/golden-hub-proof/"><span>Start</span><strong>I want the smallest proof</strong><p>Run the Hub pack smoke with no robot, camera, model, simulator, or network dependency.</p><code>pixi run demo-golden-hub-pack</code></a>
+  <a class="choice-card" href="/examples/perception-memory/"><span>Learn</span><strong>I want the applied ladder</strong><p>Walk perception, memory, language, and composition using deterministic payloads first.</p><code>pixi run -e golden-local demo-perception-detection-flow</code></a>
+  <a class="choice-card" href="/examples/simulation-visualization/"><span>Inspect</span><strong>I want visual artifacts</strong><p>Render graph structure, simulator traces, and optional Rerun streams after the mock path works.</p><code>pixi run demo-pipeline-html-viz</code></a>
+  <a class="choice-card" href="/robot-type-packs/"><span>Reuse</span><strong>I want payload contracts</strong><p>Use robot state, belief, plan, trajectory, event-buffer, and dataset export profiles across examples.</p><code>pixi run demo-robotics-typing-catalog</code></a>
+</div>
+
 ## First Verified Commands
 
 | Command | Expected result | Why it comes first |
@@ -19,6 +28,11 @@ Golden examples are the applied continuation after the core Retriever quickstart
 | `pixi run -e golden-local demo-perception-detection-flow` | Steps a deterministic synthetic perception graph to completion. | Proves the concise example ladder before heavier integrations. |
 | `pixi run demo-robosuite-mock` | Prints `[mock step=...]` simulator-policy trace lines. | Proves environment-as-Flow and policy-as-Flow without robosuite installed. |
 | `pixi run demo-pipeline-html-viz` | Prints an ASCII graph and writes `out/golden_retriever_closed_loop_viz.html`. | Proves IR validation and graph inspection. |
+
+<figure class="figure-card">
+  <img src="/assets/robot-agent-graph-ultralight.png" alt="Retriever robot agent graph with observe, belief, planner, monitor, skill, controller, and environment flows" />
+  <figcaption><strong>Expected graph shape.</strong> Golden examples make the closed-loop robot pattern concrete without hiding timing and handoff boundaries in callbacks.</figcaption>
+</figure>
 
 ## Example Families
 
@@ -29,6 +43,14 @@ Golden examples are the applied continuation after the core Retriever quickstart
   <a class="info-card" href="/examples/pipeline-composition/"><strong>Pipeline composition</strong><span>Registry-backed composition and pipeline-as-Flow surfaces.</span></a>
   <a class="info-card" href="/examples/simulation-visualization/"><strong>Simulation and visualization</strong><span>Rerun, mock-safe robosuite, TWIST2/MuJoCo lanes, and HTML graph visualization.</span></a>
   <a class="info-card" href="/robot-type-packs/"><strong>Robot type packs</strong><span>World state, belief, plans, trajectories, event streams, and dataset/export profiles.</span></a>
+</div>
+
+## Core Concept Bridge
+
+<div class="card-grid">
+  <a class="info-card" href="https://openretriever-docs.pages.dev/tutorials/examples-and-results/"><strong>Core examples and results</strong><span>Use the core route first if Flow, stepping, and graph inspection are not clear yet.</span></a>
+  <a class="info-card" href="https://openretriever-docs.pages.dev/tutorials/debug-and-visualize/"><strong>Debug and visualize</strong><span>Learn graph rendering, local stepping, and record/replay before heavier robot lanes.</span></a>
+  <a class="info-card" href="https://openretriever-docs.pages.dev/concepts/time-and-sync/"><strong>Time and sync</strong><span>Understand why Golden examples keep per-Flow timing and per-edge sampling explicit.</span></a>
 </div>
 
 ## Maturity Levels

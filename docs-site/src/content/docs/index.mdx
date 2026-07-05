@@ -1,5 +1,5 @@
 ---
-title: Golden Retriever Reference
+title: Golden Retriever
 slug: /
 description: Applied robot examples, reusable type packs, and Hub-pack candidates for Retriever.
 template: splash
@@ -20,6 +20,7 @@ template: splash
   <a href="https://openretriever.org/">Retriever home</a>
   <a href="https://openretriever-docs.pages.dev/">Core runtime docs</a>
   <a href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/">Core visual quickstart</a>
+  <a href="/examples/golden-hub-proof/">First Golden proof</a>
   <a href="/llms.txt">Agent map</a>
 </div>
 
@@ -34,6 +35,14 @@ template: splash
   <a class="path-card" href="/examples/golden-hub-proof/"><span>01</span><strong>Prove Golden boundary</strong><p>Load manifest-declared robot payloads through Retriever Hub.</p><code>pixi run demo-golden-hub-pack</code></a>
   <a class="path-card" href="/examples/perception-memory/"><span>02</span><strong>Walk the ladder</strong><p>Run perception and memory over deterministic robot-facing payloads.</p><code>pixi run -e golden-local demo-perception-detection-flow</code></a>
   <a class="path-card" href="/examples/simulation-visualization/"><span>03</span><strong>Inspect visual systems</strong><p>Move to Rerun, mock-safe simulator lanes, and HTML graph artifacts.</p><code>pixi run demo-pipeline-html-viz</code></a>
+</div>
+
+## How The Retriever Surfaces Fit
+
+<div class="layer-grid">
+  <div class="info-card"><strong>Core Retriever</strong><span>Flow, Pipeline, clocks, sync policies, IR, runtime execution, graph rendering, replay, and Hub loading mechanics.</span></div>
+  <div class="info-card"><strong>Golden Retriever</strong><span>Applied robot examples, reusable payload packs, simulator lanes, visualization demos, and candidate Hub packs.</span></div>
+  <div class="info-card"><strong>Retriever Hub</strong><span>The packaging boundary: load stable Flows, type packs, and conversion helpers without depending on source-tree layout.</span></div>
 </div>
 
 ## First Results To Recognize

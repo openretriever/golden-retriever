@@ -24,26 +24,24 @@ REQUIRED_PATHS = (
     "examples/experimental/visualization/visualize_pipeline.py",
     "examples/experimental/visualization/README.md",
     "examples/advanced/core_composition/golden_hub_pack_smoke.py",
-    "docs/examples/README.md",
-    "docs/examples/simulation_and_visualization_v1.md",
-    "docs/examples/golden_hub_packs_v1.md",
-    "docs/hub/README.md",
-    "docs/hub/export_catalog_v1.md",
-    "docs/hub/pack_roadmap_v1.md",
-    "docs/llms.txt",
-    "docs/robots.txt",
     "docs-site/astro.config.mjs",
     "docs-site/package.json",
+    "docs-site/public/llms.txt",
+    "docs-site/public/robots.txt",
+    "docs-site/public/assets/logo.svg",
     "docs-site/src/content/docs/index.mdx",
     "docs-site/src/content/docs/examples/index.mdx",
     "docs-site/src/content/docs/examples/golden-hub-proof.mdx",
     "docs-site/src/content/docs/examples/simulation-visualization.mdx",
     "docs-site/src/content/docs/hub/index.mdx",
+    "docs-site/src/content/docs/hub/export-catalog.mdx",
     "docs-site/src/content/docs/robot-type-packs/index.mdx",
     "docs-site/src/content/docs/robot-type-packs/type-catalog.mdx",
 )
 
 REMOVED_PATHS: tuple[str, ...] = (
+    "docs",
+    "mkdocs.yml",
     "examples/experimental/behavior_1k",
 )
 
@@ -58,90 +56,42 @@ REQUIRED_TASKS = (
 )
 
 DOC_MARKERS = {
-    "docs/examples/README.md": (
-        "demo-golden-hub-pack",
-        "demo-robosuite-mock",
-        "demo-pipeline-html-viz",
-        "out/golden_retriever_closed_loop_viz.html",
+    "docs-site/astro.config.mjs": (
+        "starlightThemeNova",
+        "Golden Retriever",
+        "Golden Pack Boundary",
+        "Payload Catalog",
     ),
-    "docs/examples/simulation_and_visualization_v1.md": (
-        "demo-robosuite-mock",
-        "demo-pipeline-html-viz",
-        "[mock step=...]",
-        "out/golden_retriever_closed_loop_viz.html",
-    ),
-    "docs/hub/README.md": (
-        "Retriever Hub Packs",
-        "Retriever Hub reference shape",
-        "hub.use(\"openretriever/golden-retriever:WorldState\")",
-        "Pack Maturity Guide",
-    ),
-    "docs/hub/export_catalog_v1.md": (
-        "Golden Pack Export Catalog",
-        "WorldState",
-        "convert_to_arrow",
-        "convert_from_arrow",
-    ),
-    "docs/hub/pack_roadmap_v1.md": (
-        "Pack Maturity Guide",
-        "Good Candidate Shapes",
-        "import-safe",
-        "demo-pipeline-html-viz",
-    ),
-    "docs/README.md": (
-        "Applied Retriever reference",
-        "Golden examples start where the core quickstart ends",
-        "Core runtime",
-        "Applied reference",
-        "Recommended Route",
-        "First Results To Recognize",
-        "What Belongs Here",
-        "Robot Type Packs",
-        "Hub packs",
-    ),
-    "docs/robots.txt": (
-        "Sitemap: https://retriever-space.pages.dev/sitemap.xml",
-        "Agent map: https://retriever-space.pages.dev/llms.txt",
-    ),
-    "docs/robotics_typing_standard/07_data_spec_eventstream_v1.md": (
-        "demo-robotics-data-eventstream",
-        "demo-robotics-data-join",
-        "deterministic ordering",
-    ),
-    "docs/robotics_typing_standard/08_lerobot_interop_and_dataset_profile.md": (
-        "demo-robotics-lerobot-bridge",
-        "LeRobot-style records",
-        "stable metadata",
-    ),
-    "docs/llms.txt": (
-        "Golden Retriever Reference",
+    "docs-site/public/llms.txt": (
+        "Golden Retriever",
         "demo-golden-hub-pack",
         "demo-robosuite-mock",
         "demo-pipeline-html-viz",
         "https://retriever-space.pages.dev/examples/simulation-visualization/",
         "Do not treat source examples as Retriever Hub packs unless `pyproject.toml` exports them.",
     ),
-    "docs-site/astro.config.mjs": (
-        "starlightThemeNova",
-        "Golden Retriever Reference",
-        "Golden Pack Boundary",
-        "Type Catalog",
+    "docs-site/public/robots.txt": (
+        "Sitemap: https://retriever-space.pages.dev/sitemap-index.xml",
+        "LLM map: https://retriever-space.pages.dev/llms.txt",
     ),
     "docs-site/src/content/docs/index.mdx": (
         "Golden examples start where the core quickstart ends",
         "Golden is not a second runtime",
+        "How The Retriever Surfaces Fit",
         "First Results To Recognize",
         "What Belongs Here",
     ),
     "docs-site/src/content/docs/examples/index.mdx": (
+        "Choose By Goal",
         "First Verified Commands",
         "demo-golden-hub-pack",
         "demo-pipeline-html-viz",
+        "Core Concept Bridge",
         "Maturity Levels",
     ),
     "docs-site/src/content/docs/examples/golden-hub-proof.mdx": (
         "Golden Hub Proof",
-        "hub.use(\"openretriever/golden-retriever:WorldState\")",
+        'hub.use("openretriever/golden-retriever:WorldState")',
         "Arrow round-trip: Action OK",
     ),
     "docs-site/src/content/docs/examples/simulation-visualization.mdx": (
@@ -151,17 +101,32 @@ DOC_MARKERS = {
     ),
     "docs-site/src/content/docs/hub/index.mdx": (
         "Golden Pack Boundary",
+        "What A Pack Contains",
+        "Core Concept Bridge",
         "Pack Rules",
+    ),
+    "docs-site/src/content/docs/hub/export-catalog.mdx": (
+        "Golden Export Catalog",
+        "RobotState",
+        "TaskGoal",
+        "Action",
+        "Command",
+        "Status",
+        "convert_to_arrow",
+        "convert_from_arrow",
     ),
     "docs-site/src/content/docs/robot-type-packs/index.mdx": (
         "Robot Type Packs",
+        "Payload catalog",
         "What Golden Owns",
         "demo-robotics-typing-catalog",
     ),
     "docs-site/src/content/docs/robot-type-packs/type-catalog.mdx": (
-        "Robot Type Catalog",
-        "Stamped Boundaries",
-        "Validation Boundary",
+        "Robot Payload Catalog",
+        "Pick The Smallest Useful Payload",
+        "Import And Registry Shape",
+        "Validation Checklist",
+        "Detailed field reference",
     ),
 }
 

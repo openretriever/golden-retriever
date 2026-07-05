@@ -7,8 +7,8 @@ export default defineConfig({
   site: 'https://retriever-space.pages.dev',
   integrations: [
     starlight({
-      title: 'Golden Retriever Reference',
-      description: 'Applied robot examples, type packs, and Hub-pack candidates for Retriever.',
+      title: 'Golden Retriever',
+      description: 'Applied robot examples, reusable payload packs, and Hub-pack candidates for Retriever.',
       logo: {
         src: './src/assets/retriever-illustrative.jpeg',
         alt: 'Golden Retriever',
@@ -46,7 +46,7 @@ export default defineConfig({
           label: 'Robot Type Packs',
           items: [
             { label: 'Overview', slug: 'robot-type-packs' },
-            { label: 'Type Catalog', slug: 'robot-type-packs/type-catalog' },
+            { label: 'Payload Catalog', slug: 'robot-type-packs/type-catalog' },
             { label: 'Flow Contracts', slug: 'robot-type-packs/flow-contracts' },
             { label: 'Data and Event Streams', slug: 'robot-type-packs/data-event-streams' },
             { label: 'LeRobot Dataset Export', slug: 'robot-type-packs/lerobot-export' },

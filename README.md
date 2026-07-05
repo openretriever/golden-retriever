@@ -107,11 +107,9 @@ Golden pages should answer one question: "What reusable Golden pack, payload, or
 ## Repository Layout
 
 - `examples/advanced`: runnable advanced demos with concrete launch points. Start with `examples/advanced/README.md`.
-- `docs/examples`: public example-guide articles. Start with `docs/examples/README.md`.
 - `src/retriever_typing`: typed robotics and event/data helpers used by advanced demos and exposed through the Retriever Hub pack manifest.
-- `docs/robotics_typing_standard`: typed payload and data-profile notes for this repo.
 - `notebooks`: git-friendly notebook sources and generated notebook artifacts. Start with `notebooks/README.md`.
-- `docs-site`: hostable Starlight documentation site for `retriever-space.pages.dev`; `docs/` keeps source/reference Markdown and agent-facing text assets.
+- `docs-site`: hostable Starlight documentation site for `retriever-space.pages.dev`; public guides, references, and agent-facing `llms.txt` live here.
 
 ## Example Families
 
@@ -131,7 +129,7 @@ Golden pages should answer one question: "What reusable Golden pack, payload, or
 - `examples/advanced/robosuite_lift`: mock-safe robosuite Lift smoke demo.
 - `examples/advanced/hierarchical_physics_demo`: physics demos with HTML pipeline visualization.
 
-For the end-to-end perception -> memory -> composition walkthrough, see `docs/examples/perception_and_memory_v1.md`. For registry-backed composition surfaces, continue with `docs/examples/pipeline_composition_v1.md`.
+For the end-to-end perception -> memory -> composition walkthrough, use the Golden docs site. Start at `docs-site/src/content/docs/examples/index.mdx`, then continue to `perception-memory.mdx` and `pipeline-composition.mdx`.
 
 Design notes that are not runnable example families stay separate from the main path. `examples/advanced/closed_loop_planning` is an extracted pattern note, not a first-run demo.
 
@@ -147,7 +145,7 @@ pixi run demo-pipeline-html-viz
 pixi run public-surface-check
 ```
 
-The current visual lanes cover webcam/Rerun perception, MuJoCo/TWIST2 simulation, MuJoCo manipulation, a mock-safe robosuite Lift smoke demo, hierarchical physics with HTML pipeline visualization, and the promoted pipeline HTML utility. `public-surface-check` also runs short Hub, robosuite mock, and HTML visualization smokes. See `docs/examples/simulation_and_visualization_v1.md` for the public guide.
+The current visual lanes cover webcam/Rerun perception, MuJoCo/TWIST2 simulation, MuJoCo manipulation, a mock-safe robosuite Lift smoke demo, hierarchical physics with HTML pipeline visualization, and the promoted pipeline HTML utility. `public-surface-check` also runs short Hub, robosuite mock, and HTML visualization smokes. See `docs-site/src/content/docs/examples/simulation-visualization.mdx` for the public guide.
 
 ## Typed Payload Demos
 

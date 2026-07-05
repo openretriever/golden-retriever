@@ -7,8 +7,7 @@ on:
       - chore/remove-behavior-1k-v1
       - release/golden-history-filter-current-v1
     paths:
-      - docs/**
-      - mkdocs.yml
+      - docs-site/**
       - pixi.toml
       - .github/workflows/docs.yml
   workflow_dispatch:
@@ -38,7 +37,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: golden-retriever-docs
-          path: site
+          path: docs-site/dist
 
   deploy-cloudflare-pages:
     runs-on: ubuntu-latest
@@ -47,11 +46,11 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: golden-retriever-docs
-          path: site
+          path: docs-site/dist
       - name: Deploy to Cloudflare Pages
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != '' }}
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ env.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy site --project-name=retriever-space --branch=main
+          command: pages deploy docs-site/dist --project-name=retriever-space --branch=main
