@@ -5,34 +5,50 @@
   <a href="https://openretriever.org/start/">Start path</a>
   <a href="https://openretriever-docs.pages.dev/">Core docs</a>
   <a href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/">Visual quickstart</a>
-  <a href="https://github.com/openretriever/retriever">Core source</a>
   <a href="/">Golden overview</a>
-  <a href="https://github.com/openretriever/golden-retriever">Golden source</a>
-  <a href="../llms.txt">Golden agent map</a>
+  <a href="../hub/">Hub packs</a>
+  <a href="../robotics_typing_standard/">Robot type packs</a>
+  <a href="../llms.txt">Agent map</a>
 </div>
 
-
-GoldenRetriever is the maintained reference examples layer for Retriever. Use these guides after the core visual quickstart when you want concrete robot-facing paths: Hub-pack proof, perception, memory, language, composition, simulation, visualization, and reusable type-pack examples.
+GoldenRetriever is the maintained applied examples layer for Retriever. Use this catalog after the core visual quickstart when you want concrete robot-facing paths: Hub-pack proof, perception, memory, language, composition, simulation, visualization, and reusable type-pack examples.
 
 Boundary rule: runtime mechanics stay in core Retriever; robot-facing payloads, maintained examples, and reusable pack candidates live here. Export through Retriever Hub only after the pack is import-safe, versioned, smoke-tested, and documented.
 
-If this is your first Retriever run, start with the core visual quickstart first. Golden assumes you already understand why a Flow has local state, why clocks are explicit, and why graph/replay artifacts matter.
-
-## Where This Page Fits
-
-- Learn runtime mechanics in the [core docs](https://openretriever-docs.pages.dev/).
-- Use this section to pick runnable Golden example lanes.
-- Use [Hub Reference](../hub/README.md) when you need the pack/export boundary.
-- Use [Robot Type Packs](../robotics_typing_standard/README.md) when you need payload and dataset contracts.
-
 ## Recommended Path
 
-1. [Golden Hub Proof](golden_hub_packs_v1.md) — local proof that Golden exports load through the Retriever Hub manifest.
-2. [Hub Export Catalog](../hub/export_catalog_v1.md) — exact current downloadable surface declared in `pyproject.toml`.
-3. [Perception and Memory](perception_and_memory_v1.md) — detection, belief, replay, and composed control over one small scene.
-4. [Language and Grounding](language_and_grounding_v1.md) — captioning, grounded references, and primitive plan text.
-5. [Pipeline Composition](pipeline_composition_v1.md) — registry-backed composition and reusable pipeline surfaces.
-6. [Simulation and Visualization](simulation_and_visualization_v1.md) — webcam/Rerun, MuJoCo/TWIST2, mock-safe robosuite, and HTML pipeline views.
+<div class="gr-path-grid gr-path-grid-five">
+  <a class="gr-path-step" href="golden_hub_packs_v1/">
+    <span>01</span>
+    <strong>Golden Hub proof</strong>
+    <p>Proves Golden extends Retriever through a manifest and type-pack exports.</p>
+    <code>pixi run demo-golden-hub-pack</code>
+  </a>
+  <a class="gr-path-step" href="perception_and_memory_v1/">
+    <span>02</span>
+    <strong>Perception</strong>
+    <p>Runs deterministic detection, segmentation, and pointing over one small scene.</p>
+    <code>pixi run -e golden-local demo-perception-detection-flow</code>
+  </a>
+  <a class="gr-path-step" href="perception_and_memory_v1/">
+    <span>03</span>
+    <strong>Memory</strong>
+    <p>Adds belief updates and remembered pointing over the same typed payloads.</p>
+    <code>pixi run -e golden-local demo-memory-belief-flow</code>
+  </a>
+  <a class="gr-path-step" href="language_and_grounding_v1/">
+    <span>04</span>
+    <strong>Language</strong>
+    <p>Turns typed observations into captions, grounded references, and primitive plans.</p>
+    <code>pixi run -e golden-local demo-language-caption-plan</code>
+  </a>
+  <a class="gr-path-step" href="pipeline_composition_v1/">
+    <span>05</span>
+    <strong>Composition</strong>
+    <p>Shows registry-backed composition and reusable pipeline surfaces.</p>
+    <code>pixi run -e golden-local demo-composable-pipelines</code>
+  </a>
+</div>
 
 ## Agent-Safe Public Surface
 
@@ -48,12 +64,34 @@ Use this sequence when an agent, CI job, or new user needs high-signal proof wit
 
 Optional camera, model-backed, MuJoCo, TWIST2, and real robosuite lanes should be selected only after the mock-safe path is green.
 
+## Example Results You Should Recognize
+
+<div class="gr-artifact-grid gr-artifact-grid-compact">
+  <figure class="gr-figure-card gr-figure-card-wide">
+    <img src="../assets/robot-agent-graph-ultralight.png" alt="Retriever robot agent graph with observe, belief, planner, monitor, skill, and controller flows" />
+    <figcaption><strong>Closed-loop graph shape.</strong> The applied examples combine observation, belief, planning, monitoring, skill execution, control, and environment-like state while keeping timing and sync explicit.</figcaption>
+  </figure>
+  <div class="gr-result-card">
+    <span>Hub proof</span>
+    <strong>Terminal export summary</strong>
+    <pre><code>Golden pack exports: WorldState, BeliefGraph, Skill, Plan, Trajectory, ...
+Registry WorldState: ...WorldState
+Arrow round-trip: Action OK</code></pre>
+  </div>
+  <div class="gr-result-card">
+    <span>Graph proof</span>
+    <strong>HTML graph artifact</strong>
+    <pre><code>pixi run demo-pipeline-html-viz
+# out/golden_retriever_closed_loop_viz.html
+# ASCII graph printed in terminal</code></pre>
+  </div>
+</div>
+
 ## Maintained Example Families
 
 | Family | What to use it for | Core concept it demonstrates | First command or guide |
 | --- | --- | --- | --- |
 | Hub proof | Load Golden exports through Retriever Hub and the unified runtime registry. | Retriever Hub pack + robot-facing type pack | `pixi run demo-golden-hub-pack` |
-| Hub export catalog | Inspect current exports and next pack candidates. | Retriever Hub boundary | [Retriever Hub Packs](../hub/README.md) |
 | Perception | Detection, segmentation, and pointing over one synthetic scene. | Flow I/O + typed perception payloads | `pixi run -e golden-local demo-perception-detection-flow` |
 | Memory | Belief updates, dropout memory, and remembered pointing. | Local Flow state + replayable inputs | `pixi run -e golden-local demo-memory-belief-flow` |
 | Language | Captions, grounded references, and primitive plan text. | Typed language payloads across stages | `pixi run -e golden-local demo-language-caption-plan` |
@@ -62,7 +100,7 @@ Optional camera, model-backed, MuJoCo, TWIST2, and real robosuite lanes should b
 | TWIST2 / MuJoCo | Multi-rate simulator, policy, and visualization loops. | Clocks and sync across simulator/policy rates | `pixi run -e twist2 demo-twist2-rerun` |
 | RoboSuite Lift | Mock-safe robosuite wrapper and optional real robosuite mode. | Environment-as-Flow and policy-as-Flow | `pixi run demo-robosuite-mock` |
 | Pipeline HTML Viz | Maintained promoted IR/HTML graph visualization utility. | IR validation and graph inspection | `pixi run demo-pipeline-html-viz` |
-
+| Robot type packs | Robot payload contracts and dataset/event stream profiles. | Reusable robotics types | `pixi run demo-robotics-typing-catalog` |
 
 ## Maturity Levels
 
