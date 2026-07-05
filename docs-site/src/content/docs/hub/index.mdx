@@ -1,0 +1,28 @@
+---
+title: Golden Pack Boundary
+description: What Golden should export through Retriever Hub.
+---
+
+# Golden Pack Boundary
+
+Golden is the proving ground for reusable Retriever Hub packs. A source example becomes a pack candidate only when the public boundary is stable enough for another project to load it without understanding the source tree.
+
+```python
+from retriever import hub
+
+WorldState = hub.use("openretriever/golden-retriever:WorldState")
+```
+
+## Pack Rules
+
+| Rule | Why it matters |
+| --- | --- |
+| Export through the manifest | Keeps the public surface explicit. |
+| Keep imports lightweight | Loading a type pack should not import robot, simulator, model, or camera dependencies. |
+| Smoke every export | `demo-golden-hub-pack` should prove the boundary. |
+| Document expected output | Users need to know what success looks like. |
+
+<div class="card-grid">
+  <a class="info-card" href="/hub/export-catalog/"><strong>Current export catalog</strong><span>See the exported types and helpers.</span></a>
+  <a class="info-card" href="/hub/pack-roadmap/"><strong>Pack maturity guide</strong><span>Promote only stable, documented, smoke-tested surfaces.</span></a>
+</div>

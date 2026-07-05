@@ -111,7 +111,7 @@ Golden pages should answer one question: "What reusable Golden pack, payload, or
 - `src/retriever_typing`: typed robotics and event/data helpers used by advanced demos and exposed through the Retriever Hub pack manifest.
 - `docs/robotics_typing_standard`: typed payload and data-profile notes for this repo.
 - `notebooks`: git-friendly notebook sources and generated notebook artifacts. Start with `notebooks/README.md`.
-- `docs`: public topic-based docs; `mkdocs.yml` provides a hostable site map.
+- `docs-site`: hostable Starlight documentation site for `retriever-space.pages.dev`; `docs/` keeps source/reference Markdown and agent-facing text assets.
 
 ## Example Families
 

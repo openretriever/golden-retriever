@@ -1,0 +1,44 @@
+---
+title: Golden Example Catalog
+description: Runnable applied examples and expected results for Retriever.
+---
+
+# Golden Example Catalog
+
+Golden examples are the applied continuation after the core Retriever quickstart. Start with mock-safe commands, inspect the expected result, then opt into camera, simulator, or model-backed lanes only when their dependencies are clear.
+
+<div class="cta-row">
+  <a href="/examples/golden-hub-proof/">First Golden proof</a>
+  <a href="/examples/perception-memory/">Perception and memory</a>
+  <a href="/examples/simulation-visualization/">Visualization lanes</a>
+  <a href="/robot-type-packs/">Robot type packs</a>
+</div>
+
+## First Verified Commands
+
+| Command | Expected result | Why it comes first |
+| --- | --- | --- |
+| `pixi run demo-golden-hub-pack` | Prints Golden pack exports, registry lookup, constructed payloads, and Arrow round-trip. | Shows Golden extending Retriever through a manifest. |
+| `pixi run -e golden-local demo-perception-detection-flow` | Steps a deterministic synthetic perception graph to completion. | Proves the concise example ladder before heavier integrations. |
+| `pixi run demo-robosuite-mock` | Prints `[mock step=...]` simulator-policy trace lines. | Proves environment-as-Flow and policy-as-Flow without robosuite installed. |
+| `pixi run demo-pipeline-html-viz` | Prints an ASCII graph and writes `out/golden_retriever_closed_loop_viz.html`. | Proves IR validation and graph inspection. |
+
+## Example Families
+
+<div class="card-grid">
+  <a class="info-card" href="/examples/golden-hub-proof/"><strong>Hub proof</strong><span>Load Golden exports through Retriever Hub and the unified runtime registry.</span></a>
+  <a class="info-card" href="/examples/perception-memory/"><strong>Perception and memory</strong><span>Detection, segmentation, pointing, belief updates, dropout memory, and remembered pointing.</span></a>
+  <a class="info-card" href="/examples/language-grounding/"><strong>Language and grounding</strong><span>Captions, grounded references, and primitive plan text over typed observations.</span></a>
+  <a class="info-card" href="/examples/pipeline-composition/"><strong>Pipeline composition</strong><span>Registry-backed composition and pipeline-as-Flow surfaces.</span></a>
+  <a class="info-card" href="/examples/simulation-visualization/"><strong>Simulation and visualization</strong><span>Rerun, mock-safe robosuite, TWIST2/MuJoCo lanes, and HTML graph visualization.</span></a>
+  <a class="info-card" href="/robot-type-packs/"><strong>Robot type packs</strong><span>World state, belief, plans, trajectories, event streams, and dataset/export profiles.</span></a>
+</div>
+
+## Maturity Levels
+
+| Level | Meaning | User expectation |
+| --- | --- | --- |
+| Hub-loadable pack | Declared in `pyproject.toml` and loaded by Retriever Hub. | Safe to import and reuse as a pack boundary. |
+| Promoted demo | Has a named Pixi task, docs page, expected output, and smoke coverage. | Safe for first-run docs and CI checks. |
+| Source reference | Useful implementation pattern, but not yet a public launch point. | Read the source after the promoted path works. |
+| Optional integration | Requires camera, model, simulator, GPU, robot, or external service. | Use only when the dependency story is explicit. |

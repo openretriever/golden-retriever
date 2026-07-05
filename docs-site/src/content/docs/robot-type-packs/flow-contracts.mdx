@@ -1,0 +1,58 @@
+---
+title: Flow Composition Contracts
+description: How Golden robot payloads compose across reusable Flows.
+---
+
+# Flow Composition Contracts
+
+<p class="kicker">Reusable robot graphs</p>
+
+A Golden Flow should be reusable without knowing the source folder that produced it. The contract is simple: typed inputs, stable field names, explicit validation, and no hidden dict conventions.
+
+<div class="inline-command">
+  <strong>First checks</strong>
+  <pre><code>pixi run demo-robotics-typing-contract
+pixi run demo-robotics-typing-boundary</code></pre>
+  <p>Expected result: the demos show composite I/O access, qualified field behavior, and a perception-to-control boundary with preserved frame/time/source metadata.</p>
+</div>
+
+## Composition Rules
+
+| Rule | Practical meaning | Failure avoided |
+| --- | --- | --- |
+| Prefer typed payloads over dicts. | Type names become documentation, registry keys, and validation anchors. | Anonymous payloads that only one example understands. |
+| Keep field names stable. | Downstream examples can compose without adapter glue. | Silent breakage after renaming `goal_pose` to `target`. |
+| Qualify ambiguous fields. | Multiple poses, goals, or statuses stay distinguishable. | Collisions between `robot.pose`, `object.pose`, and `goal.pose`. |
+| Validate at boundaries. | Normalize frame, time, source, progress, and array lengths before reuse. | Bad payloads moving deeper into planner/controller Flows. |
+| Keep optional integrations explicit. | Camera, simulator, model, and robot dependencies stay outside the base contract. | A first-run example that fails before teaching composition. |
+
+## Minimal Pattern
+
+```python
+from dataclasses import dataclass
+from retriever.flow import Flow, io
+from retriever_typing import PoseStamped
+from retriever_typing.robotics_types import WorldState, Skill
+
+@io
+@dataclass
+class PickInput:
+    world: WorldState
+    target_pose: PoseStamped
+
+class PickSelector(Flow[PickInput, Skill]):
+    def step(self, inp: PickInput) -> Skill:
+        return Skill(name="pick", params={"target": inp.target_pose.header.frame_id})
+```
+
+The example stays ordinary Python: one input object, one output object, and a `step(...)` method. Retriever handles graph execution separately; Golden's job is to keep the robot-facing payloads clear.
+
+## Public Lane
+
+A promoted composition page should include three things:
+
+| Requirement | Why |
+| --- | --- |
+| Named Pixi task | Users can run the exact example without hunting through source folders. |
+| Expected output | Users know whether the example worked before reading code. |
+| Dependency boundary | Optional robot, simulator, camera, model, or network dependencies are visible before launch. |

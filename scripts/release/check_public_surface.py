@@ -32,6 +32,15 @@ REQUIRED_PATHS = (
     "docs/hub/pack_roadmap_v1.md",
     "docs/llms.txt",
     "docs/robots.txt",
+    "docs-site/astro.config.mjs",
+    "docs-site/package.json",
+    "docs-site/src/content/docs/index.mdx",
+    "docs-site/src/content/docs/examples/index.mdx",
+    "docs-site/src/content/docs/examples/golden-hub-proof.mdx",
+    "docs-site/src/content/docs/examples/simulation-visualization.mdx",
+    "docs-site/src/content/docs/hub/index.mdx",
+    "docs-site/src/content/docs/robot-type-packs/index.mdx",
+    "docs-site/src/content/docs/robot-type-packs/type-catalog.mdx",
 )
 
 REMOVED_PATHS: tuple[str, ...] = (
@@ -105,12 +114,54 @@ DOC_MARKERS = {
         "stable metadata",
     ),
     "docs/llms.txt": (
-        "Golden Examples for Retriever",
+        "Golden Retriever Reference",
         "demo-golden-hub-pack",
         "demo-robosuite-mock",
         "demo-pipeline-html-viz",
-        "https://retriever-space.pages.dev/examples/simulation_and_visualization_v1/",
+        "https://retriever-space.pages.dev/examples/simulation-visualization/",
         "Do not treat source examples as Retriever Hub packs unless `pyproject.toml` exports them.",
+    ),
+    "docs-site/astro.config.mjs": (
+        "starlightThemeNova",
+        "Golden Retriever Reference",
+        "Golden Pack Boundary",
+        "Type Catalog",
+    ),
+    "docs-site/src/content/docs/index.mdx": (
+        "Golden examples start where the core quickstart ends",
+        "Golden is not a second runtime",
+        "First Results To Recognize",
+        "What Belongs Here",
+    ),
+    "docs-site/src/content/docs/examples/index.mdx": (
+        "First Verified Commands",
+        "demo-golden-hub-pack",
+        "demo-pipeline-html-viz",
+        "Maturity Levels",
+    ),
+    "docs-site/src/content/docs/examples/golden-hub-proof.mdx": (
+        "Golden Hub Proof",
+        "hub.use(\"openretriever/golden-retriever:WorldState\")",
+        "Arrow round-trip: Action OK",
+    ),
+    "docs-site/src/content/docs/examples/simulation-visualization.mdx": (
+        "HTML graph proof",
+        "Rerun",
+        "Mock robosuite",
+    ),
+    "docs-site/src/content/docs/hub/index.mdx": (
+        "Golden Pack Boundary",
+        "Pack Rules",
+    ),
+    "docs-site/src/content/docs/robot-type-packs/index.mdx": (
+        "Robot Type Packs",
+        "What Golden Owns",
+        "demo-robotics-typing-catalog",
+    ),
+    "docs-site/src/content/docs/robot-type-packs/type-catalog.mdx": (
+        "Robot Type Catalog",
+        "Stamped Boundaries",
+        "Validation Boundary",
     ),
 }
 

@@ -41,7 +41,7 @@ pixi run demo-robosuite-mock                       # simulation lane, mock mode
 pixi run demo-pipeline-html-viz                     # self-contained IR/HTML visualization
 pixi run public-surface-check                     # current-tree public surface guardrail
 pixi run demo-pi05-mock                            # pi0.5 policy lane, mock mode
-pixi run -e docs docs-build                        # mkdocs --strict
+pixi run -e docs docs-build                        # Starlight build
 pixi run build                                     # local wheel artifact; not first-launch PyPI path
 ```
 
@@ -63,7 +63,7 @@ one.
 | Example lanes (learning ladder) | `examples/advanced/` |
 | Heavier prototypes | `examples/experimental/` |
 | Tests | `tests/typing/`, `tests/examples/` |
-| Docs (mkdocs → retriever-space.pages.dev) | `docs/` |
+| Docs (Starlight → retriever-space.pages.dev) | `docs-site/`, with source/reference Markdown in `docs/` |
 
 ## Pitfalls that actually bite
 

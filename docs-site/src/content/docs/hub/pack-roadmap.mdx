@@ -1,0 +1,23 @@
+---
+title: Pack Maturity Guide
+description: Promotion rules for turning Golden examples into reusable Hub packs.
+---
+
+# Pack Maturity Guide
+
+Use this guide to decide whether a Golden source example is ready to become a reusable Hub pack.
+
+| Level | Meaning | Required proof |
+| --- | --- | --- |
+| Source reference | Useful pattern in the repo. | README or docs note. |
+| Promoted demo | Named Pixi task and expected output. | Smoke command passes. |
+| Pack candidate | Manifest export with lightweight imports. | Hub loader smoke passes. |
+| Hub-loadable pack | Stable public interface and docs. | Versioned release plus compatibility notes. |
+
+## Do Not Promote Yet If
+
+- importing the pack pulls optional simulator/model/robot dependencies;
+- the docs only say where source files live instead of what to run;
+- expected output is not documented;
+- the example requires private credentials or local-only paths;
+- the command is an editing guardrail rather than a user demo.

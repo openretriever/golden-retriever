@@ -1,0 +1,66 @@
+---
+title: Golden Retriever Reference
+slug: /
+description: Applied robot examples, reusable type packs, and Hub-pack candidates for Retriever.
+template: splash
+---
+
+<div class="hero-panel">
+  <p class="eyebrow">Applied Retriever reference</p>
+  <h1>Golden examples start where the core quickstart ends.</h1>
+  <p class="lede">GoldenRetriever is the maintained applied layer for Retriever: robot-facing examples, reusable payload packs, simulator and visualization lanes, and candidates for future Retriever Hub packs.</p>
+  <div class="action-grid">
+    <a class="action-card" href="/examples/golden-hub-proof/"><strong>Run the first Golden proof</strong><span>Load Golden robot payloads through Retriever Hub with no robot, camera, model, simulator, or network dependency.</span></a>
+    <a class="action-card" href="/examples/"><strong>Browse example results</strong><span>Use perception, memory, language, composition, simulation, and visualization as the applied reference path.</span></a>
+    <a class="action-card" href="/robot-type-packs/"><strong>Use robot type packs</strong><span>Share world state, belief, plans, trajectories, stamped spatial values, and event buffers across examples.</span></a>
+  </div>
+</div>
+
+<div class="cta-row">
+  <a href="https://openretriever.org/">Retriever home</a>
+  <a href="https://openretriever-docs.pages.dev/">Core runtime docs</a>
+  <a href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/">Core visual quickstart</a>
+  <a href="/llms.txt">Agent map</a>
+</div>
+
+<div class="boundary-note">
+<strong>Golden is not a second runtime.</strong> Install and learn Retriever once. The Python import package is <code>retriever</code>; Golden provides applied examples and pack candidates on top of that runtime, not another Flow/Pipeline implementation.
+</div>
+
+## Recommended Route
+
+<div class="path-grid">
+  <a class="path-card" href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/"><span>00</span><strong>Run core first</strong><p>Start with the mock/webcam visual graph so Flow, stepping, graph inspection, and replay are clear.</p><code>pixi run demo-webcam-detection-mock</code></a>
+  <a class="path-card" href="/examples/golden-hub-proof/"><span>01</span><strong>Prove Golden boundary</strong><p>Load manifest-declared robot payloads through Retriever Hub.</p><code>pixi run demo-golden-hub-pack</code></a>
+  <a class="path-card" href="/examples/perception-memory/"><span>02</span><strong>Walk the ladder</strong><p>Run perception and memory over deterministic robot-facing payloads.</p><code>pixi run -e golden-local demo-perception-detection-flow</code></a>
+  <a class="path-card" href="/examples/simulation-visualization/"><span>03</span><strong>Inspect visual systems</strong><p>Move to Rerun, mock-safe simulator lanes, and HTML graph artifacts.</p><code>pixi run demo-pipeline-html-viz</code></a>
+</div>
+
+## First Results To Recognize
+
+<div class="result-grid">
+  <div class="result-card"><span>Hub proof</span><strong>Terminal export summary</strong><pre>{`pixi run demo-golden-hub-pack
+# Golden pack exports: WorldState, BeliefGraph, Skill, Plan, ...
+# Arrow round-trip: Action OK`}</pre></div>
+  <div class="result-card"><span>Simulator proof</span><strong>Mock-safe environment trace</strong><pre>{`pixi run demo-robosuite-mock
+# [mock step=01] object_height=...
+# reward=... done=False`}</pre></div>
+  <div class="result-card"><span>Graph proof</span><strong>Self-contained HTML graph</strong><pre>{`pixi run demo-pipeline-html-viz
+# writes out/golden_retriever_closed_loop_viz.html
+# prints a compact ASCII graph`}</pre></div>
+</div>
+
+<figure class="figure-card">
+  <img src="/assets/robot-agent-graph-ultralight.png" alt="Retriever robot agent graph with observe, belief, planner, monitor, skill, controller, and environment flows" />
+  <figcaption><strong>Applied robot graph.</strong> Golden examples make multi-rate robot graphs concrete: camera, belief, planner, monitor, skill, controller, and environment-like Flows keep timing and data handoff boundaries explicit.</figcaption>
+</figure>
+
+## What Belongs Here
+
+| Surface | Lives in Golden? | Why |
+| --- | --- | --- |
+| Flow, Pipeline, clocks, sync, IR, replay, execution | No | These are core runtime semantics and stay in the core Retriever docs. |
+| Robot-facing payload packs | Yes | Golden defines applied `WorldState`, `BeliefGraph`, `Plan`, `Trajectory`, command/status, and conversion examples. |
+| Perception, memory, language, composition examples | Yes | These are the maintained ladder after the core quickstart. |
+| Camera, simulator, visualization, notebook lanes | Yes, with dependency labels | Optional lanes should not block the first run. |
+| Hub-pack candidates | Yes | Golden is the proving ground before examples become reusable Hub packs. |

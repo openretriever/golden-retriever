@@ -1,0 +1,24 @@
+---
+title: Perception and Memory
+description: Deterministic perception, belief, and remembered pointing examples.
+---
+
+# Perception and Memory
+
+This lane keeps the first robot-facing examples small: synthetic detections, simple belief updates, and typed outputs that are easy to inspect.
+
+<div class="command-grid">
+  <div class="command-card"><strong>Detection flow</strong><code>pixi run -e golden-local demo-perception-detection-flow</code></div>
+  <div class="command-card"><strong>Belief flow</strong><code>pixi run -e golden-local demo-memory-belief-flow</code></div>
+  <div class="command-card"><strong>Point with memory</strong><code>pixi run -e golden-local demo-memory-pointing-flow</code></div>
+</div>
+
+## What To Watch
+
+| Step | What changes | Retriever concept |
+| --- | --- | --- |
+| Perception | Synthetic frames become typed detections. | Flow I/O and typed payloads. |
+| Memory | Detections update local belief state. | Local Flow state and replayable inputs. |
+| Pointing | A goal is resolved using current belief. | Closed-loop handoff between perception, memory, and action selection. |
+
+Use this lane before real cameras or model-backed perception. It gives a stable expected output for docs, CI, and debugging.

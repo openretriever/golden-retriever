@@ -1,0 +1,34 @@
+---
+title: LeRobot Dataset Export
+description: Lightweight bridge from Golden event profiles to LeRobot-style dataset records.
+---
+
+# LeRobot Dataset Export
+
+<p class="kicker">Dataset bridge</p>
+
+The LeRobot lane is a dataset-profile example, not a second runtime path. It shows how Golden event streams can become dataset-friendly records while preserving the original timing, source, and conversion metadata.
+
+<div class="inline-command">
+  <strong>Run the bridge</strong>
+  <pre><code>pixi run demo-robotics-lerobot-bridge</code></pre>
+  <p>Expected result: a small event profile is converted into a dataset-style record with lineage attached.</p>
+</div>
+
+## What It Demonstrates
+
+<div class="card-grid">
+  <div class="info-card"><strong>Typed source payloads</strong><span>Start from Golden robot payloads before conversion.</span></div>
+  <div class="info-card"><strong>Dataset profile</strong><span>Map event records into fields expected by an offline dataset consumer.</span></div>
+  <div class="info-card"><strong>Lineage retention</strong><span>Preserve timing, source, and conversion details for debugging.</span></div>
+</div>
+
+## Boundary
+
+| Keep here | Keep out of first-run docs |
+| --- | --- |
+| Small local conversion example. | Heavy dataset generation. |
+| Event-time and source metadata preservation. | Cloud upload, private storage, or credential setup. |
+| Public payload/profile contract. | Robot-lab-specific capture procedures. |
+
+Keep this bridge lightweight. It should make the export shape clear before any large dataset pipeline grows around it.

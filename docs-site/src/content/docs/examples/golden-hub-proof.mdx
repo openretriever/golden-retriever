@@ -1,0 +1,50 @@
+---
+title: Golden Hub Proof
+description: The smallest proof that Golden extends Retriever through Hub-loadable exports.
+---
+
+# Golden Hub Proof
+
+This is the smallest Golden check: it proves that a project outside the core runtime can expose reusable robot payloads through Retriever Hub.
+
+```bash
+pixi run demo-golden-hub-pack
+```
+
+The command does four things without network access:
+
+1. reads the `[tool.retriever.module]` manifest,
+2. loads representative exports through the runtime Hub loader,
+3. checks that robot-facing types such as `WorldState` are visible through the unified registry,
+4. round-trips a lightweight `Action` payload through the exported Arrow helpers.
+
+Typical output:
+
+```text
+Golden pack exports: WorldState, BeliefGraph, Skill, Plan, Trajectory, convert_to_arrow, convert_from_arrow
+Registry WorldState: _retriever_hub...WorldState
+Constructed WorldState: ['cup']
+Constructed Plan skills: ['pick']
+Arrow round-trip: Action OK
+Retriever Hub reference: hub.use("openretriever/golden-retriever:WorldState")
+```
+
+## Hub Reference Shape
+
+```python
+from retriever import hub
+
+WorldState = hub.use("openretriever/golden-retriever:WorldState")
+Plan = hub.use("openretriever/golden-retriever:Plan")
+convert_to_arrow = hub.use("openretriever/golden-retriever:convert_to_arrow")
+```
+
+Users install the runtime once, then load domain packs through Hub. Golden stays useful because its examples prove that boundary with robot-facing payloads.
+
+## Continue
+
+<div class="card-grid">
+  <a class="info-card" href="/hub/export-catalog/"><strong>Export catalog</strong><span>See the exact Golden exports and their maturity.</span></a>
+  <a class="info-card" href="/hub/pack-roadmap/"><strong>Pack maturity guide</strong><span>Know when a source example is ready to become a reusable pack.</span></a>
+  <a class="info-card" href="/examples/"><strong>Example catalog</strong><span>Continue with perception, memory, language, composition, and visualization lanes.</span></a>
+</div>

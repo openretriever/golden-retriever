@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://retriever-space.pages.dev/sitemap.xml
+# Agent map: https://retriever-space.pages.dev/llms.txt

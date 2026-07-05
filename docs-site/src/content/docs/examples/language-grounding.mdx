@@ -1,0 +1,27 @@
+---
+title: Language and Grounding
+description: Captions, grounded references, and primitive plans over typed observations.
+---
+
+# Language and Grounding
+
+Language examples sit after perception and memory. They show how typed observations become captions, grounded references, and small plan payloads without making the runtime depend on a specific LLM provider.
+
+```bash
+pixi run -e golden-local demo-language-caption-plan
+pixi run -e golden-local demo-language-grounded-reference
+```
+
+## Expected Shape
+
+<div class="result-grid">
+  <div class="result-card"><span>Caption</span><strong>Observation summary</strong><pre>{`scene: red block near blue bowl
+caption: pick the red block first`}</pre></div>
+  <div class="result-card"><span>Grounding</span><strong>Reference resolution</strong><pre>{`target: "the red one"
+resolved_object: red_block
+confidence: 0.92`}</pre></div>
+  <div class="result-card"><span>Plan</span><strong>Primitive skills</strong><pre>{`skills: [approach, grasp, lift]
+status: planned`}</pre></div>
+</div>
+
+The point is not a large language model benchmark. The point is the data contract between perception, memory, language, and planning Flows.

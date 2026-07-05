@@ -1,0 +1,91 @@
+---
+title: Robot Type Catalog
+description: Applied robotics payloads for Golden examples, datasets, and Hub packs.
+---
+
+# Robot Type Catalog
+
+<p class="kicker">Applied robotics payloads • v1</p>
+
+Golden Retriever defines applied robotics profiles on top of the Retriever runtime. Use this catalog when examples, Hub packs, datasets, or agent workflows need stable payload shapes for robot state, motion commands, observations, plans, trajectories, and recorded events.
+
+<div class="inline-command">
+  <strong>First check</strong>
+  <pre><code>pixi run demo-robotics-typing-catalog</code></pre>
+  <p>Expected result: the demo constructs stamped spatial payloads, looks them up through the registry, and prints a compact validation summary.</p>
+</div>
+
+## Choose The Payload
+
+| If you are representing... | Start with | Why |
+| --- | --- | --- |
+| A point, direction, velocity, force, or torque axis | `Vector3` | Small, explicit 3D shape; units come from the surrounding contract. |
+| A rigid object or robot pose | `SE3Pose` | Groups translation and orientation as one robot-facing pose. |
+| A value observed at a frame and time | `PoseStamped`, `TwistStamped`, `WrenchStamped` | Carries `frame_id`, timestamp, and source with the payload. |
+| Current robot configuration | `RobotState` or `JointState` | Keeps robot pose, held objects, joints, and health/status aligned. |
+| Scene memory or task state | `WorldState` or `BeliefGraph` | Separates geometric world state from probabilistic symbolic memory. |
+| A proposed action sequence | `Skill`, `Plan`, `StructuredPlan`, `Trajectory` | Gives planners, policies, and monitors a shared action vocabulary. |
+| Runtime progress or failure state | `ExecutionStatus` | Makes progress, terminal state, and error text explicit. |
+
+## Spatial And Motion Types
+
+<div class="type-grid type-grid-compact">
+  <div class="type-card"><span>Vector3</span><strong>3D value</strong><p><code>x</code>, <code>y</code>, <code>z</code>. Use for positions, directions, velocities, forces, and offsets when the unit is declared by context.</p></div>
+  <div class="type-card"><span>Quaternion</span><strong>Orientation</strong><p><code>x</code>, <code>y</code>, <code>z</code>, <code>w</code>. Normalize at boundaries; do not hide frame conventions in a free-form dict.</p></div>
+  <div class="type-card"><span>SE3Pose</span><strong>Rigid pose</strong><p><code>position</code> plus <code>orientation</code>. Prefer this for object, end-effector, and robot poses.</p></div>
+  <div class="type-card"><span>Twist</span><strong>Spatial velocity</strong><p><code>linear</code> plus <code>angular</code>. Use for velocity estimates or velocity commands.</p></div>
+  <div class="type-card"><span>Wrench</span><strong>Force/torque</strong><p><code>force</code> plus <code>torque</code>. Use at contact, manipulation, or controller boundaries.</p></div>
+  <div class="type-card"><span>JointState</span><strong>Joint arrays</strong><p><code>names</code>, <code>positions</code>, <code>velocities</code>, <code>efforts</code>. Arrays are aligned by index.</p></div>
+</div>
+
+## Stamped Boundaries
+
+Use stamped wrappers when a payload crosses a graph boundary, process boundary, dataset boundary, or robot interface. Stamping is what keeps a value tied to a frame, time, and source during replay.
+
+| Type | Adds | Use when |
+| --- | --- | --- |
+| `Header` | `stamp_ns`, `frame_id`, `source` | A payload needs time, frame, and provenance. |
+| `PoseStamped` | `Header` + `SE3Pose` | A pose belongs to a frame at a specific time. |
+| `TwistStamped` | `Header` + `Twist` | A velocity estimate belongs to a frame and source. |
+| `WrenchStamped` | `Header` + `Wrench` | A force/torque estimate belongs to a frame and source. |
+
+## Task-Level Payloads
+
+| Type | Use when | Typical producer / consumer |
+| --- | --- | --- |
+| `WorldState` | You need current object and robot state. | Perception, memory, planner. |
+| `RobotState` | You need robot pose, held objects, battery, or last error. | Robot wrapper, monitor, policy. |
+| `BeliefGraph` | You need probabilistic symbolic scene memory. | Memory, grounding, planner. |
+| `Skill` | You need a named capability with parameters and confidence. | Planner, skill selector. |
+| `Plan` / `StructuredPlan` | You need a sequence of skills or typed steps. | Language planner, task planner. |
+| `TaskGoal` | You need user intent plus affordances and success criteria. | Interface, planner, evaluator. |
+| `Trajectory` | You need a time-indexed sequence of poses. | Motion planner, controller. |
+| `ExecutionStatus` | You need progress, terminal state, and error text. | Controller, monitor, logger. |
+
+## Registry Access
+
+```python
+from retriever_typing import PoseStamped, SE3Pose, get_type
+from retriever_typing.robotics_types import WorldState, Plan, ExecutionStatus
+
+pose_cls = get_type("PoseStamped")
+assert pose_cls is PoseStamped
+```
+
+Use direct imports when authoring code. Use `get_type(...)` when loading a manifest, replaying a dataset, or validating a Hub pack boundary.
+
+## Validation Boundary
+
+Reusable Flows should validate or normalize at the edge before passing payloads deeper into a graph.
+
+| Boundary check | Why it matters |
+| --- | --- |
+| `frame_id` is non-empty when frames matter. | Prevents silent world/camera/robot frame mixups. |
+| `stamp_ns` is monotonic per source when ordering matters. | Keeps replay and event-time joins deterministic. |
+| `Quaternion` norm is close to `1.0`. | Avoids invalid rotations crossing into planners/controllers. |
+| `JointState` arrays have aligned lengths. | Prevents index drift between names and values. |
+| `ExecutionStatus.progress` stays in `[0, 1]`. | Keeps monitors and UI progress bars comparable. |
+
+<div class="boundary-note">
+<strong>Keep the base catalog small.</strong> Add covariance-bearing poses, richer frame graphs, or domain-specific robot schemas as separate packs only after these base payloads are not enough.
+</div>

@@ -1,0 +1,28 @@
+---
+title: Simulation and Visualization
+description: Rerun, mock-safe simulation, and HTML graph visualization lanes.
+---
+
+# Simulation and Visualization
+
+Use this lane when the concise examples work and you want visible artifacts: Rerun streams, simulator traces, and self-contained HTML graph views.
+
+<div class="command-grid">
+  <div class="command-card"><strong>HTML graph proof</strong><code>pixi run demo-pipeline-html-viz</code></div>
+  <div class="command-card"><strong>Mock robosuite</strong><code>pixi run demo-robosuite-mock</code></div>
+  <div class="command-card"><strong>TWIST2 Rerun lane</strong><code>pixi run -e twist2 demo-twist2-rerun</code></div>
+</div>
+
+## What The Artifacts Show
+
+<figure class="figure-card">
+  <img src="/assets/robot-agent-graph-ultralight.png" alt="Retriever closed-loop robot agent graph" />
+  <figcaption><strong>Graph artifact.</strong> The HTML visualization should show nodes, ports, clocks, and sync boundaries before you move to a heavier simulator or robot backend.</figcaption>
+</figure>
+
+| Artifact | Use it for | Dependency level |
+| --- | --- | --- |
+| HTML graph | Inspect structure, ports, and closed-loop shape. | Lightweight. |
+| Rerun viewer | Watch perception or simulator state evolve over time. | Optional GUI. |
+| Mock robosuite trace | Validate environment/policy wiring without simulator install. | Lightweight. |
+| Real simulator lanes | Validate timing with actual simulator dynamics. | Optional/heavy. |

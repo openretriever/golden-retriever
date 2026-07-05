@@ -23,10 +23,10 @@ mcap = "*"
 jupytext = "*"
 
 
+[feature.docs.dependencies]
+nodejs = ">=22,<23"
+
 [feature.docs.pypi-dependencies]
-mkdocs = ">=1.6"
-mkdocs-material = ">=9.5"
-pymdown-extensions = ">=10"
 
 [feature.bundled_core.pypi-dependencies]
 # Temporary public/default path: use the debug PyPI package until the public
@@ -270,8 +270,9 @@ golden-perception = { features = ["py311", "runtime_core", "golden", "cpu"] }
 [tasks]
 # Documentation site
 # Run: pixi run -e docs docs-build
-docs-build = "mkdocs build --strict"
-docs-serve = "mkdocs serve --dev-addr 127.0.0.1:8001"
+docs-install = "npm --prefix docs-site install"
+docs-build = "npm --prefix docs-site install && npm --prefix docs-site run build"
+docs-serve = "npm --prefix docs-site install && npm --prefix docs-site run dev"
 test = { cmd = "python -m pytest tests -q", env = { PYTHONPATH = "." } }
 build = "python -m build"
 

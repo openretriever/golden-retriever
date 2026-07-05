@@ -1,0 +1,29 @@
+---
+title: Pipeline Composition
+description: Registry-backed composition and reusable pipeline surfaces.
+---
+
+# Pipeline Composition
+
+Composition examples show how Golden turns small pieces into reusable robot-facing graphs without inventing a second runtime.
+
+```bash
+pixi run -e golden-local demo-composable-pipelines
+```
+
+## First Runnable Example
+
+That command demonstrates three public capabilities:
+
+1. composing typed Flow modules into a larger graph,
+2. using registry-backed payloads instead of ad hoc dicts,
+3. keeping the same graph inspectable through the runtime IR and visualization path.
+
+## Why This Is Separate From Older Wiring Examples
+
+Older source folders may still be useful as implementation references, but this page is the public composition lane. A composition example belongs here only when it has a named task, expected output, dependency story, and docs page.
+
+<div class="card-grid">
+  <a class="info-card" href="/examples/simulation-visualization/"><strong>Render the graph</strong><span>Use the HTML visualization lane to inspect the composed pipeline.</span></a>
+  <a class="info-card" href="/robot-type-packs/flow-contracts/"><strong>Check contracts</strong><span>Review composite Flow I/O and field-access rules.</span></a>
+</div>

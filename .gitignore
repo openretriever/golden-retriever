@@ -65,3 +65,8 @@ retriever_dist/
 
 # Cloudflare local deploy state
 .wrangler/
+# Docs site generated artifacts
+docs-site/node_modules/
+docs-site/dist/
+docs-site/.astro/
+
