@@ -4,12 +4,19 @@ description: Choose Golden robot payloads for examples, datasets, and Hub packs.
 ---
 <p class="kicker">Applied robotics payloads</p>
 
-Golden keeps robot-facing payloads out of the core runtime. Use this page when you need a stable shape for robot state, perception output, belief, plans, trajectories, commands, or recorded events.
+Golden keeps robot-facing payloads out of the core runtime. Use this page when an example needs a stable shape for robot state, perception output, belief, plans, trajectories, commands, execution status, or recorded events.
 
-<div class="inline-command">
-  <strong>First proof</strong>
-  <pre><code>pixi run demo-robotics-typing-catalog</code></pre>
-  <p>Expected result: Golden constructs stamped spatial payloads, resolves them through the registry, and prints a compact validation summary.</p>
+<div class="proof-strip">
+  <div>
+    <p class="kicker">First proof</p>
+    <p>Run the smallest local command before reading the full catalog.</p>
+    <pre><code>pixi run demo-robotics-typing-catalog</code></pre>
+  </div>
+  <div>
+    <strong>Expected result</strong>
+    <p>Golden constructs stamped spatial payloads, resolves them through the registry, and prints a compact validation summary.</p>
+    <div class="code-chip-list"><code>PoseStamped</code><code>SE3Pose</code><code>get_type(...)</code><code>registry OK</code></div>
+  </div>
 </div>
 
 ## Pick The Smallest Useful Payload
@@ -17,7 +24,7 @@ Golden keeps robot-facing payloads out of the core runtime. Use this page when y
 <div class="choice-grid">
   <div class="choice-card"><span>Geometry</span><strong>Pose, velocity, force</strong><p>Use <code>Vector3</code>, <code>Quaternion</code>, <code>SE3Pose</code>, <code>Twist</code>, and <code>Wrench</code> when a Flow only needs spatial values.</p></div>
   <div class="choice-card"><span>Stamped boundary</span><strong>Frame + time + source</strong><p>Use <code>PoseStamped</code>, <code>TwistStamped</code>, and <code>WrenchStamped</code> when a value crosses a graph, process, dataset, or robot boundary.</p></div>
-  <div class="choice-card"><span>Robot state</span><strong>Current robot and scene</strong><p>Use <code>RobotState</code>, <code>WorldState</code>, and <code>BeliefGraph</code> for perception, memory, planning, and monitoring.</p></div>
+  <div class="choice-card"><span>World model</span><strong>Current robot and scene</strong><p>Use <code>RobotState</code>, <code>WorldState</code>, and <code>BeliefGraph</code> for perception, memory, planning, and monitoring examples.</p></div>
   <div class="choice-card"><span>Action layer</span><strong>Goal, skill, plan, trajectory</strong><p>Use <code>TaskGoal</code>, <code>Skill</code>, <code>Plan</code>, <code>StructuredPlan</code>, <code>Trajectory</code>, and <code>ExecutionStatus</code> for planner-to-controller handoff.</p></div>
 </div>
 
@@ -26,7 +33,7 @@ Golden keeps robot-facing payloads out of the core runtime. Use this page when y
 | If you are representing... | Start with | Avoid |
 | --- | --- | --- |
 | A point, direction, velocity, force, or torque axis | `Vector3` | A free-form tuple with implicit units. |
-| A rigid object, end-effector, or robot pose | `SE3Pose` | Separate position/orientation fields that drift apart. |
+| A rigid object, end-effector, or robot pose | `SE3Pose` | Separate position and orientation fields that drift apart. |
 | A value observed at a frame and time | `PoseStamped`, `TwistStamped`, `WrenchStamped` | Dropping `frame_id`, event time, or source before replay. |
 | Current robot configuration | `RobotState` or `JointState` | Unnamed joint arrays or status strings in ad hoc dicts. |
 | Scene memory or task state | `WorldState` or `BeliefGraph` | Mixing geometric state and probabilistic memory in one blob. |
@@ -35,7 +42,7 @@ Golden keeps robot-facing payloads out of the core runtime. Use this page when y
 
 ## Import And Registry Shape
 
-Use direct imports when authoring code. Use the registry when loading manifests, validating Hub packs, or replaying dataset records.
+Use direct imports when authoring code. Use registry lookup when loading manifests, validating Hub packs, or replaying dataset records.
 
 ```python
 from retriever_typing import PoseStamped, SE3Pose, get_type
@@ -46,20 +53,19 @@ assert pose_cls is PoseStamped
 ```
 
 <div class="rule-grid">
-  <div class="rule-card"><span>Authoring</span><strong>Prefer direct imports</strong><p>Code should be readable without asking the registry what a payload means.</p></div>
+  <div class="rule-card"><span>Authoring</span><strong>Prefer direct imports</strong><p>Code should be readable without asking the registry what every payload means.</p></div>
   <div class="rule-card"><span>Manifest</span><strong>Use registry lookup</strong><p>Hub packs and dataset readers can resolve names without importing optional robot integrations.</p></div>
   <div class="rule-card"><span>Boundary</span><strong>Validate before reuse</strong><p>Normalize frames, timestamps, quaternion norms, joint-array lengths, and progress ranges at graph edges.</p></div>
 </div>
 
 ## Validation Checklist
 
-| Boundary check | Why it matters |
-| --- | --- |
-| `frame_id` is non-empty when frames matter. | Prevents silent world/camera/robot frame mixups. |
-| `stamp_ns` is monotonic per source when ordering matters. | Keeps replay and event-time joins deterministic. |
-| `Quaternion` norm is close to `1.0`. | Avoids invalid rotations crossing into planners/controllers. |
-| `JointState` arrays have aligned lengths. | Prevents index drift between names and values. |
-| `ExecutionStatus.progress` stays in `[0, 1]`. | Keeps monitors and UI progress bars comparable. |
+<div class="rule-grid">
+  <div class="rule-card"><span>Frames</span><strong>Keep frame IDs explicit</strong><p>Use non-empty <code>frame_id</code> when world, camera, robot, or object frames can be confused.</p></div>
+  <div class="rule-card"><span>Time</span><strong>Preserve event time</strong><p>Keep <code>stamp_ns</code> monotonic per source when replay or event-time joins depend on ordering.</p></div>
+  <div class="rule-card"><span>Motion</span><strong>Normalize rotations</strong><p>Check quaternion norms before a pose crosses into planners, controllers, or datasets.</p></div>
+  <div class="rule-card"><span>Status</span><strong>Make progress comparable</strong><p>Keep <code>ExecutionStatus.progress</code> in <code>[0, 1]</code> so monitors and UI surfaces agree.</p></div>
+</div>
 
 <details class="reference-details">
   <summary>Detailed field reference</summary>
@@ -70,10 +76,10 @@ assert pose_cls is PoseStamped
   <div class="type-card"><span>Quaternion</span><strong>Orientation</strong><p><code>x</code>, <code>y</code>, <code>z</code>, <code>w</code>. Normalize at boundaries; keep frame conventions outside the raw quaternion.</p></div>
   <div class="type-card"><span>SE3Pose</span><strong>Rigid pose</strong><p><code>position</code> plus <code>orientation</code>. Prefer this for object, end-effector, and robot poses.</p></div>
   <div class="type-card"><span>Twist</span><strong>Spatial velocity</strong><p><code>linear</code> plus <code>angular</code>. Use for velocity estimates or velocity commands.</p></div>
-  <div class="type-card"><span>Wrench</span><strong>Force/torque</strong><p><code>force</code> plus <code>torque</code>. Use at contact, manipulation, or controller boundaries.</p></div>
+  <div class="type-card"><span>Wrench</span><strong>Force and torque</strong><p><code>force</code> plus <code>torque</code>. Use at contact, manipulation, or controller boundaries.</p></div>
   <div class="type-card"><span>JointState</span><strong>Joint arrays</strong><p><code>names</code>, <code>positions</code>, <code>velocities</code>, <code>efforts</code>. Arrays are aligned by index.</p></div>
   <div class="type-card"><span>Header</span><strong>Boundary metadata</strong><p><code>stamp_ns</code>, <code>frame_id</code>, <code>source</code>. Attach this before values leave a local Flow boundary.</p></div>
-  <div class="type-card"><span>WorldState</span><strong>Scene state</strong><p>Current robot/object facts that perception, memory, and planning can share.</p></div>
+  <div class="type-card"><span>WorldState</span><strong>Scene state</strong><p>Current robot and object facts that perception, memory, and planning can share.</p></div>
   <div class="type-card"><span>BeliefGraph</span><strong>Probabilistic memory</strong><p>Symbolic scene memory and confidence values for grounding and planning.</p></div>
   <div class="type-card"><span>Skill / Plan</span><strong>Action vocabulary</strong><p>Named capabilities, parameters, and step sequences for planner-controller handoff.</p></div>
   <div class="type-card"><span>Trajectory</span><strong>Timed motion</strong><p>A time-indexed pose sequence for motion planning or control examples.</p></div>

@@ -4,13 +4,18 @@ description: How Golden robot payloads compose across reusable Flows.
 ---
 <p class="kicker">Reusable robot graphs</p>
 
-A Golden Flow should be reusable without knowing the source folder that produced it. The contract is simple: typed inputs, stable field names, explicit validation, and no hidden dict conventions.
+A Golden Flow should be reusable without knowing the source folder, simulator, or camera pipeline that produced its inputs. The contract is simple: one typed input object, one typed output object, stable field names, explicit validation, and no hidden dict conventions.
 
-<div class="inline-command">
-  <strong>First checks</strong>
-  <pre><code>pixi run demo-robotics-typing-contract
+<div class="proof-strip">
+  <div>
+    <p class="kicker">First checks</p>
+    <pre><code>pixi run demo-robotics-typing-contract
 pixi run demo-robotics-typing-boundary</code></pre>
-  <p>Expected result: the demos show composite I/O access, qualified field behavior, and a perception-to-control boundary with preserved frame/time/source metadata.</p>
+  </div>
+  <div>
+    <strong>Expected result</strong>
+    <p>The demos show composite I/O access, qualified field behavior, and a perception-to-control boundary with preserved frame, time, and source metadata.</p>
+  </div>
 </div>
 
 ## Composition Rules
@@ -27,9 +32,10 @@ pixi run demo-robotics-typing-boundary</code></pre>
 
 ```python
 from dataclasses import dataclass
+
 from retriever.flow import Flow, io
 from retriever_typing import PoseStamped
-from retriever_typing.robotics_types import WorldState, Skill
+from retriever_typing.robotics_types import Skill, WorldState
 
 @io
 @dataclass
@@ -39,17 +45,16 @@ class PickInput:
 
 class PickSelector(Flow[PickInput, Skill]):
     def step(self, inp: PickInput) -> Skill:
-        return Skill(name="pick", params={"target": inp.target_pose.header.frame_id})
+        return Skill(name="pick", params={"target_frame": inp.target_pose.header.frame_id})
 ```
 
-The example stays ordinary Python: one input object, one output object, and a `step(...)` method. Retriever handles graph execution separately; Golden's job is to keep the robot-facing payloads clear.
+The example stays ordinary Python: a typed input object, a typed output object, and a `step(...)` method. Retriever handles graph execution separately; Golden keeps the robot-facing payloads clear enough to reuse.
 
-## Public Lane
+## Promotion Checklist
 
-A promoted composition page should include three things:
-
-| Requirement | Why |
-| --- | --- |
-| Named Pixi task | Users can run the exact example without hunting through source folders. |
-| Expected output | Users know whether the example worked before reading code. |
-| Dependency boundary | Optional robot, simulator, camera, model, or network dependencies are visible before launch. |
+<div class="rule-grid">
+  <div class="rule-card"><span>Command</span><strong>Named Pixi task</strong><p>Users can run the exact example without hunting through source folders.</p></div>
+  <div class="rule-card"><span>Output</span><strong>Expected result</strong><p>Users know whether the example worked before reading code.</p></div>
+  <div class="rule-card"><span>Boundary</span><strong>Dependency label</strong><p>Optional robot, simulator, camera, model, or network dependencies are visible before launch.</p></div>
+  <div class="rule-card"><span>Reuse</span><strong>Stable payload names</strong><p>Hub packs and downstream examples can depend on the same names and shapes.</p></div>
+</div>
