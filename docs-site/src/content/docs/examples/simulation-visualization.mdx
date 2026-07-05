@@ -12,10 +12,22 @@ Use this lane when the concise examples work and you want visible artifacts: Rer
 
 ## What The Artifacts Show
 
-<figure class="figure-card">
-  <img src="/assets/robot-agent-graph-ultralight.png" alt="Retriever closed-loop robot agent graph" />
-  <figcaption><strong>Graph artifact.</strong> The HTML visualization should show nodes, ports, clocks, and sync boundaries before you move to a heavier simulator or robot backend.</figcaption>
-</figure>
+<div class="html-artifact-card">
+  <div class="artifact-card-header">
+    <div>
+      <p class="kicker">Live HTML artifact</p>
+      <strong>Interactive Retriever graph, embedded from the generated artifact.</strong>
+      <p>Use this before moving to a heavier simulator or robot backend: inspect nodes, ports, clocks, sync policies, and feedback edges in the same HTML view produced by <code>pixi run demo-pipeline-html-viz</code>.</p>
+    </div>
+    <a href="/artifacts/golden_retriever_closed_loop_viz.html" target="_blank" rel="noreferrer">Open full graph</a>
+  </div>
+  <iframe
+    class="artifact-frame"
+    src="/artifacts/golden_retriever_closed_loop_viz.html"
+    title="Interactive Golden Retriever closed-loop graph visualization"
+    loading="lazy"
+  ></iframe>
+</div>
 
 | Artifact | Use it for | Dependency level |
 | --- | --- | --- |

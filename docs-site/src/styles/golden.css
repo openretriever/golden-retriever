@@ -1,21 +1,29 @@
 :root {
-  --sl-color-accent-low: #fff3e8;
-  --sl-color-accent: #f97316;
-  --sl-color-accent-high: #7c2d12;
-  --sl-color-text-accent: #c2410c;
+  --sl-color-accent-low: #fff6d8;
+  --sl-color-accent: #d99a16;
+  --sl-color-accent-high: #5f3b05;
+  --sl-color-text-accent: #a16207;
   --sl-font: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --sl-font-mono: "SFMono-Regular", "Cascadia Code", "Liberation Mono", Menlo, monospace;
   --sl-content-width: 62rem;
+  --golden-bg: #fffdf7;
+  --golden-bg-soft: #fffbeb;
+  --golden-line: rgba(217, 154, 22, 0.22);
+}
+
+:root[data-theme='light'] {
+  --sl-color-bg: var(--golden-bg);
+  --sl-color-bg-nav: #fffaf0;
 }
 
 :root[data-theme='dark'] {
-  --sl-color-accent-low: #4a1f0f;
-  --sl-color-accent: #fb923c;
-  --sl-color-accent-high: #ffedd5;
-  --sl-color-text-accent: #fdba74;
+  --sl-color-accent-low: #3f2b09;
+  --sl-color-accent: #fbbf24;
+  --sl-color-accent-high: #fef3c7;
+  --sl-color-text-accent: #facc15;
 }
 
-/* Keep Golden visually close to the core Retriever docs: white surface, orange accent. */
+/* Keep Golden structurally close to core docs, but shift the surface toward warm gold. */
 .hero-panel,
 .golden-panel {
   margin: 1rem 0 2.5rem;
@@ -23,10 +31,10 @@
   border: 1px solid color-mix(in srgb, var(--sl-color-accent) 20%, var(--sl-color-gray-5));
   border-radius: 26px;
   background:
-    radial-gradient(circle at 12% 8%, rgba(249, 115, 22, 0.13), transparent 30rem),
-    radial-gradient(circle at 86% 18%, rgba(245, 158, 11, 0.10), transparent 24rem),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(255, 247, 237, 0.58));
-  box-shadow: 0 18px 56px rgba(124, 45, 18, 0.08);
+    radial-gradient(circle at 12% 8%, rgba(217, 154, 22, 0.16), transparent 30rem),
+    radial-gradient(circle at 86% 18%, rgba(250, 204, 21, 0.13), transparent 24rem),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.99), rgba(255, 251, 235, 0.76));
+  box-shadow: 0 18px 56px rgba(120, 83, 9, 0.08);
 }
 
 :root[data-theme='dark'] .hero-panel,
@@ -104,7 +112,7 @@
   background: var(--sl-color-bg-nav);
   color: inherit;
   text-decoration: none;
-  box-shadow: 0 8px 26px rgba(15, 23, 42, 0.045);
+  box-shadow: 0 8px 26px rgba(120, 83, 9, 0.045);
 }
 
 .action-card:hover,
@@ -372,4 +380,76 @@ details.reference-details > div {
 
 @media (max-width: 800px) {
   .proof-strip { grid-template-columns: 1fr; }
+}
+
+.html-artifact-card {
+  margin: 2rem 0;
+  overflow: hidden;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 24px;
+  background: var(--sl-color-bg-nav);
+  box-shadow: 0 18px 54px rgba(120, 83, 9, 0.07);
+}
+
+.artifact-card-header {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 1rem 1rem 0.85rem;
+  border-bottom: 1px solid var(--sl-color-gray-5);
+}
+
+.artifact-card-header strong {
+  display: block;
+  margin: 0.25rem 0 0.35rem;
+  color: var(--sl-color-white);
+  font-size: 1.05rem;
+}
+
+:root[data-theme='light'] .artifact-card-header strong {
+  color: #111827;
+}
+
+.artifact-card-header p:last-child {
+  margin: 0;
+  color: var(--sl-color-gray-2);
+}
+
+.artifact-card-header a {
+  flex: 0 0 auto;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--sl-color-accent) 45%, var(--sl-color-gray-5));
+  border-radius: 999px;
+  color: var(--sl-color-text-accent);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.artifact-frame {
+  display: block;
+  width: 100%;
+  min-height: min(72vh, 760px);
+  border: 0;
+  background: #fff;
+}
+
+@media (max-width: 800px) {
+  .artifact-card-header {
+    flex-direction: column;
+  }
+
+  .artifact-frame {
+    min-height: 520px;
+  }
+}
+
+
+:root[data-theme='light'] .sl-markdown-content {
+  color: #1f2937;
+}
+
+:root[data-theme='light'] .sidebar-pane,
+:root[data-theme='light'] .right-sidebar-panel {
+  background: linear-gradient(180deg, rgba(255, 251, 235, 0.72), rgba(255, 255, 255, 0.52));
 }
