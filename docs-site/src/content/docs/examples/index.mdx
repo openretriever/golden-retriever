@@ -20,6 +20,13 @@ Golden examples are the applied continuation after the core Retriever quickstart
   <a class="choice-card" href="/robot-type-packs/"><span>Reuse</span><strong>I want payload contracts</strong><p>Use robot state, belief, plan, trajectory, event-buffer, and dataset export profiles across examples.</p><code>pixi run demo-robotics-typing-catalog</code></a>
 </div>
 
+## Walkthrough Order
+
+1. Run the Hub proof to check that Golden can extend Retriever without importing optional robot dependencies.
+2. Run one deterministic perception or memory demo so you can recognize expected output before adding heavier inputs.
+3. Render the pipeline graph when the behavior is confusing; inspect ports and edges before changing code.
+4. Only then opt into camera, model-backed perception, simulator, or dataset-export lanes.
+
 ## First Verified Commands
 
 | Command | Expected result | Why it comes first |
@@ -45,12 +52,10 @@ Golden examples are the applied continuation after the core Retriever quickstart
   <a class="info-card" href="/robot-type-packs/"><strong>Robot type packs</strong><span>World state, belief, plans, trajectories, event streams, and dataset/export profiles.</span></a>
 </div>
 
-## Core Concept Bridge
+## Runtime Bridge
 
-<div class="card-grid">
-  <a class="info-card" href="https://openretriever-docs.pages.dev/tutorials/examples-and-results/"><strong>Core examples and results</strong><span>Use the core route first if Flow, stepping, and graph inspection are not clear yet.</span></a>
-  <a class="info-card" href="https://openretriever-docs.pages.dev/tutorials/debug-and-visualize/"><strong>Debug and visualize</strong><span>Learn graph rendering, local stepping, and record/replay before heavier robot lanes.</span></a>
-  <a class="info-card" href="https://openretriever-docs.pages.dev/concepts/time-and-sync/"><strong>Time and sync</strong><span>Understand why Golden examples keep per-Flow timing and per-edge sampling explicit.</span></a>
+<div class="reference-strip">
+  <strong>Need the runtime mental model?</strong> Use the <a href="https://openretriever-docs.pages.dev/">core Retriever docs</a> for Flow, Pipeline, clocks, sync policies, graph rendering, stepping, and replay. Golden pages assume those runtime ideas and focus on robot-facing examples, payloads, and Hub-pack candidates.
 </div>
 
 ## Maturity Levels

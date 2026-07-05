@@ -17,24 +17,25 @@ template: splash
 </div>
 
 <div class="cta-row">
-  <a href="https://openretriever.org/">Retriever home</a>
-  <a href="https://openretriever-docs.pages.dev/">Core runtime docs</a>
-  <a href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/">Core visual quickstart</a>
   <a href="/examples/golden-hub-proof/">First Golden proof</a>
+  <a href="/examples/">Example catalog</a>
+  <a href="/robot-type-packs/">Robot type packs</a>
+  <a href="/hub/">Hub pack boundary</a>
+  <a href="https://openretriever-docs.pages.dev/">Core runtime docs</a>
   <a href="/llms.txt">Agent map</a>
 </div>
 
 <div class="boundary-note">
-<strong>Golden is not a second runtime.</strong> Install and learn Retriever once. The Python import package is <code>retriever</code>; Golden provides applied examples and pack candidates on top of that runtime, not another Flow/Pipeline implementation.
+<strong>Golden is not a second runtime.</strong> Install and learn Retriever once. The Python import package is <code>retriever</code>; Golden provides applied examples and pack candidates on top of that runtime. If you need Flow, Pipeline, clocks, sync, or replay semantics, use the core runtime docs; otherwise stay on this Golden path.
 </div>
 
 ## Recommended Route
 
 <div class="path-grid">
-  <a class="path-card" href="https://openretriever-docs.pages.dev/getting-started/visual-quickstart/"><span>00</span><strong>Run core first</strong><p>Start with the mock/webcam visual graph so Flow, stepping, graph inspection, and replay are clear.</p><code>pixi run demo-webcam-detection-mock</code></a>
-  <a class="path-card" href="/examples/golden-hub-proof/"><span>01</span><strong>Prove Golden boundary</strong><p>Load manifest-declared robot payloads through Retriever Hub.</p><code>pixi run demo-golden-hub-pack</code></a>
-  <a class="path-card" href="/examples/perception-memory/"><span>02</span><strong>Walk the ladder</strong><p>Run perception and memory over deterministic robot-facing payloads.</p><code>pixi run -e golden-local demo-perception-detection-flow</code></a>
-  <a class="path-card" href="/examples/simulation-visualization/"><span>03</span><strong>Inspect visual systems</strong><p>Move to Rerun, mock-safe simulator lanes, and HTML graph artifacts.</p><code>pixi run demo-pipeline-html-viz</code></a>
+  <a class="path-card" href="/examples/golden-hub-proof/"><span>00</span><strong>Prove Golden boundary</strong><p>Load manifest-declared robot payloads through Retriever Hub with no robot, camera, simulator, model, or network dependency.</p><code>pixi run demo-golden-hub-pack</code></a>
+  <a class="path-card" href="/examples/perception-memory/"><span>01</span><strong>Walk the ladder</strong><p>Run perception and memory over deterministic robot-facing payloads.</p><code>pixi run -e golden-local demo-perception-detection-flow</code></a>
+  <a class="path-card" href="/robot-type-packs/"><span>02</span><strong>Pick payloads</strong><p>Choose the smallest robot type that preserves frame, time, source, belief, plan, or trajectory semantics.</p><code>pixi run demo-robotics-typing-catalog</code></a>
+  <a class="path-card" href="/examples/simulation-visualization/"><span>03</span><strong>Inspect visual systems</strong><p>Move to mock-safe simulator lanes, Rerun streams, and HTML graph artifacts.</p><code>pixi run demo-pipeline-html-viz</code></a>
 </div>
 
 ## How The Retriever Surfaces Fit
@@ -44,6 +45,19 @@ template: splash
   <div class="info-card"><strong>Golden Retriever</strong><span>Applied robot examples, reusable payload packs, simulator lanes, visualization demos, and candidate Hub packs.</span></div>
   <div class="info-card"><strong>Retriever Hub</strong><span>The packaging boundary: load stable Flows, type packs, and conversion helpers without depending on source-tree layout.</span></div>
 </div>
+
+## For AI Agents And Fast Audits
+
+Start from [`/llms.txt`](/llms.txt), then run the smoke sequence before editing examples:
+
+```bash
+pixi run demo-golden-hub-pack
+pixi run -e golden-local demo-perception-detection-flow
+pixi run demo-pipeline-html-viz
+pixi run public-surface-check
+```
+
+Treat these as public-contract checks: if one fails, fix the example, task, or docs together instead of adding another undocumented launch path.
 
 ## First Results To Recognize
 

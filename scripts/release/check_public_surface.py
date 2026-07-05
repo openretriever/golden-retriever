@@ -78,6 +78,7 @@ DOC_MARKERS = {
         "Golden examples start where the core quickstart ends",
         "Golden is not a second runtime",
         "How The Retriever Surfaces Fit",
+        "For AI Agents And Fast Audits",
         "First Results To Recognize",
         "What Belongs Here",
     ),
@@ -86,7 +87,8 @@ DOC_MARKERS = {
         "First Verified Commands",
         "demo-golden-hub-pack",
         "demo-pipeline-html-viz",
-        "Core Concept Bridge",
+        "Walkthrough Order",
+        "Runtime Bridge",
         "Maturity Levels",
     ),
     "docs-site/src/content/docs/examples/golden-hub-proof.mdx": (
@@ -102,7 +104,7 @@ DOC_MARKERS = {
     "docs-site/src/content/docs/hub/index.mdx": (
         "Golden Pack Boundary",
         "What A Pack Contains",
-        "Core Concept Bridge",
+        "Runtime Bridge",
         "Pack Rules",
     ),
     "docs-site/src/content/docs/hub/export-catalog.mdx": (

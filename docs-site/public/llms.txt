@@ -20,9 +20,9 @@ The core runtime imports as `retriever`; the public runtime distribution target 
 
 ## Canonical Path
 
-1. Start in Retriever core docs if the user has not run Retriever before.
-2. In Golden, run `pixi run demo-golden-hub-pack` to prove the Hub extension boundary.
-3. Continue to the example catalog for perception, memory, language, composition, simulation, visualization, and type-pack examples.
+1. Run `pixi run demo-golden-hub-pack` to prove the Golden Hub extension boundary.
+2. Continue to the example catalog for perception, memory, language, composition, simulation, visualization, and type-pack examples.
+3. Use the core Retriever docs only when Flow, Pipeline, clocks, sync, replay, or Hub-loader mechanics are the question.
 4. Promote source examples into Hub packs only when they are import-safe, versioned, smoke-tested, documented, and useful outside this repository.
 
 ## Current Retriever Hub Pack Surface
