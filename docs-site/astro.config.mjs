@@ -7,11 +7,11 @@ export default defineConfig({
   site: 'https://retriever-space.pages.dev',
   integrations: [
     starlight({
-      title: 'Golden Retriever Reference',
+      title: 'GoldenRetriever Reference',
       description: 'Applied Retriever examples, robot payload references, visualization lanes, and Hub pack candidates.',
       logo: {
         src: './src/assets/retriever-illustrative.jpeg',
-        alt: 'Golden Retriever',
+        alt: 'GoldenRetriever',
       },
       favicon: '/assets/logo.svg',
       customCss: ['./src/styles/golden.css'],
@@ -21,7 +21,7 @@ export default defineConfig({
           label: 'Start',
           items: [
             { label: 'Overview', link: '/' },
-            { label: 'First Golden Proof', slug: 'examples/golden-hub-proof' },
+            { label: 'First GoldenRetriever Proof', slug: 'examples/golden-hub-proof' },
             { label: 'Example Catalog', slug: 'examples' },
           ],
         },

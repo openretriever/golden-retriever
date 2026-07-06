@@ -2,42 +2,124 @@
 title: Pipeline Composition
 description: Registry-backed composition and reusable pipeline surfaces.
 ---
-<p class="kicker">Runnable composition lane</p>
+Composition turns small typed Flows into a reusable graph you can register,
+mutate, and drop inside a larger graph — without a second runtime. This example
+registers a two-stage pipeline, then does two things to it: **extends** it after
+construction, and **wraps** it as a single Flow.
 
-Composition examples show how Golden turns small typed pieces into reusable robot-facing graphs without inventing a second runtime. Use this page after the core Flow and Pipeline concepts are clear.
+## The pieces
 
-<div class="proof-strip">
-  <div>
-    <p class="kicker">First runnable example</p>
-    <p>Run the public composition smoke before reading the contracts.</p>
-    <pre><code>pixi run -e golden-local demo-composable-pipelines</code></pre>
-  </div>
-  <div>
-    <strong>Expected result</strong>
-    <p>The example composes typed modules, resolves registry-backed payloads, and keeps the resulting graph inspectable through the IR and visualization path.</p>
-    <pre><code>{`=== Extend Declared Pipeline ===
+Each payload is an `@io` record; each stage is a `Flow[In, Out]`. Nothing here
+knows how it will be composed.
+
+```python
+import retriever
+from retriever.flow import Flow, Pipeline, Rate, Latest, io
+
+@io
+class CounterOut:
+    value: int
+    aux: int
+
+@io
+class ProcOut:
+    value: int
+
+class Counter(Flow[None, CounterOut]):
+    def reset(self): self.count = 0
+    def step(self, _):
+        self.count += 1
+        return CounterOut(value=self.count, aux=99)
+
+class BiasPolicy(Flow[ProcIn, ProcOut]):
+    def step(self, input: ProcIn) -> ProcOut:
+        return ProcOut(value=input.value + input.bias)
+```
+
+## Register a pipeline with surfaced ports
+
+`@retriever.register_pipeline` names a graph and declares which internal ports
+are visible from the outside. `counter.then(policy, map=..., sync=...)` wires the
+stages; `surface_policy="explicit"` means only the listed ports cross the boundary.
+
+```python
+@retriever.register_pipeline(
+    "golden.composable_counter",
+    surface_policy="explicit",
+    input_ports=["policy.bias"],
+    output_ports=["counter.aux", "policy.value"],
+    overwrite=True,
+)
+def build_composable_counter() -> Pipeline:
+    pipe = Pipeline("golden.composable_counter")
+    with pipe:
+        counter = (Counter()    @ Rate(hz=10)).named("counter")
+        policy  = (BiasPolicy() @ Rate(hz=10)).named("policy")
+        counter.then(policy, map={"value": "value"}, sync=Latest())
+    return pipe
+```
+
+## Extend a declared pipeline
+
+Because the graph is addressable by node name, you can **replace** a stage and
+**inject** an input on a live pipeline, then step it — no rebuild.
+
+```python
+pipe = build_composable_counter()
+pipe.replace(pipe.select_flow("policy"), OverridePolicy(delta=100) @ Rate(hz=10))
+pipe.inject_input("policy", "bias", 3, timestamp=0.0)
+result = pipe.step(now=0.0)
+print("policy output after replacement:", result.outputs["policy"])
+```
+
+## Compose a pipeline as a Flow
+
+`retriever.build_pipeline_flow("golden.composable_counter")` hands the registered
+pipeline back as an ordinary Flow, so it nests inside a larger graph and its
+surfaced output is a typed record.
+
+```python
+outer = Pipeline("golden.outer_composable_counter")
+with outer:
+    bias_source = BiasSource(bias=4) @ Rate(hz=10)
+    sub  = (retriever.build_pipeline_flow("golden.composable_counter") @ Rate(hz=10)).named("stage")
+    sink = DecisionPrinter() @ Rate(hz=10)
+    bias_source.then(sub, sync=Latest())
+    sub.then(sink, sync=Latest())
+result = outer.step(now=0.0)
+print("wrapped stage output:", result.outputs["stage"])
+```
+
+```bash
+pixi run -e golden-local demo-composable-pipelines
+```
+
+## What you get
+
+Real output. `value=104` is `Counter` (1) + injected `bias` (3) + `OverridePolicy`
+delta (100); the wrapped stage surfaces both `aux` and `value` as one typed record:
+
+```text
+=== Extend Declared Pipeline ===
 internal flows: ['counter', 'policy']
 policy output after replacement: ProcOut(value=104)
 
 === Compose Pipeline As Flow ===
 [outer] value=5 aux=99
-wrapped stage output: Golden_Composable_CounterOutput(aux=99, value=5)`}</code></pre>
-  </div>
-</div>
+wrapped stage output: Golden_Composable_CounterOutput(aux=99, value=5)
+```
 
-## What This Demonstrates
+## Why it's shaped this way
 
-<div class="rule-grid">
-  <div class="rule-card"><span>Compose</span><strong>Typed modules become a graph</strong><p>Examples can start from small Flows and still expose a single runnable pipeline boundary.</p></div>
-  <div class="rule-card"><span>Share</span><strong>Payloads stay registry-backed</strong><p>Robot state, belief, plans, and commands use named payloads instead of ad hoc dict glue.</p></div>
-  <div class="rule-card"><span>Inspect</span><strong>The graph remains visible</strong><p>The same composition can be rendered as runtime IR or a browser HTML graph artifact.</p></div>
-</div>
+Registration puts the graph in the runtime registry with an explicit port
+contract, so a composed pipeline is a reusable unit, not a copy-pasted script.
+Because payloads stay `@io`-typed across the boundary, you can:
 
-## Public Boundary
+- replace or inject into a stage by name after construction,
+- wrap a whole pipeline as a Flow and nest it, and
+- render either level as runtime IR or an HTML graph for inspection.
 
-This is the public composition lane. A composition example belongs here only when it has a named task, expected output, dependency story, and docs page. Older source folders can remain implementation references without becoming launch paths.
+The rendering path is on the [simulation and visualization](/examples/simulation-visualization/)
+lane; the field-access rules are in [flow contracts](/robot-payloads/flow-contracts/).
 
-<div class="card-grid">
-  <a class="info-card" href="/examples/simulation-visualization/"><strong>Render the graph</strong><span>Use the HTML visualization lane to inspect the composed pipeline.</span></a>
-  <a class="info-card" href="/robot-payloads/flow-contracts/"><strong>Check contracts</strong><span>Review composite Flow I/O and field-access rules.</span></a>
-</div>
+Source: `examples/advanced/core_composition/composable_pipelines.py`.

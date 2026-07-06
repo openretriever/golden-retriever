@@ -1,5 +1,5 @@
 ---
-title: Golden Retriever
+title: GoldenRetriever
 slug: /
 description: Applied robot examples, robot payload references, visualization lanes, and Hub pack candidates for Retriever.
 template: splash
@@ -7,17 +7,17 @@ template: splash
 
 <div class="hero-panel">
   <p class="eyebrow">Applied Retriever reference</p>
-  <h1>Golden examples start where the core quickstart ends.</h1>
+  <h1>GoldenRetriever examples start where the core quickstart ends.</h1>
   <p class="lede">Run robot-facing examples, inspect visual artifacts, and reuse robot payload references on top of the core Retriever runtime.</p>
   <div class="action-grid">
-    <a class="action-card" href="/examples/golden-hub-proof/"><strong>Run the first Golden proof</strong><span>Load Golden robot payloads through Retriever Hub with no robot, camera, model, simulator, or network dependency.</span></a>
+    <a class="action-card" href="/examples/golden-hub-proof/"><strong>Run the first GoldenRetriever proof</strong><span>Load GoldenRetriever robot payloads through Retriever Hub with no robot, camera, model, simulator, or network dependency.</span></a>
     <a class="action-card" href="/examples/"><strong>Browse example results</strong><span>Pick an applied lane by expected output, artifact type, and dependency level.</span></a>
     <a class="action-card" href="/examples/simulation-visualization/"><strong>Open visual artifacts</strong><span>Inspect generated HTML graphs, mock simulator traces, and optional Rerun lanes.</span></a>
   </div>
 </div>
 
 <div class="cta-row">
-  <a href="/examples/golden-hub-proof/">First Golden proof</a>
+  <a href="/examples/golden-hub-proof/">First GoldenRetriever proof</a>
   <a href="/examples/">Example catalog</a>
   <a href="/examples/simulation-visualization/">Visual artifacts</a>
   <a href="/hub/">Reusable packs</a>
@@ -25,12 +25,12 @@ template: splash
 </div>
 
 <div class="boundary-note">
-<strong>Golden is not a second runtime.</strong> Core Retriever owns Flow, Pipeline, clocks, sync, IR, replay, execution, and Hub mechanics. Golden owns applied robot examples, robot payload references, visualization lanes, and Hub pack candidates. Need runtime concepts first? Use the <a href="https://openretriever-docs.pages.dev/">core Retriever docs</a>.
+<strong>GoldenRetriever is not a second runtime.</strong> Core Retriever owns Flow, Pipeline, clocks, sync, IR, replay, execution, and Hub mechanics. GoldenRetriever owns applied robot examples, robot payload references, visualization lanes, and Hub pack candidates. Need runtime concepts first? Use the <a href="https://openretriever-docs.pages.dev/">core Retriever docs</a>.
 </div>
 
 ## Quick Start
 
-Start here after the core Retriever visual quickstart works. Golden is a separate source checkout:
+Start here after the core Retriever visual quickstart works. GoldenRetriever is a separate source checkout:
 
 ```bash
 git clone https://github.com/openretriever/golden-retriever.git
@@ -42,7 +42,7 @@ pixi run demo-golden-hub-pack
 <details class="explain-details">
   <summary>What does this do?</summary>
   <div>
-    <p>The command loads the Golden Hub exports through Retriever Hub, constructs representative payloads, and round-trips a command through Arrow helpers. It requires no robot, camera, simulator, model, network service, or GUI.</p>
+    <p>The command loads the GoldenRetriever Hub exports through Retriever Hub, constructs representative payloads, and round-trips a command through Arrow helpers. It requires no robot, camera, simulator, model, network service, or GUI.</p>
   </div>
 </details>
 
@@ -71,7 +71,7 @@ pixi run demo-golden-hub-pack
 
 <figure class="figure-card">
   <img src="/assets/robot-agent-graph-ultralight.png" alt="Retriever robot agent graph with observe, belief, planner, monitor, skill, controller, and environment flows" />
-  <figcaption><strong>Applied robot graph.</strong> Golden examples make multi-rate robot graphs concrete: camera, belief, planner, monitor, skill, controller, and environment-like Flows keep timing and data handoff boundaries explicit.</figcaption>
+  <figcaption><strong>Applied robot graph.</strong> GoldenRetriever examples make multi-rate robot graphs concrete: camera, belief, planner, monitor, skill, controller, and environment-like Flows keep timing and data handoff boundaries explicit.</figcaption>
 </figure>
 
 ## How The Retriever Surfaces Fit
@@ -79,14 +79,14 @@ pixi run demo-golden-hub-pack
 | Surface | Owns | Start here when... |
 | --- | --- | --- |
 | Core Retriever | Flow, Pipeline, clocks, sync policies, IR, execution, replay, graph rendering, and Hub loading mechanics. | You need to understand or debug the runtime model. |
-| Golden Retriever | Applied robot examples, robot payload references, simulator lanes, visualization demos, and Hub pack candidates. | You want runnable robot-facing examples after the core quickstart. |
+| GoldenRetriever | Applied robot examples, robot payload references, simulator lanes, visualization demos, and Hub pack candidates. | You want runnable robot-facing examples after the core quickstart. |
 | Retriever Hub | The packaging boundary for stable Flows, robot payload references, and conversion helpers. | You want reuse without depending on source-tree layout. |
 
 ## Common Patterns
 
 | Need | Start with | Avoid first |
 | --- | --- | --- |
-| Safe Golden smoke | `pixi run demo-golden-hub-pack` | Camera, simulator, model, or network setup. |
+| Safe GoldenRetriever smoke | `pixi run demo-golden-hub-pack` | Camera, simulator, model, or network setup. |
 | Example behavior | `pixi run -e golden-local demo-perception-detection-flow` | Optional model-backed lanes. |
 | Simulator integration | `pixi run demo-robosuite-mock` | Real robosuite before the mock trace works. |
 | Graph visualization | `pixi run demo-pipeline-html-viz` | Screenshots or stale generated HTML. |
@@ -95,10 +95,10 @@ pixi run demo-golden-hub-pack
 ## Continue
 
 <div class="card-grid">
-  <a class="info-card" href="/examples/golden-hub-proof/"><strong>First Golden proof</strong><span>Load the Golden Hub exports through Retriever Hub.</span></a>
+  <a class="info-card" href="/examples/golden-hub-proof/"><strong>First GoldenRetriever proof</strong><span>Load the GoldenRetriever Hub exports through Retriever Hub.</span></a>
   <a class="info-card" href="/examples/"><strong>Example catalog</strong><span>Pick a lane by expected artifact and dependency level.</span></a>
   <a class="info-card" href="/robot-payloads/"><strong>Robot payload reference</strong><span>Choose payloads for world state, belief, plans, trajectories, and events.</span></a>
   <a class="info-card" href="/examples/simulation-visualization/"><strong>Visualization lanes</strong><span>Inspect HTML graphs, mock simulator traces, and optional Rerun streams.</span></a>
 </div>
 
-<p class="external-note"><strong>Machine-readable route:</strong> <a href="/llms.txt">llms.txt</a> mirrors the same Golden path for agents and audits.</p>
+<p class="external-note"><strong>Machine-readable route:</strong> <a href="/llms.txt">llms.txt</a> mirrors the same GoldenRetriever path for agents and audits.</p>

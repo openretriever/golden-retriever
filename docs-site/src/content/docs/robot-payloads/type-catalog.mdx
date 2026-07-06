@@ -1,99 +1,178 @@
 ---
 title: Choose a Robot Payload
-description: Choose the smallest Golden robot payload that preserves the boundary.
+description: Choose the smallest GoldenRetriever robot payload that preserves the boundary.
 ---
-<div class="reference-hero">
-  <div>
-    <p class="kicker">Robot payload selection</p>
-    <h2>Choose by the handoff, not by the ontology.</h2>
-    <p>Golden payloads are for reusable robot examples. Start from the boundary you need to preserve: a local spatial value, a stamped graph handoff, scene memory, planner intent, motion output, execution status, or replayable event record.</p>
-  </div>
-  <div class="reference-command">
-    <p class="kicker">Run first</p>
-    <pre><code>pixi run demo-robotics-typing-catalog</code></pre>
-    <p>Expected result: representative spatial and robot-facing payloads are constructed, registry lookup succeeds, and validation prints a compact summary.</p>
-  </div>
-</div>
+The catalog is three tiers behind one import path. Choose by the handoff you
+need to preserve, not by the ontology.
 
-<div class="purpose-strip">
-  <div><strong>Use the smallest reusable payload.</strong><p>Prefer a narrow type that preserves the boundary instead of a broad object that silently becomes a project-specific blob.</p></div>
-  <div><strong>Stamp values before they cross boundaries.</strong><p>Add frame, event time, and source metadata before values enter replay, planning, control, export, or another process.</p></div>
-  <div><strong>Keep optional integrations outside the base layer.</strong><p>Camera, simulator, model, robot, network, and private dataset details should not be required to import these payloads.</p></div>
-</div>
+- **Standard spatial** (`retriever.types.spatial`, re-exported by `retriever_typing`)
+  — registry category `spatial`, `@io`-decorated, so they can be Flow ports directly.
+- **Applied robot types** (`retriever_typing.robotics_types`) — registry category
+  `general`, plain dataclasses carried as values and resolved by name.
+- **Applied action/status** (`retriever_typing.core_types`) — category `general`,
+  the lightweight exchange records with built-in Arrow round-trips.
+
+```python
+from retriever_typing import get_type, get_type_info, list_types
+
+get_type("WorldState")                 # -> retriever_typing.robotics_types.WorldState
+get_type_info("SE3Pose").category      # -> 'spatial'  (schema_name 'spatial/SE3Pose')
+get_type_info("WorldState").category   # -> 'general'  (kind 'payload')
+len(list_types())                      # spans categories: spatial=10, general=27, data=13, perception=10
+```
 
 ## Quick Decision Table
 
-<table class="reference-matrix">
-  <thead><tr><th>Boundary</th><th>Start with</th><th>Use when</th><th>Avoid first</th></tr></thead>
-  <tbody>
-    <tr><td>Local spatial math</td><td><code>Vector3</code>, <code>Quaternion</code>, <code>SE3Pose</code></td><td>The frame, unit, and source are already local context.</td><td>Stamped wrappers for values that never leave the local computation.</td></tr>
-    <tr><td>Graph or process handoff</td><td><code>PoseStamped</code>, <code>TwistStamped</code>, <code>WrenchStamped</code></td><td>The value crosses a Flow, process, replay, dataset, or robot boundary.</td><td>Dropping <code>frame_id</code>, <code>stamp_ns</code>, or source before replay.</td></tr>
-    <tr><td>Robot state</td><td><code>RobotState</code>, <code>JointState</code></td><td>A wrapper, monitor, policy, or simulator needs current robot configuration.</td><td>Unnamed joint arrays or opaque status strings.</td></tr>
-    <tr><td>Scene and memory</td><td><code>WorldState</code>, <code>BeliefGraph</code></td><td>Perception, memory, grounding, and planning need a shared scene description.</td><td>Mixing geometric state, confidence, and task memory in one ad hoc dict.</td></tr>
-    <tr><td>Planner handoff</td><td><code>TaskGoal</code>, <code>Skill</code>, <code>Plan</code>, <code>StructuredPlan</code></td><td>A planner or language module hands intent to a controller or monitor.</td><td>Passing natural-language instructions directly to control code.</td></tr>
-    <tr><td>Motion and progress</td><td><code>Trajectory</code>, <code>ExecutionStatus</code></td><td>A controller or monitor reports timed motion, progress, terminal state, or errors.</td><td>Boolean-only success/failure with no progress or error context.</td></tr>
-    <tr><td>Lightweight exchange</td><td><code>Action</code>, <code>Command</code>, <code>Status</code></td><td>A smoke demo, Hub export, or dataset bridge needs compact exchange records.</td><td>Embedding simulator/model-specific payloads in the public pack.</td></tr>
-  </tbody>
-</table>
+Start from the boundary you need to preserve, not the richest type available.
 
-## Common Choices
+| Boundary | Start with | Use when |
+| --- | --- | --- |
+| Local spatial math | `Vector3`, `Quaternion`, `SE3Pose` | Frame, unit, and source are already local context. |
+| Graph / process handoff | `PoseStamped`, `TwistStamped`, `WrenchStamped` | The value crosses a Flow, process, replay, or robot boundary. |
+| Robot state | `RobotState`, `JointState` | A wrapper, monitor, policy, or sim needs current configuration. |
+| Scene and memory | `WorldState`, `BeliefGraph` | Perception, memory, grounding, and planning share a scene. |
+| Planner handoff | `TaskGoal`, `Skill`, `Plan`, `StructuredPlan` | A planner hands intent to a controller or monitor. |
+| Motion and progress | `Trajectory`, `ExecutionStatus` | A controller reports timed motion, progress, or terminal state. |
+| Lightweight exchange | `Action`, `Command`, `Status` | A smoke demo, Hub export, or dataset bridge needs compact records. |
 
-<div class="choice-grid">
-  <div class="choice-card"><span>Geometry</span><strong>Pose, velocity, force</strong><p>Use <code>Vector3</code>, <code>Quaternion</code>, <code>SE3Pose</code>, <code>Twist</code>, and <code>Wrench</code> when a Flow only needs spatial values.</p></div>
-  <div class="choice-card"><span>Stamped boundary</span><strong>Frame + time + source</strong><p>Use stamped wrappers when a value crosses a graph, process, dataset, or robot boundary.</p></div>
-  <div class="choice-card"><span>World model</span><strong>Current robot and scene</strong><p>Use <code>RobotState</code>, <code>WorldState</code>, and <code>BeliefGraph</code> for perception, memory, planning, and monitoring examples.</p></div>
-  <div class="choice-card"><span>Action layer</span><strong>Goal, skill, plan, trajectory</strong><p>Use <code>TaskGoal</code>, <code>Skill</code>, <code>Plan</code>, <code>StructuredPlan</code>, <code>Trajectory</code>, and <code>ExecutionStatus</code> for planner-to-controller handoff.</p></div>
-</div>
+## Standard spatial types
+
+These are the `@io` payloads from `retriever.types.spatial`. Stamp a value with
+a `Header` before it crosses a Flow, process, dataset, or robot boundary.
+
+| Type | Fields | Notes |
+| --- | --- | --- |
+| `Vector3` | `x, y, z` | Position, direction, velocity, or force component. |
+| `Quaternion` | `x, y, z, w` | `norm()`, `is_unit(tol=1e-3)`. |
+| `SE3Pose` | `position, orientation` | Object, end-effector, or robot pose. |
+| `Twist` / `Wrench` | `linear, angular` / `force, torque` | Spatial velocity / force-torque. |
+| `Header` | `stamp_ns, frame_id, source` | Boundary metadata; attach before handoff. |
+| `PoseStamped` / `TwistStamped` / `WrenchStamped` | `header` + `pose`/`twist`/`wrench` | Stamped wrappers for cross-boundary values. |
+| `JointState` | `names, positions, velocities, efforts` | `is_aligned()` checks index alignment. |
+
+Validators live beside them: `validate_header`, `validate_quaternion`,
+`validate_pose_stamped`, `validate_joint_state`. Use them at the edge where
+robot data changes meaning.
+
+```python
+from retriever_typing import (
+    Header, SE3Pose, Vector3, Quaternion, PoseStamped, JointState,
+    validate_pose_stamped, validate_joint_state,
+)
+
+pose = PoseStamped(
+    header=Header(stamp_ns=1_726_000_000_000_000_000, frame_id="map", source="sim"),
+    pose=SE3Pose(position=Vector3(1.0, 2.0, 0.5), orientation=Quaternion(0.0, 0.0, 0.0, 1.0)),
+)
+joints = JointState(
+    names=("j1", "j2", "j3", "j4", "j5", "j6"),
+    positions=(0.0, -0.3, 0.8, 0.0, 0.6, 0.0),
+    velocities=(0.0,) * 6, efforts=(0.0,) * 6,
+)
+
+validate_pose_stamped(pose)     # raises if stamp_ns <= 0, frame_id empty, or quaternion non-unit
+validate_joint_state(joints)    # raises unless every array length matches len(names)
+```
+
+```bash
+pixi run demo-robotics-typing-catalog
+```
+
+```text
+Registry lookup: PoseStamped=PoseStamped SE3Pose=SE3Pose
+Robotics typing catalog v1 demo
+  pose.frame=map pos=Vector3(x=1.0, y=2.0, z=0.5)
+  twist.frame=base_link linear=Vector3(x=0.2, y=0.0, z=0.0)
+  wrench.frame=wrist force=Vector3(x=0.0, y=0.0, z=3.5)
+  joint_count=6 aligned=True
+```
+
+## Applied robot types
+
+Scene, memory, and planner-handoff payloads. Plain dataclasses — pick the
+narrowest one that preserves the boundary.
+
+| Type | Fields (defaults omitted) | First use |
+| --- | --- | --- |
+| `WorldState` | `object_poses: Dict[str, SE3Pose]`, `robot_pose: SE3Pose`, `timestamp` | Shared scene state for perception, memory, planning. |
+| `RobotState` | `position`, `orientation`, `objects_held`, `battery_level`, `last_error` | Robot wrapper / monitor / policy input. |
+| `BeliefGraph` | `nodes: Set[str]`, `edges: Dict[str, Set[str]]` | Symbolic scene memory and grounding. |
+| `Skill` | `name`, `params`, `confidence`, `expected_duration` | One named capability with parameters. |
+| `Plan` | `skills: List[Skill]`, `confidence` | Ordered skills; `total_duration` sums known durations. |
+| `StructuredPlan` | `steps: List[str]`, `confidence`, `metadata` | Typed multi-step plan text. |
+| `TaskGoal` | `high_level_description`, `affordances`, `success_criteria` | User intent + available objects/actions. |
+| `Trajectory` | `poses: List[SE3Pose]`, `timestamps` | Timed motion; `duration` from first/last stamp. |
+| `ExecutionStatus` | `status`, `metadata`, `progress`, `error_message` | Progress in `[0,1]`; `is_complete` for terminal states. |
+
+```python
+from retriever_typing.robotics_types import WorldState, Skill, Plan, ExecutionStatus
+from retriever_typing import SE3Pose, Vector3, Quaternion
+
+pose = SE3Pose(position=Vector3(0.1, 0.2, 0.3), orientation=Quaternion(0.0, 0.0, 0.0, 1.0))
+world = WorldState(object_poses={"cup": pose}, robot_pose=pose, timestamp=0.0)
+plan = Plan(skills=[Skill(name="pick", params={"object": "cup"}, confidence=0.95)])
+status = ExecutionStatus(status="IN_PROGRESS", metadata={}, progress=0.4)
+
+assert [s.name for s in plan.skills] == ["pick"]
+assert not status.is_complete            # only SUCCESS / FAILURE are terminal
+```
+
+## Applied action and status types
+
+Lightweight exchange records from `retriever_typing.core_types`, used by smoke
+demos, Hub exports, and dataset bridges. `Action`, `Command`, and `Status`
+carry their own Arrow round-trips.
+
+| Type | Fields | Notes |
+| --- | --- | --- |
+| `Action` | `type`, `parameters: dict`, `timestamp`, `priority` | `__post_init__` rejects non-dict params; `to_arrow` / `from_arrow`. |
+| `Command` | `action: Action`, `robot_id`, `expected_duration`, `timeout` | `action_type` shortcut. |
+| `Status` | `state`, `message`, `progress`, `timestamp`, `error_code` | `state` is one of `pending/running/completed/failed/cancelled`; `is_success`. |
+| `Timestamp` | `seconds`, `nanoseconds` | `now()`, `to_float()`. |
+| `ExecutionTimer` | `start_time`, `expected_period`, `actual_period`, `iteration` | `is_timing_violation` at 50% tolerance. |
 
 ## Authoring Pattern
 
-Use direct imports inside example code. Use registry lookup at package boundaries: manifests, Hub packs, validation tools, replay readers, and dataset readers.
+Use **direct imports** inside example code — readers should not have to ask the
+registry what a payload means. Use **registry lookup** (`get_type`) only at
+package boundaries: manifests, Hub packs, replay readers, and dataset readers,
+which resolve a name without importing optional robot integrations.
 
 ```python
-from retriever_typing import PoseStamped, SE3Pose, get_type
-from retriever_typing.robotics_types import WorldState, Plan, ExecutionStatus
-
-pose_cls = get_type("PoseStamped")
-assert pose_cls is PoseStamped
+from retriever_typing import PoseStamped, get_type
+assert get_type("PoseStamped") is PoseStamped
 ```
-
-<div class="rule-grid">
-  <div class="rule-card"><span>Authoring</span><strong>Prefer direct imports</strong><p>Code should be readable without asking the registry what every payload means.</p></div>
-  <div class="rule-card"><span>Manifest</span><strong>Use registry lookup</strong><p>Hub packs and dataset readers can resolve names without importing optional robot integrations.</p></div>
-  <div class="rule-card"><span>Boundary</span><strong>Validate before reuse</strong><p>Normalize frames, timestamps, quaternion norms, joint-array lengths, and progress ranges at graph edges.</p></div>
-</div>
 
 ## Validation Checklist
 
-<div class="rule-grid">
-  <div class="rule-card"><span>Frames</span><strong>Keep frame IDs explicit</strong><p>Use non-empty <code>frame_id</code> when world, camera, robot, or object frames can be confused.</p></div>
-  <div class="rule-card"><span>Time</span><strong>Preserve event time</strong><p>Keep <code>stamp_ns</code> monotonic per source when replay or event-time joins depend on ordering.</p></div>
-  <div class="rule-card"><span>Motion</span><strong>Normalize rotations</strong><p>Check quaternion norms before a pose crosses into planners, controllers, or datasets.</p></div>
-  <div class="rule-card"><span>Status</span><strong>Make progress comparable</strong><p>Keep <code>ExecutionStatus.progress</code> in <code>[0, 1]</code> so monitors and UI surfaces agree.</p></div>
-</div>
+Validate at the edge where robot data changes meaning, before it reaches a
+planner, controller, dataset, or another process.
+
+- **Frames** — keep `frame_id` non-empty when world, camera, robot, or object frames can be confused (`validate_header`).
+- **Time** — keep `stamp_ns` positive and monotonic per source so replay and event-time joins order correctly.
+- **Rotations** — check `Quaternion.is_unit()` before a pose crosses into planning or a dataset (`validate_quaternion`).
+- **Arrays** — confirm `JointState.is_aligned()` so `names`/`positions`/`velocities`/`efforts` share one length (`validate_joint_state`).
+- **Progress** — keep `ExecutionStatus.progress` in `[0, 1]` so monitors and UI surfaces agree.
+
+Keep the base catalog small. Add covariance-bearing poses, richer frame graphs,
+or domain-specific schemas as separate Hub packs only once these payloads are
+not enough.
 
 <details class="reference-details">
-  <summary>Detailed field reference for implementers</summary>
-  <div>
+<summary>Detailed field reference for implementers</summary>
 
-<div class="type-grid type-grid-compact">
-  <div class="type-card"><span>Vector3</span><strong>3D value</strong><p><code>x</code>, <code>y</code>, <code>z</code>. Use for positions, directions, velocities, forces, and offsets when the unit is declared by context.</p></div>
-  <div class="type-card"><span>Quaternion</span><strong>Orientation</strong><p><code>x</code>, <code>y</code>, <code>z</code>, <code>w</code>. Normalize at boundaries; keep frame conventions outside the raw quaternion.</p></div>
-  <div class="type-card"><span>SE3Pose</span><strong>Rigid pose</strong><p><code>position</code> plus <code>orientation</code>. Prefer this for object, end-effector, and robot poses.</p></div>
-  <div class="type-card"><span>Twist</span><strong>Spatial velocity</strong><p><code>linear</code> plus <code>angular</code>. Use for velocity estimates or velocity commands.</p></div>
-  <div class="type-card"><span>Wrench</span><strong>Force and torque</strong><p><code>force</code> plus <code>torque</code>. Use at contact, manipulation, or controller boundaries.</p></div>
-  <div class="type-card"><span>JointState</span><strong>Joint arrays</strong><p><code>names</code>, <code>positions</code>, <code>velocities</code>, <code>efforts</code>. Arrays are aligned by index.</p></div>
-  <div class="type-card"><span>Header</span><strong>Boundary metadata</strong><p><code>stamp_ns</code>, <code>frame_id</code>, <code>source</code>. Attach this before values leave a local Flow boundary.</p></div>
-  <div class="type-card"><span>WorldState</span><strong>Scene state</strong><p>Current robot and object facts that perception, memory, and planning can share.</p></div>
-  <div class="type-card"><span>BeliefGraph</span><strong>Probabilistic memory</strong><p>Symbolic scene memory and confidence values for grounding and planning.</p></div>
-  <div class="type-card"><span>Skill / Plan</span><strong>Action vocabulary</strong><p>Named capabilities, parameters, and step sequences for planner-controller handoff.</p></div>
-  <div class="type-card"><span>Trajectory</span><strong>Timed motion</strong><p>A time-indexed pose sequence for motion planning or control examples.</p></div>
-  <div class="type-card"><span>ExecutionStatus</span><strong>Progress and terminal state</strong><p>Progress, status, and error text for monitors, controllers, and logs.</p></div>
-</div>
+The base catalog above covers the common handoffs. `retriever_typing.robotics_types`
+also carries less-common applied payloads for specific examples:
 
-  </div>
+- `ActionPlan` — `actions: List[Action]`, `total_duration`; `num_actions` property.
+- `TaskInstance` — `goal: TaskGoal`, `initial_observation`, `seed`.
+- `Observation` / `ObservationHistory` — multi-sensor image bundles and a bounded deque.
+- `ObjectVariable` / `ObjectSymbol` — symbolic placeholders and grounded object IDs.
+- `UnorderedObjectSet` / `ObjectDescriptionDict` — object-id sets and id-to-description maps.
+
+These stay source-only until an example needs them across a stable boundary.
+
 </details>
 
-<div class="boundary-note">
-<strong>Keep the base catalog small.</strong> Add covariance-bearing poses, richer frame graphs, or domain-specific schemas as separate Hub packs only after these base payloads are not enough.
-</div>
+Source: `src/retriever_typing/robotics_types.py`, `src/retriever_typing/core_types.py`,
+`retriever.types.spatial` (re-exported via `src/retriever_typing/v1.py`).

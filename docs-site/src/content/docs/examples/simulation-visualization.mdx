@@ -2,44 +2,171 @@
 title: Simulation and Visualization
 description: Rerun, mock-safe simulation, and HTML graph visualization lanes.
 ---
-Use this lane when the concise examples work and you want visible artifacts: Rerun streams, simulator traces, and self-contained HTML graph views. Start with the lightweight artifacts before enabling heavier simulator or GUI dependencies.
+Two runnable lanes with visible artifacts: a **closed-loop simulator** where the
+environment and policy are both Flows, and a **graph renderer** that validates
+the runtime IR and writes an inspectable HTML view. Both run without a real
+simulator or GPU.
 
-<div class="command-grid">
-  <div class="command-card"><strong>HTML graph proof</strong><code>pixi run demo-pipeline-html-viz</code><p>Writes a self-contained graph artifact and prints a compact ASCII graph.</p></div>
-  <div class="command-card"><strong>Mock robosuite</strong><code>pixi run demo-robosuite-mock</code><p>Prints mock environment/policy trace lines without requiring robosuite.</p></div>
-  <div class="command-card"><strong>TWIST2 Rerun lane</strong><code>pixi run -e twist2 demo-twist2-rerun</code><p>Optional visual lane for watching state evolve in a Rerun viewer.</p></div>
-</div>
+## Simulator and policy as Flows
+
+The Lift task is a feedback loop: the environment produces a `LiftState`, the
+policy consumes it and returns a `LiftAction`, which feeds back into the
+environment. `LiftEnvFlow` runs a deterministic mock so the smoke test needs no
+robosuite install.
+
+```python
+from retriever.flow import Flow, Latest, Pipeline, Rate, Trigger, io
+
+@io
+class LiftAction:
+    dz: float | None = None
+    grip: float | None = None
+
+@io
+class LiftState:
+    step: int | None = None
+    source: str | None = None
+    object_height: float | None = None
+    gripper_z: float | None = None
+    reward: float | None = None
+    done: bool | None = None
+
+class LiftEnvFlow(Flow[LiftAction, LiftState]):
+    """robosuite Lift, or a deterministic mock when robosuite is absent."""
+    def step(self, action: LiftAction | None) -> LiftState:
+        self.step_idx += 1
+        dz   = 0.0 if action is None or action.dz   is None else float(action.dz)
+        grip = 1.0 if action is None or action.grip is None else float(action.grip)
+        return self._step_mock(dz=dz, grip=grip)   # or _step_robosuite in real mode
+
+class HeuristicLiftPolicy(Flow[LiftState, LiftAction]):
+    """Approach, close the gripper, then lift."""
+    def step(self, state: LiftState | None) -> LiftAction:
+        if state is None or state.object_height is None:
+            return LiftAction(dz=-0.4, grip=1.0)
+        if state.done or state.object_height >= self.target_height:
+            return LiftAction(dz=0.0, grip=-1.0)
+        if state.gripper_z > state.object_height + 0.08:
+            return LiftAction(dz=-0.5, grip=1.0)
+        return LiftAction(dz=0.6, grip=-1.0)
+```
+
+The feedback edge is explicit: `env → policy` and `policy → env`. The environment
+ticks at `env_hz`, the policy at `policy_hz`, and the printer wakes on each new
+`step`.
+
+```python
+pipe = Pipeline("robosuite_lift_demo")
+with pipe:
+    env     = LiftEnvFlow(mode="mock", ...)          @ Rate(hz=20)
+    policy  = HeuristicLiftPolicy(target_height=1.05) @ Rate(hz=5)
+    printer = LiftPrinter(print_every=2)              @ Trigger("step")
+    pipe.connect(env, policy, sync=Latest())
+    pipe.connect(policy, env, sync=Latest())          # feedback loop
+    pipe.connect(env, printer, sync=Latest())
+```
+
+```bash
+pixi run demo-robosuite-mock
+```
+
+Real output — the mock is deterministic, so `object_z` rises once the gripper
+closes near the block and `reward` tracks the lift:
+
+```text
+[mock step=002] object_z=0.820 gripper_z=0.940 reward=0.000 done=False
+[mock step=004] object_z=0.820 gripper_z=0.900 reward=0.000 done=False
+[mock step=006] object_z=0.841 gripper_z=0.904 reward=0.021 done=False
+[mock step=008] object_z=0.883 gripper_z=0.952 reward=0.063 done=False
+[mock step=010] object_z=0.925 gripper_z=1.000 reward=0.105 done=False
+[mock step=012] object_z=0.967 gripper_z=1.048 reward=0.147 done=False
+```
+
+Swap `mode="robosuite"` (after installing the optional dependency) and the same
+graph drives the real simulator; `LiftState.source` reports which backend ran.
+
+## HTML graph proof
+
+`pipe.validate()` returns the runtime IR; `generate_ascii_graph` and
+`save_interactive_html` turn it into an inspectable graph — including feedback
+edges, clocks, and sync policies.
+
+```python
+from retriever.flow import Latest, Pipeline, Rate, Trigger, io
+from retriever.ir.viz import generate_ascii_graph, save_interactive_html
+
+pipe = Pipeline("visualization_demo")
+env       = DummyNode() @ Rate(hz=10.0)
+perception = DummyNode() @ Trigger("obs")
+planner    = DummyNode() @ Trigger("state")
+executor   = DummyNode() @ Trigger("plan", "state")
+pipe.connect(env, perception, map={"data": "data"}, sync=Latest())
+pipe.connect(perception, planner, map={"data": "data"}, sync=Latest())
+pipe.connect(planner, executor, map={"data": "data"}, sync=Latest())
+pipe.connect(perception, executor, map={"data": "data"}, sync=Latest())
+pipe.connect(executor, env, map={"data": "data"}, sync=Latest())   # closes the loop
+
+ir = pipe.validate()
+print(generate_ascii_graph(ir))
+save_interactive_html(ir, "out/golden_retriever_closed_loop_viz.html")
+```
+
+```bash
+pixi run demo-pipeline-html-viz
+```
+
+Real output — the ASCII graph shows each node's clock and the detected cycle, and
+the command writes a self-contained HTML artifact:
+
+```text
+Pipeline: visualization_demo
+============================
+NOTE: Cycle detected in graph topology (expected for closed-loop systems).
+[DummyNode] <Rate(10.0 Hz)>
+   --(data -> data: Latest)--> [DummyNode]
+
+[DummyNode] <Trigger(on ['obs'])>
+   --(data -> data: Latest)--> [DummyNode]
+   --(data -> _fanin/DummyNode__2/data: Latest)--> [DummyNode]
+
+[DummyNode] <Trigger(on ['state'])>
+   --(data -> _fanin/DummyNode__3/data: Latest)--> [DummyNode]
+
+[DummyNode] <Trigger(on ['plan', 'state'])>
+   --(data -> data: Latest)--> [DummyNode] (feedback/cycle)
+
+HTML visualization written to out/golden_retriever_closed_loop_viz.html
+```
+
+The generated graph, embedded from the artifact:
+
+<iframe
+  class="artifact-frame"
+  src="/artifacts/golden_retriever_closed_loop_viz.html"
+  title="Interactive GoldenRetriever closed-loop graph visualization"
+  loading="lazy"
+></iframe>
 
 ## Recommended Order
 
-<div class="path-grid">
-  <div class="path-card"><span>01</span><strong>Render the graph</strong><p>Inspect Flows, ports, clocks, sync policies, and feedback edges before changing the example.</p></div>
-  <div class="path-card"><span>02</span><strong>Run the mock trace</strong><p>Validate environment-as-Flow and policy-as-Flow behavior without simulator install friction.</p></div>
-  <div class="path-card"><span>03</span><strong>Opt into GUI/sim</strong><p>Use Rerun or real simulator lanes only after the lightweight artifacts match expectations.</p></div>
-</div>
+Run the visual lane from lightest to heaviest so each layer is verified before the next:
 
-## What The Artifacts Show
+1. **HTML graph proof** — `pixi run demo-pipeline-html-viz` renders the graph structure with no simulator or model.
+2. **Mock robosuite** — `pixi run demo-robosuite-mock` runs the env↔policy loop deterministically, without a robosuite install.
+3. **Real robosuite / Rerun** — swap `mode="robosuite"` (optional dependency) only after the mock trace looks right.
 
-<div class="html-artifact-card">
-  <div class="artifact-card-header">
-    <div>
-      <p class="kicker">Live HTML artifact</p>
-      <strong>Interactive Retriever graph, embedded from the generated artifact.</strong>
-      <p>Use this before moving to a heavier simulator or robot backend: inspect nodes, ports, clocks, sync policies, and feedback edges in the same HTML view produced by <code>pixi run demo-pipeline-html-viz</code>.</p>
-    </div>
-    <a href="/artifacts/golden_retriever_closed_loop_viz.html" target="_blank" rel="noreferrer">Open full graph</a>
-  </div>
-  <iframe
-    class="artifact-frame"
-    src="/artifacts/golden_retriever_closed_loop_viz.html"
-    title="Interactive Golden Retriever closed-loop graph visualization"
-    loading="lazy"
-  ></iframe>
-</div>
+## Why it's shaped this way
 
-| Artifact | Use it for | Dependency level |
-| --- | --- | --- |
-| HTML graph | Inspect structure, ports, and closed-loop shape. | Lightweight. |
-| Rerun viewer | Watch perception or simulator state evolve over time. | Optional GUI. |
-| Mock robosuite trace | Validate environment/policy wiring without simulator install. | Lightweight. |
-| Real simulator lanes | Validate timing with actual simulator dynamics. | Optional/heavy. |
+Making the environment and policy ordinary Flows keeps timing and handoffs
+visible in the graph instead of hidden in callbacks: the feedback edge, the two
+clock rates, and the sync policies are all inspectable IR. That is why the same
+graph renders to ASCII/HTML *and* runs against either a mock or a real backend.
+
+Heavier visual lanes reuse the same runtime once their dependencies are present:
+
+```bash
+pixi run -e twist2 demo-twist2-rerun   # MuJoCo + Rerun viewer (optional, heavy)
+```
+
+Source: `examples/advanced/robosuite_lift/app.py` and
+`examples/experimental/visualization/visualize_pipeline.py`.

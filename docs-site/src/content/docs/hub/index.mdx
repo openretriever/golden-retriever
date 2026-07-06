@@ -1,10 +1,10 @@
 ---
-title: Golden Pack Boundary
-description: What Golden exposes as reusable Retriever Hub packs.
+title: GoldenRetriever Pack Boundary
+description: What GoldenRetriever exposes as reusable Retriever Hub packs.
 ---
-<p class="kicker">Reusable applied packs</p>
-
-Golden is the proving ground for reusable Retriever Hub packs: stable robot payload references, conversion helpers, and example surfaces that can load outside the Golden source tree. A source example becomes a pack candidate only when another project can load the public boundary without knowing the Golden source tree.
+GoldenRetriever publishes its applied payloads as a **Retriever Hub module**. Once the
+repository and Hub index are public, another project loads a robot payload by
+name without cloning GoldenRetriever or knowing its source tree:
 
 ```python
 from retriever import hub
@@ -14,31 +14,73 @@ WorldState = hub.use("openretriever/golden-retriever:WorldState")
 
 ## What A Pack Contains
 
-<div class="rule-grid">
-  <div class="rule-card"><span>Manifest</span><strong>Explicit exports</strong><p>The public names live in <code>[tool.retriever.module.exports]</code>, not in scattered import paths.</p></div>
-  <div class="rule-card"><span>Lightweight import</span><strong>No robot dependencies</strong><p>Loading a Hub pack should not import camera, simulator, model, robot, or network dependencies.</p></div>
-  <div class="rule-card"><span>Smoke proof</span><strong>Known success output</strong><p><code>demo-golden-hub-pack</code> proves that exports load, instantiate, and round-trip.</p></div>
-</div>
+The exported names live in `[tool.retriever.module]` in `pyproject.toml`, not in
+scattered import paths. This is the exact manifest Hub reads:
+
+```toml
+[tool.retriever.module]
+module = "retriever_typing"
+min_retriever_version = "0.0.1"
+
+[tool.retriever.module.exports]
+WorldState = "retriever_typing.robotics_types:WorldState"
+Skill = "retriever_typing.robotics_types:Skill"
+Plan = "retriever_typing.robotics_types:Plan"
+convert_to_arrow = "retriever_typing.conversions:convert_to_arrow"
+# ... full list on the export catalog page
+```
+
+The contract across versions is the **registered schema**, not class identity.
+Pin one ref per app. Standard types stay in `retriever-core`; GoldenRetriever's exports
+compose them and never redefine one.
+
+## Prove the boundary loads
+
+`hub.use(...)` against the private repo will not resolve over the network yet,
+so the smoke demo loads *this repo's* manifest directly through the runtime Hub
+loader (`retriever.hub._loader.load_exports`) — the same code path Hub uses,
+without network access.
+
+```bash
+pixi run demo-golden-hub-pack
+```
+
+Real output — exports load, `WorldState` is visible through the unified registry
+under the Hub namespace, and the Arrow helpers round-trip an `Action`:
+
+```text
+Golden pack exports: WorldState, BeliefGraph, Skill, Plan, Trajectory, convert_to_arrow, convert_from_arrow
+Registry WorldState: _retriever_hub.golden_hub_pack_smoke__retriever_typing.robotics_types.WorldState
+Constructed WorldState: ['cup']
+Constructed Plan skills: ['pick']
+Arrow round-trip: Action OK
+Hub reference: hub.use("openretriever/golden-retriever:WorldState")
+Graph proof: run `pixi run demo-pipeline-html-viz` to validate and render an IR HTML artifact.
+```
+
+The `_retriever_hub.golden_hub_pack_smoke__...` prefix is the loader isolating
+the pack in its own namespace — the same behavior a real `hub.use` gets, so
+importing a pack can never clobber another project's registry.
 
 ## Pack Rules
 
 | Rule | Why it matters |
 | --- | --- |
-| Export through the manifest | Keeps the public surface explicit. |
-| Keep imports lightweight | Loading a Hub pack should not import optional integrations. |
-| Smoke every export | `demo-golden-hub-pack` should prove the boundary. |
-| Document expected output | Users need to know what success looks like. |
+| Export through the manifest. | The public surface is explicit and reviewable. |
+| Keep imports lightweight. | Loading a pack must not pull in camera, simulator, model, robot, or network deps. |
+| Smoke every export. | `demo-golden-hub-pack` proves the boundary loads and round-trips. |
+| Document expected output. | Users need to recognize success. |
 
 ## Runtime Bridge
 
-<div class="reference-strip">
-  <strong>Need the loader mechanics?</strong> Use the <a href="https://openretriever-docs.pages.dev/">core Retriever docs</a> for Hub loading, registry mechanics, standard runtime types, and module packaging. Golden defines the applied robot-facing pack boundary.
-</div>
+Loader mechanics, registry internals, and module packaging live in the core
+Retriever docs. GoldenRetriever only defines the applied robot-facing pack boundary.
 
 ## Continue
 
-<div class="card-grid">
-  <a class="info-card" href="/hub/export-catalog/"><strong>Golden export catalog</strong><span>See the manifest exports and source path for each public name.</span></a>
-  <a class="info-card" href="/hub/pack-roadmap/"><strong>Pack maturity guide</strong><span>Promote only stable, documented, smoke-tested surfaces.</span></a>
-  <a class="info-card" href="/examples/golden-hub-proof/"><strong>First Golden proof</strong><span>Run the smallest local command that validates the Hub boundary.</span></a>
-</div>
+- [Export catalog](/hub/export-catalog/) — every exported name and its source path.
+- [Pack maturity guide](/hub/pack-roadmap/) — when a source example is ready to become a pack.
+- [GoldenRetriever Hub proof](/examples/golden-hub-proof/) — the smallest command that validates the boundary.
+
+Source: `pyproject.toml` `[tool.retriever.module]`;
+demo `examples/advanced/core_composition/golden_hub_pack_smoke.py`.

@@ -1,49 +1,80 @@
 ---
 title: LeRobot Dataset Export
-description: Lightweight bridge from Golden event profiles to LeRobot-style dataset records.
+description: Lightweight bridge from GoldenRetriever event profiles to LeRobot-style dataset records.
 ---
-<p class="kicker">Dataset bridge</p>
+The LeRobot lane is a dataset-profile bridge, not a second runtime. It maps the
+canonical event rows from [data and event streams](/robot-payloads/data-event-streams/)
+into LeRobot-style records and back, so you can verify the conversion locally
+before any real dataset upload.
 
-The LeRobot lane is a dataset-profile example, not a second runtime path. It shows how Golden event streams can become dataset-friendly records while preserving the original timing, source, and conversion metadata.
+## The pipeline
 
-<div class="inline-command">
-  <strong>Run the bridge</strong>
-  <pre><code>pixi run demo-robotics-lerobot-bridge</code></pre>
-  <p>Expected result: the command prints canonical rows, LeRobot-style records, and round-trip rows so you can verify conversion without a real dataset upload.</p>
-</div>
+`event_table_rows` flattens an `EventBuffer` into canonical rows;
+`to_lerobot_records` assigns a per-`(episode_id, stream_id)` `frame_index` in
+deterministic event-time order and tucks Retriever metadata under `metadata`;
+`validate_lerobot_mapping` checks the frame indices are contiguous;
+`from_lerobot_records` reverses it.
 
-<div class="result-grid">
-  <div class="result-card"><span>Input</span><strong>Canonical rows</strong><p>Small Golden event records with explicit event time, source, and lineage.</p></div>
-  <div class="result-card"><span>Export</span><strong>LeRobot records</strong><p>Dataset-friendly rows that preserve the robot payload boundary.</p></div>
-  <div class="result-card"><span>Check</span><strong>Roundtrip rows</strong><p>A local conversion proof before any heavy dataset pipeline or cloud storage enters the loop.</p></div>
-</div>
+```python
+from retriever_typing.data import (
+    Event, EventBuffer, StreamId,
+    event_table_rows, to_lerobot_records, from_lerobot_records, validate_lerobot_mapping,
+)
 
-## Output To Recognize
+buffer = EventBuffer((
+    Event(stream_id=StreamId("joint"), event_time_ns=1_000, ingest_time_ns=1_010, seq=0, value={"q1": 0.1}, type_name="dict"),
+    Event(stream_id=StreamId("joint"), event_time_ns=2_000, ingest_time_ns=2_010, seq=1, value={"q1": 0.2}, type_name="dict"),
+    Event(stream_id=StreamId("joint"), event_time_ns=3_000, ingest_time_ns=3_010, seq=2, value={"q1": 0.3}, type_name="dict"),
+))
 
-```text
-Canonical rows: 2
-LeRobot records: 2
-Roundtrip rows: 2
-Sample record:
-  {...}
+rows = event_table_rows(buffer, episode_id="episode-001")
+records = to_lerobot_records(rows)
+validate_lerobot_mapping(records)              # raises on non-contiguous frame_index
+roundtrip_rows = from_lerobot_records(records) # rows -> records -> rows
 ```
 
-The exact payload values can change as examples evolve, but those four labels should stay stable: source rows, exported rows, round-trip rows, and one inspectable record.
+```bash
+pixi run demo-robotics-lerobot-bridge
+```
 
-## What It Demonstrates
+Real output — three source rows in, three records out, three rows back, and one
+inspectable record:
 
-<div class="card-grid">
-  <div class="info-card"><strong>Typed source payloads</strong><span>Start from Golden robot payloads before conversion.</span></div>
-  <div class="info-card"><strong>Dataset profile</strong><span>Map event records into fields expected by an offline dataset consumer.</span></div>
-  <div class="info-card"><strong>Lineage retention</strong><span>Preserve timing, source, and conversion details for debugging.</span></div>
-</div>
+```text
+Canonical rows: 3
+LeRobot records: 3
+Roundtrip rows: 3
+Sample record:
+  {'episode_id': 'episode-001', 'stream_id': 'joint', 'frame_index': 0, 'timestamp_ns': 1000, 'type_name': 'dict', 'payload': {'q1': 0.1}, 'metadata': {'ingest_time_ns': 1010, 'seq': 0, 'frame_id': None, 'units': None, 'lineage': []}}
+```
 
-## Keep The Boundary Small
+## Reading the record
+
+The LeRobot-facing fields sit at the top level; everything Retriever needs to
+reconstruct the original event is preserved under `metadata`:
+
+| Field | Meaning |
+| --- | --- |
+| `frame_index` | Dense 0-based index per `(episode_id, stream_id)`, ordered by event time. |
+| `timestamp_ns` | The original `event_time_ns`. |
+| `payload` | The event value, unchanged. |
+| `metadata.ingest_time_ns`, `metadata.seq` | Enough to restore total ordering on the way back. |
+| `metadata.frame_id`, `metadata.units`, `metadata.lineage` | Provenance carried through the conversion. |
+
+Because ingest time, seq, and lineage survive, the round-trip is lossless for
+ordering and provenance — the reason `Roundtrip rows` equals `Canonical rows`.
+
+## Keep the boundary small
 
 | Keep here | Keep out of first-run docs |
 | --- | --- |
-| Small local conversion example. | Heavy dataset generation. |
-| Event-time and source metadata preservation. | Cloud upload, private storage, or credential setup. |
-| Public payload/profile contract. | Robot-lab-specific capture procedures. |
+| Small local conversion, verifiable offline. | Heavy dataset generation. |
+| Event-time, source, and lineage preservation. | Cloud upload, private storage, credentials. |
+| The public row/record profile contract. | Robot-lab-specific capture procedures. |
 
-Keep this bridge lightweight. It should make the export shape clear before any large dataset pipeline grows around it.
+This bridge exists to make the export *shape* obvious before a large dataset
+pipeline grows around it.
+
+Source: `src/retriever_typing/data/lerobot_bridge.py`,
+`src/retriever_typing/data/dataset_manifest.py`;
+demo `examples/advanced/robotics_typing_standard/lerobot_bridge_demo.py`.

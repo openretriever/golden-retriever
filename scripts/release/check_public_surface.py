@@ -58,19 +58,19 @@ REQUIRED_TASKS = (
 
 DOC_MARKERS = {
     "README.md": (
-        "Golden Retriever is the applied reference layer",
+        "GoldenRetriever is the applied reference layer",
         "Start Here",
         "Surface Boundary",
         "pixi run public-surface-check",
     ),
     "docs-site/astro.config.mjs": (
         "starlightThemeNova",
-        "Golden Retriever",
+        "GoldenRetriever",
         "Reuse Robot Payloads",
         "Choose a Payload",
     ),
     "docs-site/public/llms.txt": (
-        "Golden Retriever",
+        "GoldenRetriever",
         "demo-golden-hub-pack",
         "demo-robosuite-mock",
         "demo-pipeline-html-viz",
@@ -82,9 +82,9 @@ DOC_MARKERS = {
         "LLM map: https://retriever-space.pages.dev/llms.txt",
     ),
     "docs-site/src/content/docs/index.mdx": (
-        "Golden examples start where the core quickstart ends",
+        "GoldenRetriever examples start where the core quickstart ends",
         "Run robot-facing examples",
-        "Golden is not a second runtime",
+        "GoldenRetriever is not a second runtime",
         "First Results To Recognize",
         "Recommended Route",
         "How The Retriever Surfaces Fit",
@@ -100,7 +100,7 @@ DOC_MARKERS = {
         "Maturity Levels",
     ),
     "docs-site/src/content/docs/examples/golden-hub-proof.mdx": (
-        "Golden Hub Proof",
+        "GoldenRetriever Hub Proof",
         'hub.use("openretriever/golden-retriever:WorldState")',
         "Arrow round-trip: Action OK",
     ),
@@ -112,13 +112,13 @@ DOC_MARKERS = {
         "demo-pipeline-html-viz",
     ),
     "docs-site/src/content/docs/hub/index.mdx": (
-        "Golden Pack Boundary",
+        "GoldenRetriever Pack Boundary",
         "What A Pack Contains",
         "Runtime Bridge",
         "Pack Rules",
     ),
     "docs-site/src/content/docs/hub/export-catalog.mdx": (
-        "Golden Export Catalog",
+        "GoldenRetriever Export Catalog",
         "RobotState",
         "TaskGoal",
         "Action",
@@ -143,7 +143,7 @@ DOC_MARKERS = {
     "docs-site/src/content/docs/robot-payloads/index.mdx": (
         "Robot Payload Reference",
         "Which payload should this Flow use?",
-        "What Golden Owns",
+        "What GoldenRetriever Owns",
         "demo-robotics-typing-catalog",
     ),
     "docs-site/src/content/docs/robot-payloads/type-catalog.mdx": (

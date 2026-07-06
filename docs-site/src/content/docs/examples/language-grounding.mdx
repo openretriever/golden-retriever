@@ -1,24 +1,104 @@
 ---
 title: Language and Grounding
-description: Captions, grounded references, and primitive plans over typed observations.
+description: Turn a typed observation into a primitive plan with ordinary Flows — no LLM dependency, fully runnable.
 ---
-Language examples sit after perception and memory. They show how typed observations become captions, grounded references, and small plan payloads without making the runtime depend on a specific LLM provider.
+This example turns a scene **caption** into a small **plan** using three plain
+Flows. There is no LLM in the loop: the planner is deterministic rules, so the
+example runs anywhere and shows the real point — the **typed data contract**
+between language and planning, and where a model would later slot in.
+
+## The Flows
+
+Each stage is a `Flow[In, Out]` whose payloads are standard language types from
+`retriever.types.language`. A `Flow` is a stateful function over a stream: it
+wakes on its clock and returns one typed record.
+
+```python
+from retriever.flow import Flow
+from retriever.types.language import Caption, PlanText, PlanStepText
+
+class CaptionSource(Flow[None, Caption]):
+    """Emits one caption per tick (stands in for a captioner / VLM)."""
+    def reset(self): self._i = 0
+    def step(self, _):
+        text = self.captions[self._i % len(self.captions)]
+        self._i += 1
+        return Caption(text=text, source="golden.language_examples")
+
+class CaptionPlanner(Flow[Caption, PlanText]):
+    """Caption -> ordered primitive steps. Rules here; swap for an LLM later."""
+    def step(self, caption: Caption) -> PlanText:
+        text = caption.text.lower()
+        steps = [PlanStepText(index=0, text=f"inspect scene: {caption.text}", action_label="inspect")]
+        if "red" in text:
+            steps.append(PlanStepText(index=len(steps), text="focus on the red object", action_label="focus"))
+        if "pick" in text or "grasp" in text:
+            steps.append(PlanStepText(index=len(steps), text="pick the target object", action_label="pick"))
+        if "place" in text or "goal" in text:
+            steps.append(PlanStepText(index=len(steps), text="place the target at the goal", action_label="place"))
+        return PlanText(steps=tuple(steps), summary=caption.text, source="caption_planner")
+
+class PlanTextPrinter(Flow[PlanText, None]):
+    def step(self, plan: PlanText) -> None:
+        print("plan=" + str([f"{s.index}:{s.action_label}:{s.text}" for s in plan.steps]))
+```
+
+`CaptionPlanner` only reads `caption.text` and returns a typed `PlanText` — it
+knows nothing about clocks, buffering, or how it's wired. That isolation is the
+whole point: replace the rule body with a real model and the graph is unchanged.
+
+## Wire it and run
+
+Clocks say *when* each Flow runs; `sync=` says *which* input record it consumes.
+The source ticks on a `Rate`; the planner and printer are `Trigger`ed by new
+arrivals on the port named in the type.
+
+```python
+from retriever.flow import Pipeline, Rate, Trigger, Latest
+
+pipe = Pipeline("language_caption_plan")
+with pipe:
+    source  = CaptionSource()   @ Rate(hz=10)
+    planner = CaptionPlanner()  @ Trigger("text")     # wakes on a new Caption.text
+    printer = PlanTextPrinter() @ Trigger("summary")  # wakes on a new PlanText.summary
+    pipe.connect(source, planner, sync=Latest())
+    pipe.connect(planner, printer, sync=Latest())
+
+for _ in range(3):
+    pipe.step(dt=0.1)   # in-process; set a breakpoint in any step()
+pipe.close_stepper()
+```
 
 ```bash
 pixi run -e golden-local demo-language-caption-plan
+```
+
+## What you get
+
+Real output — three captions in, three plans out. The rules fire on the words
+present in each caption:
+
+```text
+plan=['0:inspect:inspect scene: red cube on the left near the blue cylinder', '1:focus:focus on the red object']
+plan=['0:inspect:inspect scene: pick the red cube and place it at the goal', '1:focus:focus on the red object', '2:pick:pick the target object', '3:place:place the target at the goal']
+plan=['0:inspect:inspect scene: inspect the blue object before moving']
+```
+
+## Why it's shaped this way
+
+`Caption`, `PlanText`, and `PlanStepText` are **standard payloads** — the same
+types perception, memory, and planning Flows hand each other. Because the
+contract is typed and explicit, you can:
+
+- swap `CaptionPlanner`'s rule body for a real VLM without touching the graph,
+- step the whole pipeline in-process and breakpoint inside any `step()`,
+- record the run and replay the exact caption→plan stream later.
+
+The sibling example resolves referring expressions ("the red one" → a detected
+object) with the same structure:
+
+```bash
 pixi run -e golden-local demo-language-grounded-reference
 ```
 
-## Expected Shape
-
-<div class="result-grid">
-  <div class="result-card"><span>Caption</span><strong>Observation summary</strong><pre>{`scene: red block near blue bowl
-caption: pick the red block first`}</pre></div>
-  <div class="result-card"><span>Grounding</span><strong>Reference resolution</strong><pre>{`target: "the red one"
-resolved_object: red_block
-confidence: 0.92`}</pre></div>
-  <div class="result-card"><span>Plan</span><strong>Primitive skills</strong><pre>{`skills: [approach, grasp, lift]
-status: planned`}</pre></div>
-</div>
-
-The point is not a large language model benchmark. The point is the data contract between perception, memory, language, and planning Flows.
+Source: `examples/advanced/language_examples/` (`caption_to_plan.py`, `grounded_reference.py`, `common.py`).

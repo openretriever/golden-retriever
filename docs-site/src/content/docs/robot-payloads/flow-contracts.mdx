@@ -1,61 +1,134 @@
 ---
 title: Payload Flow Contracts
-description: How Golden robot payloads cross reusable Flow boundaries.
+description: How GoldenRetriever robot payloads cross reusable Flow boundaries.
 ---
-<div class="reference-hero">
-  <div>
-    <p class="kicker">Reusable Flow boundaries</p>
-    <h2>Make the robot handoff explicit before a graph becomes reusable.</h2>
-    <p>A Golden Flow should not depend on a source folder, simulator callback, or camera pipeline convention. It should receive one typed input object, return one typed output object, and keep validation at the boundary where robot data changes meaning.</p>
-  </div>
-  <div class="reference-command">
-    <p class="kicker">Run first</p>
-    <pre><code>pixi run demo-robotics-typing-contract
-pixi run demo-robotics-typing-boundary</code></pre>
-    <p>Expected result: composite I/O access works, qualified fields stay stable, and frame/time/source metadata survives a perception-to-control boundary.</p>
-  </div>
-</div>
-
-## What The Contract Protects
-
-<div class="result-grid">
-  <div class="result-card"><span>Names</span><strong>Downstream code knows what it receives</strong><p>Use named payloads and fields instead of anonymous dicts that only one example understands.</p></div>
-  <div class="result-card"><span>Boundary</span><strong>Robot metadata survives handoff</strong><p>Stamped payloads keep frame, event time, and source before values cross into planning, control, replay, or export.</p></div>
-  <div class="result-card"><span>Reuse</span><strong>Hub packs can load the same surface</strong><p>Stable inputs and outputs can become manifest exports without importing optional robot dependencies.</p></div>
-</div>
-
-## Minimal Pattern
+A `Flow[In, Out]` declares its I/O contract in the type parameters: it consumes
+one typed input port and returns one typed output payload, and both must be
+`@io`-decorated. The runtime enforces this at class-definition time.
 
 ```python
-from dataclasses import dataclass
+from retriever.flow import Flow
+from retriever.flow.io import is_flow_io
+from retriever_typing import PoseStamped, JointState
+from retriever_typing.robotics_types import WorldState, Skill
 
-from retriever.flow import Flow, io
-from retriever_typing import PoseStamped
-from retriever_typing.robotics_types import Skill, WorldState
-
-@io
-@dataclass
-class PickInput:
-    world: WorldState
-    target_pose: PoseStamped
-
-class PickSelector(Flow[PickInput, Skill]):
-    def step(self, inp: PickInput) -> Skill:
-        return Skill(name="pick", params={"target_frame": inp.target_pose.header.frame_id})
+is_flow_io(PoseStamped)   # True  — standard spatial types are @io, valid ports
+is_flow_io(JointState)    # True
+is_flow_io(WorldState)    # False — applied payloads are plain dataclasses
+is_flow_io(Skill)         # False
 ```
 
-The example stays ordinary Python: a typed input object, a typed output object, and a synchronous `step(...)` method. Retriever handles graph execution separately; Golden keeps the robot-facing payloads clear enough to reuse.
+Declaring a non-`@io` type as a port raises immediately, so the contract can't
+drift silently:
 
-## Contract Rules
+```text
+FlowError: [FLOW_TYPE_NOT_COMPATIBLE]: Flow input type must use @io decorator,
+got <class 'retriever_typing.robotics_types.WorldState'>
+```
+
+That split is the whole design: **standard spatial/perception/language payloads
+are the port currency; applied GoldenRetriever payloads travel as values** carried inside
+steps, returned to callers, resolved through the registry, and exported via Hub.
+
+## One typed port in, one typed payload out
+
+The controller stage from the boundary demo is a real `Flow[PoseStamped,
+TwistStamped]` — both ports are `@io` spatial types, so frame, time, and source
+survive the handoff:
+
+```python
+from retriever.flow import Flow
+from retriever_typing import PoseStamped, TwistStamped, Header, Twist, Vector3
+
+class ApproachController(Flow[PoseStamped, TwistStamped]):
+    def step(self, target: PoseStamped) -> TwistStamped:
+        return TwistStamped(
+            header=Header(
+                stamp_ns=target.header.stamp_ns + 1_000_000,
+                frame_id="base_link",
+                source="approach_controller",
+            ),
+            twist=Twist(
+                linear=Vector3(max(0.0, target.pose.position.x - 0.25), target.pose.position.y * 0.4, 0.0),
+                angular=Vector3(0.0, 0.0, 0.15),
+            ),
+        )
+```
+
+`demo-robotics-typing-boundary` runs the full camera → frame-normalization →
+control chain as plain typed functions and then round-trips the command through
+Arrow. The point is that the frame/source transition is *in the payload*, not
+implied:
+
+```bash
+pixi run demo-robotics-typing-boundary
+```
+
+```text
+Perception to control boundary demo
+  camera_target: camera_color_optical_frame rgb_detector Vector3(x=0.42, y=-0.08, z=0.63)
+  base_target: base_link frame_projection Vector3(x=0.3, y=-0.08, z=0.45)
+  command: base_link approach_controller Vector3(x=0.05333333333333332, y=-0.032, z=0.0)
+  serialized_roundtrip: TwistStamped base_link Vector3(x=0.05333333333333332, y=-0.032, z=0.0)
+```
+
+The pose enters in `camera_color_optical_frame` and leaves as a command in
+`base_link`; the serialized round-trip recovers the same `TwistStamped` with its
+frame intact.
+
+## Multiple inputs: tuple ports and qualified access
+
+For more than one input, a Flow takes a tuple of ports. The shipped
+`DetectionGrounder` is `Flow[(ReferringExpression, DetectionBatch),
+GroundedPhrase]` and reads each input by its type name:
+
+```python
+class DetectionGrounder(Flow[(ReferringExpression, DetectionBatch), GroundedPhrase]):
+    def step(self, inp):
+        if isinstance(inp, tuple):
+            expression, batch = inp
+        else:
+            expression = inp.ReferringExpression   # qualified access by port name
+            batch = inp.DetectionBatch
+        ...
+```
+
+When two ports share a field name, unqualified access is ambiguous by design.
+`demo-robotics-typing-contract` demonstrates the rule on a composite of two
+`PoseStamped` payloads plus a `JointState`: a unique field resolves unqualified,
+a shared field (`header`) raises, and qualified access disambiguates before a
+planner step consumes it.
+
+```bash
+pixi run demo-robotics-typing-contract
+```
+
+```text
+Unique field access:
+  names = ('j1', 'j2', 'j3')
+Ambiguous field access (expected error):
+  ambiguous field 'header' present in ['pose', 'base']; use qualified access
+Qualified access:
+  pose.header.frame_id = map
+  base.header.frame_id = base_link
+Planner output:
+  MotionCommand(target_x=0.967, gripper_open=True)
+```
+
+## Contract rules
 
 | Rule | Practical meaning | Failure avoided |
 | --- | --- | --- |
-| Prefer typed payloads over dicts. | Type names become documentation, registry keys, and validation anchors. | Anonymous payloads that only one example understands. |
-| Keep field names stable. | Downstream examples can compose without adapter glue. | Silent breakage after renaming `goal_pose` to `target`. |
-| Qualify ambiguous fields. | Multiple poses, goals, or statuses stay distinguishable. | Collisions between `robot.pose`, `object.pose`, and `goal.pose`. |
-| Validate at boundaries. | Normalize frame, time, source, progress, and array lengths before reuse. | Bad payloads moving deeper into planner/controller Flows. |
-| Keep optional integrations explicit. | Camera, simulator, model, and robot dependencies stay outside the base contract. | A first-run example that fails before teaching composition. |
+| Ports are `@io` types. | Use spatial/perception/language payloads as Flow ports; carry applied types as values. | `FlowError` at class definition. |
+| Prefer typed payloads over dicts. | Type names become documentation, registry keys, and validation anchors. | Anonymous payloads only one example understands. |
+| Keep field names stable. | Downstream Flows compose without adapter glue. | Silent breakage after renaming `goal_pose` to `target`. |
+| Qualify shared fields. | Multiple poses/goals/statuses stay distinguishable. | Collisions between `pose.header` and `base.header`. |
+| Validate at boundaries. | Normalize frame, time, source, and array lengths before reuse. | Bad payloads reaching planner/controller Flows. |
 
-<div class="reference-strip">
-  <strong>Need the runtime semantics?</strong> Use the core Retriever docs for Flow, Pipeline, clocks, and sync. This Golden page only explains the applied robot payload contract built on top of those primitives.
-</div>
+Runtime semantics for Flow, Pipeline, clocks, and sync live in the core
+Retriever docs. This page only covers the applied robot-payload contract built
+on top of them.
+
+Source: `examples/advanced/robotics_typing_standard/perception_to_control_boundary_demo.py`,
+`compositional_contract_demo.py`; tuple-port Flow in
+`examples/advanced/language_examples/common.py`.

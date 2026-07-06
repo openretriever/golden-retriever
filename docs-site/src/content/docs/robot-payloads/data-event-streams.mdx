@@ -2,45 +2,109 @@
 title: Robot Data and Event Streams
 description: Event buffers, joins, windows, lineage, and dataset export examples.
 ---
-<p class="kicker">Replayable robot data</p>
+Camera frames, joint states, commands, and status updates arrive at different
+times and in different orders. `retriever_typing.data` gives every value an
+event time and a source so a stream stays deterministic under replay. The types
+are immutable dataclasses in registry category `data`.
 
-Robot data rarely arrives in one neat loop. Camera frames, commands, plans, observations, and status updates arrive at different times. Golden data examples show how to keep those streams replayable and exportable while preserving event time and source metadata.
+```python
+from retriever_typing.data import Event, EventBuffer, StreamId
 
-<div class="command-grid">
-  <div class="command-card"><strong>Build a buffer</strong><code>pixi run demo-robotics-data-eventstream</code><p>Expected result: timestamped events are appended, queried by window, and printed with source metadata intact.</p></div>
-  <div class="command-card"><strong>Join streams</strong><code>pixi run demo-robotics-data-join</code><p>Expected result: observation and command events align by event time instead of callback arrival order.</p></div>
-</div>
+evt = Event(
+    stream_id=StreamId("camera"),
+    event_time_ns=1_000,     # when the robot observed it
+    ingest_time_ns=1_050,    # when the process received it
+    seq=0,
+    value=0.2,
+    type_name="float",
+)
+```
 
-<div class="result-grid">
-  <div class="result-card"><span>Record</span><strong>Every value keeps event time</strong><p>Logs and datasets can explain when the robot saw, planned, commanded, or reported a value.</p></div>
-  <div class="result-card"><span>Replay</span><strong>Queries are deterministic</strong><p>Windowed reads depend on recorded timestamps, not live scheduling jitter.</p></div>
-  <div class="result-card"><span>Export</span><strong>Lineage survives conversion</strong><p>Dataset rows keep source and conversion metadata so downstream errors remain traceable.</p></div>
-</div>
+Two clocks are always explicit: `event_time_ns` (what actually happened) and
+`ingest_time_ns` (when the callback fired). `Event.ordering_key()` sorts by
+`(event_time, ingest_time, stream_id, seq)`, so a merge is reproducible even
+when two streams share a timestamp.
 
-## Output To Recognize
+## Deterministic ordering and windows
+
+`merge_sorted` interleaves buffers by event time; `latest` and `window_agg`
+read from the merged stream by recorded time, not arrival order.
+
+```python
+from retriever_typing.data import EventBuffer, merge_sorted, latest, window_agg, WindowPolicy
+
+merged = merge_sorted(camera, joint)          # ordered by ordering_key()
+latest(merged)                                # value with the largest event_time
+window_agg(merged, now_ns=2_000, policy=WindowPolicy(duration_ns=1_000, agg="mean"))
+```
+
+```bash
+pixi run demo-robotics-data-eventstream
+```
+
+Note the camera event at `event=2000` sorts *after* the joint event at the same
+time because its `ingest` is later — the ordering key is total and stable:
 
 ```text
 Deterministic merged order:
+  stream=camera event=1000 ingest=1050 seq=0 value=0.2
+  stream=joint event=1500 ingest=1510 seq=0 value=1.0
+  stream=joint event=2000 ingest=2020 seq=1 value=1.4
+  stream=camera event=2000 ingest=2100 seq=1 value=0.5
+
 Processing-time profile:
-Exact join:
-Latest-before join (max_delta=50):
-Window join (+/-20):
+  latest = 0.5
+  window mean at now=2_000ns over 1_000ns = 0.7749999999999999
 ```
 
-Those labels are the point of the examples: a later user should be able to tell whether timing alignment, windowing, and lineage survived without reading the implementation first.
+## Event-time joins carry lineage
 
-## What Each Piece Is For
+The join operators align two streams by recorded time and stamp each result
+with a `LineageRef` naming the source events it came from — so an exported row
+can still explain where it came from.
 
-| Concept | Use it for | Check |
+```python
+from retriever_typing.data import align_exact, align_latest_before, align_window
+
+align_exact(left, right)                                   # same event_time only
+align_latest_before(left, right, max_delta_ns=50)          # most recent left <= right, within delta
+align_window(left, right, window_ns=20)                    # any left within +/- window of right
+```
+
+```bash
+pixi run demo-robotics-data-join
+```
+
+Each joined value keeps `lineage=[A:<t>, B:<t>]`, the exact source timestamps
+that produced it:
+
+```text
+Exact join:
+  t=180 value=(2, 10) lineage=['A:180', 'B:180']
+Latest-before join (max_delta=50):
+  t=180 value=(2, 10) lineage=['A:180', 'B:180']
+  t=200 value=(2, 20) lineage=['A:180', 'B:200']
+Window join (+/-20):
+  t=180 value=(2, 10) lineage=['A:180', 'B:180']
+  t=200 value=(2, 20) lineage=['A:180', 'B:200']
+```
+
+## What each piece is for
+
+| Type / helper | Use it for | Check |
 | --- | --- | --- |
-| `Event` | One timestamped value with source metadata. | Value, event time, source, and lineage are explicit. |
-| `EventBuffer` | A bounded event history. | Window queries are deterministic. |
-| Event-time join | Aligning two streams. | The join uses recorded timestamps, not callback timing. |
-| Window | Aggregating over a temporal slice. | The slice is explicit and replayable. |
-| Lineage | Tracking conversion and source details. | Exported data still explains where it came from. |
+| `Event` | One timestamped value with source metadata. | Event time, ingest time, source, and lineage are explicit. |
+| `EventBuffer` | An immutable event history. | `sorted()`, `within(start, end)`, and `latest_event()` are deterministic. |
+| `StreamId` | A stable stream identity. | Non-empty; used in ordering and manifests. |
+| `align_*` | Aligning two streams by event time. | Uses recorded timestamps, not callback timing. |
+| `WindowPolicy` | Aggregating over a temporal slice. | Duration and agg (`first/last/max/min/mean`) are explicit. |
+| `LineageRef` | Tracking derivation. | Joined/exported values still name their sources. |
 
-## Why This Belongs In Golden
+Core Retriever owns the runtime event-buffer mechanics and scheduler. GoldenRetriever
+adds this applied data profile: enough timing and provenance on a camera
+observation, command, or state estimate to debug it after the fact. It feeds
+directly into the [LeRobot export](/robot-payloads/lerobot-export/).
 
-Core Retriever owns runtime event mechanics. Golden shows the applied robot-data profile: how a camera observation, command, state estimate, or dataset record should carry enough timing and provenance to be debugged later.
-
-Use this path when you need reproducible examples for record/replay, dataset export, or cross-runtime comparison.
+Source: `src/retriever_typing/data/` (`v1.py`, `buffer.py`, `join.py`);
+demos `examples/advanced/robotics_typing_standard/data_spec_eventstream_demo.py`,
+`multi_stream_join_demo.py`.

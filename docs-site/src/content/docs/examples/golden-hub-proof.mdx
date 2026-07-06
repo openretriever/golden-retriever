@@ -1,57 +1,86 @@
 ---
-title: Golden Hub Proof
-description: The smallest proof that Golden extends Retriever through Hub-loadable exports.
+title: GoldenRetriever Hub Proof
+description: The smallest proof that GoldenRetriever extends Retriever through Hub-loadable exports.
 ---
-<div class="reference-hero">
-  <div>
-    <p class="kicker">Smallest Golden check</p>
-    <h2>Prove Golden can extend Retriever without optional robot dependencies.</h2>
-    <p>This command proves that a project outside the core runtime can expose reusable robot payloads through Retriever Hub.</p>
-  </div>
-  <div class="reference-command">
-    <p class="kicker">Run first</p>
-    <pre><code>{`git clone https://github.com/openretriever/golden-retriever.git
-cd golden-retriever
-pixi install
-pixi run demo-golden-hub-pack`}</code></pre>
-    <p>Run this after the core Retriever visual quickstart works. No robot, camera, simulator, model, network service, or GUI is required.</p>
-  </div>
-</div>
+The smallest check that a project *outside* the core runtime can publish reusable
+robot payloads through Retriever Hub. No robot, camera, simulator, model,
+network, or GUI is required.
 
-The command does four things:
+```bash
+pixi run demo-golden-hub-pack
+```
 
-1. reads the `[tool.retriever.module]` manifest,
-2. loads representative exports through the runtime Hub loader,
-3. checks that robot-facing types such as `WorldState` are visible through the unified registry,
-4. round-trips a lightweight `Action` payload through the exported Arrow helpers.
+## What it does
 
-Typical output:
+The smoke test loads this repo's `[tool.retriever.module]` manifest through the
+same runtime Hub loader that `hub.use(...)` uses, then exercises the exports:
+construct payloads, look one up in the unified registry, and round-trip a payload
+through the exported Arrow helpers.
+
+```python
+import tomllib
+from pathlib import Path
+from retriever.hub._loader import load_exports
+from retriever.registry.types import get_type_info, list_types
+
+# 1. read the manifest and load exports through the Hub loader
+manifest = tomllib.loads(Path("pyproject.toml").read_text())["tool"]["retriever"]["module"]
+exports = load_exports(Path("."), manifest["module"], manifest["exports"],
+                       namespace="golden_hub_pack_smoke",
+                       hub_meta={"org": "openretriever", "name": "golden-retriever"})
+
+WorldState, Skill, Plan, Action = (exports[n] for n in ("WorldState", "Skill", "Plan", "Action"))
+convert_to_arrow, convert_from_arrow = exports["convert_to_arrow"], exports["convert_from_arrow"]
+
+# 2. construct robot-facing payloads
+world = WorldState(object_poses={"cup": pose}, robot_pose=pose, timestamp=0.0)
+plan  = Plan(skills=[Skill(name="pick", params={"object": "cup"}, confidence=0.95)])
+action = Action(type="pick", parameters={"object": "cup"}, timestamp=0.0, priority=1)
+
+# 3. Arrow round-trip must be lossless
+assert convert_from_arrow(convert_to_arrow(action), Action) == action
+
+# 4. the type is visible in the unified registry
+assert "WorldState" in list_types()
+print("Registry WorldState:", get_type_info("WorldState").type_class.__module__)
+```
+
+## What you get
+
+Real output. The exports load, `WorldState` resolves through the registry under a
+Hub-namespaced module, payloads construct, and the Arrow round-trip is lossless:
 
 ```text
 Golden pack exports: WorldState, BeliefGraph, Skill, Plan, Trajectory, convert_to_arrow, convert_from_arrow
-Registry WorldState: _retriever_hub...WorldState
+Registry WorldState: _retriever_hub.golden_hub_pack_smoke__retriever_typing.robotics_types.WorldState
 Constructed WorldState: ['cup']
 Constructed Plan skills: ['pick']
 Arrow round-trip: Action OK
-Retriever Hub reference: hub.use("openretriever/golden-retriever:WorldState")
+Hub reference: hub.use("openretriever/golden-retriever:WorldState")
+Graph proof: run `pixi run demo-pipeline-html-viz` to validate and render an IR HTML artifact.
 ```
 
-## Hub Reference Shape
+## Hub reference shape
+
+Once the repo and Hub index are public, the same payloads load over Hub with no
+manifest plumbing — install the runtime once, then pull domain packs by name:
 
 ```python
 from retriever import hub
 
-WorldState = hub.use("openretriever/golden-retriever:WorldState")
-Plan = hub.use("openretriever/golden-retriever:Plan")
+WorldState       = hub.use("openretriever/golden-retriever:WorldState")
+Plan             = hub.use("openretriever/golden-retriever:Plan")
 convert_to_arrow = hub.use("openretriever/golden-retriever:convert_to_arrow")
 ```
 
-Users install the runtime once, then load domain packs through Hub. Golden stays useful because its examples prove that boundary with robot-facing payloads.
+## Why it's shaped this way
 
-## Continue
+Loading through the manifest (not a direct import) is the point: it proves the
+pack boundary the same way a remote Hub fetch would, while staying offline. The
+registry lookup and Arrow round-trip confirm the exports are real runtime types —
+usable and serializable — not just names in a file.
 
-<div class="card-grid">
-  <a class="info-card" href="/hub/export-catalog/"><strong>Export catalog</strong><span>See the exact Golden exports and their maturity.</span></a>
-  <a class="info-card" href="/hub/pack-roadmap/"><strong>Pack maturity guide</strong><span>Know when a source example is ready to become a reusable pack.</span></a>
-  <a class="info-card" href="/examples/"><strong>Example catalog</strong><span>Continue with perception, memory, language, composition, and visualization lanes.</span></a>
-</div>
+Continue with the [export catalog](/hub/export-catalog/) for the exact exports
+and their maturity, or the [example catalog](/examples/) for the applied lanes.
+
+Source: `examples/advanced/core_composition/golden_hub_pack_smoke.py`.

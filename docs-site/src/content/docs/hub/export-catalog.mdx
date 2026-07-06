@@ -1,63 +1,74 @@
 ---
-title: Golden Export Catalog
+title: GoldenRetriever Export Catalog
 description: The current manifest exports intended for Retriever Hub use.
 ---
-<p class="kicker">Hub-loadable boundary</p>
+This page mirrors the live `[tool.retriever.module.exports]` manifest in
+`pyproject.toml`. Loading any of these must not require a camera, simulator,
+model, robot, network service, or source-tree knowledge — they resolve to plain
+payload classes and two conversion helpers.
 
-The Golden pack should stay import-safe: loading these exports must not require a camera, simulator, model, robot, network service, or local source-tree knowledge. This page mirrors the current `[tool.retriever.module.exports]` manifest.
-
-<div class="inline-command">
-  <strong>Verify the manifest boundary</strong>
-  <pre><code>pixi run demo-golden-hub-pack</code></pre>
-  <p>Expected result: exports load, representative payloads instantiate, and the Arrow conversion helpers round-trip a lightweight action payload.</p>
-</div>
-
-## Choose The Export By Job
-
-<div class="result-grid">
-  <div class="result-card"><span>Scene</span><strong>Need current or remembered state?</strong><p>Start with <code>WorldState</code>, <code>RobotState</code>, or <code>BeliefGraph</code>.</p></div>
-  <div class="result-card"><span>Task</span><strong>Need planner handoff?</strong><p>Start with <code>TaskGoal</code>, <code>Skill</code>, <code>Plan</code>, or <code>StructuredPlan</code>.</p></div>
-  <div class="result-card"><span>Exchange</span><strong>Need lightweight conversion?</strong><p>Use <code>Action</code>, <code>Command</code>, <code>Status</code>, and Arrow helpers.</p></div>
-</div>
-
-## Export Groups
-
-<div class="choice-grid">
-  <div class="choice-card"><span>Scene</span><strong>World and belief</strong><p><code>WorldState</code>, <code>RobotState</code>, and <code>BeliefGraph</code> cover current state and remembered state.</p></div>
-  <div class="choice-card"><span>Task</span><strong>Goal, skill, plan</strong><p><code>TaskGoal</code>, <code>Skill</code>, <code>Plan</code>, and <code>StructuredPlan</code> cover planner-facing intent and action structure.</p></div>
-  <div class="choice-card"><span>Control</span><strong>Trajectory and status</strong><p><code>Trajectory</code> and <code>ExecutionStatus</code> cover motion handoff and progress reporting.</p></div>
-  <div class="choice-card"><span>Interop</span><strong>Core helpers</strong><p><code>Action</code>, <code>Command</code>, <code>Status</code>, <code>convert_to_arrow</code>, and <code>convert_from_arrow</code> cover lightweight exchange and dataset paths.</p></div>
-</div>
-
-## Manifest Mirror
+## The manifest
 
 | Export | Source | First use |
 | --- | --- | --- |
 | `WorldState` | `retriever_typing.robotics_types:WorldState` | Perception, memory, planning. |
 | `RobotState` | `retriever_typing.robotics_types:RobotState` | Robot wrapper, monitor, policy. |
 | `BeliefGraph` | `retriever_typing.robotics_types:BeliefGraph` | Memory and grounding. |
-| `Skill` | `retriever_typing.robotics_types:Skill` | Planner to controller handoff. |
+| `Skill` | `retriever_typing.robotics_types:Skill` | Planner-to-controller handoff. |
 | `Plan` | `retriever_typing.robotics_types:Plan` | Task planning. |
 | `StructuredPlan` | `retriever_typing.robotics_types:StructuredPlan` | Typed multi-step planning. |
-| `TaskGoal` | `retriever_typing.robotics_types:TaskGoal` | User intent, affordances, and success criteria. |
-| `Trajectory` | `retriever_typing.robotics_types:Trajectory` | Motion planner/controller examples. |
+| `TaskGoal` | `retriever_typing.robotics_types:TaskGoal` | Intent, affordances, success criteria. |
+| `Trajectory` | `retriever_typing.robotics_types:Trajectory` | Motion planner / controller. |
 | `ExecutionStatus` | `retriever_typing.robotics_types:ExecutionStatus` | Monitor and controller outputs. |
 | `Action` | `retriever_typing.core_types:Action` | Lightweight action payloads. |
 | `Command` | `retriever_typing.core_types:Command` | Runtime or robot command payloads. |
 | `Status` | `retriever_typing.core_types:Status` | Status exchange and smoke demos. |
-| `convert_to_arrow` | `retriever_typing.conversions:convert_to_arrow` | Dataset and event stream examples. |
-| `convert_from_arrow` | `retriever_typing.conversions:convert_from_arrow` | Dataset and event stream examples. |
+| `convert_to_arrow` | `retriever_typing.conversions:convert_to_arrow` | Dataset / event-stream serialization. |
+| `convert_from_arrow` | `retriever_typing.conversions:convert_from_arrow` | Dataset / event-stream deserialization. |
 
-## Use Directly Or Through Hub
+## By job
+
+- **Scene / memory** — `WorldState`, `RobotState`, `BeliefGraph`.
+- **Task / plan** — `TaskGoal`, `Skill`, `Plan`, `StructuredPlan`.
+- **Control** — `Trajectory`, `ExecutionStatus`.
+- **Interop** — `Action`, `Command`, `Status`, `convert_to_arrow`, `convert_from_arrow`.
+
+## Use it directly, or through Hub
+
+In the GoldenRetriever source tree, import directly. From another project (once the repo
+and Hub index are public), the same names load through Hub and resolve to the
+same classes:
 
 ```python
 from retriever import hub
 from retriever_typing.robotics_types import WorldState
 
+# Once public — resolves to the manifest export above:
 WorldStateFromHub = hub.use("openretriever/golden-retriever:WorldState")
 assert WorldStateFromHub.__name__ == WorldState.__name__
 ```
 
-<div class="boundary-note">
-<strong>Promotion rule:</strong> a Golden export is public only when this catalog, the manifest, and <code>demo-golden-hub-pack</code> agree. If an export needs optional simulator/model/camera dependencies, keep it source-only until it has a lightweight boundary.
-</div>
+The `convert_to_arrow` / `convert_from_arrow` pair is what makes the payloads
+dataset- and replay-friendly. The Hub smoke demo exercises exactly that on an
+exported `Action`:
+
+```bash
+pixi run demo-golden-hub-pack
+```
+
+```text
+Golden pack exports: WorldState, BeliefGraph, Skill, Plan, Trajectory, convert_to_arrow, convert_from_arrow
+Registry WorldState: _retriever_hub.golden_hub_pack_smoke__retriever_typing.robotics_types.WorldState
+Constructed WorldState: ['cup']
+Constructed Plan skills: ['pick']
+Arrow round-trip: Action OK
+Hub reference: hub.use("openretriever/golden-retriever:WorldState")
+```
+
+**Promotion rule:** an export is public only when this catalog, the manifest,
+and `demo-golden-hub-pack` agree. If a payload needs an optional
+simulator/model/camera dependency to import, it stays source-only until it has a
+lightweight boundary.
+
+Source: `pyproject.toml` `[tool.retriever.module.exports]`;
+demo `examples/advanced/core_composition/golden_hub_pack_smoke.py`.

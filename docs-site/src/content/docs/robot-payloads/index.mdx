@@ -1,56 +1,83 @@
 ---
 title: Robot Payload Reference
-description: Choose reusable robot-facing payloads for Golden examples and Hub pack candidates.
+description: Choose reusable robot-facing payloads for GoldenRetriever examples and Hub pack candidates.
 ---
-<div class="reference-hero">
-  <div>
-    <p class="kicker">Applied payload layer</p>
-    <h2>Use robot payloads when an example needs a stable handoff.</h2>
-    <p>Core Retriever gives you Flow, Pipeline, clocks, sync, execution, IR, replay, and Hub loading. Golden adds the applied vocabulary around robot boundaries: world state, belief, skills, plans, trajectories, stamped spatial values, event buffers, and dataset records.</p>
-  </div>
-  <div class="reference-command">
-    <p class="kicker">First payload proof</p>
-    <pre><code>pixi run demo-robotics-typing-catalog</code></pre>
-    <p>Expected result: stamped spatial payloads are constructed, resolved through the registry, and validated with a compact summary.</p>
-  </div>
-</div>
+Core Retriever gives you the runtime: `Flow`, `Pipeline`, clocks, sync,
+execution, IR, replay, and the Hub loader. GoldenRetriever adds the **applied payload
+layer** — the typed records robot examples hand each other so a perception,
+memory, planning, or control Flow can be swapped without renegotiating the
+data contract.
 
-<div class="purpose-strip">
-  <div><strong>Core owns runtime mechanics.</strong><p>Use core docs for Flow, Pipeline, clocks, sync, IR, replay, execution, and the registry loader.</p></div>
-  <div><strong>Golden owns robot-facing reuse.</strong><p>Use Golden for payload choices that appear across examples: world state, belief, plans, trajectories, events, and dataset rows.</p></div>
-  <div><strong>Projects own lab-specific schemas.</strong><p>Keep camera rigs, private robot fields, and simulator quirks local until the boundary is stable enough to share.</p></div>
-</div>
+There are two tiers behind one import path. `retriever_typing` re-exports the
+**standard spatial types** from `retriever.types.spatial` (identity preserved —
+`retriever_typing.PoseStamped` *is* `retriever.types.spatial.PoseStamped`, never
+a copy) and adds the **applied robot types** that have no standard equivalent
+yet.
 
-<div class="boundary-note">
-<strong>Keep the boundary simple.</strong> Use core docs for runtime mechanics. Use Golden when the question becomes: what robot state, belief, plan, trajectory, event, or dataset payload should this applied example expose?
-</div>
+```python
+# Standard types, re-exported from retriever.types.spatial (same classes, @io-ready ports):
+from retriever_typing import Header, Vector3, Quaternion, SE3Pose, PoseStamped, JointState
 
-## Choose By Boundary
+# Applied robot payloads GoldenRetriever owns (plain dataclasses carried as values):
+from retriever_typing.robotics_types import WorldState, BeliefGraph, Skill, Plan, Trajectory, ExecutionStatus
+from retriever_typing.core_types import Action, Command, Status
+```
 
-<div class="choice-grid">
-  <a class="choice-card" href="/robot-payloads/type-catalog/"><span>Choose</span><strong>Which payload should this Flow use?</strong><p>Pick the smallest payload that preserves frame, time, source, scene, plan, trajectory, command, or status semantics.</p></a>
-  <a class="choice-card" href="/robot-payloads/flow-contracts/"><span>Compose</span><strong>How should payloads cross Flows?</strong><p>Use stable I/O objects, qualified fields, and validation boundaries instead of dict glue.</p></a>
-  <a class="choice-card" href="/robot-payloads/data-event-streams/"><span>Record</span><strong>How should robot data become replayable?</strong><p>Use event time, event buffers, stream joins, windows, lineage, and export profiles.</p></a>
-  <a class="choice-card" href="/robot-payloads/lerobot-export/"><span>Export</span><strong>How do event records become dataset rows?</strong><p>Bridge Golden event profiles into LeRobot-style rows while retaining provenance.</p></a>
-</div>
+## Construct one, resolve it through the registry
 
-## First Runnable Checks
+Every payload is a plain `@dataclass`. It carries no clock, buffer, or graph
+state — that isolation is what lets one Flow return it and another consume it.
+The same names resolve through the unified registry, so a manifest, replay
+reader, or Hub pack can look a type up without importing the module first.
 
-<div class="command-grid">
-  <div class="command-card"><strong>Payload catalog</strong><code>pixi run demo-robotics-typing-catalog</code><p>Constructs canonical spatial and robot-facing payloads.</p></div>
-  <div class="command-card"><strong>Flow contract</strong><code>pixi run demo-robotics-typing-contract</code><p>Checks composite I/O access and stable field behavior.</p></div>
-  <div class="command-card"><strong>Boundary proof</strong><code>pixi run demo-robotics-typing-boundary</code><p>Preserves frame, time, and source metadata across a perception-to-control boundary.</p></div>
-</div>
+```python
+from retriever_typing import Header, SE3Pose, Vector3, Quaternion, PoseStamped, get_type
 
-## What Golden Owns
+pose = PoseStamped(
+    header=Header(stamp_ns=1_726_000_000_000_000_000, frame_id="map", source="sim"),
+    pose=SE3Pose(position=Vector3(1.0, 2.0, 0.5), orientation=Quaternion(0.0, 0.0, 0.0, 1.0)),
+)
 
-| Area | Golden provides | Core Retriever provides |
+assert get_type("PoseStamped") is PoseStamped   # the registry name resolves to the class
+```
+
+```bash
+pixi run demo-robotics-typing-catalog
+```
+
+Real output — the registry resolves the standard names, and the constructed
+payloads keep frame, position, and joint metadata intact:
+
+```text
+Registry lookup: PoseStamped=PoseStamped SE3Pose=SE3Pose
+Robotics typing catalog v1 demo
+  pose.frame=map pos=Vector3(x=1.0, y=2.0, z=0.5)
+  twist.frame=base_link linear=Vector3(x=0.2, y=0.0, z=0.0)
+  wrench.frame=wrist force=Vector3(x=0.0, y=0.0, z=3.5)
+  joint_count=6 aligned=True
+```
+
+## The four questions this section answers
+
+| Page | Question | Runnable proof |
 | --- | --- | --- |
-| Robot payload reference | `WorldState`, `BeliefGraph`, `Skill`, `Plan`, `Trajectory`, status, stamped spatial examples. | Runtime, clocks, Flow/Pipeline execution, IR, replay, and registry mechanics. |
-| Flow contracts | Composite I/O, qualified fields, and validation boundaries for applied examples. | The graph semantics used by those examples. |
-| Event/data profiles | `Event`, `EventBuffer`, event-time joins, manifests, and LeRobot bridge examples. | Runtime event-buffer mechanics and scheduler behavior. |
-| Hub pack readiness | Pack boundary, export catalog, smoke demos, and promotion guidance. | Hub loader and registry integration. |
+| [Choose a payload](/robot-payloads/type-catalog/) | Which payload should this Flow use? | `demo-robotics-typing-catalog` |
+| [Flow contracts](/robot-payloads/flow-contracts/) | How do `@io` typed ports form the I/O contract? | `demo-robotics-typing-contract`, `demo-robotics-typing-boundary` |
+| [Data and event streams](/robot-payloads/data-event-streams/) | How does robot data stay replayable? | `demo-robotics-data-eventstream`, `demo-robotics-data-join` |
+| [LeRobot export](/robot-payloads/lerobot-export/) | How do event records become dataset rows? | `demo-robotics-lerobot-bridge` |
 
-## Promotion Rule
+## What GoldenRetriever Owns
 
-A robot payload belongs in Golden when it can help more than one applied example without importing optional robot, simulator, camera, model, network, or private dataset dependencies. Keep lab-specific capture procedures, simulator quirks, and one-off policy fields inside the example until the boundary is stable.
+A payload belongs in GoldenRetriever when it helps more than one applied example
+**without importing an optional robot, simulator, camera, model, network, or
+private-dataset dependency**. The `WorldState`, `Skill`, `Plan`, `Trajectory`,
+and `ExecutionStatus` types clear that bar and are the pack GoldenRetriever publishes
+through [Retriever Hub](/hub/). Lab-specific capture procedures, camera rigs,
+and one-off policy fields stay inside the example until the boundary is stable.
+
+Runtime mechanics (Flow, Pipeline, clocks, sync, IR, replay, the loader) live
+in the core Retriever docs. This section only covers the applied payloads that
+ride on top of them.
+
+Source: `src/retriever_typing/` (`v1.py`, `robotics_types.py`, `core_types.py`, `registry.py`);
+demo `examples/advanced/robotics_typing_standard/type_catalog_demo.py`.

@@ -1,10 +1,10 @@
-# Golden Retriever
+# GoldenRetriever
 
-<img src="assets/retriever-illustrative.jpeg" width="120" alt="Golden Retriever logo">
+<img src="assets/retriever-illustrative.jpeg" width="120" alt="GoldenRetriever logo">
 
-Golden Retriever is the applied reference layer for Retriever: robot-facing examples, reusable robot payload references, simulator and visualization lanes, and candidates for future Retriever Hub packs.
+GoldenRetriever is the applied reference layer for Retriever: robot-facing examples, reusable robot payload references, simulator and visualization lanes, and candidates for future Retriever Hub packs.
 
-Use Golden after the core Retriever quickstart. Core Retriever teaches `Flow`, `Pipeline`, clocks, sync, graph rendering, stepping, replay, and Hub loading. Golden shows those ideas as runnable robot-facing examples.
+Use GoldenRetriever after the core Retriever quickstart. Core Retriever teaches `Flow`, `Pipeline`, clocks, sync, graph rendering, stepping, replay, and Hub loading. GoldenRetriever shows those ideas as runnable robot-facing examples.
 
 ## Start Here
 
@@ -17,7 +17,7 @@ pixi run demo-pipeline-html-viz
 
 Expected results:
 
-- `demo-golden-hub-pack` prints Golden payload exports and an Arrow round-trip check.
+- `demo-golden-hub-pack` prints GoldenRetriever payload exports and an Arrow round-trip check.
 - `demo-perception-detection-flow` runs a deterministic synthetic perception flow.
 - `demo-pipeline-html-viz` writes a self-contained HTML graph artifact.
 
@@ -25,14 +25,14 @@ Expected results:
 
 - Retriever home: https://openretriever.org/
 - Core Retriever docs: https://openretriever-docs.pages.dev/
-- Golden Retriever docs: https://retriever-space.pages.dev/
-- First Golden proof: https://retriever-space.pages.dev/examples/golden-hub-proof/
+- GoldenRetriever docs: https://retriever-space.pages.dev/
+- First GoldenRetriever proof: https://retriever-space.pages.dev/examples/golden-hub-proof/
 - Example catalog: https://retriever-space.pages.dev/examples/
-- Golden Hub boundary: https://retriever-space.pages.dev/hub/
+- GoldenRetriever Hub boundary: https://retriever-space.pages.dev/hub/
 
 ## Surface Boundary
 
-| Surface | Golden owns | Core Retriever owns |
+| Surface | GoldenRetriever owns | Core Retriever owns |
 | --- | --- | --- |
 | Runtime concepts | Applied examples that use them. | Flow, Pipeline, clocks, sync, IR, replay, execution, and Hub mechanics. |
 | Robot examples | Perception, memory, language, composition, simulator, and visualization lanes. | Small runtime/tutorial examples. |
@@ -40,9 +40,9 @@ Expected results:
 
 ## Repository Map
 
-- `examples/advanced/`: runnable Golden example families.
-- `src/retriever_typing/`: robot payloads and data/event helpers used by Golden examples.
-- `docs-site/`: Starlight docs site for Golden reference pages.
+- `examples/advanced/`: runnable GoldenRetriever example families.
+- `src/retriever_typing/`: robot payloads and data/event helpers used by GoldenRetriever examples.
+- `docs-site/`: Starlight docs site for GoldenRetriever reference pages.
 - `notebooks/`: notebook sources and generated notebook artifacts.
 
 ## Common Commands
@@ -69,4 +69,4 @@ pixi run public-surface-check
 
 ## Contributing And License
 
-See `CONTRIBUTING.md` for contribution workflow and `SECURITY.md` for private vulnerability reporting. Golden Retriever is licensed under Apache License 2.0; see `LICENSE`.
+See `CONTRIBUTING.md` for contribution workflow and `SECURITY.md` for private vulnerability reporting. GoldenRetriever is licensed under Apache License 2.0; see `LICENSE`.

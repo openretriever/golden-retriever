@@ -2,28 +2,207 @@
 title: Perception and Memory
 description: Deterministic perception, belief, and remembered pointing examples.
 ---
-This lane keeps the first robot-facing examples small: synthetic detections, simple belief updates, and typed outputs that are easy to inspect.
+This lane runs the **perception → memory → action** contract on deterministic
+synthetic data — no camera, no model. A `SyntheticColorCamera` paints a moving
+red and blue block; a `ColorDetector` turns pixels into typed `Detection2D`; a
+`BeliefTracker` smooths and remembers them; a selector turns belief into a
+`PointTarget2D`. Every payload is a standard `retriever.types.perception` type,
+so the same graph accepts a real detector later without rewiring.
 
-<div class="command-grid">
-  <div class="command-card"><strong>Detection flow</strong><code>pixi run -e golden-local demo-perception-detection-flow</code></div>
-  <div class="command-card"><strong>Belief flow</strong><code>pixi run -e golden-local demo-memory-belief-flow</code></div>
-  <div class="command-card"><strong>Point with memory</strong><code>pixi run -e golden-local demo-memory-pointing-flow</code></div>
-</div>
+## Perception: pixels to typed detections
 
-## What To Watch
+The scene is deterministic, so the output is reproducible. The detector is plain
+NumPy thresholding that returns a typed `DetectionBatch` — a `Flow[Image2D, DetectionBatch]`.
 
-| Step | What changes | Retriever concept |
-| --- | --- | --- |
-| Perception | Synthetic frames become typed detections. | Flow I/O and typed payloads. |
-| Memory | Detections update local belief state. | Local Flow state and replayable inputs. |
-| Pointing | A goal is resolved using current belief. | Closed-loop handoff between perception, memory, and action selection. |
+```python
+import numpy as np
+from retriever.flow import Flow
+from retriever.types.perception import BBox2D, Detection2D, DetectionBatch, Image2D
 
-Use this lane before real cameras or model-backed perception. These commands are smoke checks: success is exit code 0 with the Pixi task line, not a long terminal report. If a command fails, the Flow, task, docs page, and expected output are out of sync.
+class SyntheticColorCamera(Flow[None, Image2D]):
+    """One red and one blue block moving over time."""
+    def reset(self):
+        self.frame_index = 0; self.t_sim = 0.0
+    def step(self, _):
+        self.frame_index += 1
+        image = np.zeros((self.height, self.width, 3), dtype=np.uint8)
+        # ... paint a red block and a blue block at time-varying positions ...
+        return Image2D(data=image, encoding="rgb8", header=..., frame_index=self.frame_index)
 
-## Expected Results
+class ColorDetector(Flow[Image2D, DetectionBatch]):
+    MIN_PIXELS = 20
+    def step(self, frame: Image2D) -> DetectionBatch:
+        image = frame.data
+        red_mask  = (image[..., 0] > 180) & (image[..., 1] < 100) & (image[..., 2] < 100)
+        blue_mask = (image[..., 2] > 180) & (image[..., 0] < 100) & (image[..., 1] < 100)
+        detections: list[Detection2D] = []
+        for label, mask in (("red", red_mask), ("blue", blue_mask)):
+            stats = _mask_stats(mask)                 # pixel_count, cx, cy, bbox
+            if stats is None or stats[0] < self.MIN_PIXELS:
+                continue
+            pixel_count, cx, cy, bbox = stats
+            detections.append(Detection2D(
+                label=label, confidence=min(0.99, pixel_count / 180.0),
+                bbox=bbox, centroid_x=cx, centroid_y=cy, pixel_count=pixel_count))
+        return DetectionBatch(detections=tuple(detections),
+                              header=frame.header, frame_index=frame.frame_index)
+```
 
-| Command | Stable success cue |
-| --- | --- |
-| `pixi run -e golden-local demo-perception-detection-flow` | exits 0 after stepping the synthetic camera -> detector -> printer graph. |
-| `pixi run -e golden-local demo-memory-belief-flow` | exits 0 after stepping synthetic detections through the belief tracker. |
-| `pixi run -e golden-local demo-memory-pointing-flow` | exits 0 after dropout and belief memory preserve a target point through intermittent detections. |
+Clocks say *when* each Flow runs; `sync=` says *which* record it consumes. Every
+payload carries a `frame_index`, so the detector and printer wake once per frame:
+
+```python
+from retriever.flow import Latest, Pipeline, Rate, Trigger
+
+pipe = Pipeline("advanced_perception_detection")
+with pipe:
+    camera   = SyntheticColorCamera(dt=0.1) @ Rate(hz=10)
+    detector = ColorDetector()              @ Trigger("frame_index")  # wakes per new frame
+    printer  = DetectionPrinter()           @ Trigger("frame_index")
+    pipe.connect(camera, detector, sync=Latest())
+    pipe.connect(detector, printer, sync=Latest())
+```
+
+```bash
+pixi run -e golden-local demo-perception-detection-flow
+```
+
+Real output — each frame yields two typed detections with sub-pixel centroids
+that track the moving blocks:
+
+```text
+[frame=01] detections=['red@(28.5,34.5) c=0.80', 'blue@(59.5,41.5) c=0.56']
+[frame=02] detections=['red@(38.5,34.5) c=0.80', 'blue@(57.5,43.5) c=0.56']
+[frame=03] detections=['red@(47.5,33.5) c=0.80', 'blue@(53.5,46.5) c=0.56']
+[frame=04] detections=['red@(54.5,32.5) c=0.80', 'blue@(49.5,47.5) c=0.56']
+[frame=05] detections=['red@(59.5,31.5) c=0.80', 'blue@(43.5,48.5) c=0.56']
+[frame=06] detections=['red@(62.5,30.5) c=0.80', 'blue@(37.5,49.5) c=0.56']
+```
+
+## Memory: a stable belief over time
+
+`BeliefTracker` is a `Flow[DetectionBatch, SceneBelief]` that holds state across
+steps. It smooths each object's position with an EMA (`alpha`), counts how many
+times it has been seen, and — via `hold_steps` — keeps an object in the belief
+for a few frames after it drops out of detection.
+
+```python
+from examples.advanced.memory_examples.types import ObjectBelief, SceneBelief
+
+class BeliefTracker(Flow[DetectionBatch, SceneBelief]):
+    def reset(self):
+        self._memory: dict[str, ObjectBelief] = {}
+    def step(self, batch: DetectionBatch) -> SceneBelief:
+        updated: dict[str, ObjectBelief] = {}
+        seen = {d.label for d in batch.detections}
+        for det in batch.detections:                 # smooth toward the new observation
+            prev = self._memory.get(det.label)
+            x = (det.centroid_x or 0.0) / (self.image_width - 1.0)
+            y = (det.centroid_y or 0.0) / (self.image_height - 1.0)
+            if prev is not None:
+                x = (1 - self.alpha) * prev.x_norm + self.alpha * x
+                y = (1 - self.alpha) * prev.y_norm + self.alpha * y
+            updated[det.label] = ObjectBelief(label=det.label, x_norm=x, y_norm=y,
+                confidence=det.confidence or 0.0,
+                seen_count=(prev.seen_count + 1) if prev else 1,
+                last_frame_index=batch.frame_index, missing_steps=0)
+        for label, prev in self._memory.items():     # hold a missing object briefly
+            if label in seen or prev.missing_steps + 1 > self.hold_steps:
+                continue
+            updated[label] = replace_missing(prev)   # keep position, decay confidence
+        self._memory = updated
+        return SceneBelief(frame_index=batch.frame_index,
+                           objects=tuple(sorted(updated.values(), key=lambda o: o.label)))
+```
+
+`SceneBelief` is an example-local `@io` payload built from standard perception
+types — the pattern for defining your own record when the standard set does not
+cover it.
+
+```python
+pipe = Pipeline("advanced_memory_belief")
+with pipe:
+    camera   = SyntheticColorCamera(dt=0.1) @ Rate(hz=10)
+    detector = ColorDetector()              @ Trigger("frame_index")
+    belief   = BeliefTracker()              @ Trigger("frame_index")
+    printer  = BeliefPrinter()              @ Trigger("frame_index")
+    pipe.connect(camera, detector, sync=Latest())
+    pipe.connect(detector, belief, sync=Latest())
+    pipe.connect(belief, printer, sync=Latest())
+```
+
+```bash
+pixi run -e golden-local demo-memory-belief-flow
+```
+
+Real output — normalized positions, and `seen` climbing as the belief
+accumulates evidence across frames:
+
+```text
+[frame=01] belief=['blue@(0.63,0.58) c=0.56 seen=1 miss=0', 'red@(0.30,0.49) c=0.80 seen=1 miss=0']
+[frame=02] belief=['blue@(0.62,0.59) c=0.56 seen=2 miss=0', 'red@(0.34,0.49) c=0.80 seen=2 miss=0']
+[frame=03] belief=['blue@(0.60,0.62) c=0.56 seen=3 miss=0', 'red@(0.39,0.48) c=0.80 seen=3 miss=0']
+[frame=04] belief=['blue@(0.57,0.63) c=0.56 seen=4 miss=0', 'red@(0.46,0.47) c=0.80 seen=4 miss=0']
+[frame=05] belief=['blue@(0.53,0.65) c=0.56 seen=5 miss=0', 'red@(0.52,0.46) c=0.80 seen=5 miss=0']
+[frame=06] belief=['blue@(0.48,0.67) c=0.56 seen=6 miss=0', 'red@(0.57,0.45) c=0.80 seen=6 miss=0']
+```
+
+## Action: belief to a target point
+
+The last stage turns detections into a `PointTarget2D` for a controller. Because
+the input is typed, the selector is a few lines and knows nothing about clocks or
+wiring.
+
+```python
+from retriever.types.perception import PointTarget2D
+
+class PointToLabel(Flow[DetectionBatch, PointTarget2D]):
+    def step(self, batch: DetectionBatch) -> PointTarget2D:
+        for det in batch.detections:
+            if det.label == self.target_label:
+                return PointTarget2D(frame_index=batch.frame_index, label=det.label,
+                    x_norm=det.centroid_x / (self.image_width - 1.0),
+                    y_norm=det.centroid_y / (self.image_height - 1.0),
+                    confidence=det.confidence)
+        return PointTarget2D(frame_index=batch.frame_index)   # nothing to point at
+```
+
+```bash
+pixi run -e golden-local demo-perception-pointing-flow
+```
+
+```text
+[frame=01] target=red x_norm=0.30 y_norm=0.49 confidence=0.80
+[frame=02] target=red x_norm=0.41 y_norm=0.49 confidence=0.80
+[frame=03] target=red x_norm=0.50 y_norm=0.47 confidence=0.80
+[frame=04] target=red x_norm=0.57 y_norm=0.46 confidence=0.80
+[frame=05] target=red x_norm=0.63 y_norm=0.44 confidence=0.80
+[frame=06] target=red x_norm=0.66 y_norm=0.43 confidence=0.80
+```
+
+`SelectBeliefTarget` is the same shape but reads the *belief* instead of the raw
+batch, so pointing stays on target even when a detection is briefly missing —
+the memory-backed variant of this stage.
+
+## Why it's shaped this way
+
+`Image2D`, `Detection2D`, `DetectionBatch`, and `PointTarget2D` are **standard
+payloads** — the same records a real camera, a learned detector, and a
+controller would exchange. Because each stage is an isolated `Flow` over a typed
+stream, you can:
+
+- swap `ColorDetector` for a model-backed detector without touching the graph,
+- carry any payload's memory in local Flow state (`BeliefTracker._memory`),
+- step the whole pipeline in-process and breakpoint inside any `step()`.
+
+The model-backed siblings keep the identical graph shape, running a real
+detector behind a mock backend:
+
+```bash
+pixi run demo-gemini-detection-flow      # --backend mock
+pixi run demo-belief-from-real-detections # --backend mock
+```
+
+Source: `examples/advanced/perception_examples/` and
+`examples/advanced/memory_examples/` (`common.py`, `detection_flow.py`,
+`belief_from_detections.py`, `pointing_flow.py`).
