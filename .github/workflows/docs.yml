@@ -47,10 +47,11 @@ jobs:
         with:
           name: golden-retriever-docs
           path: docs-site/dist
+      # main -> production; chore/cleanup -> dev-docs preview alias. release/public-v1 builds only.
       - name: Deploy to Cloudflare Pages
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != '' }}
+        if: ${{ github.event_name == 'push' && env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != '' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/chore/cleanup') }}
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ env.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy docs-site/dist --project-name=retriever-space --branch=main
+          command: pages deploy docs-site/dist --project-name=retriever-space --branch=${{ github.ref == 'refs/heads/main' && 'main' || 'dev-docs' }}
