@@ -1,6 +1,26 @@
-# GoldenRetriever
+<div align="center">
+  <a href="https://retriever-space.pages.dev/"><img width="400px" height="auto" src="assets/retriever-illustrative.jpeg" alt="GoldenRetriever logo"></a>
+</div>
 
-<img src="assets/retriever-illustrative.jpeg" width="120" alt="GoldenRetriever logo">
+# 🐕 <span style="background: linear-gradient(45deg, #e96443 0%, #904e95 25%, #e65c00 50%, #f9d423 75%, #fc00ff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: bold; font-size: 1.1em;">**GoldenRetriever**</span>
+
+## **Applied Robot Examples and Hub Packs for Retriever**
+
+<div align="center">
+
+<p>Robot-facing examples, reusable payload types, simulator and visualization lanes, and Retriever Hub packs — the applied layer on top of the core <code>retriever</code> runtime.</p>
+
+<p>
+  <a href="https://retriever-space.pages.dev/"><img alt="Docs" src="https://img.shields.io/badge/Docs-open-b45309?style=for-the-badge"></a>
+  <a href="https://retriever-space.pages.dev/examples/"><img alt="Examples" src="https://img.shields.io/badge/Applied%20Examples-catalog-f97316?style=for-the-badge"></a>
+  <a href="https://github.com/openretriever/golden-retriever"><img alt="Source" src="https://img.shields.io/badge/Source-GitHub-111827?style=for-the-badge&logo=github"></a>
+  <a href="https://github.com/openretriever/retriever"><img alt="Core runtime" src="https://img.shields.io/badge/Core-Retriever-0f766e?style=for-the-badge&logo=github"></a>
+  <a href="https://openretriever.org/"><img alt="Website" src="https://img.shields.io/badge/Website-openretriever.org-111827?style=for-the-badge"></a>
+</p>
+
+</div>
+
+---
 
 GoldenRetriever is the applied reference layer for Retriever: robot-facing examples, reusable robot payload references, simulator and visualization lanes, and candidates for future Retriever Hub packs.
 
