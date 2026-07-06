@@ -5,7 +5,7 @@ on:
     branches:
       - main
       - chore/cleanup
-      - release/golden-history-filter-current-v1
+      - release/public-v1
     paths:
       - docs-site/**
       - pixi.toml
