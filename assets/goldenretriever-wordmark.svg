@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 132" width="820" height="132" role="img" aria-label="GoldenRetriever">
+  <title>GoldenRetriever</title>
+  <defs>
+    <linearGradient id="goldenRainbow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#e96443"/>
+      <stop offset="25%" stop-color="#904e95"/>
+      <stop offset="50%" stop-color="#e65c00"/>
+      <stop offset="75%" stop-color="#f9d423"/>
+      <stop offset="100%" stop-color="#fc00ff"/>
+    </linearGradient>
+  </defs>
+  <text x="410" y="92" text-anchor="middle"
+        textLength="780" lengthAdjust="spacingAndGlyphs"
+        font-family="'Segoe UI', Helvetica, Arial, sans-serif"
+        font-weight="800" font-size="92" letter-spacing="-1"
+        fill="url(#goldenRainbow)">GoldenRetriever</text>
+</svg>

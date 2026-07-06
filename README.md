@@ -1,21 +1,24 @@
 <div align="center">
-  <a href="https://retriever-space.pages.dev/"><img width="400px" height="auto" src="assets/retriever-illustrative.jpeg" alt="GoldenRetriever logo"></a>
-</div>
 
-# 🐕 <span style="background: linear-gradient(45deg, #e96443 0%, #904e95 25%, #e65c00 50%, #f9d423 75%, #fc00ff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: bold; font-size: 1.1em;">**GoldenRetriever**</span>
+<a href="https://retriever-space.pages.dev/"><img width="360" height="auto" src="assets/retriever-illustrative.jpeg" alt="GoldenRetriever logo"></a>
 
-## **Applied Robot Examples and Hub Packs for Retriever**
+<br><br>
 
-<div align="center">
+<a href="https://retriever-space.pages.dev/"><img src="assets/goldenretriever-wordmark.svg" alt="GoldenRetriever" width="540"></a>
+
+### Applied Robot Examples and Hub Packs for Retriever
 
 <p>Robot-facing examples, reusable payload types, simulator and visualization lanes, and Retriever Hub packs — the applied layer on top of the core <code>retriever</code> runtime.</p>
 
 <p>
   <a href="https://retriever-space.pages.dev/"><img alt="Docs" src="https://img.shields.io/badge/Docs-open-b45309?style=for-the-badge"></a>
-  <a href="https://retriever-space.pages.dev/examples/"><img alt="Examples" src="https://img.shields.io/badge/Applied%20Examples-catalog-f97316?style=for-the-badge"></a>
+  <a href="https://retriever-space.pages.dev/examples/"><img alt="Applied examples" src="https://img.shields.io/badge/Applied_Examples-catalog-f97316?style=for-the-badge"></a>
+  <a href="https://retriever-space.pages.dev/hub/"><img alt="Hub packs" src="https://img.shields.io/badge/Hub-packs-9333ea?style=for-the-badge"></a>
+  <br>
   <a href="https://github.com/openretriever/golden-retriever"><img alt="Source" src="https://img.shields.io/badge/Source-GitHub-111827?style=for-the-badge&logo=github"></a>
-  <a href="https://github.com/openretriever/retriever"><img alt="Core runtime" src="https://img.shields.io/badge/Core-Retriever-0f766e?style=for-the-badge&logo=github"></a>
+  <a href="https://github.com/openretriever/retriever"><img alt="Core runtime" src="https://img.shields.io/badge/Core-retriever-0f766e?style=for-the-badge&logo=github"></a>
   <a href="https://openretriever.org/"><img alt="Website" src="https://img.shields.io/badge/Website-openretriever.org-111827?style=for-the-badge"></a>
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/License-Apache_2.0-3b82f6?style=for-the-badge"></a>
 </p>
 
 </div>
