@@ -1,10 +1,10 @@
 <div align="center">
 
-<a href="https://retriever-space.pages.dev/"><img width="360" height="auto" src="assets/retriever-illustrative.jpeg" alt="GoldenRetriever logo"></a>
+<a href="https://retriever-space.pages.dev/"><img width="200" height="auto" src="assets/retriever-illustrative.jpeg" alt="GoldenRetriever logo"></a>
 
-<br><br>
+<br>
 
-<a href="https://retriever-space.pages.dev/"><img src="assets/goldenretriever-wordmark.svg" alt="GoldenRetriever" width="540"></a>
+<a href="https://retriever-space.pages.dev/"><img src="assets/goldenretriever-wordmark.svg" alt="GoldenRetriever" width="360"></a>
 
 ### Applied Robot Examples and Hub Packs for Retriever
 
