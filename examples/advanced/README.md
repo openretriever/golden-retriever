@@ -12,7 +12,7 @@ pixi run demo-webcam-detection-mock
 
 # In openretriever/golden-retriever next:
 pixi run demo-golden-hub-pack
-pixi run -e golden-local demo-perception-detection-flow
+pixi run -e golden demo-perception-detection-flow
 pixi run demo-pipeline-html-viz
 ```
 
@@ -25,21 +25,21 @@ Public guides for this folder live in the [Golden example catalog](../../docs/ex
 After the Hub proof is green, run the maintained mock-safe ladder:
 
 ```bash
-pixi run -e golden-local demo-perception-detection-flow
-pixi run -e golden-local demo-perception-segmentation-flow
-pixi run -e golden-local demo-perception-pointing-flow
-pixi run -e golden-local demo-memory-belief-flow
-pixi run -e golden-local demo-memory-dropout-flow
-pixi run -e golden-local demo-memory-pointing-flow
+pixi run -e golden demo-perception-detection-flow
+pixi run -e golden demo-perception-segmentation-flow
+pixi run -e golden demo-perception-pointing-flow
+pixi run -e golden demo-memory-belief-flow
+pixi run -e golden demo-memory-dropout-flow
+pixi run -e golden demo-memory-pointing-flow
 pixi run demo-perception-record
 pixi run demo-perception-replay
-pixi run -e golden-local demo-detection-window-stats
+pixi run -e golden demo-detection-window-stats
 pixi run demo-perception-replay-to-belief
 pixi run demo-perception-belief-control
-pixi run -e golden-local demo-composable-pipelines
+pixi run -e golden demo-composable-pipelines
 ```
 
-The concise perception, memory, language, and composition ladders use `golden-local` or `golden-perception` when they need the Golden example feature set.
+The concise perception, memory, language, and composition ladders use `golden` or `golden-perception` when they need the Golden example feature set.
 
 ## Recommended progression
 
@@ -85,7 +85,7 @@ pixi run -e twist2 demo-twist2-rerun
 - `perception_debug/README.md`: stepper-first perception debugging and record/replay.
 - `state_management/README.md`: older state, reset, and belief-update examples.
 - `functional_wiring/README.md`: composition, fan-in/fan-out, and surfaced builders.
-- `core_composition/README.md`: registry-backed pipeline composition surfaces (`pixi run -e golden-local demo-composable-pipelines`).
+- `core_composition/README.md`: registry-backed pipeline composition surfaces (`pixi run -e golden demo-composable-pipelines`).
 - `closed_loop_planning/README.md`: extracted belief, monitoring, and replanning patterns from the old prototype.
 - `robosuite_lift/README.md`: mock-safe robosuite smoke demo and optional real-mode setup.
 - `robotics_typing_standard/README.md`: typed payload and data-spec demos.

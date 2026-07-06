@@ -5,7 +5,7 @@
 ## Validation
 
 - [ ] `pixi run -e docs docs-build`
-- [ ] Relevant Golden demo command(s): `pixi run -e golden-local ...`
+- [ ] Relevant Golden demo command(s): `pixi run -e golden ...`
 - [ ] Docs updated if launch commands or example behavior changed
 
 ## Public-Release Checklist

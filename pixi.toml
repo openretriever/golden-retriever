@@ -29,17 +29,9 @@ nodejs = ">=22,<23"
 [feature.docs.pypi-dependencies]
 
 [feature.bundled_core.pypi-dependencies]
-# Temporary public/default path: use the debug PyPI package until the public
-# retriever-core distribution is published.
-debug-retriever = { version = ">=0.1.4", extras = [
-    "dora",
-    "demo",
-] }
-
-[feature.runtime_core.pypi-dependencies]
-# Compatibility environment name retained for existing Golden launch commands.
-# Until the public retriever-core distribution is published, this resolves
-# the same temporary runtime package as the default bundled-core path.
+# Single source of the Retriever runtime dependency, shared by every environment.
+# ONE-LINE SWITCH AT PUBLISH: when the public distribution lands on PyPI, replace
+# `debug-retriever` on the next line with `retriever-core` — nothing else changes.
 debug-retriever = { version = ">=0.1.4", extras = [
     "dora",
     "demo",
@@ -257,10 +249,8 @@ gpu = { features = ["py311", "bundled_core", "gpu"] }
 ros = { features = ["bundled_core", "ros"] }
 roboplan = { features = ["bundled_core", "roboplan"] }
 golden = { features = ["py311", "bundled_core", "golden"] }
-runtime-core = { features = ["py311", "runtime_core"] }
-golden-local = { features = ["py311", "runtime_core", "golden"] }
 docs = { features = ["py311", "docs"] }
-golden-perception = { features = ["py311", "runtime_core", "golden", "cpu"] }
+golden-perception = { features = ["py311", "bundled_core", "golden", "cpu"] }
 
 [feature.vlm_planning.tasks]
 

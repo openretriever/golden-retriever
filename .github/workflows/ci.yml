@@ -27,7 +27,7 @@ jobs:
       - name: Docs build
         run: pixi run -e docs docs-build
       - name: Golden smoke demo
-        run: pixi run -e golden-local demo-perception-detection-flow
+        run: pixi run -e golden demo-perception-detection-flow
       - name: Public surface guardrail
         run: pixi run public-surface-check
       - name: Package build

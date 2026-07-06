@@ -36,7 +36,7 @@ first launch path.
 
 ```bash
 pixi run test                                      # full Golden suite
-pixi run -e golden-local demo-perception-detection-flow
+pixi run -e golden demo-perception-detection-flow
 pixi run demo-robosuite-mock                       # simulation lane, mock mode
 pixi run demo-pipeline-html-viz                     # self-contained IR/HTML visualization
 pixi run public-surface-check                     # current-tree public surface guardrail
@@ -45,9 +45,9 @@ pixi run -e docs docs-build                        # Starlight build
 pixi run build                                     # local wheel artifact; not first-launch PyPI path
 ```
 
-Environments: `default` and `golden-local` currently resolve the runtime
+Environments: `default` and `golden` currently resolve the runtime
 through the Pixi dependency table until `retriever-core` is published;
-`golden-local` adds Golden extras. For prerelease core validation, set
+`golden` adds Golden extras. For prerelease core validation, set
 `RETRIEVER_CORE_SRC=<core-repo>/src` before running
 `pixi run test`. Heavier lanes (`torch`, `vlm`, `twist2`, ...) exist for
 specific examples — check `[environments]` in `pixi.toml` before assuming

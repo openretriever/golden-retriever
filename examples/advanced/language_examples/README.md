@@ -11,6 +11,6 @@ planning outputs.
 Run them through the Golden demo environment:
 
 ```bash
-pixi run -e golden-local demo-language-caption-plan
-pixi run -e golden-local demo-language-grounded-reference
+pixi run -e golden demo-language-caption-plan
+pixi run -e golden demo-language-grounded-reference
 ```

@@ -22,11 +22,11 @@ Those commands regenerate:
 
 `retriever_demo.ipynb` stays a small Jupytext mechanics demo for the packaged Golden environment.
 
-`hub_demo.ipynb` is the Hub-first notebook. Run it from the `golden-local` environment so the Golden example feature set is available:
+`hub_demo.ipynb` is the Hub-first notebook. Run it from the `golden` environment so the Golden example feature set is available:
 
 ```bash
-pixi install -e golden-local
-pixi run -e golden-local demo-hub-notebook-source
+pixi install -e golden
+pixi run -e golden demo-hub-notebook-source
 ```
 
 The Hub notebook does not hardcode any private or organization-specific module refs. Set these environment variables before running it if you want the live Hub cells to execute:

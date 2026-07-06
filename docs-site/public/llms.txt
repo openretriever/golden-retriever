@@ -41,7 +41,7 @@ Run this sequence from a GoldenRetriever source checkout when you need a safe pu
 
 ```bash
 pixi run demo-golden-hub-pack
-pixi run -e golden-local demo-perception-detection-flow
+pixi run -e golden demo-perception-detection-flow
 pixi run demo-robosuite-mock
 pixi run demo-pipeline-html-viz
 pixi run demo-robotics-typing-catalog
@@ -54,7 +54,7 @@ Expected artifacts: Hub export/registry/Arrow terminal proof, exit-zero syntheti
 | If the user asks for... | Start with | Do not start with |
 | --- | --- | --- |
 | A safe Golden smoke | `pixi run demo-golden-hub-pack` | camera, simulator, model, or network setup |
-| Example behavior | `pixi run -e golden-local demo-perception-detection-flow` | optional model-backed lanes |
+| Example behavior | `pixi run -e golden demo-perception-detection-flow` | optional model-backed lanes |
 | Simulator integration | `pixi run demo-robosuite-mock` | real robosuite until the mock trace works |
 | Graph visualization | `pixi run demo-pipeline-html-viz` | screenshots or stale generated HTML |
 | Robot payload reuse | `pixi run demo-robotics-typing-catalog` | ad hoc dict payloads or source-only imports |
