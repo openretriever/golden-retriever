@@ -50,7 +50,7 @@ def main() -> None:
         "convert_to_arrow",
         "convert_from_arrow",
     ]
-    print("Golden pack exports:", ", ".join(selected))
+    print("GoldenRetriever pack exports:", ", ".join(selected))
 
     WorldState = exports["WorldState"]
     Skill = exports["Skill"]

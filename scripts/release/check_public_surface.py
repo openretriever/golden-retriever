@@ -159,7 +159,7 @@ SMOKE_CHECKS = (
     (
         "smoke:demo-golden-hub-pack",
         [sys.executable, "examples/advanced/core_composition/golden_hub_pack_smoke.py"],
-        ("Golden pack exports:", "Arrow round-trip: Action OK"),
+        ("GoldenRetriever pack exports:", "Arrow round-trip: Action OK"),
     ),
     (
         "smoke:demo-robosuite-mock",
