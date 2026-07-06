@@ -8,7 +8,7 @@ export default defineConfig({
   integrations: [
     starlight({
       title: 'Golden Retriever Reference',
-      description: 'Applied robot examples, reusable payload packs, and Hub-pack candidates for Retriever.',
+      description: 'Applied Retriever examples, robot payload references, visualization lanes, and Hub pack candidates.',
       logo: {
         src: './src/assets/retriever-illustrative.jpeg',
         alt: 'Golden Retriever',
@@ -26,7 +26,7 @@ export default defineConfig({
           ],
         },
         {
-          label: 'Runnable Examples',
+          label: 'Run Examples',
           items: [
             { label: 'Perception and Memory', slug: 'examples/perception-memory' },
             { label: 'Language and Grounding', slug: 'examples/language-grounding' },
@@ -35,21 +35,21 @@ export default defineConfig({
           ],
         },
         {
-          label: 'Applied Reference',
+          label: 'Reuse Robot Payloads',
           items: [
-            { label: 'Robot Type Packs', slug: 'robot-type-packs' },
-            { label: 'Payload Catalog', slug: 'robot-type-packs/type-catalog' },
-            { label: 'Flow Contracts', slug: 'robot-type-packs/flow-contracts' },
-            { label: 'Data and Event Streams', slug: 'robot-type-packs/data-event-streams' },
-            { label: 'LeRobot Dataset Export', slug: 'robot-type-packs/lerobot-export' },
+            { label: 'Payload Overview', slug: 'robot-payloads' },
+            { label: 'Choose a Payload', slug: 'robot-payloads/type-catalog' },
+            { label: 'Flow I/O Contracts', slug: 'robot-payloads/flow-contracts' },
+            { label: 'Data and Event Streams', slug: 'robot-payloads/data-event-streams' },
+            { label: 'LeRobot Export', slug: 'robot-payloads/lerobot-export' },
           ],
         },
         {
-          label: 'Pack Promotion',
+          label: 'Promote to Hub Packs',
           items: [
-            { label: 'Golden Pack Boundary', slug: 'hub' },
-            { label: 'Current Export Catalog', slug: 'hub/export-catalog' },
-            { label: 'Pack Maturity Guide', slug: 'hub/pack-roadmap' },
+            { label: 'Pack Boundary', slug: 'hub' },
+            { label: 'Export Catalog', slug: 'hub/export-catalog' },
+            { label: 'Maturity Guide', slug: 'hub/pack-roadmap' },
           ],
         },
       ],

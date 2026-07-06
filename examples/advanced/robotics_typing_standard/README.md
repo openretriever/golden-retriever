@@ -1,6 +1,6 @@
 # Robotics Typing Standard Demos
 
-These examples accompany `docs/robotics_typing_standard/` and the current Golden Hub type pack. Use them when you need applied robot payload contracts after the core Retriever type model is clear.
+These examples accompany `docs/robotics_typing_standard/` and the current Golden Hub payload pack. Use them when you need applied robot payload contracts after the core Retriever type model is clear.
 
 Start with the manifest proof:
 

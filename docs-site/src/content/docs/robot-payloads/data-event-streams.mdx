@@ -1,0 +1,46 @@
+---
+title: Robot Data and Event Streams
+description: Event buffers, joins, windows, lineage, and dataset export examples.
+---
+<p class="kicker">Replayable robot data</p>
+
+Robot data rarely arrives in one neat loop. Camera frames, commands, plans, observations, and status updates arrive at different times. Golden data examples show how to keep those streams replayable and exportable while preserving event time and source metadata.
+
+<div class="command-grid">
+  <div class="command-card"><strong>Build a buffer</strong><code>pixi run demo-robotics-data-eventstream</code><p>Expected result: timestamped events are appended, queried by window, and printed with source metadata intact.</p></div>
+  <div class="command-card"><strong>Join streams</strong><code>pixi run demo-robotics-data-join</code><p>Expected result: observation and command events align by event time instead of callback arrival order.</p></div>
+</div>
+
+<div class="result-grid">
+  <div class="result-card"><span>Record</span><strong>Every value keeps event time</strong><p>Logs and datasets can explain when the robot saw, planned, commanded, or reported a value.</p></div>
+  <div class="result-card"><span>Replay</span><strong>Queries are deterministic</strong><p>Windowed reads depend on recorded timestamps, not live scheduling jitter.</p></div>
+  <div class="result-card"><span>Export</span><strong>Lineage survives conversion</strong><p>Dataset rows keep source and conversion metadata so downstream errors remain traceable.</p></div>
+</div>
+
+## Output To Recognize
+
+```text
+Deterministic merged order:
+Processing-time profile:
+Exact join:
+Latest-before join (max_delta=50):
+Window join (+/-20):
+```
+
+Those labels are the point of the examples: a later user should be able to tell whether timing alignment, windowing, and lineage survived without reading the implementation first.
+
+## What Each Piece Is For
+
+| Concept | Use it for | Check |
+| --- | --- | --- |
+| `Event` | One timestamped value with source metadata. | Value, event time, source, and lineage are explicit. |
+| `EventBuffer` | A bounded event history. | Window queries are deterministic. |
+| Event-time join | Aligning two streams. | The join uses recorded timestamps, not callback timing. |
+| Window | Aggregating over a temporal slice. | The slice is explicit and replayable. |
+| Lineage | Tracking conversion and source details. | Exported data still explains where it came from. |
+
+## Why This Belongs In Golden
+
+Core Retriever owns runtime event mechanics. Golden shows the applied robot-data profile: how a camera observation, command, state estimate, or dataset record should carry enough timing and provenance to be debugged later.
+
+Use this path when you need reproducible examples for record/replay, dataset export, or cross-runtime comparison.

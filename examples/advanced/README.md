@@ -16,7 +16,7 @@ pixi run -e golden-local demo-perception-detection-flow
 pixi run demo-pipeline-html-viz
 ```
 
-The first Golden command loads the current manifest-declared type pack and Arrow helpers through Retriever Hub. The second starts the concise applied ladder. The third writes a graph artifact so users can see the pipeline boundary instead of only reading code.
+The first Golden command loads the current manifest-declared payload pack and Arrow helpers through Retriever Hub. The second starts the concise applied ladder. The third writes a graph artifact so users can see the pipeline boundary instead of only reading code.
 
 Public guides for this folder live in the [Golden example catalog](../../docs/examples/README.md). Agent-oriented routing lives in [`docs/llms.txt`](../../docs/llms.txt). Keep new source examples out of the first-run path until they have a named Pixi task, expected output, and dependency level.
 

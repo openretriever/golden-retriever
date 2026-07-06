@@ -1,10 +1,10 @@
 ---
 title: Golden Pack Boundary
-description: What Golden should export through Retriever Hub.
+description: What Golden exposes as reusable Retriever Hub packs.
 ---
 <p class="kicker">Reusable applied packs</p>
 
-Golden is the proving ground for reusable Retriever Hub packs. A source example becomes a pack candidate only when another project can load the public boundary without understanding the source tree.
+Golden is the proving ground for reusable Retriever Hub packs: stable robot payload references, conversion helpers, and example surfaces that can load outside the Golden source tree. A source example becomes a pack candidate only when another project can load the public boundary without knowing the Golden source tree.
 
 ```python
 from retriever import hub
@@ -16,7 +16,7 @@ WorldState = hub.use("openretriever/golden-retriever:WorldState")
 
 <div class="rule-grid">
   <div class="rule-card"><span>Manifest</span><strong>Explicit exports</strong><p>The public names live in <code>[tool.retriever.module.exports]</code>, not in scattered import paths.</p></div>
-  <div class="rule-card"><span>Lightweight import</span><strong>No robot dependencies</strong><p>Loading a type pack should not import camera, simulator, model, robot, or network dependencies.</p></div>
+  <div class="rule-card"><span>Lightweight import</span><strong>No robot dependencies</strong><p>Loading a Hub pack should not import camera, simulator, model, robot, or network dependencies.</p></div>
   <div class="rule-card"><span>Smoke proof</span><strong>Known success output</strong><p><code>demo-golden-hub-pack</code> proves that exports load, instantiate, and round-trip.</p></div>
 </div>
 
@@ -25,7 +25,7 @@ WorldState = hub.use("openretriever/golden-retriever:WorldState")
 | Rule | Why it matters |
 | --- | --- |
 | Export through the manifest | Keeps the public surface explicit. |
-| Keep imports lightweight | Loading a type pack should not import optional integrations. |
+| Keep imports lightweight | Loading a Hub pack should not import optional integrations. |
 | Smoke every export | `demo-golden-hub-pack` should prove the boundary. |
 | Document expected output | Users need to know what success looks like. |
 

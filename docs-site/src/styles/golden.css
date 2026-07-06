@@ -1,26 +1,36 @@
 :root {
-  --sl-color-accent-low: #fff4e6;
-  --sl-color-accent: #f59e0b;
-  --sl-color-accent-high: #78350f;
-  --sl-color-text-accent: #b45309;
+  --sl-color-accent-low: #fff3e8;
+  --sl-color-accent: #f97316;
+  --sl-color-accent-high: #7c2d12;
+  --sl-color-text-accent: #c2410c;
   --sl-font: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --sl-font-mono: "SFMono-Regular", "Cascadia Code", "Liberation Mono", Menlo, monospace;
-  --sl-content-width: 62rem;
-  --gold-shadow: rgba(120, 53, 15, 0.06);
+  --sl-content-width: 58rem;
+  --gold-shadow: rgba(120, 53, 15, 0.045);
+  --gold-surface: #fffdf9;
 }
 
 :root[data-theme='dark'] {
-  --sl-color-accent-low: #422006;
-  --sl-color-accent: #fbbf24;
-  --sl-color-accent-high: #fef3c7;
-  --sl-color-text-accent: #facc15;
-  --gold-shadow: rgba(0, 0, 0, 0.28);
+  --sl-color-accent-low: #4a1f0f;
+  --sl-color-accent: #fb923c;
+  --sl-color-accent-high: #ffedd5;
+  --sl-color-text-accent: #fdba74;
+  /* warm charcoal ground (not flat black) — keeps the golden warmth in dark */
+  --sl-color-bg: #1a1712;
+  --sl-color-bg-nav: #1f1b15;
+  --gold-surface: #262019;
+  --gold-shadow: rgba(0, 0, 0, 0.3);
 }
 
-/* Golden uses the same quiet docs shell as core Retriever. Gold is an accent, not a page wash. */
-:root[data-theme='light'] body {
-  background: var(--sl-color-bg);
+/* Warm "golden paper" ground — the whole shell (page + sidebar + header) shares
+   one warm tone, Claude-style; cards/panels lift on --gold-surface. */
+:root[data-theme='light'] {
+  --sl-color-bg: #f7f3ea;
+  --sl-color-bg-nav: #f2ece0;
+  --gold-surface: #fffdf9;
 }
+
+/* Golden keeps the same quiet Nova shell as core Retriever; warm color is an accent. */
 
 .hero-panel,
 .golden-panel {
@@ -29,34 +39,38 @@
   border: 1px solid var(--sl-color-gray-5);
   border-radius: 28px;
   background:
-    radial-gradient(circle at top left, rgba(245, 158, 11, 0.16), transparent 30rem),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(255, 251, 235, 0.72));
-  box-shadow: 0 22px 70px rgba(120, 53, 15, 0.08);
+    radial-gradient(circle at top left, rgba(249, 115, 22, 0.16), transparent 32rem),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 247, 237, 0.74));
+  box-shadow: 0 1px 2px rgba(124, 45, 18, 0.05), 0 14px 44px -18px var(--gold-shadow);
 }
 
 :root[data-theme='dark'] .hero-panel,
 :root[data-theme='dark'] .golden-panel {
   background:
-    radial-gradient(circle at top left, rgba(251, 191, 36, 0.18), transparent 30rem),
+    radial-gradient(circle at top left, rgba(245, 158, 11, 0.16), transparent 30rem),
     linear-gradient(135deg, rgba(25, 18, 12, 0.94), rgba(35, 24, 17, 0.84));
 }
 
 .hero-panel h1 {
   margin-top: 0.4rem;
   max-width: 850px;
-  font-size: clamp(2.15rem, 6vw, 4.6rem);
-  line-height: 0.96;
-  letter-spacing: -0.068em;
+  font-size: clamp(2.05rem, 5.5vw, 4.15rem);
+  line-height: 1.02;
+  letter-spacing: -0.04em;
 }
 
 .eyebrow,
 .kicker {
+  display: inline-block;
   margin: 0;
+  padding-bottom: 0.5rem;
   color: var(--sl-color-text-accent);
-  font-size: 0.77rem;
-  font-weight: 850;
-  letter-spacing: 0.16em;
+  font-family: var(--sl-font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
+  border-bottom: 2px solid var(--sl-color-accent);
 }
 
 .lede {
@@ -65,6 +79,54 @@
   font-size: clamp(1.04rem, 1.8vw, 1.25rem);
   line-height: 1.62;
 }
+
+
+.reference-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(240px, 0.72fr);
+  gap: 1rem;
+  align-items: stretch;
+  margin: 1rem 0 2rem;
+  padding: clamp(1.15rem, 3vw, 1.75rem);
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(249, 115, 22, 0.10), transparent 24rem),
+    linear-gradient(135deg, color-mix(in srgb, var(--sl-color-bg-nav) 94%, var(--sl-color-accent-low)), var(--sl-color-bg));
+  box-shadow: 0 10px 28px var(--gold-shadow);
+}
+
+.reference-hero h2 {
+  margin: 0.35rem 0 0.8rem;
+  font-size: clamp(1.35rem, 2.35vw, 1.95rem);
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+}
+
+.reference-hero p {
+  color: var(--sl-color-gray-2);
+}
+
+.reference-command {
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, var(--sl-color-accent) 35%, var(--sl-color-gray-5));
+  border-radius: 18px;
+  background: var(--sl-color-bg-nav);
+}
+
+.reference-command pre { margin: 0.55rem 0 0.75rem; overflow-x: auto; }
+.reference-command p:last-child { margin-bottom: 0; color: var(--sl-color-gray-2); }
+
+.external-note {
+  margin: 1.1rem 0 1.8rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 16px;
+  background: var(--sl-color-bg-nav);
+  color: var(--sl-color-gray-2);
+}
+
+.external-note a { font-weight: 800; }
 
 .action-grid,
 .card-grid,
@@ -97,11 +159,20 @@
   display: block;
   padding: 1.08rem;
   border: 1px solid var(--sl-color-gray-5);
-  border-radius: 18px;
-  background: var(--sl-color-bg-nav);
+  border-top: 2px solid color-mix(in srgb, var(--sl-color-accent) 34%, var(--sl-color-gray-5));
+  border-radius: 16px;
+  background: var(--gold-surface);
   color: inherit;
   text-decoration: none;
-  box-shadow: 0 10px 30px var(--gold-shadow);
+  box-shadow: 0 6px 18px var(--gold-shadow);
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+}
+.action-card:hover, .info-card:hover, .command-card:hover, .result-card:hover,
+.path-card:hover, .type-card:hover, .choice-card:hover, .rule-card:hover {
+  border-top-color: var(--sl-color-accent);
+  border-color: color-mix(in srgb, var(--sl-color-accent) 42%, var(--sl-color-gray-5));
+  transform: translateY(-3px);
+  box-shadow: 0 16px 34px -12px var(--gold-shadow);
 }
 
 .action-card:hover,
@@ -193,7 +264,7 @@
   border: 1px solid var(--sl-color-gray-5);
   border-radius: 22px;
   background: var(--sl-color-bg-nav);
-  box-shadow: 0 14px 42px var(--gold-shadow);
+  box-shadow: 0 1px 2px rgba(124, 45, 18, 0.05), 0 10px 30px -14px var(--gold-shadow);
 }
 
 .figure-card { padding: 0.75rem; }
@@ -250,14 +321,14 @@
 .sl-markdown-content > h1,
 main h1 {
   max-width: 58rem;
-  font-size: clamp(2rem, 3vw, 2.45rem);
-  line-height: 1.08;
-  letter-spacing: -0.042em;
+  font-size: clamp(1.9rem, 3vw, 2.55rem) !important;
+  line-height: 1.1;
+  letter-spacing: -0.035em;
 }
 
 .sl-markdown-content > h2,
 main h2 {
-  margin-top: 2.6rem;
+  margin-top: 2.35rem;
   letter-spacing: -0.035em;
 }
 
@@ -271,18 +342,23 @@ main h2 {
 .sl-markdown-content table {
   overflow: hidden;
   border: 1px solid var(--sl-color-gray-5);
-  border-radius: 18px;
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.04);
+  border-radius: 16px;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.035);
 }
 
 .sl-markdown-content th {
-  background: color-mix(in srgb, var(--sl-color-accent-low) 52%, var(--sl-color-bg-nav));
+  background: color-mix(in srgb, var(--sl-color-accent-low) 24%, var(--sl-color-bg-nav));
   color: var(--sl-color-white);
   font-weight: 780;
 }
 
 :root[data-theme='light'] .sl-markdown-content th { color: #111827; }
+.sl-markdown-content td,
+.sl-markdown-content th { padding: 0.62rem 0.9rem; }
 .sl-markdown-content td { vertical-align: top; }
+.sl-markdown-content tbody tr:hover td {
+  background: color-mix(in srgb, var(--sl-color-accent) 6%, transparent);
+}
 .sl-markdown-content code:not(pre code) { overflow-wrap: anywhere; }
 
 /* Prevent reference pages from looking like oversized generated dumps. */
@@ -340,7 +416,8 @@ details.reference-details > div { padding: 0 1rem 1rem; }
 
 @media (max-width: 800px) {
   .two-col,
-  .proof-strip { grid-template-columns: 1fr; }
+  .proof-strip,
+  .reference-hero { grid-template-columns: 1fr; }
   .artifact-card-header { flex-direction: column; }
   .artifact-frame { min-height: 520px; }
 }
@@ -387,12 +464,15 @@ details.reference-details > div { padding: 0 1rem 1rem; }
 }
 
 .check-list p::before {
-  content: "✓";
+  content: "";
   position: absolute;
-  left: 0.95rem;
-  top: 0.88rem;
-  color: var(--sl-color-accent);
-  font-weight: 900;
+  left: 1rem;
+  top: 1.15rem;
+  width: 0.62rem;
+  height: 0.62rem;
+  border-radius: 999px;
+  background: var(--sl-color-accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--sl-color-accent-low) 70%, transparent);
 }
 
 .check-list strong {
@@ -401,4 +481,66 @@ details.reference-details > div { padding: 0 1rem 1rem; }
 
 :root[data-theme='light'] .check-list strong {
   color: #111827;
+}
+
+
+/* Public reference polish. */
+.sl-markdown-content > .cta-row:first-child,
+.sl-markdown-content > .code-chip-list:first-child {
+  margin-top: 0.25rem;
+}
+
+.sl-markdown-content p + .reference-hero,
+.sl-markdown-content p + .surface-map {
+  margin-top: 1.1rem;
+}
+
+
+.reference-hero + .cta-row,
+.reference-hero + .result-grid,
+.reference-hero + .choice-grid {
+  margin-top: 1rem;
+}
+
+.sl-markdown-content > .reference-hero:first-child {
+  margin-top: 0.25rem;
+}
+
+.sl-markdown-content > h1 + .cta-row {
+  margin-top: 1rem;
+}
+
+
+.purpose-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.85rem;
+  margin: 1.25rem 0 2rem;
+}
+
+.purpose-strip div {
+  padding: 0.95rem 1rem;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 16px;
+  background: var(--sl-color-bg-nav);
+}
+
+.purpose-strip strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--sl-color-white);
+}
+
+:root[data-theme='light'] .purpose-strip strong { color: #13211f; }
+.purpose-strip p { margin: 0; color: var(--sl-color-gray-2); line-height: 1.55; }
+
+.reference-matrix td:first-child,
+.reference-matrix th:first-child { width: 12rem; }
+
+/* Nova paints the sidebar on --sl-color-black (which is WHITE in light theme),
+   leaving it out of sync with the warm ground. Put the sidebar on the same
+   golden-paper ground as the page and header. */
+.sidebar,
+.nova-scroll-container {
+  background: var(--sl-color-bg) !important;
 }

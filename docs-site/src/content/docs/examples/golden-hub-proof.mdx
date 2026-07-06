@@ -2,13 +2,23 @@
 title: Golden Hub Proof
 description: The smallest proof that Golden extends Retriever through Hub-loadable exports.
 ---
-This is the smallest Golden check: it proves that a project outside the core runtime can expose reusable robot payloads through Retriever Hub.
+<div class="reference-hero">
+  <div>
+    <p class="kicker">Smallest Golden check</p>
+    <h2>Prove Golden can extend Retriever without optional robot dependencies.</h2>
+    <p>This command proves that a project outside the core runtime can expose reusable robot payloads through Retriever Hub.</p>
+  </div>
+  <div class="reference-command">
+    <p class="kicker">Run first</p>
+    <pre><code>{`git clone https://github.com/openretriever/golden-retriever.git
+cd golden-retriever
+pixi install
+pixi run demo-golden-hub-pack`}</code></pre>
+    <p>Run this after the core Retriever visual quickstart works. No robot, camera, simulator, model, network service, or GUI is required.</p>
+  </div>
+</div>
 
-```bash
-pixi run demo-golden-hub-pack
-```
-
-The command does four things without network access:
+The command does four things:
 
 1. reads the `[tool.retriever.module]` manifest,
 2. loads representative exports through the runtime Hub loader,

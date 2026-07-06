@@ -9,8 +9,26 @@ The LeRobot lane is a dataset-profile example, not a second runtime path. It sho
 <div class="inline-command">
   <strong>Run the bridge</strong>
   <pre><code>pixi run demo-robotics-lerobot-bridge</code></pre>
-  <p>Expected result: a small event profile is converted into a dataset-style record with lineage attached.</p>
+  <p>Expected result: the command prints canonical rows, LeRobot-style records, and round-trip rows so you can verify conversion without a real dataset upload.</p>
 </div>
+
+<div class="result-grid">
+  <div class="result-card"><span>Input</span><strong>Canonical rows</strong><p>Small Golden event records with explicit event time, source, and lineage.</p></div>
+  <div class="result-card"><span>Export</span><strong>LeRobot records</strong><p>Dataset-friendly rows that preserve the robot payload boundary.</p></div>
+  <div class="result-card"><span>Check</span><strong>Roundtrip rows</strong><p>A local conversion proof before any heavy dataset pipeline or cloud storage enters the loop.</p></div>
+</div>
+
+## Output To Recognize
+
+```text
+Canonical rows: 2
+LeRobot records: 2
+Roundtrip rows: 2
+Sample record:
+  {...}
+```
+
+The exact payload values can change as examples evolve, but those four labels should stay stable: source rows, exported rows, round-trip rows, and one inspectable record.
 
 ## What It Demonstrates
 
@@ -20,7 +38,7 @@ The LeRobot lane is a dataset-profile example, not a second runtime path. It sho
   <div class="info-card"><strong>Lineage retention</strong><span>Preserve timing, source, and conversion details for debugging.</span></div>
 </div>
 
-## Boundary
+## Keep The Boundary Small
 
 | Keep here | Keep out of first-run docs |
 | --- | --- |

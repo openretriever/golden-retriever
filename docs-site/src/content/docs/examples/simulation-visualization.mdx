@@ -2,12 +2,20 @@
 title: Simulation and Visualization
 description: Rerun, mock-safe simulation, and HTML graph visualization lanes.
 ---
-Use this lane when the concise examples work and you want visible artifacts: Rerun streams, simulator traces, and self-contained HTML graph views.
+Use this lane when the concise examples work and you want visible artifacts: Rerun streams, simulator traces, and self-contained HTML graph views. Start with the lightweight artifacts before enabling heavier simulator or GUI dependencies.
 
 <div class="command-grid">
-  <div class="command-card"><strong>HTML graph proof</strong><code>pixi run demo-pipeline-html-viz</code></div>
-  <div class="command-card"><strong>Mock robosuite</strong><code>pixi run demo-robosuite-mock</code></div>
-  <div class="command-card"><strong>TWIST2 Rerun lane</strong><code>pixi run -e twist2 demo-twist2-rerun</code></div>
+  <div class="command-card"><strong>HTML graph proof</strong><code>pixi run demo-pipeline-html-viz</code><p>Writes a self-contained graph artifact and prints a compact ASCII graph.</p></div>
+  <div class="command-card"><strong>Mock robosuite</strong><code>pixi run demo-robosuite-mock</code><p>Prints mock environment/policy trace lines without requiring robosuite.</p></div>
+  <div class="command-card"><strong>TWIST2 Rerun lane</strong><code>pixi run -e twist2 demo-twist2-rerun</code><p>Optional visual lane for watching state evolve in a Rerun viewer.</p></div>
+</div>
+
+## Recommended Order
+
+<div class="path-grid">
+  <div class="path-card"><span>01</span><strong>Render the graph</strong><p>Inspect Flows, ports, clocks, sync policies, and feedback edges before changing the example.</p></div>
+  <div class="path-card"><span>02</span><strong>Run the mock trace</strong><p>Validate environment-as-Flow and policy-as-Flow behavior without simulator install friction.</p></div>
+  <div class="path-card"><span>03</span><strong>Opt into GUI/sim</strong><p>Use Rerun or real simulator lanes only after the lightweight artifacts match expectations.</p></div>
 </div>
 
 ## What The Artifacts Show

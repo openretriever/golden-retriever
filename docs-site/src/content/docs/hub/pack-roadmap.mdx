@@ -1,20 +1,54 @@
 ---
 title: Pack Maturity Guide
-description: Promotion rules for turning Golden examples into reusable Hub packs.
+description: Decide when a Golden example is ready to become a reusable Hub pack.
 ---
-Use this guide to decide whether a Golden source example is ready to become a reusable Hub pack.
+<p class="kicker">Pack promotion</p>
 
-| Level | Meaning | Required proof |
+Use this page when a Golden example feels useful outside its source folder. The question is not "is the code interesting?" It is "can another project load, run, and understand the boundary without inheriting the whole example tree?"
+
+<div class="inline-command">
+  <strong>Maintainer promotion check</strong>
+  <pre><code>pixi run demo-golden-hub-pack
+pixi run public-surface-check</code></pre>
+  <p>Expected result: the pack boundary loads through Retriever Hub, promoted commands run, and docs still name the commands plus expected outputs users should see.</p>
+</div>
+
+## Promotion Levels
+
+<div class="choice-grid">
+  <div class="choice-card"><span>Source</span><strong>Useful pattern</strong><p>The code is helpful as an implementation reference, but users should not depend on it as a stable public surface yet.</p></div>
+  <div class="choice-card"><span>Demo</span><strong>Named command</strong><p>The example has a Pixi task, docs page, expected output, and smoke coverage. This is the first public launch point.</p></div>
+  <div class="choice-card"><span>Candidate</span><strong>Manifest boundary</strong><p>The reusable part has lightweight imports and can be loaded by manifest without optional robot, camera, simulator, model, or network dependencies.</p></div>
+  <div class="choice-card"><span>Pack</span><strong>Reusable interface</strong><p>The exported names, docs, smoke tests, and compatibility notes are stable enough for downstream projects.</p></div>
+</div>
+
+## Decision Table
+
+| Level | User-facing promise | Required proof |
 | --- | --- | --- |
-| Source reference | Useful pattern in the repo. | README or docs note. |
-| Promoted demo | Named Pixi task and expected output. | Smoke command passes. |
-| Pack candidate | Manifest export with lightweight imports. | Hub loader smoke passes. |
-| Hub-loadable pack | Stable public interface and docs. | Versioned release plus compatibility notes. |
+| Source reference | Read the code after the promoted path works. | README or docs note explains what pattern to copy. |
+| Promoted demo | Run one command and recognize success. | Named Pixi task, expected output, smoke check. |
+| Pack candidate | Load the reusable boundary without source-path knowledge. | Manifest export plus Hub loader smoke. |
+| Hub-loadable pack | Reuse the interface from another project. | Versioned release, docs, compatibility notes, and maintainer guardrail. |
 
 ## Do Not Promote Yet If
 
-- importing the pack pulls optional simulator/model/robot dependencies;
-- the docs only say where source files live instead of what to run;
-- expected output is not documented;
-- the example requires private credentials or local-only paths;
-- the command is an editing guardrail rather than a user demo.
+<div class="rule-grid">
+  <div class="rule-card"><span>Imports</span><strong>Optional dependencies leak in</strong><p>Loading the pack imports simulator, model, robot, camera, GUI, network, or credential-dependent code.</p></div>
+  <div class="rule-card"><span>Docs</span><strong>Only source paths are documented</strong><p>A user sees where files live, but not which command to run or what output proves success.</p></div>
+  <div class="rule-card"><span>Output</span><strong>Success is ambiguous</strong><p>The page lacks terminal markers, artifact names, generated files, or screenshots that make success recognizable.</p></div>
+  <div class="rule-card"><span>Scope</span><strong>The example is lab-specific</strong><p>Private paths, private credentials, capture procedures, or local hardware assumptions are still required.</p></div>
+</div>
+
+## Minimum Promotion Checklist
+
+1. Name the public command.
+2. Show expected output or generated artifacts.
+3. Keep imports lightweight.
+4. Add or update the smoke check.
+5. Add or update the release-surface marker in `scripts/release/check_public_surface.py`.
+6. Keep `/llms.txt` aligned so agents start from the same route as humans.
+
+<div class="boundary-note">
+<strong>Default decision:</strong> keep a useful example as a promoted demo before turning it into a Hub pack. Promote only the stable boundary, not the whole experiment.
+</div>

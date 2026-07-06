@@ -19,6 +19,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 
 REQUIRED_PATHS = (
+    "README.md",
     "examples/advanced/robosuite_lift/app.py",
     "examples/advanced/robosuite_lift/README.md",
     "examples/experimental/visualization/visualize_pipeline.py",
@@ -35,8 +36,8 @@ REQUIRED_PATHS = (
     "docs-site/src/content/docs/examples/simulation-visualization.mdx",
     "docs-site/src/content/docs/hub/index.mdx",
     "docs-site/src/content/docs/hub/export-catalog.mdx",
-    "docs-site/src/content/docs/robot-type-packs/index.mdx",
-    "docs-site/src/content/docs/robot-type-packs/type-catalog.mdx",
+    "docs-site/src/content/docs/robot-payloads/index.mdx",
+    "docs-site/src/content/docs/robot-payloads/type-catalog.mdx",
 )
 
 REMOVED_PATHS: tuple[str, ...] = (
@@ -56,11 +57,17 @@ REQUIRED_TASKS = (
 )
 
 DOC_MARKERS = {
+    "README.md": (
+        "Golden Retriever is the applied reference layer",
+        "Start Here",
+        "Surface Boundary",
+        "pixi run public-surface-check",
+    ),
     "docs-site/astro.config.mjs": (
         "starlightThemeNova",
         "Golden Retriever",
-        "Golden Pack Boundary",
-        "Payload Catalog",
+        "Reuse Robot Payloads",
+        "Choose a Payload",
     ),
     "docs-site/public/llms.txt": (
         "Golden Retriever",
@@ -68,7 +75,7 @@ DOC_MARKERS = {
         "demo-robosuite-mock",
         "demo-pipeline-html-viz",
         "https://retriever-space.pages.dev/examples/simulation-visualization/",
-        "Do not treat source examples as Retriever Hub packs unless `pyproject.toml` exports them.",
+        "Do not treat source examples as Retriever Hub packs unless the Hub manifest exports them.",
     ),
     "docs-site/public/robots.txt": (
         "Sitemap: https://retriever-space.pages.dev/sitemap-index.xml",
@@ -76,11 +83,12 @@ DOC_MARKERS = {
     ),
     "docs-site/src/content/docs/index.mdx": (
         "Golden examples start where the core quickstart ends",
+        "Run robot-facing examples",
         "Golden is not a second runtime",
-        "How The Retriever Surfaces Fit",
-        "For AI Agents And Fast Audits",
         "First Results To Recognize",
-        "What Belongs Here",
+        "Recommended Route",
+        "How The Retriever Surfaces Fit",
+        "Machine-readable route",
     ),
     "docs-site/src/content/docs/examples/index.mdx": (
         "Choose By Goal",
@@ -98,8 +106,10 @@ DOC_MARKERS = {
     ),
     "docs-site/src/content/docs/examples/simulation-visualization.mdx": (
         "HTML graph proof",
+        "Recommended Order",
         "Rerun",
         "Mock robosuite",
+        "demo-pipeline-html-viz",
     ),
     "docs-site/src/content/docs/hub/index.mdx": (
         "Golden Pack Boundary",
@@ -117,16 +127,29 @@ DOC_MARKERS = {
         "convert_to_arrow",
         "convert_from_arrow",
     ),
-    "docs-site/src/content/docs/robot-type-packs/index.mdx": (
-        "Robot Type Packs",
-        "Payload catalog",
-        "What Golden Provides",
+    "docs-site/src/content/docs/hub/pack-roadmap.mdx": (
+        "Pack Maturity Guide",
+        "Promotion Levels",
+        "Maintainer promotion check",
+        "Minimum Promotion Checklist",
+    ),
+    "docs-site/src/content/docs/robot-payloads/lerobot-export.mdx": (
+        "LeRobot Dataset Export",
+        "demo-robotics-lerobot-bridge",
+        "Canonical rows",
+        "LeRobot records",
+        "Roundtrip rows",
+    ),
+    "docs-site/src/content/docs/robot-payloads/index.mdx": (
+        "Robot Payload Reference",
+        "Which payload should this Flow use?",
+        "What Golden Owns",
         "demo-robotics-typing-catalog",
     ),
-    "docs-site/src/content/docs/robot-type-packs/type-catalog.mdx": (
-        "Robot Payload Catalog",
-        "Pick The Smallest Useful Payload",
-        "Import And Registry Shape",
+    "docs-site/src/content/docs/robot-payloads/type-catalog.mdx": (
+        "Choose a Robot Payload",
+        "Quick Decision Table",
+        "Authoring Pattern",
         "Validation Checklist",
         "Detailed field reference",
     ),

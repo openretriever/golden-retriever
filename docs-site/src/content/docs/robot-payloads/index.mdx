@@ -1,0 +1,56 @@
+---
+title: Robot Payload Reference
+description: Choose reusable robot-facing payloads for Golden examples and Hub pack candidates.
+---
+<div class="reference-hero">
+  <div>
+    <p class="kicker">Applied payload layer</p>
+    <h2>Use robot payloads when an example needs a stable handoff.</h2>
+    <p>Core Retriever gives you Flow, Pipeline, clocks, sync, execution, IR, replay, and Hub loading. Golden adds the applied vocabulary around robot boundaries: world state, belief, skills, plans, trajectories, stamped spatial values, event buffers, and dataset records.</p>
+  </div>
+  <div class="reference-command">
+    <p class="kicker">First payload proof</p>
+    <pre><code>pixi run demo-robotics-typing-catalog</code></pre>
+    <p>Expected result: stamped spatial payloads are constructed, resolved through the registry, and validated with a compact summary.</p>
+  </div>
+</div>
+
+<div class="purpose-strip">
+  <div><strong>Core owns runtime mechanics.</strong><p>Use core docs for Flow, Pipeline, clocks, sync, IR, replay, execution, and the registry loader.</p></div>
+  <div><strong>Golden owns robot-facing reuse.</strong><p>Use Golden for payload choices that appear across examples: world state, belief, plans, trajectories, events, and dataset rows.</p></div>
+  <div><strong>Projects own lab-specific schemas.</strong><p>Keep camera rigs, private robot fields, and simulator quirks local until the boundary is stable enough to share.</p></div>
+</div>
+
+<div class="boundary-note">
+<strong>Keep the boundary simple.</strong> Use core docs for runtime mechanics. Use Golden when the question becomes: what robot state, belief, plan, trajectory, event, or dataset payload should this applied example expose?
+</div>
+
+## Choose By Boundary
+
+<div class="choice-grid">
+  <a class="choice-card" href="/robot-payloads/type-catalog/"><span>Choose</span><strong>Which payload should this Flow use?</strong><p>Pick the smallest payload that preserves frame, time, source, scene, plan, trajectory, command, or status semantics.</p></a>
+  <a class="choice-card" href="/robot-payloads/flow-contracts/"><span>Compose</span><strong>How should payloads cross Flows?</strong><p>Use stable I/O objects, qualified fields, and validation boundaries instead of dict glue.</p></a>
+  <a class="choice-card" href="/robot-payloads/data-event-streams/"><span>Record</span><strong>How should robot data become replayable?</strong><p>Use event time, event buffers, stream joins, windows, lineage, and export profiles.</p></a>
+  <a class="choice-card" href="/robot-payloads/lerobot-export/"><span>Export</span><strong>How do event records become dataset rows?</strong><p>Bridge Golden event profiles into LeRobot-style rows while retaining provenance.</p></a>
+</div>
+
+## First Runnable Checks
+
+<div class="command-grid">
+  <div class="command-card"><strong>Payload catalog</strong><code>pixi run demo-robotics-typing-catalog</code><p>Constructs canonical spatial and robot-facing payloads.</p></div>
+  <div class="command-card"><strong>Flow contract</strong><code>pixi run demo-robotics-typing-contract</code><p>Checks composite I/O access and stable field behavior.</p></div>
+  <div class="command-card"><strong>Boundary proof</strong><code>pixi run demo-robotics-typing-boundary</code><p>Preserves frame, time, and source metadata across a perception-to-control boundary.</p></div>
+</div>
+
+## What Golden Owns
+
+| Area | Golden provides | Core Retriever provides |
+| --- | --- | --- |
+| Robot payload reference | `WorldState`, `BeliefGraph`, `Skill`, `Plan`, `Trajectory`, status, stamped spatial examples. | Runtime, clocks, Flow/Pipeline execution, IR, replay, and registry mechanics. |
+| Flow contracts | Composite I/O, qualified fields, and validation boundaries for applied examples. | The graph semantics used by those examples. |
+| Event/data profiles | `Event`, `EventBuffer`, event-time joins, manifests, and LeRobot bridge examples. | Runtime event-buffer mechanics and scheduler behavior. |
+| Hub pack readiness | Pack boundary, export catalog, smoke demos, and promotion guidance. | Hub loader and registry integration. |
+
+## Promotion Rule
+
+A robot payload belongs in Golden when it can help more than one applied example without importing optional robot, simulator, camera, model, network, or private dataset dependencies. Keep lab-specific capture procedures, simulator quirks, and one-off policy fields inside the example until the boundary is stable.

@@ -18,4 +18,12 @@ This lane keeps the first robot-facing examples small: synthetic detections, sim
 | Memory | Detections update local belief state. | Local Flow state and replayable inputs. |
 | Pointing | A goal is resolved using current belief. | Closed-loop handoff between perception, memory, and action selection. |
 
-Use this lane before real cameras or model-backed perception. It gives a stable expected output for docs, CI, and debugging.
+Use this lane before real cameras or model-backed perception. These commands are smoke checks: success is exit code 0 with the Pixi task line, not a long terminal report. If a command fails, the Flow, task, docs page, and expected output are out of sync.
+
+## Expected Results
+
+| Command | Stable success cue |
+| --- | --- |
+| `pixi run -e golden-local demo-perception-detection-flow` | exits 0 after stepping the synthetic camera -> detector -> printer graph. |
+| `pixi run -e golden-local demo-memory-belief-flow` | exits 0 after stepping synthetic detections through the belief tracker. |
+| `pixi run -e golden-local demo-memory-pointing-flow` | exits 0 after dropout and belief memory preserve a target point through intermittent detections. |

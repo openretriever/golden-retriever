@@ -1,54 +1,53 @@
 ---
-title: Robot Payload Catalog
-description: Choose Golden robot payloads for examples, datasets, and Hub packs.
+title: Choose a Robot Payload
+description: Choose the smallest Golden robot payload that preserves the boundary.
 ---
-<p class="kicker">Applied robotics payloads</p>
-
-Golden keeps robot-facing payloads layered above the core runtime. Use this page as a selection guide first: choose the smallest payload that preserves the robot boundary you care about, then open the detailed field reference only when you need exact fields.
-
-<div class="proof-strip">
+<div class="reference-hero">
   <div>
-    <p class="kicker">First proof</p>
-    <p>Run the smallest local command before reading the full catalog.</p>
+    <p class="kicker">Robot payload selection</p>
+    <h2>Choose by the handoff, not by the ontology.</h2>
+    <p>Golden payloads are for reusable robot examples. Start from the boundary you need to preserve: a local spatial value, a stamped graph handoff, scene memory, planner intent, motion output, execution status, or replayable event record.</p>
+  </div>
+  <div class="reference-command">
+    <p class="kicker">Run first</p>
     <pre><code>pixi run demo-robotics-typing-catalog</code></pre>
-  </div>
-  <div>
-    <strong>Expected result</strong>
-    <p>Golden constructs stamped spatial payloads, resolves them through the registry, and prints a compact validation summary.</p>
-    <div class="code-chip-list"><code>PoseStamped</code><code>SE3Pose</code><code>get_type(...)</code><code>registry OK</code></div>
+    <p>Expected result: representative spatial and robot-facing payloads are constructed, registry lookup succeeds, and validation prints a compact summary.</p>
   </div>
 </div>
 
-## Pick The Smallest Useful Payload
-
-<div class="surface-map">
-  <p class="kicker">How to read this page</p>
-  <p>Start with the boundary, not the type name. Spatial values stay small; values that cross process, replay, dataset, or robot boundaries become stamped; planning and memory use task-level payloads.</p>
-  <div class="code-chip-list"><code>local math -> Vector3 / SE3Pose</code><code>graph boundary -> PoseStamped</code><code>scene memory -> BeliefGraph</code><code>planner handoff -> Plan / Trajectory</code></div>
+<div class="purpose-strip">
+  <div><strong>Use the smallest reusable payload.</strong><p>Prefer a narrow type that preserves the boundary instead of a broad object that silently becomes a project-specific blob.</p></div>
+  <div><strong>Stamp values before they cross boundaries.</strong><p>Add frame, event time, and source metadata before values enter replay, planning, control, export, or another process.</p></div>
+  <div><strong>Keep optional integrations outside the base layer.</strong><p>Camera, simulator, model, robot, network, and private dataset details should not be required to import these payloads.</p></div>
 </div>
+
+## Quick Decision Table
+
+<table class="reference-matrix">
+  <thead><tr><th>Boundary</th><th>Start with</th><th>Use when</th><th>Avoid first</th></tr></thead>
+  <tbody>
+    <tr><td>Local spatial math</td><td><code>Vector3</code>, <code>Quaternion</code>, <code>SE3Pose</code></td><td>The frame, unit, and source are already local context.</td><td>Stamped wrappers for values that never leave the local computation.</td></tr>
+    <tr><td>Graph or process handoff</td><td><code>PoseStamped</code>, <code>TwistStamped</code>, <code>WrenchStamped</code></td><td>The value crosses a Flow, process, replay, dataset, or robot boundary.</td><td>Dropping <code>frame_id</code>, <code>stamp_ns</code>, or source before replay.</td></tr>
+    <tr><td>Robot state</td><td><code>RobotState</code>, <code>JointState</code></td><td>A wrapper, monitor, policy, or simulator needs current robot configuration.</td><td>Unnamed joint arrays or opaque status strings.</td></tr>
+    <tr><td>Scene and memory</td><td><code>WorldState</code>, <code>BeliefGraph</code></td><td>Perception, memory, grounding, and planning need a shared scene description.</td><td>Mixing geometric state, confidence, and task memory in one ad hoc dict.</td></tr>
+    <tr><td>Planner handoff</td><td><code>TaskGoal</code>, <code>Skill</code>, <code>Plan</code>, <code>StructuredPlan</code></td><td>A planner or language module hands intent to a controller or monitor.</td><td>Passing natural-language instructions directly to control code.</td></tr>
+    <tr><td>Motion and progress</td><td><code>Trajectory</code>, <code>ExecutionStatus</code></td><td>A controller or monitor reports timed motion, progress, terminal state, or errors.</td><td>Boolean-only success/failure with no progress or error context.</td></tr>
+    <tr><td>Lightweight exchange</td><td><code>Action</code>, <code>Command</code>, <code>Status</code></td><td>A smoke demo, Hub export, or dataset bridge needs compact exchange records.</td><td>Embedding simulator/model-specific payloads in the public pack.</td></tr>
+  </tbody>
+</table>
+
+## Common Choices
 
 <div class="choice-grid">
   <div class="choice-card"><span>Geometry</span><strong>Pose, velocity, force</strong><p>Use <code>Vector3</code>, <code>Quaternion</code>, <code>SE3Pose</code>, <code>Twist</code>, and <code>Wrench</code> when a Flow only needs spatial values.</p></div>
-  <div class="choice-card"><span>Stamped boundary</span><strong>Frame + time + source</strong><p>Use <code>PoseStamped</code>, <code>TwistStamped</code>, and <code>WrenchStamped</code> when a value crosses a graph, process, dataset, or robot boundary.</p></div>
+  <div class="choice-card"><span>Stamped boundary</span><strong>Frame + time + source</strong><p>Use stamped wrappers when a value crosses a graph, process, dataset, or robot boundary.</p></div>
   <div class="choice-card"><span>World model</span><strong>Current robot and scene</strong><p>Use <code>RobotState</code>, <code>WorldState</code>, and <code>BeliefGraph</code> for perception, memory, planning, and monitoring examples.</p></div>
   <div class="choice-card"><span>Action layer</span><strong>Goal, skill, plan, trajectory</strong><p>Use <code>TaskGoal</code>, <code>Skill</code>, <code>Plan</code>, <code>StructuredPlan</code>, <code>Trajectory</code>, and <code>ExecutionStatus</code> for planner-to-controller handoff.</p></div>
 </div>
 
-## Common Choices
+## Authoring Pattern
 
-| If you are representing... | Start with | Avoid |
-| --- | --- | --- |
-| A point, direction, velocity, force, or torque axis | `Vector3` | A free-form tuple with implicit units. |
-| A rigid object, end-effector, or robot pose | `SE3Pose` | Separate position and orientation fields that drift apart. |
-| A value observed at a frame and time | `PoseStamped`, `TwistStamped`, `WrenchStamped` | Dropping `frame_id`, event time, or source before replay. |
-| Current robot configuration | `RobotState` or `JointState` | Unnamed joint arrays or status strings in ad hoc dicts. |
-| Scene memory or task state | `WorldState` or `BeliefGraph` | Mixing geometric state and probabilistic memory in one blob. |
-| A proposed action sequence | `Skill`, `Plan`, `StructuredPlan`, `Trajectory` | Passing natural-language instructions directly to a controller. |
-| Runtime progress or failure state | `ExecutionStatus` | Boolean-only success/failure without progress or error context. |
-
-## Import And Registry Shape
-
-Use direct imports when authoring code. Use registry lookup only at package boundaries: manifests, Hub packs, validation tools, and replay/dataset readers.
+Use direct imports inside example code. Use registry lookup at package boundaries: manifests, Hub packs, validation tools, replay readers, and dataset readers.
 
 ```python
 from retriever_typing import PoseStamped, SE3Pose, get_type
@@ -96,5 +95,5 @@ assert pose_cls is PoseStamped
 </details>
 
 <div class="boundary-note">
-<strong>Keep the base catalog small.</strong> Add covariance-bearing poses, richer frame graphs, or domain-specific robot schemas as separate packs only after these base payloads are not enough.
+<strong>Keep the base catalog small.</strong> Add covariance-bearing poses, richer frame graphs, or domain-specific schemas as separate Hub packs only after these base payloads are not enough.
 </div>

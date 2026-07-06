@@ -15,6 +15,13 @@ Composition examples show how Golden turns small typed pieces into reusable robo
   <div>
     <strong>Expected result</strong>
     <p>The example composes typed modules, resolves registry-backed payloads, and keeps the resulting graph inspectable through the IR and visualization path.</p>
+    <pre><code>{`=== Extend Declared Pipeline ===
+internal flows: ['counter', 'policy']
+policy output after replacement: ProcOut(value=104)
+
+=== Compose Pipeline As Flow ===
+[outer] value=5 aux=99
+wrapped stage output: Golden_Composable_CounterOutput(aux=99, value=5)`}</code></pre>
   </div>
 </div>
 
@@ -32,5 +39,5 @@ This is the public composition lane. A composition example belongs here only whe
 
 <div class="card-grid">
   <a class="info-card" href="/examples/simulation-visualization/"><strong>Render the graph</strong><span>Use the HTML visualization lane to inspect the composed pipeline.</span></a>
-  <a class="info-card" href="/robot-type-packs/flow-contracts/"><strong>Check contracts</strong><span>Review composite Flow I/O and field-access rules.</span></a>
+  <a class="info-card" href="/robot-payloads/flow-contracts/"><strong>Check contracts</strong><span>Review composite Flow I/O and field-access rules.</span></a>
 </div>

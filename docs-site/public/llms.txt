@@ -1,6 +1,6 @@
 # Golden Retriever
 
-GoldenRetriever is the maintained applied reference layer for Retriever: robot-facing examples, reusable payload packs, simulator and visualization lanes, expected artifacts, and Retriever Hub pack candidates. Use it after the core Retriever visual quickstart when you want runnable robot-facing examples rather than runtime concepts alone.
+GoldenRetriever is the maintained applied reference layer for Retriever: robot-facing examples, reusable robot payload references, simulator and visualization lanes, expected artifacts, and Retriever Hub pack candidates. Use it after the core Retriever visual quickstart when you want runnable robot-facing examples rather than runtime concepts alone.
 
 ## Public Surfaces
 
@@ -12,22 +12,22 @@ GoldenRetriever is the maintained applied reference layer for Retriever: robot-f
 - Golden Hub reference: https://retriever-space.pages.dev/hub/
 - Golden export catalog: https://retriever-space.pages.dev/hub/export-catalog/
 - Golden pack roadmap: https://retriever-space.pages.dev/hub/pack-roadmap/
-- Golden robot type packs: https://retriever-space.pages.dev/robot-type-packs/
+- Golden robot payload reference: https://retriever-space.pages.dev/robot-payloads/
 
 ## Boundary
 
-The core runtime imports as `retriever`; the public runtime distribution target is `retriever-core`. GoldenRetriever is not a second runtime package. Golden maintains robot-facing examples, reusable type packs, robotics typing references, simulator/visualization lanes, notebooks, and Hub-pack candidates.
+GoldenRetriever is not a second runtime package. Golden maintains robot-facing examples, reusable robot payload references, simulator/visualization lanes, notebooks, and Hub pack candidates on top of the core `retriever` runtime.
 
 ## Canonical Path
 
 1. Run `pixi run demo-golden-hub-pack` to prove the Golden Hub extension boundary.
-2. Continue to the example catalog for perception, memory, language, composition, simulation, visualization, and type-pack examples.
+2. Continue to the example catalog for perception, memory, language, composition, simulation, visualization, and robot payload and Hub pack examples.
 3. Use the core Retriever docs only when Flow, Pipeline, clocks, sync, replay, or Hub-loader mechanics are the question.
 4. Promote source examples into Hub packs only when they are import-safe, versioned, smoke-tested, documented, and useful outside this repository.
 
 ## Current Retriever Hub Pack Surface
 
-The current manifest-declared Golden pack surface is the robot-facing type pack declared in `pyproject.toml`: `WorldState`, `RobotState`, `BeliefGraph`, `Skill`, `Plan`, `StructuredPlan`, `TaskGoal`, `Trajectory`, `ExecutionStatus`, `Action`, `Command`, `Status`, `convert_to_arrow`, and `convert_from_arrow`.
+The current manifest-declared Golden pack surface is the robot-facing payload pack declared by the Hub manifest: `WorldState`, `RobotState`, `BeliefGraph`, `Skill`, `Plan`, `StructuredPlan`, `TaskGoal`, `Trajectory`, `ExecutionStatus`, `Action`, `Command`, `Status`, `convert_to_arrow`, and `convert_from_arrow`.
 
 ```python
 from retriever import hub
@@ -44,10 +44,10 @@ pixi run demo-golden-hub-pack
 pixi run -e golden-local demo-perception-detection-flow
 pixi run demo-robosuite-mock
 pixi run demo-pipeline-html-viz
-pixi run public-surface-check
+pixi run demo-robotics-typing-catalog
 ```
 
-Expected artifacts: Hub export/registry/Arrow terminal proof, exit-zero synthetic perception flow, `[mock step=...]` robosuite trace lines, `out/golden_retriever_closed_loop_viz.html`, and PASS lines from the public-surface guardrail.
+Expected artifacts: Hub export/registry/Arrow terminal proof, exit-zero synthetic perception flow, `[mock step=...]` robosuite trace lines, `out/golden_retriever_closed_loop_viz.html`, and robot payload catalog output.
 
 ## Agent Decision Table
 
@@ -57,9 +57,9 @@ Expected artifacts: Hub export/registry/Arrow terminal proof, exit-zero syntheti
 | Example behavior | `pixi run -e golden-local demo-perception-detection-flow` | optional model-backed lanes |
 | Simulator integration | `pixi run demo-robosuite-mock` | real robosuite until the mock trace works |
 | Graph visualization | `pixi run demo-pipeline-html-viz` | screenshots or stale generated HTML |
-| Type-pack reuse | `pixi run demo-robotics-typing-catalog` | ad hoc dict payloads or source-only imports |
+| Robot payload reuse | `pixi run demo-robotics-typing-catalog` | ad hoc dict payloads or source-only imports |
 
-If a safe command fails, fix the example, task, docs, or public-surface check together. Do not add a new undocumented command as a workaround.
+If a safe command fails, keep the example, task, docs, and expected output aligned before promoting a new command.
 
 ## Optional Lanes
 
@@ -73,9 +73,9 @@ Only start these when the user explicitly asks for the relevant environment:
 
 ## Agent Guidance
 
-- Start from `AGENTS.md` in the GoldenRetriever repository.
+- Start from the repository guidance, then verify against the hosted docs and safe smoke commands.
 - Use hosted docs for public behavior and the source checkout for runnable examples.
-- Do not treat source examples as Retriever Hub packs unless `pyproject.toml` exports them.
+- Do not treat source examples as Retriever Hub packs unless the Hub manifest exports them.
 - Keep public docs limited to public source paths, hosted docs, and public URLs.
 - Prefer mock/smoke commands before optional hardware, simulator, model, GPU, or network dependencies.
-- When editing examples, update the matching Pixi task, docs page, expected output, and public-surface check in the same change.
+- When editing examples, update the matching Pixi task, docs page, and expected output in the same change.

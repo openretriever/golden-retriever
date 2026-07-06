@@ -1,0 +1,61 @@
+---
+title: Payload Flow Contracts
+description: How Golden robot payloads cross reusable Flow boundaries.
+---
+<div class="reference-hero">
+  <div>
+    <p class="kicker">Reusable Flow boundaries</p>
+    <h2>Make the robot handoff explicit before a graph becomes reusable.</h2>
+    <p>A Golden Flow should not depend on a source folder, simulator callback, or camera pipeline convention. It should receive one typed input object, return one typed output object, and keep validation at the boundary where robot data changes meaning.</p>
+  </div>
+  <div class="reference-command">
+    <p class="kicker">Run first</p>
+    <pre><code>pixi run demo-robotics-typing-contract
+pixi run demo-robotics-typing-boundary</code></pre>
+    <p>Expected result: composite I/O access works, qualified fields stay stable, and frame/time/source metadata survives a perception-to-control boundary.</p>
+  </div>
+</div>
+
+## What The Contract Protects
+
+<div class="result-grid">
+  <div class="result-card"><span>Names</span><strong>Downstream code knows what it receives</strong><p>Use named payloads and fields instead of anonymous dicts that only one example understands.</p></div>
+  <div class="result-card"><span>Boundary</span><strong>Robot metadata survives handoff</strong><p>Stamped payloads keep frame, event time, and source before values cross into planning, control, replay, or export.</p></div>
+  <div class="result-card"><span>Reuse</span><strong>Hub packs can load the same surface</strong><p>Stable inputs and outputs can become manifest exports without importing optional robot dependencies.</p></div>
+</div>
+
+## Minimal Pattern
+
+```python
+from dataclasses import dataclass
+
+from retriever.flow import Flow, io
+from retriever_typing import PoseStamped
+from retriever_typing.robotics_types import Skill, WorldState
+
+@io
+@dataclass
+class PickInput:
+    world: WorldState
+    target_pose: PoseStamped
+
+class PickSelector(Flow[PickInput, Skill]):
+    def step(self, inp: PickInput) -> Skill:
+        return Skill(name="pick", params={"target_frame": inp.target_pose.header.frame_id})
+```
+
+The example stays ordinary Python: a typed input object, a typed output object, and a synchronous `step(...)` method. Retriever handles graph execution separately; Golden keeps the robot-facing payloads clear enough to reuse.
+
+## Contract Rules
+
+| Rule | Practical meaning | Failure avoided |
+| --- | --- | --- |
+| Prefer typed payloads over dicts. | Type names become documentation, registry keys, and validation anchors. | Anonymous payloads that only one example understands. |
+| Keep field names stable. | Downstream examples can compose without adapter glue. | Silent breakage after renaming `goal_pose` to `target`. |
+| Qualify ambiguous fields. | Multiple poses, goals, or statuses stay distinguishable. | Collisions between `robot.pose`, `object.pose`, and `goal.pose`. |
+| Validate at boundaries. | Normalize frame, time, source, progress, and array lengths before reuse. | Bad payloads moving deeper into planner/controller Flows. |
+| Keep optional integrations explicit. | Camera, simulator, model, and robot dependencies stay outside the base contract. | A first-run example that fails before teaching composition. |
+
+<div class="reference-strip">
+  <strong>Need the runtime semantics?</strong> Use the core Retriever docs for Flow, Pipeline, clocks, and sync. This Golden page only explains the applied robot payload contract built on top of those primitives.
+</div>

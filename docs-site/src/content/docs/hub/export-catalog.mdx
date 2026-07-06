@@ -12,6 +12,14 @@ The Golden pack should stay import-safe: loading these exports must not require 
   <p>Expected result: exports load, representative payloads instantiate, and the Arrow conversion helpers round-trip a lightweight action payload.</p>
 </div>
 
+## Choose The Export By Job
+
+<div class="result-grid">
+  <div class="result-card"><span>Scene</span><strong>Need current or remembered state?</strong><p>Start with <code>WorldState</code>, <code>RobotState</code>, or <code>BeliefGraph</code>.</p></div>
+  <div class="result-card"><span>Task</span><strong>Need planner handoff?</strong><p>Start with <code>TaskGoal</code>, <code>Skill</code>, <code>Plan</code>, or <code>StructuredPlan</code>.</p></div>
+  <div class="result-card"><span>Exchange</span><strong>Need lightweight conversion?</strong><p>Use <code>Action</code>, <code>Command</code>, <code>Status</code>, and Arrow helpers.</p></div>
+</div>
+
 ## Export Groups
 
 <div class="choice-grid">
