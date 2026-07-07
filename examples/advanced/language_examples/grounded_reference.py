@@ -1,8 +1,8 @@
 """Minimal advanced language example: ground a referring expression using detections.
 
 Run:
-  pixi run -e golden demo-language-grounded-reference
-  pixi run -e golden python -m examples.advanced.language_examples.grounded_reference --steps 6 --dt 0.1
+  pixi run -e golden-retriever demo-language-grounded-reference
+  pixi run -e golden-retriever python -m examples.advanced.language_examples.grounded_reference --steps 6 --dt 0.1
 """
 
 from __future__ import annotations

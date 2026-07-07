@@ -20,8 +20,8 @@ pixi run -e docs docs-build
 For Golden example launch commands that need the companion runtime package:
 
 ```bash
-pixi install -e golden
-pixi run -e golden demo-perception-detection-flow
+pixi install -e golden-retriever
+pixi run -e golden-retriever demo-perception-detection-flow
 ```
 
 Golden example environments should import the runtime as `retriever`; update docs when the packaged runtime dependency changes.

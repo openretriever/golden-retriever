@@ -9,7 +9,7 @@ Run these before a public launch or docs promotion:
 ```bash
 pixi run test
 pixi run -e docs docs-build
-pixi run -e golden demo-perception-detection-flow
+pixi run -e golden-retriever demo-perception-detection-flow
 pixi run public-surface-check
 ```
 
@@ -25,7 +25,7 @@ The same checks are wired in `.github/workflows/ci.yml`. `public-surface-check` 
 Before the public Hub index and `retriever-core==0.0.1` wheel are live, run the Hub-pack smoke against a local core checkout when validating the final cutover:
 
 ```bash
-RETRIEVER_CORE_SRC=<core-repo>/src PYTHONPATH=<core-repo>/src:. pixi run -e golden demo-golden-hub-pack
+RETRIEVER_CORE_SRC=<core-repo>/src PYTHONPATH=<core-repo>/src:. pixi run -e golden-retriever demo-golden-hub-pack
 ```
 
 Do not add this Hub-pack smoke as a required remote CI gate until the public runtime wheel and Hub index are available to CI.

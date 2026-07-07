@@ -1,8 +1,8 @@
 """Real perception example: detection with a Gemini or mock backend.
 
 Run:
-  pixi run -e golden-perception demo-gemini-detection-flow
-  pixi run -e golden-perception python -m examples.advanced.real_perception.gemini_detection_flow --backend gemini_api --labels "red block,blue block"
+  pixi run -e golden-retriever-perception demo-gemini-detection-flow
+  pixi run -e golden-retriever-perception python -m examples.advanced.real_perception.gemini_detection_flow --backend gemini_api --labels "red block,blue block"
 """
 
 from __future__ import annotations

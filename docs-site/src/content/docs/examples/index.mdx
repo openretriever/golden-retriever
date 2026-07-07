@@ -16,7 +16,7 @@ first line of output, then open its page for the code and the full run.
 pixi run demo-golden-hub-pack
 # GoldenRetriever pack exports: WorldState, BeliefGraph, Skill, Plan, Trajectory, convert_to_arrow, convert_from_arrow
 
-pixi run -e golden demo-composable-pipelines
+pixi run -e golden-retriever demo-composable-pipelines
 # policy output after replacement: ProcOut(value=104)
 
 pixi run demo-robosuite-mock
@@ -39,9 +39,9 @@ Once a proof runs, walk the perception → memory → language → composition l
 on deterministic payloads before adding heavier inputs.
 
 ```bash
-pixi run -e golden demo-perception-detection-flow   # pixels -> typed Detection2D
-pixi run -e golden demo-memory-belief-flow          # detections -> remembered SceneBelief
-pixi run -e golden demo-language-caption-plan       # caption -> primitive PlanText
+pixi run -e golden-retriever demo-perception-detection-flow   # pixels -> typed Detection2D
+pixi run -e golden-retriever demo-memory-belief-flow          # detections -> remembered SceneBelief
+pixi run -e golden-retriever demo-language-caption-plan       # caption -> primitive PlanText
 ```
 
 - [Perception and memory](/examples/perception-memory/) — synthetic detections, belief tracking, and pointing over standard `retriever.types.perception` payloads.

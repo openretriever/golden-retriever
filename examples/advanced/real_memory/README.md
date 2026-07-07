@@ -5,8 +5,8 @@ These examples reuse the local `SceneBelief` memory state from `examples/advance
 ## Start Here
 
 ```bash
-pixi run -e golden-perception demo-belief-from-real-detections
-pixi run -e golden-perception demo-grounded-reference-memory
+pixi run -e golden-retriever-perception demo-belief-from-real-detections
+pixi run -e golden-retriever-perception demo-grounded-reference-memory
 ```
 
 Start with the mock tasks first. They keep the same surface but avoid credentials and local model setup.

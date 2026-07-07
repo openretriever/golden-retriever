@@ -38,18 +38,18 @@ debug-retriever = { version = ">=0.1.4", extras = [
 ] }
 
 # -----------------------------------------------------------------------------
-# Base system feature (the "golden" stack)
+# Base system feature (the GoldenRetriever example stack)
 # -----------------------------------------------------------------------------
 [dependencies]
 
 [feature.py311.dependencies]
 python = "3.11.*"
 
-[feature.golden.dependencies]
+[feature.golden_retriever.dependencies]
 # Required for HEIF bindings (pyheif / pillow-heif) when using the legacy stack.
 libheif = "*"
 
-[feature.golden.pypi-dependencies]
+[feature.golden_retriever.pypi-dependencies]
 transformers = "*"
 openai = "*"
 accelerate = "*"
@@ -240,17 +240,17 @@ default = { features = ["py311", "bundled_core"] }
 training = { features = ["py311", "bundled_core", "training"] }
 mapper = { features = ["py311", "bundled_core", "mapper"] }
 spot = { features = ["py311", "bundled_core", "spot"] }
-vlm = { features = ["py311", "bundled_core", "golden", "vlm_planning"] }
-llm = { features = ["py311", "bundled_core", "golden", "vlm_planning"] }
-torch = { features = ["py311", "bundled_core", "golden", "cpu"] }
+vlm = { features = ["py311", "bundled_core", "golden_retriever", "vlm_planning"] }
+llm = { features = ["py311", "bundled_core", "golden_retriever", "vlm_planning"] }
+torch = { features = ["py311", "bundled_core", "golden_retriever", "cpu"] }
 twist2 = { features = ["py311", "bundled_core", "twist2"] }
 cpu = { features = ["py311", "bundled_core", "cpu"] }
 gpu = { features = ["py311", "bundled_core", "gpu"] }
 ros = { features = ["bundled_core", "ros"] }
 roboplan = { features = ["bundled_core", "roboplan"] }
-golden = { features = ["py311", "bundled_core", "golden"] }
+golden-retriever = { features = ["py311", "bundled_core", "golden_retriever"] }
 docs = { features = ["py311", "docs"] }
-golden-perception = { features = ["py311", "bundled_core", "golden", "cpu"] }
+golden-retriever-perception = { features = ["py311", "bundled_core", "golden_retriever", "cpu"] }
 
 [feature.vlm_planning.tasks]
 

@@ -11,7 +11,7 @@ All three examples now use the canonical primitive payloads from `retriever.type
 Run the examples through the Golden demo environment:
 
 ```bash
-pixi run -e golden demo-perception-detection-flow
-pixi run -e golden demo-perception-segmentation-flow
-pixi run -e golden demo-perception-pointing-flow
+pixi run -e golden-retriever demo-perception-detection-flow
+pixi run -e golden-retriever demo-perception-segmentation-flow
+pixi run -e golden-retriever demo-perception-pointing-flow
 ```

@@ -3,7 +3,7 @@ Registry-backed composable pipeline demo for GoldenRetriever.
 
 This example runs through the Golden demo environment:
 
-  pixi run -e golden demo-composable-pipelines
+  pixi run -e golden-retriever demo-composable-pipelines
 
 It demonstrates:
   - registering a pipeline with explicit surfaced ports

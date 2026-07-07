@@ -11,7 +11,7 @@
 # # Retriever Hub notebook demo
 #
 # This notebook is Hub-first and assumes you are running it from Golden's
-# `golden` environment so the Golden example feature set is available.
+# `golden-retriever` environment so the Golden example feature set is available.
 #
 # Configure one or both environment variables before running the source file or
 # launching the generated notebook:

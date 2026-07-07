@@ -11,7 +11,7 @@ All three examples reuse the canonical detection and pointing payloads from `ret
 Run the examples through the Golden demo environment:
 
 ```bash
-pixi run -e golden demo-memory-belief-flow
-pixi run -e golden demo-memory-dropout-flow
-pixi run -e golden demo-memory-pointing-flow
+pixi run -e golden-retriever demo-memory-belief-flow
+pixi run -e golden-retriever demo-memory-dropout-flow
+pixi run -e golden-retriever demo-memory-pointing-flow
 ```

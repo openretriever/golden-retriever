@@ -1,7 +1,7 @@
 """Minimal advanced memory example: keep pointing stable through intermittent detections.
 
 Run:
-  pixi run -e golden demo-memory-pointing-flow
+  pixi run -e golden-retriever demo-memory-pointing-flow
   pixi run python -m examples.advanced.memory_examples.pointing_with_memory --target red --steps 12 --dt 0.1
 """
 

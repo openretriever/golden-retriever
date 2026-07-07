@@ -34,7 +34,7 @@ Use GoldenRetriever after the core Retriever quickstart. Core Retriever teaches 
 ```bash
 pixi install
 pixi run demo-golden-hub-pack
-pixi run -e golden demo-perception-detection-flow
+pixi run -e golden-retriever demo-perception-detection-flow
 pixi run demo-pipeline-html-viz
 ```
 
@@ -72,10 +72,10 @@ Expected results:
 
 ```bash
 pixi run demo-golden-hub-pack
-pixi run -e golden demo-perception-detection-flow
-pixi run -e golden demo-memory-belief-flow
-pixi run -e golden demo-language-caption-plan
-pixi run -e golden demo-composable-pipelines
+pixi run -e golden-retriever demo-perception-detection-flow
+pixi run -e golden-retriever demo-memory-belief-flow
+pixi run -e golden-retriever demo-language-caption-plan
+pixi run -e golden-retriever demo-composable-pipelines
 pixi run demo-robosuite-mock
 pixi run demo-pipeline-html-viz
 pixi run demo-robotics-typing-catalog

@@ -64,7 +64,7 @@ with pipe:
 ```
 
 ```bash
-pixi run -e golden demo-perception-detection-flow
+pixi run -e golden-retriever demo-perception-detection-flow
 ```
 
 Real output — each frame yields two typed detections with sub-pixel centroids
@@ -132,7 +132,7 @@ with pipe:
 ```
 
 ```bash
-pixi run -e golden demo-memory-belief-flow
+pixi run -e golden-retriever demo-memory-belief-flow
 ```
 
 Real output — normalized positions, and `seen` climbing as the belief
@@ -168,7 +168,7 @@ class PointToLabel(Flow[DetectionBatch, PointTarget2D]):
 ```
 
 ```bash
-pixi run -e golden demo-perception-pointing-flow
+pixi run -e golden-retriever demo-perception-pointing-flow
 ```
 
 ```text

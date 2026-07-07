@@ -52,7 +52,7 @@ pixi run demo-golden-hub-pack
   <div class="result-card"><span>Hub proof</span><strong>Terminal export summary</strong><pre>{`pixi run demo-golden-hub-pack
 # GoldenRetriever pack exports: WorldState, BeliefGraph, Skill, Plan, ...
 # Arrow round-trip: Action OK`}</pre></div>
-  <div class="result-card"><span>Example proof</span><strong>Deterministic perception flow</strong><pre>{`pixi run -e golden demo-perception-detection-flow
+  <div class="result-card"><span>Example proof</span><strong>Deterministic perception flow</strong><pre>{`pixi run -e golden-retriever demo-perception-detection-flow
 # synthetic scene -> typed detections
 # steps complete`}</pre></div>
   <div class="result-card"><span>Graph proof</span><strong>Self-contained HTML graph</strong><pre>{`pixi run demo-pipeline-html-viz
@@ -87,7 +87,7 @@ pixi run demo-golden-hub-pack
 | Need | Start with | Avoid first |
 | --- | --- | --- |
 | Safe GoldenRetriever smoke | `pixi run demo-golden-hub-pack` | Camera, simulator, model, or network setup. |
-| Example behavior | `pixi run -e golden demo-perception-detection-flow` | Optional model-backed lanes. |
+| Example behavior | `pixi run -e golden-retriever demo-perception-detection-flow` | Optional model-backed lanes. |
 | Simulator integration | `pixi run demo-robosuite-mock` | Real robosuite before the mock trace works. |
 | Graph visualization | `pixi run demo-pipeline-html-viz` | Screenshots or stale generated HTML. |
 | Robot payload reuse | `pixi run demo-robotics-typing-catalog` | Ad hoc dict payloads or source-only imports. |

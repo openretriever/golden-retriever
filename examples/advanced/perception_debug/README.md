@@ -36,7 +36,7 @@ This is the main reason this folder exists: stable artifacts for debugging and d
 ### Windowed detection stats
 
 ```bash
-pixi run -e golden demo-detection-window-stats
+pixi run -e golden-retriever demo-detection-window-stats
 ```
 
 This adds a temporal aggregation stage on top of the same synthetic detector. Keep it as a follow-on after the concise perception ladder.

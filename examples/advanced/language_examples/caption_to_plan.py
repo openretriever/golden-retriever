@@ -1,8 +1,8 @@
 """Minimal advanced language example: caption to primitive plan text.
 
 Run:
-  pixi run -e golden demo-language-caption-plan
-  pixi run -e golden python -m examples.advanced.language_examples.caption_to_plan --steps 4 --dt 0.1
+  pixi run -e golden-retriever demo-language-caption-plan
+  pixi run -e golden-retriever python -m examples.advanced.language_examples.caption_to_plan --steps 4 --dt 0.1
 """
 
 from __future__ import annotations
