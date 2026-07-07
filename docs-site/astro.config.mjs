@@ -35,6 +35,12 @@ export default defineConfig({
           ],
         },
         {
+          label: 'Notebooks',
+          items: [
+            { label: 'Language → Plan', slug: 'notebooks/language-caption-plan' },
+          ],
+        },
+        {
           label: 'Reuse Robot Payloads',
           items: [
             { label: 'Payload Overview', slug: 'robot-payloads' },

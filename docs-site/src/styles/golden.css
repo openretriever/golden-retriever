@@ -544,3 +544,68 @@ details.reference-details > div { padding: 0 1rem 1rem; }
 .nova-scroll-container {
   background: var(--sl-color-bg) !important;
 }
+
+/* Notebook-style pages: cell labels, output blocks, takeaways, and the
+   download / Open-in-Colab action buttons. Mirrors the core docs style but on
+   the warm GoldenRetriever ground. */
+.notebook-label {
+  margin: 1.1rem 0 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--sl-color-gray-3);
+}
+
+.notebook-label.output-label {
+  color: var(--sl-color-accent);
+}
+
+.output-label + .expressive-code,
+.output-label + pre {
+  border-left: 2px solid var(--sl-color-accent);
+  border-radius: 14px;
+}
+
+.notebook-takeaway {
+  margin: 0.85rem 0 2rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 16px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--sl-color-accent-low) 42%, transparent), transparent);
+}
+
+.nb-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0 0 1.7rem;
+}
+
+.nb-download {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  padding: 0.5rem 0.95rem;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  background: color-mix(in srgb, var(--sl-color-accent-low) 32%, transparent);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.nb-download:hover {
+  background: color-mix(in srgb, var(--sl-color-accent) 16%, transparent);
+  border-color: var(--sl-color-accent);
+}
+
+.nb-colab {
+  background: color-mix(in srgb, #f9ab00 22%, transparent);
+}
+
+.nb-colab:hover {
+  background: color-mix(in srgb, #f9ab00 34%, transparent);
+  border-color: #f9ab00;
+}

@@ -1,0 +1,94 @@
+---
+title: Language → Plan (Notebook)
+description: Turn a caption into a primitive plan with three plain Flows — the notebook version of the Language and Grounding example, with a downloadable .ipynb.
+---
+
+The notebook companion to [Language and Grounding](/examples/language-grounding/):
+turn a scene **caption** into a small **plan** using three plain Flows. No LLM in
+the loop — the planner is deterministic rules, so it runs anywhere. Every output
+block below is captured from a real run.
+
+<p class="nb-actions">
+  <a class="nb-download" href="/notebooks/language-caption-plan.ipynb" download>⬇&nbsp; Download&nbsp;.ipynb</a>
+  <a class="nb-download nb-colab" href="https://colab.research.google.com/github/openretriever/golden-retriever/blob/main/docs-site/public/notebooks/language-caption-plan.ipynb" target="_blank" rel="noopener">▶&nbsp; Open in Colab</a>
+</p>
+
+## The Flows
+
+Each stage is a `Flow[In, Out]` whose payloads are standard language types from
+`retriever.types.language`. A Flow wakes on its clock and returns one typed
+record — it knows nothing about buffering or how it's wired.
+
+```python
+from retriever.flow import Flow
+from retriever.types.language import Caption, PlanStepText, PlanText
+
+class CaptionSource(Flow[None, Caption]):
+    """Emits one caption per tick (stands in for a captioner / VLM)."""
+    def __init__(self, *, captions=None):
+        super().__init__()
+        self.captions = tuple(captions or (
+            "red cube on the left near the blue cylinder",
+            "pick the red cube and place it at the goal",
+            "inspect the blue object before moving",
+        ))
+    def reset(self):
+        self._i = 0
+    def step(self, _):
+        text = self.captions[self._i % len(self.captions)]
+        self._i += 1
+        return Caption(text=text, source="golden.language_examples")
+
+class CaptionPlanner(Flow[Caption, PlanText]):
+    """Caption -> ordered primitive steps. Rules here; swap for an LLM later."""
+    def step(self, caption: Caption) -> PlanText:
+        text = caption.text.lower()
+        steps = [PlanStepText(index=0, text=f"inspect scene: {caption.text}", action_label="inspect")]
+        if "red" in text:
+            steps.append(PlanStepText(index=len(steps), text="focus on the red object", action_label="focus"))
+        if "pick" in text or "grasp" in text:
+            steps.append(PlanStepText(index=len(steps), text="pick the target object", action_label="pick"))
+        if "place" in text or "goal" in text:
+            steps.append(PlanStepText(index=len(steps), text="place the target at the goal", action_label="place"))
+        return PlanText(steps=tuple(steps), summary=caption.text, source="caption_planner")
+
+class PlanTextPrinter(Flow[PlanText, None]):
+    def step(self, plan: PlanText) -> None:
+        print("plan=" + str([f"{s.index}:{s.action_label}:{s.text}" for s in plan.steps]))
+```
+
+<p class="notebook-takeaway"><strong>Takeaway:</strong> <code>CaptionPlanner</code> only reads <code>caption.text</code> and returns a typed <code>PlanText</code>. That isolation is the whole point — replace the rule body with a real model and the graph is unchanged.</p>
+
+## Wire it and run
+
+Clocks say *when* each Flow runs; `sync=` says *which* input record it consumes.
+
+```python
+from retriever.flow import Latest, Pipeline, Rate, Trigger
+
+pipe = Pipeline("language_caption_plan")
+with pipe:
+    source = CaptionSource() @ Rate(hz=10)
+    planner = CaptionPlanner() @ Trigger("text")     # wakes on a new Caption.text
+    printer = PlanTextPrinter() @ Trigger("summary")  # wakes on a new PlanText.summary
+    pipe.connect(source, planner, sync=Latest())
+    pipe.connect(planner, printer, sync=Latest())
+
+for _ in range(3):
+    pipe.step(dt=0.1)   # in-process; set a breakpoint in any step()
+pipe.close_stepper()
+```
+
+<p class="notebook-label output-label">Output</p>
+
+```text
+plan=['0:inspect:inspect scene: red cube on the left near the blue cylinder', '1:focus:focus on the red object']
+plan=['0:inspect:inspect scene: pick the red cube and place it at the goal', '1:focus:focus on the red object', '2:pick:pick the target object', '3:place:place the target at the goal']
+plan=['0:inspect:inspect scene: inspect the blue object before moving']
+```
+
+<p class="notebook-takeaway"><strong>Takeaway:</strong> <code>Caption</code>, <code>PlanText</code>, and <code>PlanStepText</code> are standard payloads — the same types perception, memory, and planning Flows hand each other. Because the contract is typed, you can swap the rule body for a real VLM without touching the graph, step in-process and breakpoint inside any <code>step()</code>, and record then replay the exact stream later.</p>
+
+---
+
+This page is generated from [`notebooks/src/language_caption_plan.py`](https://github.com/openretriever/golden-retriever/blob/main/notebooks/src/language_caption_plan.py) (jupytext `py:percent` source). Grab the [runnable notebook](/notebooks/language-caption-plan.ipynb) and run every cell yourself.
