@@ -25,7 +25,7 @@
 
 ---
 
-GoldenRetriever is the applied reference layer for Retriever: robot-facing examples, reusable robot payload references, simulator and visualization lanes, and candidates for future Retriever Hub packs.
+GoldenRetriever is the applied reference layer for Retriever: robot-facing examples, reusable robot payload types, simulator and visualization lanes, and candidates for future Retriever Hub packs.
 
 Use GoldenRetriever after the core Retriever quickstart. Core Retriever teaches `Flow`, `Pipeline`, clocks, sync, graph rendering, stepping, replay, and Hub loading. GoldenRetriever shows those ideas as runnable robot-facing examples.
 
