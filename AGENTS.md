@@ -14,7 +14,7 @@ robotics/planning type pack. The pack declares a Retriever Hub module
 manifest now; public `hub.use(...)` loading becomes usable after the
 public `retriever-core` release and GitHub visibility cutover. Until that
 cutover, Pixi owns the runtime dependency details. The local build metadata
-remains for wheel smoke tests, but a public Golden PyPI wheel is not on the
+remains for wheel smoke tests, but a public GoldenRetriever PyPI wheel is not on the
 first launch path.
 
 - Python: **3.11+**. License: Apache-2.0.
@@ -35,7 +35,7 @@ first launch path.
 ## Commands (verified)
 
 ```bash
-pixi run test                                      # full Golden suite
+pixi run test                                      # full GoldenRetriever suite
 pixi run -e golden-retriever demo-perception-detection-flow
 pixi run demo-robosuite-mock                       # simulation lane, mock mode
 pixi run demo-pipeline-html-viz                     # self-contained IR/HTML visualization
@@ -47,7 +47,7 @@ pixi run build                                     # local wheel artifact; not f
 
 Environments: `default` and `golden-retriever` currently resolve the runtime
 through the Pixi dependency table until `retriever-core` is published;
-`golden-retriever` adds Golden extras. For prerelease core validation, set
+`golden-retriever` adds GoldenRetriever extras. For prerelease core validation, set
 `RETRIEVER_CORE_SRC=<core-repo>/src` before running
 `pixi run test`. Heavier lanes (`torch`, `vlm`, `twist2`, ...) exist for
 specific examples — check `[environments]` in `pixi.toml` before assuming
