@@ -90,6 +90,25 @@ pixi run -e docs docs-build
 pixi run public-surface-check
 ```
 
+## Clone and Stay in Sync
+
+```bash
+git clone https://github.com/openretriever/golden-retriever
+cd golden-retriever
+git pull   # normal pulls fast-forward
+```
+
+`main` is the canonical branch. Its history was consolidated once before the
+public release (large bundled build artifacts were scrubbed from old commits),
+and every update since is a fast-forward — so a fresh clone and ordinary
+`git pull` are all you need. Only if you kept a *pre-release* clone whose `main`
+refuses to fast-forward, re-point it at the published line:
+
+```bash
+git fetch origin
+git reset --hard origin/main   # discards local commits on the old history
+```
+
 ## Contributing And License
 
 See `CONTRIBUTING.md` for contribution workflow and `SECURITY.md` for private vulnerability reporting. GoldenRetriever is licensed under Apache License 2.0; see `LICENSE`.
