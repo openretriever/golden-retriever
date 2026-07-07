@@ -30,11 +30,11 @@ nodejs = ">=22,<23"
 
 [feature.bundled_core.pypi-dependencies]
 # Single source of the Retriever runtime dependency, shared by every environment.
-# SWITCH AT PUBLISH: replace `debug-retriever` below with `retriever-core`, and set
-# the version to match what is published to PyPI (retriever-core is currently 0.0.1,
-# whereas the interim debug-retriever is >=0.1.4 — reconcile the two, do not just
-# rename). The `dora` and `demo` extras exist on retriever-core as well.
-debug-retriever = { version = ">=0.1.4", extras = [
+# ONE-LINE SWITCH AT PUBLISH: replace `debug-retriever` below with `retriever-core`.
+# The `>=0.0.1` floor and the `dora`/`demo` extras are satisfied by BOTH the interim
+# debug-retriever (currently 0.1.4) and retriever-core (0.0.1+), so only the package
+# name changes — nothing else.
+debug-retriever = { version = ">=0.0.1", extras = [
     "dora",
     "demo",
 ] }
