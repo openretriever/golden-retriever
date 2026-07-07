@@ -98,11 +98,8 @@ cd golden-retriever
 git pull   # normal pulls fast-forward
 ```
 
-`main` is the canonical branch. Its history was consolidated once before the
-public release (large bundled build artifacts were scrubbed from old commits),
-and every update since is a fast-forward — so a fresh clone and ordinary
-`git pull` are all you need. Only if you kept a *pre-release* clone whose `main`
-refuses to fast-forward, re-point it at the published line:
+`main` is canonical and only fast-forwards. If a pre-release clone won't pull
+(history was consolidated once before release), reset to the published line:
 
 ```bash
 git fetch origin
