@@ -141,7 +141,7 @@ DOC_MARKERS = {
         "Roundtrip rows",
     ),
     "docs-site/src/content/docs/robot-payloads/index.mdx": (
-        "Robot Payload Reference",
+        "Robot Payload Types",
         "Which payload should this Flow use?",
         "What GoldenRetriever Owns",
         "demo-robotics-typing-catalog",
