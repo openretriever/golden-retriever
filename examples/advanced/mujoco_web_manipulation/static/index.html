@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Retriever MuJoCo Web</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #101114;
+        --panel: #181a20;
+        --panel-2: #20242c;
+        --line: #343945;
+        --text: #eef1f5;
+        --muted: #9ea7b3;
+        --green: #4dd37b;
+        --red: #ff615a;
+        --blue: #4da3ff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        overflow: hidden;
+      }
+
+      #viewport {
+        position: fixed;
+        inset: 0;
+      }
+
+      .toolbar {
+        position: fixed;
+        top: 16px;
+        left: 16px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(24, 26, 32, 0.9);
+        backdrop-filter: blur(10px);
+      }
+
+      .title {
+        font-weight: 650;
+        margin-right: 12px;
+      }
+
+      button {
+        appearance: none;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel-2);
+        color: var(--text);
+        padding: 7px 10px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        border-color: #566071;
+      }
+
+      .stats {
+        position: fixed;
+        right: 16px;
+        top: 16px;
+        width: 260px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(24, 26, 32, 0.9);
+        backdrop-filter: blur(10px);
+      }
+
+      .row {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 4px 0;
+        color: var(--muted);
+      }
+
+      .row strong {
+        color: var(--text);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 7px;
+        background: var(--red);
+      }
+
+      .dot.ok {
+        background: var(--green);
+      }
+
+      .legend {
+        position: fixed;
+        left: 16px;
+        bottom: 16px;
+        display: flex;
+        gap: 14px;
+        padding: 10px 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(24, 26, 32, 0.9);
+        color: var(--muted);
+      }
+
+      .swatch {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 6px;
+      }
+
+      .loading {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        color: var(--muted);
+        background: var(--bg);
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="viewport"></canvas>
+    <div id="loading" class="loading">Loading MuJoCo WASM...</div>
+
+    <div class="toolbar">
+      <div class="title">Retriever MuJoCo Web</div>
+      <button id="toggle">Pause</button>
+      <button id="reset">Reset</button>
+    </div>
+
+    <div class="stats">
+      <div class="row"><span><span id="ws-dot" class="dot"></span>Retriever</span><strong id="ws">connecting</strong></div>
+      <div class="row"><span>MuJoCo</span><strong id="mj">loading</strong></div>
+      <div class="row"><span>sim time</span><strong id="sim-time">0.00s</strong></div>
+      <div class="row"><span>tracking error</span><strong id="error">0.000m</strong></div>
+      <div class="row"><span>control</span><strong id="control">[0.0, 0.0]</strong></div>
+    </div>
+
+    <div class="legend">
+      <span><span class="swatch" style="background: #26c6da"></span>arm</span>
+      <span><span class="swatch" style="background: #4da3ff"></span>tip</span>
+      <span><span class="swatch" style="background: #ff615a"></span>target</span>
+    </div>
+
+    <script type="module">
+      import * as THREE from "https://esm.sh/three@0.166.1";
+      import { OrbitControls } from "https://esm.sh/three@0.166.1/examples/jsm/controls/OrbitControls.js";
+      import loadMujoco from "https://cdn.jsdelivr.net/npm/mujoco-js@0.0.7/dist/mujoco_wasm.js";
+
+      const CDN_BASE = "https://cdn.jsdelivr.net/npm/mujoco-js@0.0.7/dist/";
+      const status = {
+        ws: document.getElementById("ws"),
+        wsDot: document.getElementById("ws-dot"),
+        mj: document.getElementById("mj"),
+        simTime: document.getElementById("sim-time"),
+        error: document.getElementById("error"),
+        control: document.getElementById("control"),
+        loading: document.getElementById("loading"),
+      };
+
+      const canvas = document.getElementById("viewport");
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setClearColor(0x101114);
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 20);
+      camera.position.set(1.25, -1.7, 1.2);
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.target.set(0.45, 0.0, 0.08);
+      controls.enableDamping = true;
+
+      scene.add(new THREE.HemisphereLight(0xffffff, 0x293040, 2.4));
+      const keyLight = new THREE.DirectionalLight(0xffffff, 1.8);
+      keyLight.position.set(1.8, -2.5, 2.5);
+      scene.add(keyLight);
+
+      const grid = new THREE.GridHelper(2.2, 22, 0x3b4250, 0x252a33);
+      grid.rotation.x = Math.PI / 2;
+      scene.add(grid);
+
+      const armMaterial = new THREE.MeshStandardMaterial({ color: 0x26c6da, roughness: 0.55 });
+      const jointMaterial = new THREE.MeshStandardMaterial({ color: 0xd8dee9, roughness: 0.45 });
+      const tipMaterial = new THREE.MeshStandardMaterial({ color: 0x4da3ff, roughness: 0.4 });
+      const targetMaterial = new THREE.MeshStandardMaterial({ color: 0xff615a, roughness: 0.4 });
+
+      function makeSphere(radius, material) {
+        return new THREE.Mesh(new THREE.SphereGeometry(radius, 32, 16), material);
+      }
+
+      function makeLink() {
+        return new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 1, 24), armMaterial);
+      }
+
+      const link1 = makeLink();
+      const link2 = makeLink();
+      const baseJoint = makeSphere(0.045, jointMaterial);
+      const elbowJoint = makeSphere(0.04, jointMaterial);
+      const tip = makeSphere(0.035, tipMaterial);
+      const target = makeSphere(0.05, targetMaterial);
+      scene.add(link1, link2, baseJoint, elbowJoint, tip, target);
+
+      function setCylinderBetween(mesh, a, b) {
+        const va = new THREE.Vector3(...a);
+        const vb = new THREE.Vector3(...b);
+        const mid = va.clone().add(vb).multiplyScalar(0.5);
+        const delta = vb.clone().sub(va);
+        mesh.position.copy(mid);
+        mesh.scale.set(1, delta.length(), 1);
+        mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), delta.normalize());
+      }
+
+      function setPosition(mesh, p) {
+        mesh.position.set(p[0], p[1], p[2]);
+      }
+
+      let mujoco;
+      let model;
+      let data;
+      let siteId;
+      let link2BodyId;
+      let jacp;
+      let jacr;
+      let latestCtrl = [0.0, 0.0];
+      let paused = false;
+      let ws;
+      let lastSocketSend = 0;
+      let accumulator = 0;
+      let lastFrame = performance.now();
+
+      function targetAt(t) {
+        return [0.5 + 0.2 * Math.cos(t), 0.2 * Math.sin(t), 0.08];
+      }
+
+      function vectorSlice(array, offset) {
+        return Array.from(array.slice(offset, offset + 3));
+      }
+
+      function updateTarget() {
+        data.mocap_pos.set(targetAt(data.time), 0);
+      }
+
+      function currentState() {
+        mujoco.mj_forward(model, data);
+        mujoco.mj_jacSite(model, data, jacp, jacr, siteId);
+        return {
+          time: data.time,
+          qpos: Array.from(data.qpos),
+          qvel: Array.from(data.qvel),
+          tip_pos: vectorSlice(data.site_xpos, siteId * 3),
+          target_pos: Array.from(data.mocap_pos.slice(0, 3)),
+          jacobian: Array.from(jacp.GetView()),
+        };
+      }
+
+      function updateScene(state) {
+        const base = [0, 0, 0.08];
+        const elbow = vectorSlice(data.xpos, link2BodyId * 3);
+        const tipPos = state.tip_pos;
+        setCylinderBetween(link1, base, elbow);
+        setCylinderBetween(link2, elbow, tipPos);
+        setPosition(baseJoint, base);
+        setPosition(elbowJoint, elbow);
+        setPosition(tip, tipPos);
+        setPosition(target, state.target_pos);
+
+        const dx = state.target_pos[0] - tipPos[0];
+        const dy = state.target_pos[1] - tipPos[1];
+        const dz = state.target_pos[2] - tipPos[2];
+        status.simTime.textContent = `${state.time.toFixed(2)}s`;
+        status.error.textContent = `${Math.hypot(dx, dy, dz).toFixed(3)}m`;
+        status.control.textContent = `[${latestCtrl.map((v) => v.toFixed(1)).join(", ")}]`;
+      }
+
+      function connectWebSocket() {
+        const scheme = location.protocol === "https:" ? "wss" : "ws";
+        ws = new WebSocket(`${scheme}://${location.host}/ws/control`);
+
+        ws.addEventListener("open", () => {
+          status.ws.textContent = "connected";
+          status.wsDot.classList.add("ok");
+        });
+
+        ws.addEventListener("message", (event) => {
+          const msg = JSON.parse(event.data);
+          if (Array.isArray(msg.ctrl) && msg.ctrl.length === 2) {
+            latestCtrl = msg.ctrl.map(Number);
+          }
+        });
+
+        ws.addEventListener("close", () => {
+          status.ws.textContent = "reconnecting";
+          status.wsDot.classList.remove("ok");
+          setTimeout(connectWebSocket, 500);
+        });
+      }
+
+      async function initMuJoCo() {
+        mujoco = await loadMujoco({ locateFile: (path) => `${CDN_BASE}${path}` });
+        const xml = await (await fetch("/model.xml")).text();
+
+        try {
+          mujoco.FS.mkdir("/working");
+          mujoco.FS.mount(mujoco.MEMFS, { root: "." }, "/working");
+        } catch (_) {
+          // Reloads in the same module instance may already have the directory mounted.
+        }
+
+        mujoco.FS.writeFile("/working/retriever_arm.xml", xml);
+        model = mujoco.MjModel.loadFromXML("/working/retriever_arm.xml");
+        data = new mujoco.MjData(model);
+        mujoco.mj_resetData(model, data);
+        updateTarget();
+        mujoco.mj_forward(model, data);
+
+        siteId = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SITE.value, "tip");
+        link2BodyId = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY.value, "link2");
+        jacp = new mujoco.DoubleBuffer(model.nv * 3);
+        jacr = new mujoco.DoubleBuffer(model.nv * 3);
+
+        status.mj.textContent = `loaded ${mujoco.mj_version()}`;
+        status.loading.style.display = "none";
+      }
+
+      function stepSimulation(dt) {
+        accumulator += Math.min(dt, 0.05);
+        while (accumulator >= model.opt.timestep) {
+          updateTarget();
+          data.ctrl[0] = latestCtrl[0] || 0.0;
+          data.ctrl[1] = latestCtrl[1] || 0.0;
+          mujoco.mj_step(model, data);
+          accumulator -= model.opt.timestep;
+        }
+      }
+
+      function maybeSendState(state, now) {
+        if (!ws || ws.readyState !== WebSocket.OPEN) return;
+        if (now - lastSocketSend < 20) return;
+        ws.send(JSON.stringify(state));
+        lastSocketSend = now;
+      }
+
+      function animate(now) {
+        requestAnimationFrame(animate);
+        if (!model || !data) return;
+
+        const dt = (now - lastFrame) / 1000;
+        lastFrame = now;
+        if (!paused) {
+          stepSimulation(dt);
+        }
+
+        const state = currentState();
+        maybeSendState(state, now);
+        updateScene(state);
+        controls.update();
+        renderer.render(scene, camera);
+      }
+
+      document.getElementById("toggle").addEventListener("click", (event) => {
+        paused = !paused;
+        event.currentTarget.textContent = paused ? "Resume" : "Pause";
+      });
+
+      document.getElementById("reset").addEventListener("click", () => {
+        if (!mujoco || !model || !data) return;
+        mujoco.mj_resetData(model, data);
+        latestCtrl = [0.0, 0.0];
+        updateTarget();
+        mujoco.mj_forward(model, data);
+      });
+
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      connectWebSocket();
+      await initMuJoCo();
+      requestAnimationFrame((now) => {
+        lastFrame = now;
+        animate(now);
+      });
+    </script>
+  </body>
+</html>

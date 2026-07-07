@@ -1,0 +1,750 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Retriever TWIST2 Web</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #f4f5f7;
+        --panel: #181b20;
+        --panel-2: #22272f;
+        --line: #343b46;
+        --text: #eef2f5;
+        --muted: #9aa5b1;
+        --green: #4fd27a;
+        --red: #ff6058;
+        --cyan: #38c7d8;
+        --amber: #f2b84b;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: #f4f5f7;
+        color: var(--text);
+        font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      #viewport {
+        position: fixed;
+        inset: 0;
+      }
+
+      .toolbar,
+      .stats,
+      .legend {
+        position: fixed;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(24, 27, 32, 0.9);
+        backdrop-filter: blur(10px);
+      }
+
+      .toolbar {
+        top: 16px;
+        left: 16px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        padding: 10px;
+      }
+
+      .title {
+        margin-right: 12px;
+        font-weight: 650;
+      }
+
+      button {
+        appearance: none;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel-2);
+        color: var(--text);
+        padding: 7px 10px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        border-color: #566272;
+      }
+
+      .stats {
+        top: 16px;
+        right: 16px;
+        width: 310px;
+        padding: 12px;
+      }
+
+      .row {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 4px 0;
+        color: var(--muted);
+      }
+
+      .row strong {
+        color: var(--text);
+        font-variant-numeric: tabular-nums;
+        text-align: right;
+      }
+
+      .dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        margin-right: 7px;
+        border-radius: 50%;
+        background: var(--red);
+      }
+
+      .dot.ok {
+        background: var(--green);
+      }
+
+      .legend {
+        left: 16px;
+        bottom: 16px;
+        display: flex;
+        gap: 14px;
+        padding: 10px 12px;
+        color: var(--muted);
+      }
+
+      .swatch {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        margin-right: 6px;
+        border-radius: 50%;
+      }
+
+      .loading {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: #f4f5f7;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      .loading strong {
+        display: block;
+        color: var(--text);
+        font-size: 15px;
+        margin-bottom: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="viewport"></canvas>
+    <div id="loading" class="loading">
+      <div>
+        <strong>Loading MuJoCo WASM</strong>
+        <span id="load-detail">initializing</span>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="title">TWIST2 Web</div>
+      <button id="toggle">Pause</button>
+      <button id="reset">Reset</button>
+      <button id="camera-overview">Overview</button>
+      <button id="camera-top">Top</button>
+      <button id="camera-side">Side</button>
+    </div>
+
+    <div class="stats">
+      <div class="row"><span><span id="ws-dot" class="dot"></span>Retriever</span><strong id="ws">connecting</strong></div>
+      <div class="row"><span>MuJoCo</span><strong id="mj">loading</strong></div>
+      <div class="row"><span>sim time</span><strong id="sim-time">0.00s</strong></div>
+      <div class="row"><span>root height</span><strong id="root-z">0.000m</strong></div>
+      <div class="row"><span>policy age</span><strong id="policy-age">0ms</strong></div>
+      <div class="row"><span>action norm</span><strong id="action-norm">0.00</strong></div>
+    </div>
+
+    <div class="legend">
+      <span><span class="swatch" style="background: #b0b0b0"></span>humanoid mesh</span>
+      <span><span class="swatch" style="background: #f7f7f7"></span>MuJoCo floor</span>
+    </div>
+
+    <script type="module">
+      import * as THREE from "https://esm.sh/three@0.166.1";
+      import { OrbitControls } from "https://esm.sh/three@0.166.1/examples/jsm/controls/OrbitControls.js";
+      import loadMujoco from "https://cdn.jsdelivr.net/npm/mujoco-js@0.0.7/dist/mujoco_wasm.js";
+
+      const CDN_BASE = "https://cdn.jsdelivr.net/npm/mujoco-js@0.0.7/dist/";
+      const status = {
+        ws: document.getElementById("ws"),
+        wsDot: document.getElementById("ws-dot"),
+        mj: document.getElementById("mj"),
+        simTime: document.getElementById("sim-time"),
+        rootZ: document.getElementById("root-z"),
+        policyAge: document.getElementById("policy-age"),
+        actionNorm: document.getElementById("action-norm"),
+        loading: document.getElementById("loading"),
+        loadDetail: document.getElementById("load-detail"),
+      };
+
+      const bodySegments = [
+        ["pelvis", "left_hip_pitch_link"],
+        ["left_hip_pitch_link", "left_hip_roll_link"],
+        ["left_hip_roll_link", "left_hip_yaw_link"],
+        ["left_hip_yaw_link", "left_knee_link"],
+        ["left_knee_link", "left_ankle_pitch_link"],
+        ["left_ankle_pitch_link", "left_ankle_roll_link"],
+        ["pelvis", "right_hip_pitch_link"],
+        ["right_hip_pitch_link", "right_hip_roll_link"],
+        ["right_hip_roll_link", "right_hip_yaw_link"],
+        ["right_hip_yaw_link", "right_knee_link"],
+        ["right_knee_link", "right_ankle_pitch_link"],
+        ["right_ankle_pitch_link", "right_ankle_roll_link"],
+        ["pelvis", "waist_yaw_link"],
+        ["waist_yaw_link", "waist_roll_link"],
+        ["waist_roll_link", "torso_link"],
+        ["torso_link", "head_link"],
+        ["torso_link", "left_shoulder_pitch_link"],
+        ["left_shoulder_pitch_link", "left_shoulder_roll_link"],
+        ["left_shoulder_roll_link", "left_shoulder_yaw_link"],
+        ["left_shoulder_yaw_link", "left_elbow_link"],
+        ["left_elbow_link", "left_wrist_roll_link"],
+        ["left_wrist_roll_link", "left_wrist_pitch_link"],
+        ["left_wrist_pitch_link", "left_wrist_yaw_link"],
+        ["torso_link", "right_shoulder_pitch_link"],
+        ["right_shoulder_pitch_link", "right_shoulder_roll_link"],
+        ["right_shoulder_roll_link", "right_shoulder_yaw_link"],
+        ["right_shoulder_yaw_link", "right_elbow_link"],
+        ["right_elbow_link", "right_wrist_roll_link"],
+        ["right_wrist_roll_link", "right_wrist_pitch_link"],
+        ["right_wrist_pitch_link", "right_wrist_yaw_link"],
+      ];
+      const markerNames = [...new Set(bodySegments.flat())];
+      const footNames = new Set(["left_ankle_roll_link", "right_ankle_roll_link"]);
+
+      const canvas = document.getElementById("viewport");
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setClearColor(0xf4f5f7);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0xf4f5f7);
+      const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.01, 20);
+      camera.up.set(0, 0, 1);
+      camera.position.set(1.8, -2.2, 2.3);
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.target.set(0, 0, 0.45);
+      controls.enableDamping = true;
+      controls.screenSpacePanning = false;
+      controls.update();
+      controls.addEventListener("start", () => {
+        activeCameraPreset = "free";
+      });
+
+      scene.add(new THREE.HemisphereLight(0xffffff, 0xd6d8de, 1.7));
+      const keyLight = new THREE.DirectionalLight(0xffffff, 2.1);
+      keyLight.position.set(2, -3, 4);
+      keyLight.castShadow = true;
+      scene.add(keyLight);
+      const fillLight = new THREE.DirectionalLight(0xffffff, 0.55);
+      fillLight.position.set(-3, 2, 2);
+      scene.add(fillLight);
+
+      const linkMaterial = new THREE.MeshStandardMaterial({ color: 0x38c7d8, roughness: 0.55 });
+      const jointMaterial = new THREE.MeshStandardMaterial({ color: 0xd8dee9, roughness: 0.45 });
+      const pelvisMaterial = new THREE.MeshStandardMaterial({ color: 0xf2b84b, roughness: 0.45 });
+      const footMaterial = new THREE.MeshStandardMaterial({ color: 0x4fd27a, roughness: 0.45 });
+
+      function makeLink() {
+        return new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 1, 12), linkMaterial);
+      }
+
+      function makeMarker(name) {
+        let material = jointMaterial;
+        let radius = 0.032;
+        if (name === "pelvis") {
+          material = pelvisMaterial;
+          radius = 0.05;
+        } else if (footNames.has(name)) {
+          material = footMaterial;
+          radius = 0.04;
+        }
+        return new THREE.Mesh(new THREE.SphereGeometry(radius, 18, 10), material);
+      }
+
+      function vec3From(array, offset) {
+        return [array[offset], array[offset + 1], array[offset + 2]];
+      }
+
+      function setCylinderBetween(mesh, a, b) {
+        const va = new THREE.Vector3(a[0], a[1], a[2]);
+        const vb = new THREE.Vector3(b[0], b[1], b[2]);
+        const delta = vb.clone().sub(va);
+        const length = delta.length();
+        if (length < 1e-6) {
+          mesh.visible = false;
+          return;
+        }
+        mesh.visible = true;
+        mesh.position.copy(va.add(vb).multiplyScalar(0.5));
+        mesh.scale.set(1, length, 1);
+        mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), delta.normalize());
+      }
+
+      function setPosition(mesh, p) {
+        mesh.position.set(p[0], p[1], p[2]);
+      }
+
+      function cameraTargetFromState() {
+        if (data && data.qpos && data.qpos.length >= 3) {
+          return new THREE.Vector3(data.qpos[0] || 0, data.qpos[1] || 0, Math.max((data.qpos[2] || 0) * 0.5, 0.25));
+        }
+        return new THREE.Vector3(0, 0, 0.45);
+      }
+
+      function applyCameraPreset(preset) {
+        const target = cameraTargetFromState();
+        if (preset === "top") {
+          camera.position.set(target.x + 0.03, target.y - 0.35, target.z + 4.0);
+          controls.target.copy(target);
+        } else if (preset === "side") {
+          camera.position.set(target.x, target.y - 3.2, target.z + 0.85);
+          controls.target.copy(target);
+        } else {
+          camera.position.set(target.x + 1.8, target.y - 2.2, target.z + 1.85);
+          controls.target.copy(target);
+        }
+        camera.up.set(0, 0, 1);
+        camera.lookAt(controls.target);
+        controls.update();
+      }
+
+      function setCameraPreset(preset) {
+        activeCameraPreset = preset;
+        applyCameraPreset(preset);
+      }
+
+      function updatePresetCamera() {
+        if (activeCameraPreset === "free") return;
+        applyCameraPreset(activeCameraPreset);
+      }
+
+      let mujoco;
+      let model;
+      let data;
+      let constants;
+      let ws;
+      let paused = false;
+      let lastFrame = performance.now();
+      let accumulator = 0;
+      let lastSocketSend = 0;
+      let latestPolicyAction = Array(29).fill(0);
+      let lastAppliedAction = Array(29).fill(0);
+      let activeCameraPreset = "overview";
+      const bodyIds = new Map();
+      const linkMeshes = [];
+      const markerMeshes = new Map();
+      const geomObjects = [];
+      const meshGeometryCache = new Map();
+      const matrix = new THREE.Matrix4();
+
+      const GEOM_TYPES = {
+        PLANE: 0,
+        SPHERE: 2,
+        CAPSULE: 3,
+        ELLIPSOID: 4,
+        CYLINDER: 5,
+        BOX: 6,
+        MESH: 7,
+      };
+
+      function ensureDir(path) {
+        try {
+          mujoco.FS.mkdir(path);
+        } catch (_) {
+          // The path may already exist after a reload in the same module instance.
+        }
+      }
+
+      async function preloadAssets() {
+        const manifest = await (await fetch("/asset-manifest.json")).json();
+        ensureDir("/working");
+        ensureDir("/working/g1");
+        ensureDir("/working/g1/meshes");
+
+        const files = manifest.mesh_files || [];
+        for (let i = 0; i < files.length; i += 1) {
+          const file = files[i];
+          status.loadDetail.textContent = `loading mesh ${i + 1}/${files.length}`;
+          const bytes = new Uint8Array(await (await fetch(`/assets/g1/meshes/${file}`)).arrayBuffer());
+          mujoco.FS.writeFile(`/working/g1/meshes/${file}`, bytes);
+        }
+      }
+
+      function resetPose() {
+        mujoco.mj_resetData(model, data);
+        const qpos = [0, 0, 0.793, 1, 0, 0, 0, ...constants.default_dof_pos];
+        data.qpos.set(qpos.slice(0, model.nq), 0);
+        data.qvel.fill(0);
+        latestPolicyAction = Array(constants.num_actions).fill(0);
+        lastAppliedAction = Array(constants.num_actions).fill(0);
+        mujoco.mj_forward(model, data);
+      }
+
+      function setupSkeleton() {
+        for (const name of markerNames) {
+          const id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY.value, name);
+          if (id >= 0) {
+            bodyIds.set(name, id);
+            const marker = makeMarker(name);
+            markerMeshes.set(name, marker);
+            scene.add(marker);
+          }
+        }
+
+        for (const [from, to] of bodySegments) {
+          if (!bodyIds.has(from) || !bodyIds.has(to)) continue;
+          const mesh = makeLink();
+          linkMeshes.push({ from, to, mesh });
+          scene.add(mesh);
+        }
+      }
+
+      function checkerTexture() {
+        const size = 256;
+        const squares = 8;
+        const canvas = document.createElement("canvas");
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext("2d");
+        const step = size / squares;
+        for (let y = 0; y < squares; y += 1) {
+          for (let x = 0; x < squares; x += 1) {
+            ctx.fillStyle = (x + y) % 2 === 0 ? "#f7f7f7" : "#d9d9d9";
+            ctx.fillRect(x * step, y * step, step, step);
+          }
+        }
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(8, 8);
+        return texture;
+      }
+
+      const floorTexture = checkerTexture();
+
+      function geomRgba(geomId) {
+        const offset = geomId * 4;
+        const rgba = [
+          model.geom_rgba[offset],
+          model.geom_rgba[offset + 1],
+          model.geom_rgba[offset + 2],
+          model.geom_rgba[offset + 3],
+        ];
+        if (rgba[3] <= 0) return [0.7, 0.7, 0.7, 1.0];
+        return rgba;
+      }
+
+      function materialForGeom(geomId, { floor = false } = {}) {
+        if (floor) {
+          return new THREE.MeshStandardMaterial({
+            color: 0xffffff,
+            map: floorTexture,
+            roughness: 0.75,
+            metalness: 0,
+            side: THREE.DoubleSide,
+          });
+        }
+
+        const rgba = geomRgba(geomId);
+        return new THREE.MeshStandardMaterial({
+          color: new THREE.Color(rgba[0], rgba[1], rgba[2]),
+          opacity: rgba[3],
+          transparent: rgba[3] < 0.999,
+          roughness: 0.6,
+          metalness: 0.0,
+          side: THREE.DoubleSide,
+          polygonOffset: true,
+          polygonOffsetFactor: 1,
+          polygonOffsetUnits: 1,
+        });
+      }
+
+      function meshGeometry(meshId) {
+        if (meshGeometryCache.has(meshId)) return meshGeometryCache.get(meshId);
+
+        const vertAdr = model.mesh_vertadr[meshId];
+        const vertNum = model.mesh_vertnum[meshId];
+        const faceAdr = model.mesh_faceadr[meshId];
+        const faceNum = model.mesh_facenum[meshId];
+        const positions = new Float32Array(vertNum * 3);
+        const indices = new Uint32Array(faceNum * 3);
+
+        for (let i = 0; i < vertNum * 3; i += 1) {
+          positions[i] = model.mesh_vert[vertAdr * 3 + i];
+        }
+        for (let i = 0; i < faceNum * 3; i += 1) {
+          indices[i] = model.mesh_face[faceAdr * 3 + i];
+        }
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+        geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+        geometry.computeVertexNormals();
+        meshGeometryCache.set(meshId, geometry);
+        return geometry;
+      }
+
+      function primitiveGeometry(geomId, type) {
+        const offset = geomId * 3;
+        const sx = model.geom_size[offset];
+        const sy = model.geom_size[offset + 1];
+        const sz = model.geom_size[offset + 2];
+
+        if (type === GEOM_TYPES.PLANE) {
+          return new THREE.PlaneGeometry(12, 12, 1, 1);
+        }
+        if (type === GEOM_TYPES.SPHERE) {
+          return new THREE.SphereGeometry(Math.max(sx, 0.004), 24, 12);
+        }
+        if (type === GEOM_TYPES.ELLIPSOID) {
+          const geometry = new THREE.SphereGeometry(1, 24, 12);
+          geometry.scale(Math.max(sx, 0.004), Math.max(sy, 0.004), Math.max(sz, 0.004));
+          return geometry;
+        }
+        if (type === GEOM_TYPES.CYLINDER) {
+          const geometry = new THREE.CylinderGeometry(Math.max(sx, 0.004), Math.max(sx, 0.004), Math.max(sy * 2, 0.004), 24);
+          geometry.rotateX(Math.PI / 2);
+          return geometry;
+        }
+        if (type === GEOM_TYPES.CAPSULE) {
+          const geometry = new THREE.CapsuleGeometry(Math.max(sx, 0.004), Math.max(sy * 2, 0.004), 8, 16);
+          geometry.rotateX(Math.PI / 2);
+          return geometry;
+        }
+        if (type === GEOM_TYPES.BOX) {
+          return new THREE.BoxGeometry(Math.max(sx * 2, 0.004), Math.max(sy * 2, 0.004), Math.max(sz * 2, 0.004));
+        }
+        return null;
+      }
+
+      function applyGeomTransform(object, geomId) {
+        const p = geomId * 3;
+        const r = geomId * 9;
+        matrix.set(
+          data.geom_xmat[r],
+          data.geom_xmat[r + 1],
+          data.geom_xmat[r + 2],
+          data.geom_xpos[p],
+          data.geom_xmat[r + 3],
+          data.geom_xmat[r + 4],
+          data.geom_xmat[r + 5],
+          data.geom_xpos[p + 1],
+          data.geom_xmat[r + 6],
+          data.geom_xmat[r + 7],
+          data.geom_xmat[r + 8],
+          data.geom_xpos[p + 2],
+          0,
+          0,
+          0,
+          1,
+        );
+        object.matrix.copy(matrix);
+      }
+
+      function setupGeomRendering() {
+        const meshType = mujoco.mjtGeom?.mjGEOM_MESH?.value ?? GEOM_TYPES.MESH;
+        for (let geomId = 0; geomId < model.ngeom; geomId += 1) {
+          const type = model.geom_type[geomId];
+          const group = model.geom_group[geomId];
+          let geometry = null;
+          let material = null;
+
+          if (type === meshType) {
+            if (group !== 1) continue;
+            const meshId = model.geom_dataid[geomId];
+            if (meshId < 0) continue;
+            geometry = meshGeometry(meshId);
+            material = materialForGeom(geomId);
+          } else {
+            geometry = primitiveGeometry(geomId, type);
+            if (geometry == null) continue;
+            material = materialForGeom(geomId, { floor: type === GEOM_TYPES.PLANE });
+          }
+
+          const object = new THREE.Mesh(geometry, material);
+          object.matrixAutoUpdate = false;
+          object.castShadow = type !== GEOM_TYPES.PLANE;
+          object.receiveShadow = true;
+          applyGeomTransform(object, geomId);
+          geomObjects.push({ geomId, object });
+          scene.add(object);
+        }
+      }
+
+      async function initMuJoCo() {
+        status.loadDetail.textContent = "loading WASM module";
+        mujoco = await loadMujoco({ locateFile: (path) => `${CDN_BASE}${path}` });
+        constants = await (await fetch("/constants.json")).json();
+
+        await preloadAssets();
+        status.loadDetail.textContent = "loading XML";
+        const xml = await (await fetch("/model.xml")).text();
+        mujoco.FS.writeFile("/working/g1/g1_sim2sim_29dof.xml", xml);
+        model = mujoco.MjModel.loadFromXML("/working/g1/g1_sim2sim_29dof.xml");
+        data = new mujoco.MjData(model);
+        resetPose();
+        setupGeomRendering();
+
+        status.mj.textContent = `loaded ${mujoco.mj_version()} (${geomObjects.length} geoms)`;
+        status.loading.style.display = "none";
+      }
+
+      function applyPolicyControl() {
+        const n = constants.num_actions;
+        const qpos = data.qpos;
+        const qvel = data.qvel;
+        const target = new Array(n);
+
+        for (let i = 0; i < n; i += 1) {
+          const raw = Math.max(-10, Math.min(10, Number(latestPolicyAction[i] || 0)));
+          lastAppliedAction[i] = raw;
+          target[i] = constants.default_dof_pos[i] + raw * constants.action_scale[i];
+        }
+
+        for (let i = 0; i < n; i += 1) {
+          const dofPos = qpos[7 + i] || 0;
+          const dofVel = qvel[6 + i] || 0;
+          let torque = (target[i] - dofPos) * constants.stiffness[i] - dofVel * constants.damping[i];
+          const limit = constants.torque_limits[i];
+          torque = Math.max(-limit, Math.min(limit, torque));
+          data.ctrl[i] = torque;
+        }
+      }
+
+      function stepSimulation(dt) {
+        accumulator += Math.min(dt, 0.05);
+        while (accumulator >= model.opt.timestep) {
+          applyPolicyControl();
+          mujoco.mj_step(model, data);
+          accumulator -= model.opt.timestep;
+        }
+      }
+
+      function currentState() {
+        mujoco.mj_forward(model, data);
+        return {
+          time: data.time,
+          qpos: Array.from(data.qpos),
+          qvel: Array.from(data.qvel),
+          last_action: lastAppliedAction.slice(),
+        };
+      }
+
+      function updateScene(state) {
+        for (const { geomId, object } of geomObjects) {
+          applyGeomTransform(object, geomId);
+        }
+        updatePresetCamera();
+
+        const actionNorm = Math.hypot(...lastAppliedAction);
+        status.simTime.textContent = `${state.time.toFixed(2)}s`;
+        status.rootZ.textContent = `${(state.qpos[2] || 0).toFixed(3)}m`;
+        status.actionNorm.textContent = actionNorm.toFixed(2);
+      }
+
+      function connectWebSocket() {
+        const scheme = location.protocol === "https:" ? "wss" : "ws";
+        ws = new WebSocket(`${scheme}://${location.host}/ws/policy`);
+
+        ws.addEventListener("open", () => {
+          status.ws.textContent = "connected";
+          status.wsDot.classList.add("ok");
+        });
+
+        ws.addEventListener("message", (event) => {
+          const msg = JSON.parse(event.data);
+          if (Array.isArray(msg.policy_action) && msg.policy_action.length === 29) {
+            latestPolicyAction = msg.policy_action.map(Number);
+          }
+          if (Number.isFinite(msg.policy_age_ms)) {
+            status.policyAge.textContent = `${Math.round(msg.policy_age_ms)}ms`;
+          }
+        });
+
+        ws.addEventListener("close", () => {
+          status.ws.textContent = "reconnecting";
+          status.wsDot.classList.remove("ok");
+          setTimeout(connectWebSocket, 500);
+        });
+      }
+
+      function maybeSendState(state, now) {
+        if (!ws || ws.readyState !== WebSocket.OPEN) return;
+        if (now - lastSocketSend < 20) return;
+        ws.send(JSON.stringify(state));
+        lastSocketSend = now;
+      }
+
+      function animate(now) {
+        requestAnimationFrame(animate);
+        if (!model || !data) return;
+
+        const dt = (now - lastFrame) / 1000;
+        lastFrame = now;
+        if (!paused) {
+          stepSimulation(dt);
+        }
+
+        const state = currentState();
+        maybeSendState(state, now);
+        updateScene(state);
+        controls.update();
+        renderer.render(scene, camera);
+      }
+
+      document.getElementById("toggle").addEventListener("click", (event) => {
+        paused = !paused;
+        event.currentTarget.textContent = paused ? "Resume" : "Pause";
+      });
+
+      document.getElementById("reset").addEventListener("click", () => {
+        if (!mujoco || !model || !data) return;
+        resetPose();
+      });
+
+      document.getElementById("camera-overview").addEventListener("click", () => setCameraPreset("overview"));
+      document.getElementById("camera-top").addEventListener("click", () => setCameraPreset("top"));
+      document.getElementById("camera-side").addEventListener("click", () => setCameraPreset("side"));
+
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      connectWebSocket();
+      try {
+        await initMuJoCo();
+        requestAnimationFrame((now) => {
+          lastFrame = now;
+          animate(now);
+        });
+      } catch (error) {
+        console.error(error);
+        status.loadDetail.textContent = error?.message || String(error);
+        status.mj.textContent = "error";
+      }
+    </script>
+  </body>
+</html>
