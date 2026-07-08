@@ -4,15 +4,15 @@ GoldenRetriever is the maintained applied reference layer for Retriever: robot-f
 
 ## Public Surfaces
 
-- Retriever core docs: https://openretriever-docs.pages.dev/
-- Golden overview: https://retriever-space.pages.dev/
-- Golden Hub proof: https://retriever-space.pages.dev/examples/golden-hub-proof/
-- Golden example catalog: https://retriever-space.pages.dev/examples/
-- Golden simulation and visualization guide: https://retriever-space.pages.dev/examples/simulation-visualization/
-- Golden Hub reference: https://retriever-space.pages.dev/hub/
-- Golden export catalog: https://retriever-space.pages.dev/hub/export-catalog/
-- Golden pack roadmap: https://retriever-space.pages.dev/hub/pack-roadmap/
-- Golden robot payload reference: https://retriever-space.pages.dev/robot-payloads/
+- Retriever core docs: https://retriever.build/
+- Golden overview: https://golden.retriever.build/
+- Golden Hub proof: https://golden.retriever.build/examples/golden-hub-proof/
+- Golden example catalog: https://golden.retriever.build/examples/
+- Golden simulation and visualization guide: https://golden.retriever.build/examples/simulation-visualization/
+- Golden Hub reference: https://golden.retriever.build/hub/
+- Golden export catalog: https://golden.retriever.build/hub/export-catalog/
+- Golden pack roadmap: https://golden.retriever.build/hub/pack-roadmap/
+- Golden robot payload reference: https://golden.retriever.build/robot-payloads/
 
 ## Boundary
 

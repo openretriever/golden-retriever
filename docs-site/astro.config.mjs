@@ -4,7 +4,7 @@ import { defineConfig } from 'astro/config';
 import starlightThemeNova from 'starlight-theme-nova';
 
 export default defineConfig({
-  site: 'https://retriever-space.pages.dev',
+  site: 'https://golden.retriever.build',
   integrations: [
     starlight({
       title: 'GoldenRetriever Reference',

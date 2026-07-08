@@ -62,7 +62,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/openretriever/golden-retriever"
-Documentation = "https://retriever-space.pages.dev/"
+Documentation = "https://golden.retriever.build/"
 Repository = "https://github.com/openretriever/golden-retriever"
 Issues = "https://github.com/openretriever/golden-retriever/issues"
 

@@ -1,5 +1,5 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://retriever-space.pages.dev/sitemap-index.xml
-# LLM map: https://retriever-space.pages.dev/llms.txt
+Sitemap: https://golden.retriever.build/sitemap-index.xml
+# LLM map: https://golden.retriever.build/llms.txt

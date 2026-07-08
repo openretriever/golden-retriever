@@ -1,19 +1,19 @@
 <div align="center">
 
-<a href="https://retriever-space.pages.dev/"><img width="200" height="auto" src="assets/retriever-illustrative.jpeg" alt="GoldenRetriever logo"></a>
+<a href="https://golden.retriever.build/"><img width="200" height="auto" src="assets/retriever-illustrative.jpeg" alt="GoldenRetriever logo"></a>
 
 <br>
 
-<a href="https://retriever-space.pages.dev/"><img src="assets/goldenretriever-wordmark.svg" alt="GoldenRetriever" width="360"></a>
+<a href="https://golden.retriever.build/"><img src="assets/goldenretriever-wordmark.svg" alt="GoldenRetriever" width="360"></a>
 
 ### Applied Robot Examples and Hub Packs for Retriever
 
 <p>Robot-facing examples, reusable payload types, simulator and visualization lanes, and Retriever Hub packs — the applied layer on top of the core <code>retriever</code> runtime.</p>
 
 <p>
-  <a href="https://retriever-space.pages.dev/"><img alt="Docs" src="https://img.shields.io/badge/Docs-open-b45309?style=for-the-badge"></a>
-  <a href="https://retriever-space.pages.dev/examples/"><img alt="Applied examples" src="https://img.shields.io/badge/Applied_Examples-catalog-f97316?style=for-the-badge"></a>
-  <a href="https://retriever-space.pages.dev/hub/"><img alt="Hub packs" src="https://img.shields.io/badge/Hub-packs-9333ea?style=for-the-badge"></a>
+  <a href="https://golden.retriever.build/"><img alt="Docs" src="https://img.shields.io/badge/Docs-open-b45309?style=for-the-badge"></a>
+  <a href="https://golden.retriever.build/examples/"><img alt="Applied examples" src="https://img.shields.io/badge/Applied_Examples-catalog-f97316?style=for-the-badge"></a>
+  <a href="https://golden.retriever.build/hub/"><img alt="Hub packs" src="https://img.shields.io/badge/Hub-packs-9333ea?style=for-the-badge"></a>
   <br>
   <a href="https://github.com/openretriever/golden-retriever"><img alt="Source" src="https://img.shields.io/badge/Source-GitHub-111827?style=for-the-badge&logo=github"></a>
   <a href="https://github.com/openretriever/retriever"><img alt="Core runtime" src="https://img.shields.io/badge/Core-retriever-0f766e?style=for-the-badge&logo=github"></a>
@@ -47,11 +47,11 @@ Expected results:
 ## Public Docs
 
 - Retriever home: https://openretriever.org/
-- Core Retriever docs: https://openretriever-docs.pages.dev/
-- GoldenRetriever docs: https://retriever-space.pages.dev/
-- First GoldenRetriever proof: https://retriever-space.pages.dev/examples/golden-hub-proof/
-- Example catalog: https://retriever-space.pages.dev/examples/
-- GoldenRetriever Hub boundary: https://retriever-space.pages.dev/hub/
+- Core Retriever docs: https://retriever.build/
+- GoldenRetriever docs: https://golden.retriever.build/
+- First GoldenRetriever proof: https://golden.retriever.build/examples/golden-hub-proof/
+- Example catalog: https://golden.retriever.build/examples/
+- GoldenRetriever Hub boundary: https://golden.retriever.build/hub/
 
 ## Surface Boundary
 

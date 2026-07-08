@@ -48,15 +48,15 @@ Open `http://127.0.0.1:8782/`, `http://127.0.0.1:8782/examples/`, `http://127.0.
 After deploying the Golden docs site, verify the live page reflects the applied-reference framing rather than stale Hub-module wording:
 
 ```bash
-html=$(curl -fsSL https://retriever-space.pages.dev/)
+html=$(curl -fsSL https://golden.retriever.build/)
 printf '%s' "$html" | grep -q 'Golden examples start where the core quickstart ends'
 printf '%s' "$html" | grep -q 'First Results To Recognize'
 printf '%s' "$html" | grep -q 'How The Retriever Surfaces Fit'
-curl -fsSL https://retriever-space.pages.dev/robot-payloads/ | grep -q 'Robot Payload Reference'
-curl -fsSL https://retriever-space.pages.dev/robot-payloads/type-catalog/ | grep -q 'Robot Payload Selection'
-curl -fsSL https://retriever-space.pages.dev/robots.txt | grep -q 'Sitemap: https://retriever-space.pages.dev/sitemap-index.xml'
-curl -fsSL https://retriever-space.pages.dev/robots.txt | grep -q 'LLM map: https://retriever-space.pages.dev/llms.txt'
-curl -fsSL https://retriever-space.pages.dev/llms.txt | grep -q 'Golden Retriever'
+curl -fsSL https://golden.retriever.build/robot-payloads/ | grep -q 'Robot Payload Reference'
+curl -fsSL https://golden.retriever.build/robot-payloads/type-catalog/ | grep -q 'Robot Payload Selection'
+curl -fsSL https://golden.retriever.build/robots.txt | grep -q 'Sitemap: https://golden.retriever.build/sitemap-index.xml'
+curl -fsSL https://golden.retriever.build/robots.txt | grep -q 'LLM map: https://golden.retriever.build/llms.txt'
+curl -fsSL https://golden.retriever.build/llms.txt | grep -q 'Golden Retriever'
 ```
 
 If a custom Golden domain is bound later, run the same checks against that hostname before advertising it.
@@ -68,7 +68,7 @@ Before making the repository public:
 - Confirm the default branch is `main`.
 - Deploy the Starlight docs build through the configured static hosting target.
 - Confirm the repository URL is `https://github.com/openretriever/golden-retriever`.
-- Confirm the hosted examples/docs URL is `https://retriever-space.pages.dev/` until custom domains are active.
+- Confirm the hosted examples/docs URL is `https://golden.retriever.build/` until custom domains are active.
 
 ## Package Boundary
 

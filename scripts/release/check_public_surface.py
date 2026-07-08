@@ -74,12 +74,12 @@ DOC_MARKERS = {
         "demo-golden-hub-pack",
         "demo-robosuite-mock",
         "demo-pipeline-html-viz",
-        "https://retriever-space.pages.dev/examples/simulation-visualization/",
+        "https://golden.retriever.build/examples/simulation-visualization/",
         "Do not treat source examples as Retriever Hub packs unless the Hub manifest exports them.",
     ),
     "docs-site/public/robots.txt": (
-        "Sitemap: https://retriever-space.pages.dev/sitemap-index.xml",
-        "LLM map: https://retriever-space.pages.dev/llms.txt",
+        "Sitemap: https://golden.retriever.build/sitemap-index.xml",
+        "LLM map: https://golden.retriever.build/llms.txt",
     ),
     "docs-site/src/content/docs/index.mdx": (
         "GoldenRetriever examples start where the core quickstart ends",

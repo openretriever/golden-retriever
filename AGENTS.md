@@ -18,8 +18,8 @@ remains for wheel smoke tests, but a public GoldenRetriever PyPI wheel is not on
 first launch path.
 
 - Python: **3.11+**. License: Apache-2.0.
-- Docs site: <https://retriever-space.pages.dev/>
-- Core runtime docs: <https://openretriever-docs.pages.dev/> (agents: also
+- Docs site: <https://golden.retriever.build/>
+- Core runtime docs: <https://retriever.build/> (agents: also
   read `AGENTS.md` in the core repo and `/llms.txt` on the docs site).
 
 ## Documentation goals (keep these when editing anything)
@@ -63,7 +63,7 @@ one.
 | Example lanes (learning ladder) | `examples/advanced/` |
 | Heavier prototypes | `examples/experimental/` |
 | Tests | `tests/typing/`, `tests/examples/` |
-| Docs (Starlight -> retriever-space.pages.dev) | `docs-site/` |
+| Docs (Starlight -> golden.retriever.build) | `docs-site/` |
 
 ## Pitfalls that actually bite
 
