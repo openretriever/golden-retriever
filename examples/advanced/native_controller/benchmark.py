@@ -18,12 +18,12 @@ def check_binaries():
     if rust_bin.exists():
         print(f"  [OK] Rust binary found: {rust_bin}")
     else:
-        print(f"  [FAIL] Rust binary NOT found: {rust_bin}\n         Run 'pixi run -e rust binding-build-rust' first.")
+        print(f"  [FAIL] Rust binary NOT found: {rust_bin}\n         Build it first: 'cargo build --release' (see README.md).")
         
     if cpp_bin.exists():
         print(f"  [OK] C++ binary found: {cpp_bin}")
     else:
-        print(f"  [FAIL] C++ binary NOT found: {cpp_bin}\n         Run 'pixi run -e cpp binding-build-cpp' first.")
+        print(f"  [FAIL] C++ binary NOT found: {cpp_bin}\n         Build it first with CMake (see README.md).")
 
 def run_benchmark(backend: str, duration: int, rate: float) -> Optional[float]:
     """

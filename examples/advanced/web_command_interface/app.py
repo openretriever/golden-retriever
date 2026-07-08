@@ -51,8 +51,8 @@ class VLACommand:
 # 2. Web Interface Source
 # =============================================================================
 
-# These are expected to be in the environment.
-# If not, the user should: pixi run -e dev python -m pip install fastapi uvicorn
+# fastapi + uvicorn ship in the golden-retriever env; run this under it, e.g.
+#   pixi run -e golden-retriever python -m examples.advanced.web_command_interface.app
 try:
     import uvicorn
     from fastapi import FastAPI, Request
