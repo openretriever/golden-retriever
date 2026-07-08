@@ -1,5 +1,5 @@
 ---
-title: GoldenRetriever Hub Proof
+title: Hub Pack Quickstart
 description: The smallest proof that GoldenRetriever extends Retriever through Hub-loadable exports.
 ---
 The smallest check that a project *outside* the core runtime can publish reusable
@@ -73,7 +73,7 @@ Plan             = hub.use("openretriever/golden-retriever:Plan")
 convert_to_arrow = hub.use("openretriever/golden-retriever:convert_to_arrow")
 ```
 
-## Why it's shaped this way
+## Design notes
 
 Loading through the manifest (not a direct import) is the point: it proves the
 pack boundary the same way a remote Hub fetch would, while staying offline. The

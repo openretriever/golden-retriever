@@ -85,7 +85,7 @@ closes near the block and `reward` tracks the lift:
 Swap `mode="robosuite"` (after installing the optional dependency) and the same
 graph drives the real simulator; `LiftState.source` reports which backend ran.
 
-## HTML graph proof
+## Render the graph to HTML
 
 `pipe.validate()` returns the runtime IR; `generate_ascii_graph` and
 `save_interactive_html` turn it into an inspectable graph — including feedback
@@ -147,15 +147,15 @@ The generated graph, embedded from the artifact:
   loading="lazy"
 ></iframe>
 
-## Recommended Order
+## Run these in order
 
 Run the visual lane from lightest to heaviest so each layer is verified before the next:
 
-1. **HTML graph proof** — `pixi run demo-pipeline-html-viz` renders the graph structure with no simulator or model.
+1. **Render the graph to HTML** — `pixi run demo-pipeline-html-viz` renders the graph structure with no simulator or model.
 2. **Mock robosuite** — `pixi run demo-robosuite-mock` runs the env↔policy loop deterministically, without a robosuite install.
 3. **Real robosuite / Rerun** — swap `mode="robosuite"` (optional dependency) only after the mock trace looks right.
 
-## Why it's shaped this way
+## Design notes
 
 Making the environment and policy ordinary Flows keeps timing and handoffs
 visible in the graph instead of hidden in callbacks: the feedback edge, the two

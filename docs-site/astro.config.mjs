@@ -21,7 +21,7 @@ export default defineConfig({
           label: 'Start',
           items: [
             { label: 'Overview', link: '/' },
-            { label: 'First GoldenRetriever Proof', slug: 'examples/golden-hub-proof' },
+            { label: 'Hub Pack Quickstart', slug: 'examples/golden-hub-proof' },
             { label: 'Example Catalog', slug: 'examples' },
           ],
         },
@@ -53,7 +53,7 @@ export default defineConfig({
         {
           label: 'Promote to Hub Packs',
           items: [
-            { label: 'Pack Boundary', slug: 'hub' },
+            { label: 'Hub Packs', slug: 'hub' },
             { label: 'Export Catalog', slug: 'hub/export-catalog' },
             { label: 'Maturity Guide', slug: 'hub/pack-roadmap' },
           ],

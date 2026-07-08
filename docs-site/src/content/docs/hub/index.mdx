@@ -1,5 +1,5 @@
 ---
-title: GoldenRetriever Pack Boundary
+title: GoldenRetriever Hub Packs
 description: What GoldenRetriever exposes as reusable Retriever Hub packs.
 ---
 GoldenRetriever publishes its applied payloads as a **Retriever Hub module**. Once the
@@ -12,7 +12,7 @@ from retriever import hub
 WorldState = hub.use("openretriever/golden-retriever:WorldState")
 ```
 
-## What A Pack Contains
+## What's in the pack
 
 The exported names live in `[tool.retriever.module]` in `pyproject.toml`, not in
 scattered import paths. This is the exact manifest Hub reads:
@@ -34,7 +34,7 @@ The contract across versions is the **registered schema**, not class identity.
 Pin one ref per app. Standard types stay in `retriever-core`; GoldenRetriever's exports
 compose them and never redefine one.
 
-## Prove the boundary loads
+## Check that it loads
 
 `hub.use(...)` against the private repo will not resolve over the network yet,
 so the smoke demo loads *this repo's* manifest directly through the runtime Hub
@@ -71,7 +71,7 @@ importing a pack can never clobber another project's registry.
 | Smoke every export. | `demo-golden-hub-pack` proves the boundary loads and round-trips. |
 | Document expected output. | Users need to recognize success. |
 
-## Runtime Bridge
+## Related runtime docs
 
 Loader mechanics, registry internals, and module packaging live in the core
 Retriever docs. GoldenRetriever only defines the applied robot-facing pack boundary.

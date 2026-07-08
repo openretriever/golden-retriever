@@ -7,7 +7,7 @@ Each one is a real `Pipeline` of typed Flows you can run, step in-process, and
 render. Start with the mock-safe commands below, confirm the output, then opt
 into camera, simulator, or model-backed lanes.
 
-## First Verified Commands
+## Try it first
 
 Every command runs with no robot, camera, model, or network. Run one, match the
 first line of output, then open its page for the code and the full run.
@@ -33,7 +33,7 @@ pixi run demo-pipeline-html-viz
 | `demo-robosuite-mock` | Environment-as-Flow and policy-as-Flow close a feedback loop with no simulator install. | [Simulation](/examples/simulation-visualization/) |
 | `demo-pipeline-html-viz` | The runtime IR validates and renders to ASCII plus an inspectable HTML graph. | [Visualization](/examples/simulation-visualization/) |
 
-## Choose By Goal
+## Find an example
 
 Once a proof runs, walk the perception → memory → language → composition ladder
 on deterministic payloads before adding heavier inputs.
@@ -50,20 +50,20 @@ pixi run -e golden-retriever demo-language-caption-plan       # caption -> primi
 - [Simulation and visualization](/examples/simulation-visualization/) — mock-safe robosuite, optional Rerun lanes, and HTML graph rendering.
 - [Robot payloads](/robot-payloads/) — world state, belief, plans, trajectories, and dataset/export profiles reused across examples.
 
-## Walkthrough Order
+## Suggested order
 
 1. Run the [Hub proof](/examples/golden-hub-proof/) so you know GoldenRetriever loads without optional robot dependencies.
 2. Run one deterministic perception or memory demo and recognize its typed output before adding heavier inputs.
 3. Render the graph with `demo-pipeline-html-viz` when wiring is unclear — inspect ports, clocks, and feedback edges first.
 4. Only then opt into camera, model-backed perception, real simulator, or dataset-export lanes.
 
-## Runtime Bridge
+## Related runtime docs
 
 These pages assume the Flow, Pipeline, clock, and sync mental model from the
 [core Retriever docs](https://retriever.build/). GoldenRetriever focuses on
 robot-facing examples, typed payloads, and Hub pack candidates built on that runtime.
 
-## Maturity Levels
+## How mature each example is
 
 | Level | Meaning | User expectation |
 | --- | --- | --- |

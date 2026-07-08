@@ -21,7 +21,7 @@ get_type_info("WorldState").category   # -> 'general'  (kind 'payload')
 len(list_types())                      # spans categories: spatial=10, general=27, data=13, perception=10
 ```
 
-## Quick Decision Table
+## Which type to use
 
 Start from the boundary you need to preserve, not the richest type available.
 
@@ -131,7 +131,7 @@ carry their own Arrow round-trips.
 | `Timestamp` | `seconds`, `nanoseconds` | `now()`, `to_float()`. |
 | `ExecutionTimer` | `start_time`, `expected_period`, `actual_period`, `iteration` | `is_timing_violation` at 50% tolerance. |
 
-## Authoring Pattern
+## Authoring your own
 
 Use **direct imports** inside example code — readers should not have to ask the
 registry what a payload means. Use **registry lookup** (`get_type`) only at
@@ -143,7 +143,7 @@ from retriever_typing import PoseStamped, get_type
 assert get_type("PoseStamped") is PoseStamped
 ```
 
-## Validation Checklist
+## Validation checklist
 
 Validate at the edge where robot data changes meaning, before it reaches a
 planner, controller, dataset, or another process.
