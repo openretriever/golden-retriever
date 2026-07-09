@@ -36,7 +36,7 @@ exclude = [
 # Keep this name descriptive so it is not confused with a first-launch package.
 [project]
 name = "golden-retriever-examples"
-version = "0.0.1"
+version = "0.0.2"
 description = "Robot-facing reference examples and Hub-distributed type packs for Retriever."
 readme = "README.md"
 requires-python = ">=3.11"
