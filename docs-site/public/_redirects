@@ -1,0 +1,4 @@
+# Retired pre-release route. Keep it as a redirect so stale custom-domain
+# requests cannot serve an old generated page from a previous deployment.
+/determinism/ /examples/simulation-visualization/ 302
+/determinism /examples/simulation-visualization/ 302
