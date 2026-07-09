@@ -21,7 +21,6 @@ venv/
 
 # Pixi
 .pixi/
-pixi.lock
 
 # Agent
 .claude/
