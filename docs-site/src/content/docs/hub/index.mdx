@@ -62,6 +62,21 @@ The `_retriever_hub.golden_hub_pack_smoke__...` prefix is the loader isolating
 the pack in its own namespace — the same behavior a real `hub.use` gets, so
 importing a pack can never clobber another project's registry.
 
+### See `hub.use()` resolve over the network today
+
+While GoldenRetriever's own repository is not public yet, the
+`openretriever/hello-world` pack already is (tagged `v0.1.0`), so you can watch
+the full network path — index lookup, tag resolution, fetch, load — work end to
+end right now:
+
+```python
+from retriever import hub
+
+HelloFlow = hub.use("openretriever/hello-world:HelloFlow")
+```
+
+GoldenRetriever's exports resolve exactly the same way once the repository is public.
+
 ## Pack Rules
 
 | Rule | Why it matters |
