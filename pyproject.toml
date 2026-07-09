@@ -91,6 +91,10 @@ Command = "retriever_typing.core_types:Command"
 Status = "retriever_typing.core_types:Status"
 convert_to_arrow = "retriever_typing.conversions:convert_to_arrow"
 convert_from_arrow = "retriever_typing.conversions:convert_from_arrow"
+# Runnable demo (needs numpy + opencv; opencv is imported lazily so consuming
+# the payload types above never requires it):
+#   hub.use("openretriever/golden-retriever:webcam")()
+webcam = "retriever_typing.demos.webcam:run"
 
 [project.optional-dependencies]
 # Legacy/system stack (carried over from the current monorepo; expect to refine).
