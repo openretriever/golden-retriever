@@ -42,7 +42,7 @@ loader (`retriever.hub._loader.load_exports`) — the same code path Hub uses,
 without network access.
 
 ```bash
-pixi run demo-golden-hub-pack
+retriever run demo-golden-hub-pack
 ```
 
 Real output — exports load, `WorldState` is visible through the unified registry
@@ -55,7 +55,7 @@ Constructed WorldState: ['cup']
 Constructed Plan skills: ['pick']
 Arrow round-trip: Action OK
 Hub reference: hub.use("openretriever/golden-retriever:WorldState")
-Graph proof: run `pixi run demo-pipeline-html-viz` to validate and render an IR HTML artifact.
+Graph proof: run `retriever run demo-pipeline-html-viz` to validate and render an IR HTML artifact.
 ```
 
 The `_retriever_hub.golden_hub_pack_smoke__...` prefix is the loader isolating

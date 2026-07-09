@@ -30,14 +30,17 @@ template: splash
 
 ## Quick Start
 
-Start here after the core Retriever visual quickstart works. GoldenRetriever is a separate source checkout:
+Start here after the core Retriever visual quickstart works. GoldenRetriever runs on the same `retriever` CLI; it is a separate source checkout of the examples:
 
 ```bash
+pip install retriever-core           # if you don't already have the `retriever` command
 git clone https://github.com/openretriever/golden-retriever.git
 cd golden-retriever
-pixi install
-pixi run demo-golden-hub-pack
+retriever install                    # sets up the example environment (wraps Pixi)
+retriever run demo-golden-hub-pack   # payload exports + Arrow round-trip
 ```
+
+Perception, memory, and language examples need extra model dependencies, so they run in the `golden-retriever` Pixi environment (`pixi run -e golden-retriever demo-...`). Everything else runs through `retriever run`.
 
 <details class="explain-details">
   <summary>What does this do?</summary>
@@ -49,13 +52,13 @@ pixi run demo-golden-hub-pack
 ## What you should see
 
 <div class="result-grid">
-  <div class="result-card"><span>Hub proof</span><strong>Terminal export summary</strong><pre>{`pixi run demo-golden-hub-pack
+  <div class="result-card"><span>Hub proof</span><strong>Terminal export summary</strong><pre>{`retriever run demo-golden-hub-pack
 # GoldenRetriever pack exports: WorldState, BeliefGraph, Skill, Plan, ...
 # Arrow round-trip: Action OK`}</pre></div>
   <div class="result-card"><span>Example proof</span><strong>Deterministic perception flow</strong><pre>{`pixi run -e golden-retriever demo-perception-detection-flow
 # synthetic scene -> typed detections
 # steps complete`}</pre></div>
-  <div class="result-card"><span>Graph proof</span><strong>Self-contained HTML graph</strong><pre>{`pixi run demo-pipeline-html-viz
+  <div class="result-card"><span>Graph proof</span><strong>Self-contained HTML graph</strong><pre>{`retriever run demo-pipeline-html-viz
 # writes out/golden_retriever_closed_loop_viz.html
 # prints a compact ASCII graph`}</pre></div>
 </div>
@@ -86,11 +89,11 @@ pixi run demo-golden-hub-pack
 
 | Need | Start with | Avoid first |
 | --- | --- | --- |
-| Safe GoldenRetriever smoke | `pixi run demo-golden-hub-pack` | Camera, simulator, model, or network setup. |
+| Safe GoldenRetriever smoke | `retriever run demo-golden-hub-pack` | Camera, simulator, model, or network setup. |
 | Example behavior | `pixi run -e golden-retriever demo-perception-detection-flow` | Optional model-backed lanes. |
-| Simulator integration | `pixi run demo-robosuite-mock` | Real robosuite before the mock trace works. |
-| Graph visualization | `pixi run demo-pipeline-html-viz` | Screenshots or stale generated HTML. |
-| Robot payload reuse | `pixi run demo-robotics-typing-catalog` | Ad hoc dict payloads or source-only imports. |
+| Simulator integration | `retriever run demo-robosuite-mock` | Real robosuite before the mock trace works. |
+| Graph visualization | `retriever run demo-pipeline-html-viz` | Screenshots or stale generated HTML. |
+| Robot payload reuse | `retriever run demo-robotics-typing-catalog` | Ad hoc dict payloads or source-only imports. |
 
 ## Continue
 

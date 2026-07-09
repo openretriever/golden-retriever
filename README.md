@@ -31,18 +31,31 @@ Use GoldenRetriever after the core Retriever quickstart. Core Retriever teaches 
 
 ## Start Here
 
+GoldenRetriever runs on the core `retriever` runtime and CLI. Install the runtime once, then run the examples from a source checkout:
+
 ```bash
-pixi install
-pixi run demo-golden-hub-pack
-pixi run -e golden-retriever demo-perception-detection-flow
-pixi run demo-pipeline-html-viz
+pip install retriever-core                 # provides the `retriever` command
+git clone https://github.com/openretriever/golden-retriever
+cd golden-retriever
+retriever install                          # sets up the example environment
+retriever run demo-golden-hub-pack         # payload exports + Arrow round-trip
+retriever run demo-pipeline-html-viz       # writes a self-contained HTML graph
 ```
 
 Expected results:
 
 - `demo-golden-hub-pack` prints GoldenRetriever payload exports and an Arrow round-trip check.
-- `demo-perception-detection-flow` runs a deterministic synthetic perception flow.
 - `demo-pipeline-html-viz` writes a self-contained HTML graph artifact.
+
+### Examples that need extra model dependencies
+
+Perception, memory, and language examples pull in heavier libraries, so they live in the `golden-retriever` Pixi environment. Name it explicitly:
+
+```bash
+pixi run -e golden-retriever demo-perception-detection-flow
+```
+
+GoldenRetriever uses [Pixi](https://pixi.sh) as its environment manager, exactly like the core runtime. `retriever run` wraps Pixi for the default examples; the heavier lanes name the `golden-retriever` environment directly.
 
 ## Public Docs
 
@@ -71,14 +84,14 @@ Expected results:
 ## Common Commands
 
 ```bash
-pixi run demo-golden-hub-pack
+retriever run demo-golden-hub-pack
 pixi run -e golden-retriever demo-perception-detection-flow
 pixi run -e golden-retriever demo-memory-belief-flow
 pixi run -e golden-retriever demo-language-caption-plan
 pixi run -e golden-retriever demo-composable-pipelines
-pixi run demo-robosuite-mock
-pixi run demo-pipeline-html-viz
-pixi run demo-robotics-typing-catalog
+retriever run demo-robosuite-mock
+retriever run demo-pipeline-html-viz
+retriever run demo-robotics-typing-catalog
 ```
 
 Optional camera, model, simulator, GPU, or network-dependent lanes should come after the mock-safe path works.

@@ -9,20 +9,29 @@ into camera, simulator, or model-backed lanes.
 
 ## Try it first
 
-Every command runs with no robot, camera, model, or network. Run one, match the
-first line of output, then open its page for the code and the full run.
+Set up once with `pip install retriever-core` (gives you the `retriever` command),
+then `git clone` this repo and run `retriever install`. After that:
+
+- `retriever run <demo>` runs an example in the default environment.
+- `pixi run -e golden-retriever <demo>` runs the heavier perception, memory, and
+  language examples, which pull in extra model dependencies. GoldenRetriever uses
+  [Pixi](https://pixi.sh) as its environment manager; `retriever run` wraps it for
+  the default set.
+
+Every command below runs with no robot, camera, model, or network. Run one, match
+the first line of output, then open its page for the code and the full run.
 
 ```bash
-pixi run demo-golden-hub-pack
+retriever run demo-golden-hub-pack
 # GoldenRetriever pack exports: WorldState, BeliefGraph, Skill, Plan, Trajectory, convert_to_arrow, convert_from_arrow
 
 pixi run -e golden-retriever demo-composable-pipelines
 # policy output after replacement: ProcOut(value=104)
 
-pixi run demo-robosuite-mock
+retriever run demo-robosuite-mock
 # [mock step=002] object_z=0.820 gripper_z=0.940 reward=0.000 done=False
 
-pixi run demo-pipeline-html-viz
+retriever run demo-pipeline-html-viz
 # Pipeline: visualization_demo  ->  writes out/golden_retriever_closed_loop_viz.html
 ```
 

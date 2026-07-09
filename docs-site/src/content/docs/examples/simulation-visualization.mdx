@@ -67,7 +67,7 @@ with pipe:
 ```
 
 ```bash
-pixi run demo-robosuite-mock
+retriever run demo-robosuite-mock
 ```
 
 Real output — the mock is deterministic, so `object_z` rises once the gripper
@@ -112,7 +112,7 @@ save_interactive_html(ir, "out/golden_retriever_closed_loop_viz.html")
 ```
 
 ```bash
-pixi run demo-pipeline-html-viz
+retriever run demo-pipeline-html-viz
 ```
 
 Real output — the ASCII graph shows each node's clock and the detected cycle, and
@@ -151,8 +151,8 @@ The generated graph, embedded from the artifact:
 
 Run the visual lane from lightest to heaviest so each layer is verified before the next:
 
-1. **Render the graph to HTML** — `pixi run demo-pipeline-html-viz` renders the graph structure with no simulator or model.
-2. **Mock robosuite** — `pixi run demo-robosuite-mock` runs the env↔policy loop deterministically, without a robosuite install.
+1. **Render the graph to HTML** — `retriever run demo-pipeline-html-viz` renders the graph structure with no simulator or model.
+2. **Mock robosuite** — `retriever run demo-robosuite-mock` runs the env↔policy loop deterministically, without a robosuite install.
 3. **Real robosuite / Rerun** — swap `mode="robosuite"` (optional dependency) only after the mock trace looks right.
 
 ## Design notes

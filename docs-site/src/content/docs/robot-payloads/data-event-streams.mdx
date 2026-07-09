@@ -39,7 +39,7 @@ window_agg(merged, now_ns=2_000, policy=WindowPolicy(duration_ns=1_000, agg="mea
 ```
 
 ```bash
-pixi run demo-robotics-data-eventstream
+retriever run demo-robotics-data-eventstream
 ```
 
 Note the camera event at `event=2000` sorts *after* the joint event at the same
@@ -72,7 +72,7 @@ align_window(left, right, window_ns=20)                    # any left within +/-
 ```
 
 ```bash
-pixi run demo-robotics-data-join
+retriever run demo-robotics-data-join
 ```
 
 Each joined value keeps `lineage=[A:<t>, B:<t>]`, the exact source timestamps
