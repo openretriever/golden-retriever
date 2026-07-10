@@ -7,7 +7,7 @@ export default defineConfig({
   site: 'https://golden.retriever.build',
   integrations: [
     starlight({
-      title: 'GoldenRetriever Reference',
+      title: 'GoldenRetriever',
       description: 'Applied Retriever examples, robot payload references, visualization lanes, and Hub pack candidates.',
       logo: {
         src: './src/assets/retriever-illustrative.jpeg',
@@ -15,7 +15,22 @@ export default defineConfig({
       },
       favicon: '/assets/logo.svg',
       customCss: ['./src/styles/golden.css'],
-      plugins: [starlightThemeNova()],
+      social: [
+        { icon: 'open-book', label: 'Retriever core docs', href: 'https://retriever.build/' },
+        { icon: 'external', label: 'Retriever project home', href: 'https://openretriever.org/' },
+        { icon: 'github', label: 'GoldenRetriever source on GitHub', href: 'https://github.com/openretriever/golden-retriever' },
+      ],
+      plugins: [
+        starlightThemeNova({
+          nav: [
+            { label: 'Core docs', href: 'https://retriever.build/' },
+            { label: 'Project home', href: 'https://openretriever.org/' },
+          ],
+        }),
+      ],
+      components: {
+        PageTitle: './src/components/PageTitleWithSource.astro',
+      },
       sidebar: [
         {
           label: 'Start',
