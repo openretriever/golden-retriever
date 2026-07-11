@@ -17,7 +17,7 @@ pixi run python experiments/benchmarks/benchmark_retriever.py --backend multipro
 First, build the ROS 2 packages using `colcon.
 
 ```bash
-pixi run -e ros build
+pixi run -e ros ros-build
 ```
 
 Then, you can run the standard Python (`rclpy`) and C++ (`rclcpp`) benchmarks.

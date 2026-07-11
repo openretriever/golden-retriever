@@ -4,7 +4,7 @@
 #
 # This manifest captures the heavier Golden example/demo environment.
 # It installs the core Retriever runtime from the temporary public
-# `debug-retriever` package plus the extra libraries needed by the advanced
+# `retriever-core` package plus the extra libraries needed by the advanced
 # system demos in this repo.
 #
 # =============================================================================
@@ -206,7 +206,9 @@ scripts = ["experiments/benchmarks/ros/install/setup.bash"]
 RMW_IMPLEMENTATION = "rmw_cyclonedds_cpp"
 
 [feature.ros.tasks]
-build = { cmd = "colcon build", cwd = "./experiments/benchmarks/ros" }
+# Named ros-build so it cannot collide with the global `build` (python -m build):
+# pixi treats a task defined in multiple environments as ambiguous.
+ros-build = { cmd = "colcon build", cwd = "./experiments/benchmarks/ros" }
 benchmark_python = "ros2 run benchmark_python publisher & ros2 run benchmark_python subscriber"
 benchmark_cpp = "ros2 run benchmark_cpp publisher & ros2 run benchmark_cpp subscriber"
 benchmark_cpp_components = "ros2 launch benchmark_cpp intra_process.launch.py"
