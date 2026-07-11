@@ -30,11 +30,9 @@ nodejs = ">=22,<23"
 
 [feature.bundled_core.pypi-dependencies]
 # Single source of the Retriever runtime dependency, shared by every environment.
-# ONE-LINE SWITCH AT PUBLISH: replace `debug-retriever` below with `retriever-core`.
-# The `>=0.0.1` floor and the `dora`/`demo` extras are satisfied by BOTH the interim
-# debug-retriever (currently 0.1.4) and retriever-core (0.0.1+), so only the package
-# name changes — nothing else.
-debug-retriever = { version = ">=0.0.1", extras = [
+# The canonical public runtime; >=0.0.2 has the timestamp-based sync sampling
+# and the src-layout Hub loader that the manifest tests rely on.
+retriever-core = { version = ">=0.0.2", extras = [
     "dora",
     "demo",
 ] }
