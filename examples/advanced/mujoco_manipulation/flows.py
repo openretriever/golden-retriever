@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from typing import Optional
 import time
 import numpy as np
-import rerun as rr
 from retriever.flow import Flow, io
 from env import MujocoEnv
 
@@ -126,6 +125,9 @@ class ControllerFlow(Flow[State, Control]):
 class RerunLoggerFlow(Flow[State, None]):
     """Logs MuJoCo state to Rerun for visualization."""
     def init(self):
+        import rerun as rr
+
+        self._rr = rr
         rr.init("mujoco_manipulation", spawn=True)
         print("[Rerun] Visualization started. Check the Rerun window!")
         self.start_time = time.time()
@@ -137,27 +139,29 @@ class RerunLoggerFlow(Flow[State, None]):
         if inp is None or inp.time is None:
             return
 
+        rr = self._rr
+
         # Use actual wall-clock time offset by sim time
         # This matches sim duration (0, dt, 2dt...) to real time (now, now+dt...)
         real_time = self.start_time + inp.time
         rr.set_time_seconds("sim_time", real_time)
-        
+
         # Add a sequence timeline (sim_step) to avoid "1970" date confusion if desired
         # We estimate step from time since we don't pass step count explicitly in State
         # Or just let it be. 'sim_time' is correct seconds.
         # But let's add it for clarity.
         sim_step = int(inp.time / 0.005)
         rr.set_time_sequence("sim_step", sim_step)
-        
+
         if inp.qpos is not None:
              rr.log("state/joint1", rr.Scalars([float(inp.qpos[0])]))
              rr.log("state/joint2", rr.Scalars([float(inp.qpos[1])]))
-             
+
         if inp.image is not None:
             rr.log("camera/render", rr.Image(inp.image))
-            
+
         if inp.tip_pos is not None:
             rr.log("world/tip", rr.Points3D([inp.tip_pos], colors=[0,0,255], radii=0.03))
-            
+
         if inp.target_pos is not None:
             rr.log("world/target", rr.Points3D([inp.target_pos], colors=[255,0,0], radii=0.03))
