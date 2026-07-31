@@ -66,9 +66,12 @@ class MujocoEnvFlow(Flow[Control, State]):
 class ControllerFlow(Flow[State, Control]):
     def init(self):
         # Jacobian Transpose Control Gains
-        self.kp_cart = 200.0  # Cartesian stiffness (N/m)
-        self.kd_joint = 5.0   # Joint damping (Nms/rad)
+        self.kp_cart = 1500.0  # Cartesian stiffness (N/m)
+        self.kd_cart = 80.0    # Cartesian damping on tracking-error velocity (Ns/m)
+        self.kd_joint = 5.0    # Joint damping (Nms/rad)
         self.tick = 0
+        self._prev_target_pos = None
+        self._prev_time = None
 
     def run(self, inp: State) -> Control:
         if inp.qpos is None or inp.jacobian is None:
@@ -81,27 +84,43 @@ class ControllerFlow(Flow[State, Control]):
         # Ignore Z error since it's planar
         err_cart[2] = 0.0
 
-        # 2. Virtual Spring Force (F = Kp * dx)
-        f_cart = self.kp_cart * err_cart
-        
-        # 3. Jacobian Transpose (Tau = J^T * F)
+        # 2. Estimate target velocity via finite difference. A pure position
+        # spring always lags a continuously moving setpoint; feeding forward
+        # the target's own velocity lets the controller track it instead of
+        # perpetually chasing where it used to be.
+        target_vel = np.zeros(3)
+        if self._prev_target_pos is not None and inp.time > self._prev_time:
+            dt = inp.time - self._prev_time
+            target_vel = (inp.target_pos - self._prev_target_pos) / dt
+        self._prev_target_pos = inp.target_pos.copy()
+        self._prev_time = inp.time
+
+        # Tip velocity in task space, from the site Jacobian.
+        tip_vel = inp.jacobian @ inp.qvel
+        vel_err_cart = target_vel - tip_vel
+        vel_err_cart[2] = 0.0
+
+        # 3. Cartesian PD (+ velocity feedforward) force
+        f_cart = self.kp_cart * err_cart + self.kd_cart * vel_err_cart
+
+        # 4. Jacobian Transpose (Tau = J^T * F)
         # Jacobian is 3x2 (3D pos, 2 joints)
         # f_cart is 3x1
         # tau is 2x1
         J = inp.jacobian
-        tau = J.T @ f_cart 
+        tau = J.T @ f_cart
 
-        # 4. Joint Damping (Stability)
+        # 5. Joint Damping (Stability)
         tau -= self.kd_joint * inp.qvel
 
         # Clip control
         tau = np.clip(tau, -200, 200)
-        
+
         self.tick += 1
         if self.tick % 50 == 0:
             dist = np.linalg.norm(err_cart)
             print(f"[Controller] t={inp.time:.2f}s, dist={dist:.3f}m, F={np.linalg.norm(f_cart):.1f}N")
-             
+
         return Control(ctrl=tau)
 
 class RerunLoggerFlow(Flow[State, None]):

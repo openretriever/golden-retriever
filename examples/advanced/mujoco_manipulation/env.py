@@ -5,6 +5,7 @@ import numpy as np
 # Simple 2-link arm model
 MODEL_XML = """
 <mujoco>
+  <compiler angle="radian"/>
   <option timestep="0.005" integrator="RK4" gravity="0 0 -9.81"/>
   <worldbody>
     <light pos="0 0 1"/>
