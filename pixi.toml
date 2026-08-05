@@ -170,7 +170,7 @@ demo-twist2-rerun = { cmd = "python examples/advanced/twist2_simulation/app.py -
 mujoco = "*"
 
 [feature.simulation_test.tasks]
-test-simulation = { cmd = "python -m pytest tests/examples/test_mujoco_manipulation_convergence.py -q", env = { PYTHONPATH = "." } }
+test-simulation = { cmd = "python -m pytest tests/examples/test_mujoco_manipulation_convergence.py", env = { PYTHONPATH = "." } }
 
 # -----------------------------------------------------------------------------
 # Optional: VLM planning stack
