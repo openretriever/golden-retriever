@@ -27,8 +27,11 @@ class MujocoManipulationConvergenceTests(unittest.TestCase):
         env_flow = MujocoEnvFlow()
         env_flow.init()
         # Constructing a renderer needs a GL context; this test only checks
-        # physics, so make sure render() is never triggered.
-        env_flow.render_every = steps + 1
+        # physics, so make sure render() is never triggered. Use a fixed,
+        # deliberately huge value rather than deriving it from `steps` - the
+        # loop below calls .run() steps+1 times (one priming call before the
+        # loop), so `steps + 1` was exactly wrong and fired on the last step.
+        env_flow.render_every = 10**9
 
         controller = ControllerFlow() if controlled else None
         if controller is not None:
