@@ -44,6 +44,7 @@ class RoboCasaAction:
 @dataclass
 class RoboCasaObservation:
     image: np.ndarray | None = None
+    image_updated: bool = False
     source: str = "mock"
     task: str = "TurnOnMicrowave"
     episode_step: int = 0
@@ -56,7 +57,7 @@ class RoboCasaObservation:
     def log_to_rerun(self, path: str) -> None:
         import rerun as rr
 
-        if self.image is not None:
+        if self.image is not None and self.image_updated:
             image = rr.Image(self.image)
             compress = getattr(image, "compress", None)
             rr.log(
@@ -277,6 +278,7 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
             image[:, filled:, 2] = 70
         return RoboCasaObservation(
             image=image,
+            image_updated=image is not None,
             source="mock",
             task=self.task,
             episode_step=action.episode_step,
@@ -313,6 +315,7 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
         self._next_step_at = max(self._next_step_at + (1.0 / self.hz), time.monotonic())
         return RoboCasaObservation(
             image=image,
+            image_updated=image is not None,
             source="robocasa",
             task=self.task,
             episode_step=action.episode_step,
@@ -357,8 +360,59 @@ class ObservationPrinter(Flow[RoboCasaObservation, None]):
         self._last_success = observation.success
 
 
+class VideoRecorder(Flow[RoboCasaObservation, None]):
+    """Write emitted RGB camera frames to an MP4 artifact."""
+
+    def __init__(self, *, path: str, fps: float) -> None:
+        self.path = Path(path)
+        self.fps = float(fps)
+        self._writer: Any | None = None
+        self._frames = 0
+        self._last_frame: tuple[int, int] | None = None
+
+    def init_config(self) -> dict[str, Any]:
+        return {"path": str(self.path), "fps": self.fps}
+
+    def reset(self) -> None:
+        self._writer = None
+        self._frames = 0
+        self._last_frame = None
+
+    def step(self, observation: RoboCasaObservation) -> None:
+        if observation.image is None or not observation.image_updated:
+            return
+        frame_key = (observation.cycle, observation.episode_step)
+        if frame_key == self._last_frame:
+            return
+
+        import cv2
+
+        if self._writer is None:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            height, width = observation.image.shape[:2]
+            fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+            self._writer = cv2.VideoWriter(
+                str(self.path), fourcc, self.fps, (width, height)
+            )
+            if not self._writer.isOpened():
+                raise RuntimeError(f"Could not open MP4 writer for {self.path}")
+
+        frame_bgr = cv2.cvtColor(observation.image, cv2.COLOR_RGB2BGR)
+        self._writer.write(frame_bgr)
+        self._frames += 1
+        self._last_frame = frame_key
+
+    def finalize(self) -> None:
+        if self._writer is not None:
+            self._writer.release()
+            self._writer = None
+        if self._frames:
+            print(f"Saved {self._frames} camera frames to {self.path}.")
+
+
 def build_pipeline(args: argparse.Namespace) -> tuple[Pipeline, RoboCasaSimulator]:
-    emit_images = args.visualize == "rerun" and not args.viewer
+    video_path = getattr(args, "video", None)
+    emit_images = (args.visualize == "rerun" or video_path is not None) and not args.viewer
     source = DemoActionSource(
         mode=args.mode,
         task=args.task,
@@ -392,6 +446,15 @@ def build_pipeline(args: argparse.Namespace) -> tuple[Pipeline, RoboCasaSimulato
         output = (printer @ Trigger("episode_step")).named("observation_printer")
         actions.then(simulation, sync=Latest())
         simulation.then(output, sync=Latest())
+        if video_path is not None:
+            video = (
+                VideoRecorder(
+                    path=video_path,
+                    fps=getattr(args, "video_fps", args.image_hz),
+                )
+                @ Trigger("episode_step")
+            ).named("video_recorder")
+            simulation.then(video, sync=Latest())
     return pipeline, simulator
 
 
@@ -421,6 +484,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--rerun-address", default="127.0.0.1:9876")
     parser.add_argument("--recording", default="logs/robocasa-replay.rrd")
+    parser.add_argument("--video", help="Write offscreen camera frames to an MP4 file.")
+    parser.add_argument("--video-fps", type=float, default=5.0)
     parser.add_argument("--repeat", action="store_true")
     parser.add_argument("--print-every", type=int, default=4)
     return parser.parse_args()
@@ -428,6 +493,11 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    if args.viewer and args.video:
+        raise SystemExit(
+            "--video uses the offscreen MuJoCo renderer and cannot be combined "
+            "with --viewer on macOS. Run them as separate commands."
+        )
     retriever.init(default_viz=VizConfig(hz=args.image_hz, fields=None))
     pipeline, simulator = build_pipeline(args)
 

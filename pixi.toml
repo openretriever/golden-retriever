@@ -310,6 +310,7 @@ demo-robocasa-mock = { cmd = "python -m examples.advanced.robocasa.app --mode mo
 demo-robocasa-replay = { cmd = "python -m examples.advanced.robocasa.app --mode robocasa --task TurnOnMicrowave --seconds 45", env = { PYTHONPATH = "." } }
 demo-robocasa-rerun = { cmd = "python -m examples.advanced.robocasa.app --mode robocasa --task TurnOnMicrowave --seconds 45 --visualize rerun", env = { PYTHONPATH = "." } }
 demo-robocasa-record = { cmd = "python -m examples.advanced.robocasa.app --mode robocasa --task TurnOnMicrowave --seconds 45 --visualize rerun --rerun-mode record --recording logs/robocasa-replay.rrd", env = { PYTHONPATH = "." } }
+demo-robocasa-video = { cmd = "python -m examples.advanced.robocasa.app --mode robocasa --task TurnOnMicrowave --seconds 45 --video logs/robocasa-replay.mp4", env = { PYTHONPATH = "." } }
 demo-pipeline-html-viz = { cmd = "python examples/experimental/visualization/visualize_pipeline.py", env = { PYTHONPATH = "." } }
 public-surface-check = { cmd = "python scripts/release/check_public_surface.py", env = { PYTHONPATH = "." } }
 demo-hierarchical-vla = { cmd = "python examples/advanced/hierarchical_vla/app.py --backend multiprocessing", env = { PYTHONPATH = "." } }

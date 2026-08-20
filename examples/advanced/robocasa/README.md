@@ -124,10 +124,23 @@ Record mode uses Retriever's deterministic step recorder; `--seconds * --hz`
 is the maximum step budget, and a non-repeating replay stops after its final
 recorded action.
 
+Write a compact MP4 for experiment review or a representative documentation
+clip:
+
+```bash
+pixi run demo-robocasa-video
+```
+
+The default output is `logs/robocasa-replay.mp4`. Ordinary recordings remain
+ignored under `logs/`; deliberately selected clips can be copied into
+`docs-site/public/media/robocasa/` in a separate documentation commit. Adjust
+capture cadence with `--image-hz` and playback speed with `--video-fps`.
+
 On macOS, native MuJoCo and offscreen Rerun camera rendering are separate modes
 because AppKit cannot safely create both GLFW contexts in one `mjpython`
 process. `--viewer --visualize rerun` therefore sends telemetry but not camera
-frames to Rerun.
+frames to Rerun. MP4 capture also uses the offscreen renderer and cannot be
+combined with `--viewer` in the same process.
 
 ## What this proves
 

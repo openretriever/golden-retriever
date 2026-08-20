@@ -122,6 +122,11 @@ same trace without spawning a viewer, then inspect it later on a local machine.
 This uses Retriever's deterministic step recorder and stops after the final
 recorded action unless `--repeat` is set.
 
+For a compact shareable artifact, `pixi run demo-robocasa-video` writes the
+offscreen camera stream to `logs/robocasa-replay.mp4`. Use this for run review
+or promote a deliberately selected clip into the documentation media folder;
+routine videos remain generated artifacts and stay out of Git.
+
 The recorded action source is intentionally replaceable. A learned policy,
 planner, or memory-backed skill system can emit the same `RoboCasaAction`
 payload without changing the simulator Flow. The existing
