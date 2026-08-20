@@ -127,6 +127,28 @@ offscreen camera stream to `logs/robocasa-replay.mp4`. Use this for run review
 or promote a deliberately selected clip into the documentation media folder;
 routine videos remain generated artifacts and stay out of Git.
 
+<figure>
+  <video
+    controls
+    playsInline
+    preload="metadata"
+    poster="/media/robocasa/turn-on-microwave-replay.jpg"
+    style="width: 100%; height: auto; max-height: 72vh; background: #000; border-radius: 0.5rem;"
+  >
+    <source
+      src="/media/robocasa/turn-on-microwave-replay.mp4"
+      type="video/mp4"
+    />
+    <a href="/media/robocasa/turn-on-microwave-replay.mp4">
+      Download the RoboCasa replay video.
+    </a>
+  </video>
+  <figcaption>
+    Retriever replaying the <code>TurnOnMicrowave</code> demonstration through
+    RoboCasa, captured from the offscreen MuJoCo camera stream.
+  </figcaption>
+</figure>
+
 The recorded action source is intentionally replaceable. A learned policy,
 planner, or memory-backed skill system can emit the same `RoboCasaAction`
 payload without changing the simulator Flow. The existing
