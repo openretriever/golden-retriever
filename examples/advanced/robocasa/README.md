@@ -32,7 +32,42 @@ Expected output includes deterministic progress and a successful final step:
 [mock step=0011] progress=100.0% reward=1.000 success=True
 ```
 
-## 2. Install the real simulator lane
+## 2. Verify the RoboSuite base layer
+
+RoboCasa builds on RoboSuite. This family keeps a small mock-first Lift loop
+next to the RoboCasa adapter so the lower-level environment and policy wiring
+can be checked independently:
+
+```bash
+retriever run demo-robosuite-mock
+```
+
+After installing the optional RoboSuite dependency, run the same Flow graph
+against its real `Lift` task:
+
+```bash
+pixi run demo-robosuite-lift
+```
+
+```text
+LiftEnvFlow @ 20 Hz --Latest--> HeuristicLiftPolicy @ 5 Hz
+       ^                                      |
+       +----------------Latest----------------+
+       +--Latest--> LiftPrinter @ Trigger("step")
+```
+
+The implementation lives in [`robosuite_lift.py`](robosuite_lift.py). The
+lower-level [`robosuite_inspection.py`](robosuite_inspection.py) script exposes
+the underlying MuJoCo model and native viewer directly:
+
+```bash
+mjpython examples/advanced/robocasa/robosuite_inspection.py
+```
+
+That inspection script was originally contributed by Sebastian Castro and is
+kept as a separate entry point within this family.
+
+## 3. Install the real RoboCasa lane
 
 RoboCasa currently needs source checkouts plus its kitchen assets. Keep those
 large dependencies outside Golden Retriever and install them editable into the
@@ -49,12 +84,12 @@ python -m robocasa.scripts.download_datasets \
 The example lazily imports RoboCasa, so the mock path and normal Golden
 Retriever tests do not require this stack.
 
-## 3. Run a real replay
+## 4. Run a real replay
 
 Headless physics, suitable for Linux workers:
 
 ```bash
-python -m examples.advanced.robocasa_replay.app \
+python -m examples.advanced.robocasa.app \
   --mode robocasa --task TurnOnMicrowave --seconds 45
 ```
 
@@ -64,21 +99,21 @@ the first MJCF and asset initialization on a laptop before replay time begins.
 Native MuJoCo viewer on macOS:
 
 ```bash
-mjpython -m examples.advanced.robocasa_replay.app \
+mjpython -m examples.advanced.robocasa.app \
   --mode robocasa --task TurnOnMicrowave --seconds 45 --viewer
 ```
 
 Rerun camera frames, flow execution, and telemetry:
 
 ```bash
-python -m examples.advanced.robocasa_replay.app \
+python -m examples.advanced.robocasa.app \
   --mode robocasa --task TurnOnMicrowave --seconds 45 --visualize rerun
 ```
 
 Record the same trace without opening a viewer, suitable for remote workers:
 
 ```bash
-python -m examples.advanced.robocasa_replay.app \
+python -m examples.advanced.robocasa.app \
   --mode robocasa --task TurnOnMicrowave --seconds 45 \
   --visualize rerun --rerun-mode record \
   --recording logs/robocasa-replay.rrd
@@ -110,9 +145,8 @@ purpose is to make the simulator connection visible and reproducible first.
 
 ## Related building blocks
 
-- [`robosuite_lift`](../robosuite_lift/) shows the smaller closed-loop
-  environment-as-Flow and policy-as-Flow pattern that this adapter extends to
-  RoboCasa tasks and datasets.
+- [`robosuite_lift.py`](robosuite_lift.py) provides the smaller closed-loop
+  environment-as-Flow and policy-as-Flow prerequisite within this family.
 - [`openpi_policy`](../openpi_policy/) defines the existing
   `PolicyObservation -> ActionChunk` policy boundary. A policy-backed RoboCasa
   loop should adapt those chunks into `RoboCasaAction` rather than introduce a

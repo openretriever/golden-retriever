@@ -229,7 +229,7 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
         except ImportError as exc:
             raise RuntimeError(
                 "RoboCasa is not installed. Run the mock smoke first, then follow "
-                "examples/advanced/robocasa_replay/README.md for the real setup."
+                "examples/advanced/robocasa/README.md for the real setup."
             ) from exc
 
         path = _dataset_path(self.task, self.split)

@@ -2,7 +2,7 @@ from argparse import Namespace
 
 import pytest
 
-from examples.advanced.robocasa_replay.app import build_pipeline
+from examples.advanced.robocasa.app import build_pipeline
 
 
 def test_mock_robocasa_replay_reaches_success_without_simulator() -> None:

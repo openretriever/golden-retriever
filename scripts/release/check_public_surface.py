@@ -20,10 +20,9 @@ ROOT = Path(__file__).resolve().parents[2]
 
 REQUIRED_PATHS = (
     "README.md",
-    "examples/advanced/robosuite_lift/app.py",
-    "examples/advanced/robosuite_lift/README.md",
-    "examples/advanced/robocasa_replay/app.py",
-    "examples/advanced/robocasa_replay/README.md",
+    "examples/advanced/robocasa/robosuite_lift.py",
+    "examples/advanced/robocasa/app.py",
+    "examples/advanced/robocasa/README.md",
     "examples/experimental/visualization/visualize_pipeline.py",
     "examples/experimental/visualization/README.md",
     "examples/advanced/core_composition/golden_hub_pack_smoke.py",
@@ -171,7 +170,7 @@ SMOKE_CHECKS = (
         [
             sys.executable,
             "-m",
-            "examples.advanced.robosuite_lift.app",
+            "examples.advanced.robocasa.robosuite_lift",
             "--mode",
             "mock",
             "--steps",
@@ -186,7 +185,7 @@ SMOKE_CHECKS = (
         [
             sys.executable,
             "-m",
-            "examples.advanced.robocasa_replay.app",
+            "examples.advanced.robocasa.app",
             "--mode",
             "mock",
             "--steps",

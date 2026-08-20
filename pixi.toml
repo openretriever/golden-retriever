@@ -304,12 +304,12 @@ demo-composable-pipelines = { cmd = "python examples/advanced/core_composition/c
 demo-golden-hub-pack = { cmd = "python examples/advanced/core_composition/golden_hub_pack_smoke.py", env = { PYTHONPATH = "." } }
 demo-webcam-rerun = { cmd = "python examples/advanced/webcam_rerun/app.py", env = { PYTHONPATH = "." } }
 demo-pi05-mock = { cmd = "python -m examples.advanced.openpi_policy.app --mode mock --steps 8 --dt 0.1", env = { PYTHONPATH = "." } }
-demo-robosuite-mock = { cmd = "python -m examples.advanced.robosuite_lift.app --mode mock --steps 12 --dt 0.05", env = { PYTHONPATH = "." } }
-demo-robosuite-lift = { cmd = "python -m examples.advanced.robosuite_lift.app --mode robosuite --steps 80 --dt 0.05", env = { PYTHONPATH = "." } }
-demo-robocasa-mock = { cmd = "python -m examples.advanced.robocasa_replay.app --mode mock --steps 14", env = { PYTHONPATH = "." } }
-demo-robocasa-replay = { cmd = "python -m examples.advanced.robocasa_replay.app --mode robocasa --task TurnOnMicrowave --seconds 45", env = { PYTHONPATH = "." } }
-demo-robocasa-rerun = { cmd = "python -m examples.advanced.robocasa_replay.app --mode robocasa --task TurnOnMicrowave --seconds 45 --visualize rerun", env = { PYTHONPATH = "." } }
-demo-robocasa-record = { cmd = "python -m examples.advanced.robocasa_replay.app --mode robocasa --task TurnOnMicrowave --seconds 45 --visualize rerun --rerun-mode record --recording logs/robocasa-replay.rrd", env = { PYTHONPATH = "." } }
+demo-robosuite-mock = { cmd = "python -m examples.advanced.robocasa.robosuite_lift --mode mock --steps 12 --dt 0.05", env = { PYTHONPATH = "." } }
+demo-robosuite-lift = { cmd = "python -m examples.advanced.robocasa.robosuite_lift --mode robosuite --steps 80 --dt 0.05", env = { PYTHONPATH = "." } }
+demo-robocasa-mock = { cmd = "python -m examples.advanced.robocasa.app --mode mock --steps 14", env = { PYTHONPATH = "." } }
+demo-robocasa-replay = { cmd = "python -m examples.advanced.robocasa.app --mode robocasa --task TurnOnMicrowave --seconds 45", env = { PYTHONPATH = "." } }
+demo-robocasa-rerun = { cmd = "python -m examples.advanced.robocasa.app --mode robocasa --task TurnOnMicrowave --seconds 45 --visualize rerun", env = { PYTHONPATH = "." } }
+demo-robocasa-record = { cmd = "python -m examples.advanced.robocasa.app --mode robocasa --task TurnOnMicrowave --seconds 45 --visualize rerun --rerun-mode record --recording logs/robocasa-replay.rrd", env = { PYTHONPATH = "." } }
 demo-pipeline-html-viz = { cmd = "python examples/experimental/visualization/visualize_pipeline.py", env = { PYTHONPATH = "." } }
 public-surface-check = { cmd = "python scripts/release/check_public_surface.py", env = { PYTHONPATH = "." } }
 demo-hierarchical-vla = { cmd = "python examples/advanced/hierarchical_vla/app.py --backend multiprocessing", env = { PYTHONPATH = "." } }

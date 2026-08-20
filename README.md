@@ -77,7 +77,7 @@ GoldenRetriever uses [Pixi](https://pixi.sh) as its environment manager, exactly
 ## Repository Map
 
 - `examples/advanced/`: runnable GoldenRetriever example families.
-- `examples/advanced/robocasa_replay/`: mock-first Retriever connection to real RoboCasa physics and Rerun.
+- `examples/advanced/robocasa/`: self-contained RoboSuite smoke and Retriever connection to real RoboCasa physics and Rerun.
 - `src/retriever_typing/`: robot payloads and data/event helpers used by GoldenRetriever examples.
 - `docs-site/`: Starlight docs site for GoldenRetriever reference pages.
 - `notebooks/`: notebook sources and generated notebook artifacts.

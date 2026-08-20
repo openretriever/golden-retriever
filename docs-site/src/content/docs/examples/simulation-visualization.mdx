@@ -105,7 +105,7 @@ After installing RoboCasa from source, downloading its kitchen assets, and
 downloading the `TurnOnMicrowave` human demonstration, run real physics:
 
 ```bash
-python -m examples.advanced.robocasa_replay.app \
+python -m examples.advanced.robocasa.app \
   --mode robocasa --task TurnOnMicrowave --seconds 45
 ```
 
@@ -129,7 +129,7 @@ payload without changing the simulator Flow. The existing
 lane already owns GoldenRetriever's `PolicyObservation -> ActionChunk`
 contract; future policy wiring should add a small action-chunk adapter instead
 of defining another policy interface. See the full setup and expected output
-in [`examples/advanced/robocasa_replay/README.md`](https://github.com/openretriever/golden-retriever/tree/main/examples/advanced/robocasa_replay).
+in [`examples/advanced/robocasa/README.md`](https://github.com/openretriever/golden-retriever/tree/main/examples/advanced/robocasa).
 
 ## Render the graph to HTML
 
@@ -216,6 +216,6 @@ Heavier visual lanes reuse the same runtime once their dependencies are present:
 pixi run -e twist2 demo-twist2-rerun   # MuJoCo + Rerun viewer (optional, heavy)
 ```
 
-Source: `examples/advanced/robosuite_lift/app.py`,
-`examples/advanced/robocasa_replay/app.py`, and
+Source: `examples/advanced/robocasa/robosuite_lift.py`,
+`examples/advanced/robocasa/app.py`, and
 `examples/experimental/visualization/visualize_pipeline.py`.
