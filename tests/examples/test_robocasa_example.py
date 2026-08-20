@@ -3,7 +3,8 @@ from math import ceil
 
 import pytest
 
-from examples.advanced.robocasa.app import build_pipeline
+from examples.advanced.robocasa.app import DemoActionSource, build_pipeline
+from examples.advanced.robocasa.mjviser_bridge import ReplayControls
 
 
 def _mock_args(**overrides: object) -> Namespace:
@@ -42,6 +43,32 @@ def test_mock_robocasa_replay_reaches_success_without_simulator() -> None:
     assert latest.progress == pytest.approx(1.0)
     assert latest.success is True
     assert simulator.env is None
+
+
+def test_demo_action_source_obeys_browser_replay_controls() -> None:
+    controls = ReplayControls(task="TurnOnMicrowave", episode=0)
+    source = DemoActionSource(mock_steps=4, controls=controls)
+    source.reset()
+
+    first = source.step()
+    controls.set_paused(True)
+    paused = source.step()
+    controls.request_step()
+    second = source.step()
+    paused_again = source.step()
+    controls.request_restart()
+    restarted = source.step()
+
+    assert first.active is True
+    assert first.episode_step == 0
+    assert paused.active is False
+    assert second.active is True
+    assert second.episode_step == 1
+    assert paused_again.active is False
+    assert restarted.active is True
+    assert restarted.episode_step == 0
+    assert restarted.cycle == 1
+    assert controls.snapshot().total_steps == 4
 
 
 def test_mock_robocasa_video_is_finalized(tmp_path) -> None:
