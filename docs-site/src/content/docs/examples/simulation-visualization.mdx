@@ -1,11 +1,11 @@
 ---
-title: Simulation and Visualization
-description: Rerun, mock-safe simulation, and HTML graph visualization lanes.
+title: Simulation and Replay
+description: Mock-safe simulator boundaries, real RoboCasa replay, Rerun telemetry, and video capture.
 ---
-Two runnable lanes with visible artifacts: a **closed-loop simulator** where the
-environment and policy are both Flows, and a **graph renderer** that validates
-the runtime IR and writes an inspectable HTML view. Both run without a real
-simulator or GPU.
+Start with mock-safe simulator boundaries, then move the same typed Flows to
+real robosuite or RoboCasa. This page focuses on simulator execution, replay,
+and captured observations; use [Pipeline Debugging](/examples/pipeline-debugging/)
+to inspect generic graph topology, clocks, ports, and feedback edges.
 
 ## Simulator and policy as Flows
 
@@ -158,84 +158,22 @@ contract; future policy wiring should add a small action-chunk adapter instead
 of defining another policy interface. See the full setup and expected output
 in [`examples/advanced/robocasa/README.md`](https://github.com/openretriever/golden-retriever/tree/main/examples/advanced/robocasa).
 
-## Render the graph to HTML
-
-`pipe.validate()` returns the runtime IR; `generate_ascii_graph` and
-`save_interactive_html` turn it into an inspectable graph — including feedback
-edges, clocks, and sync policies.
-
-```python
-from retriever.flow import Latest, Pipeline, Rate, Trigger, io
-from retriever.ir.viz import generate_ascii_graph, save_interactive_html
-
-pipe = Pipeline("visualization_demo")
-env       = DummyNode() @ Rate(hz=10.0)
-perception = DummyNode() @ Trigger("obs")
-planner    = DummyNode() @ Trigger("state")
-executor   = DummyNode() @ Trigger("plan", "state")
-pipe.connect(env, perception, map={"data": "data"}, sync=Latest())
-pipe.connect(perception, planner, map={"data": "data"}, sync=Latest())
-pipe.connect(planner, executor, map={"data": "data"}, sync=Latest())
-pipe.connect(perception, executor, map={"data": "data"}, sync=Latest())
-pipe.connect(executor, env, map={"data": "data"}, sync=Latest())   # closes the loop
-
-ir = pipe.validate()
-print(generate_ascii_graph(ir))
-save_interactive_html(ir, "out/golden_retriever_closed_loop_viz.html")
-```
-
-```bash
-retriever run demo-pipeline-html-viz
-```
-
-Real output — the ASCII graph shows each node's clock and the detected cycle, and
-the command writes a self-contained HTML artifact:
-
-```text
-Pipeline: visualization_demo
-============================
-NOTE: Cycle detected in graph topology (expected for closed-loop systems).
-[DummyNode] <Rate(10.0 Hz)>
-   --(data -> data: Latest)--> [DummyNode]
-
-[DummyNode] <Trigger(on ['obs'])>
-   --(data -> data: Latest)--> [DummyNode]
-   --(data -> _fanin/DummyNode__2/data: Latest)--> [DummyNode]
-
-[DummyNode] <Trigger(on ['state'])>
-   --(data -> _fanin/DummyNode__3/data: Latest)--> [DummyNode]
-
-[DummyNode] <Trigger(on ['plan', 'state'])>
-   --(data -> data: Latest)--> [DummyNode] (feedback/cycle)
-
-HTML visualization written to out/golden_retriever_closed_loop_viz.html
-```
-
-The generated graph, embedded from the artifact:
-
-<iframe
-  class="artifact-frame"
-  src="/artifacts/golden_retriever_closed_loop_viz.html"
-  title="Interactive GoldenRetriever closed-loop graph visualization"
-  loading="lazy"
-></iframe>
-
 ## Run these in order
 
-Run the visual lane from lightest to heaviest so each layer is verified before the next:
+Run the simulator lanes from lightest to heaviest so each boundary is verified
+before the next:
 
-1. **Render the graph to HTML** — `retriever run demo-pipeline-html-viz` renders the graph structure with no simulator or model.
-2. **Mock robosuite** — `retriever run demo-robosuite-mock` runs the env↔policy loop deterministically, without a robosuite install.
-3. **Mock RoboCasa contract** — `retriever run demo-robocasa-mock` verifies the recorded-action → simulator → observation graph without RoboCasa.
-4. **Real RoboCasa / Rerun** — replay a human demonstration through real RoboCasa physics after the mock trace looks right.
-5. **Real robosuite / Rerun** — swap `mode="robosuite"` (optional dependency) only after the mock trace looks right.
+1. **Mock robosuite** — `retriever run demo-robosuite-mock` runs the env↔policy loop deterministically, without a robosuite install.
+2. **Mock RoboCasa contract** — `retriever run demo-robocasa-mock` verifies the recorded-action → simulator → observation graph without RoboCasa.
+3. **Real RoboCasa / Rerun** — replay a human demonstration through real RoboCasa physics after the mock trace looks right.
+4. **Real robosuite / Rerun** — swap `mode="robosuite"` (optional dependency) only after the mock trace looks right.
 
 ## Design notes
 
 Making the environment and policy ordinary Flows keeps timing and handoffs
-visible in the graph instead of hidden in callbacks: the feedback edge, the two
-clock rates, and the sync policies are all inspectable IR. That is why the same
-graph renders to ASCII/HTML *and* runs against either a mock or a real backend.
+visible instead of hiding them in callbacks. The same typed simulator boundary
+runs against either a mock or a real backend, while Retriever recording and
+Rerun expose observations without changing the policy contract.
 
 Heavier visual lanes reuse the same runtime once their dependencies are present:
 
@@ -244,5 +182,4 @@ pixi run -e twist2 demo-twist2-rerun   # MuJoCo + Rerun viewer (optional, heavy)
 ```
 
 Source: `examples/advanced/robocasa/robosuite_lift.py`,
-`examples/advanced/robocasa/app.py`, and
-`examples/experimental/visualization/visualize_pipeline.py`.
+and `examples/advanced/robocasa/app.py`.

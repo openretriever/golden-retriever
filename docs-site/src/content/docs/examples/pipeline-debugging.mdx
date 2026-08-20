@@ -1,0 +1,96 @@
+---
+title: Pipeline Debugging
+description: Inspect Retriever topology, clocks, ports, sync policies, and feedback loops before running heavier integrations.
+---
+Use graph visualization when a pipeline compiles but its wiring or timing is
+unclear. This lane validates the runtime IR and produces two debugging views:
+a compact ASCII summary for terminals and a self-contained interactive HTML
+artifact for deeper inspection. It needs no simulator, model, or GPU.
+
+## Render the graph to HTML
+
+`pipe.validate()` returns the same runtime IR used for execution.
+`generate_ascii_graph` and `save_interactive_html` expose its nodes, mapped
+ports, clocks, synchronization policies, and feedback edges.
+
+```python
+from retriever.flow import Latest, Pipeline, Rate, Trigger
+from retriever.ir.viz import generate_ascii_graph, save_interactive_html
+
+pipe = Pipeline("visualization_demo")
+env        = DummyNode() @ Rate(hz=10.0)
+perception = DummyNode() @ Trigger("obs")
+planner    = DummyNode() @ Trigger("state")
+executor   = DummyNode() @ Trigger("plan", "state")
+pipe.connect(env, perception, map={"data": "data"}, sync=Latest())
+pipe.connect(perception, planner, map={"data": "data"}, sync=Latest())
+pipe.connect(planner, executor, map={"data": "data"}, sync=Latest())
+pipe.connect(perception, executor, map={"data": "data"}, sync=Latest())
+pipe.connect(executor, env, map={"data": "data"}, sync=Latest())
+
+ir = pipe.validate()
+print(generate_ascii_graph(ir))
+save_interactive_html(ir, "out/golden_retriever_closed_loop_viz.html")
+```
+
+```bash
+retriever run demo-pipeline-html-viz
+```
+
+The command prints each node's clock and the detected cycle, then writes a
+self-contained HTML artifact:
+
+```text
+Pipeline: visualization_demo
+============================
+NOTE: Cycle detected in graph topology (expected for closed-loop systems).
+[DummyNode] <Rate(10.0 Hz)>
+   --(data -> data: Latest)--> [DummyNode]
+
+[DummyNode] <Trigger(on ['obs'])>
+   --(data -> data: Latest)--> [DummyNode]
+   --(data -> _fanin/DummyNode__2/data: Latest)--> [DummyNode]
+
+[DummyNode] <Trigger(on ['state'])>
+   --(data -> _fanin/DummyNode__3/data: Latest)--> [DummyNode]
+
+[DummyNode] <Trigger(on ['plan', 'state'])>
+   --(data -> data: Latest)--> [DummyNode] (feedback/cycle)
+
+HTML visualization written to out/golden_retriever_closed_loop_viz.html
+```
+
+## Inspect the artifact
+
+The generated graph is embedded below. Open the self-contained file from
+`out/` when debugging an experiment checkout or sharing the exact topology
+without running the docs site.
+
+<iframe
+  class="artifact-frame"
+  src="/artifacts/golden_retriever_closed_loop_viz.html"
+  title="Interactive GoldenRetriever closed-loop graph visualization"
+  loading="lazy"
+></iframe>
+
+## What to check
+
+- **Ports:** confirm every mapped output reaches the intended input or fan-in.
+- **Clocks:** compare `Rate` and `Trigger` boundaries before blaming a slow Flow.
+- **Synchronization:** verify `Latest` or another policy matches the data-freshness contract.
+- **Cycles:** distinguish intentional control feedback from an accidental dependency loop.
+- **Names:** give important nodes stable names so traces and deployment overrides remain readable.
+
+## Debugging order
+
+1. Run `pipe.validate()` and fix structural errors before execution.
+2. Read the ASCII graph in the terminal for a fast topology check.
+3. Open the HTML artifact when ports, fan-in, or feedback edges need spatial inspection.
+4. Add Rerun or recorded telemetry only after the static graph matches the intended system.
+5. Move to the [simulation and replay](/examples/simulation-visualization/) lane when the simulator boundary itself is under test.
+
+Graph visualization explains **what can communicate**. Runtime telemetry and
+recordings explain **what happened over time**; keeping those questions
+separate makes both tools easier to use.
+
+Source: `examples/experimental/visualization/visualize_pipeline.py`.
