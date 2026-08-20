@@ -134,7 +134,16 @@ pause or resume the replay, advance one action while paused, restart the
 episode, or slow execution for inspection. Its **Graph** tab renders a live
 HTML node-and-edge view of the
 `DemoActionSource -> RoboCasaSimulator -> ObservationPrinter` handoff. Restart
-resets MuJoCo in place and increments the displayed replay cycle.
+resets MuJoCo in place and increments the displayed replay cycle. New browser
+clients open in the unobstructed agent-facing view; use the **Camera** control
+to switch to a tracked third-person robot view or overhead overview. mjviser's
+**Track camera** toggle changes between following the robot and a static world
+frame.
+
+Keep task selection one level above this run view. A demo launcher can start a
+fresh Retriever session for `PrepareCoffee`, `TurnOnMicrowave`, or another
+installed dataset; the viewer stays bound to one task because switching tasks
+can replace the RoboCasa environment, recorded actions, and MuJoCo model.
 
 For a longer composite task, download one dataset and replay it through the
 same Flow:
