@@ -5,7 +5,11 @@ from types import SimpleNamespace
 
 import pytest
 
-from examples.advanced.robocasa.mjviser_bridge import MjviserBridge, ReplayControls
+from examples.advanced.robocasa.mjviser_bridge import (
+    MjviserBridge,
+    ReplayControls,
+    _graph_html,
+)
 
 
 def test_replay_controls_pause_step_restart_and_speed() -> None:
@@ -45,6 +49,30 @@ def test_replay_controls_pause_step_restart_and_speed() -> None:
 
     with pytest.raises(ValueError, match="positive"):
         controls.set_speed(0.0)
+
+
+def test_live_graph_html_contains_typed_flow_and_escapes_task() -> None:
+    controls = ReplayControls(task="Coffee <script>", episode=0)
+    controls.set_total_steps(100)
+    controls.update_observation(
+        episode_step=24,
+        cycle=0,
+        progress=0.25,
+        reward=1.0,
+        success=False,
+        action_norm=0.75,
+    )
+
+    html = _graph_html(controls.snapshot(), "Running")
+
+    assert "DemoActionSource" in html
+    assert "RoboCasaAction" in html
+    assert "RoboCasaSimulator" in html
+    assert "RoboCasaObservation" in html
+    assert "ObservationPrinter" in html
+    assert "25.0% complete" in html
+    assert "Coffee &lt;script&gt;" in html
+    assert "Coffee <script>" not in html
 
 
 def test_bridge_streams_native_robosuite_state(monkeypatch) -> None:
