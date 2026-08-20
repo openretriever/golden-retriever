@@ -209,7 +209,7 @@ class MjviserBridge:
         with self._gui_lock:
             self._status_markdown.content = _status_markdown(snapshot, status)
             self._graph_html.content = _graph_html(snapshot, status)
-            self._progress.value = snapshot.progress
+            self._progress.value = snapshot.progress * 100.0
 
     def close(self) -> None:
         if self._server is not None:
@@ -311,6 +311,8 @@ def _graph_html(snapshot: ReplaySnapshot, status: str) -> str:
         status_color = "#a16207"
     task = snapshot.task
     status = escape(status)
+    total = snapshot.total_steps
+    displayed_step = min(snapshot.episode_step + 1, total) if total else 0
     return (
         '<div style="font-family: Inter, ui-sans-serif, system-ui, sans-serif; '
         'padding: 6px 2px 12px; color: #172033;">'
@@ -319,7 +321,7 @@ def _graph_html(snapshot: ReplaySnapshot, status: str) -> str:
         '<strong style="font-size:17px;">Live Retriever Flow</strong>'
         f'<span style="font-size:11px; font-weight:700; color:{status_color}; '
         f'letter-spacing:0.04em;">{status.upper()}</span></div>'
-        f"{_flow_node('SOURCE', 'DemoActionSource', '#0e7490', '#ecfeff', f'{task} / action {snapshot.episode_step}')}"
+        f"{_flow_node('SOURCE', 'DemoActionSource', '#0e7490', '#ecfeff', f'{task} / action {displayed_step} of {total}')}"
         f"{_flow_edge('RoboCasaAction', 'Latest', '#0e7490')}"
         f"{_flow_node('SIMULATOR', 'RoboCasaSimulator', '#b45309', '#fffbeb', f'MuJoCo / {snapshot.progress:.1%} complete')}"
         f"{_flow_edge('RoboCasaObservation', 'Latest', '#b45309')}"

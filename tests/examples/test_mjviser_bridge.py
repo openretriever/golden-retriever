@@ -70,6 +70,7 @@ def test_live_graph_html_contains_typed_flow_and_escapes_task() -> None:
     assert "RoboCasaSimulator" in html
     assert "RoboCasaObservation" in html
     assert "ObservationPrinter" in html
+    assert "action 25 of 100" in html
     assert "25.0% complete" in html
     assert "Coffee &lt;script&gt;" in html
     assert "Coffee <script>" not in html
