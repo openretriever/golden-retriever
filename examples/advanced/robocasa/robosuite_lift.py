@@ -11,9 +11,12 @@ Run against robosuite after installing the optional dependency:
 from __future__ import annotations
 
 import argparse
+import time
 from typing import Any
 
 from retriever.flow import Flow, Latest, Pipeline, Rate, Trigger, io
+
+from .mjviser_bridge import MjviserBridge
 
 
 @io
@@ -42,12 +45,25 @@ class LiftEnvFlow(Flow[LiftAction, LiftState]):
         env_name: str,
         robot: str,
         has_renderer: bool,
+        visualize: str = "none",
+        viser_host: str = "127.0.0.1",
+        viser_port: int = 8085,
     ) -> None:
         super().__init__()
         self.mode = mode
         self.env_name = env_name
         self.robot = robot
         self.has_renderer = has_renderer
+        self.visualize = visualize
+        self._web_viewer = (
+            MjviserBridge(
+                host=viser_host,
+                port=viser_port,
+                label=f"Retriever robosuite {env_name}",
+            )
+            if visualize == "mjviser"
+            else None
+        )
 
     def init(self) -> None:
         self.step_idx = 0
@@ -74,8 +90,11 @@ class LiftEnvFlow(Flow[LiftAction, LiftState]):
                 has_offscreen_renderer=False,
                 use_camera_obs=False,
                 control_freq=20,
+                ignore_done=self.visualize == "mjviser",
             )
             self._obs = self._env.reset()
+            if self._web_viewer is not None:
+                self._web_viewer.update(self._env.sim)
 
     def step(self, action: LiftAction | None) -> LiftState:
         self.step_idx += 1
@@ -93,7 +112,9 @@ class LiftEnvFlow(Flow[LiftAction, LiftState]):
 
         self._mock_gripper_z = max(0.75, min(1.25, self._mock_gripper_z + dz * 0.04))
         if self._mock_lift_started:
-            self._mock_object_height = min(1.18, self._mock_object_height + max(dz, 0.0) * 0.035)
+            self._mock_object_height = min(
+                1.18, self._mock_object_height + max(dz, 0.0) * 0.035
+            )
         reward = max(0.0, self._mock_object_height - 0.82)
         done = self._mock_object_height >= 1.05
         return LiftState(
@@ -126,6 +147,8 @@ class LiftEnvFlow(Flow[LiftAction, LiftState]):
         else:
             obs, reward, done, _info = result
         self._obs = obs
+        if self._web_viewer is not None:
+            self._web_viewer.update(self._env.sim)
 
         object_height = _safe_z(obs, "cube_pos")
         gripper_z = _safe_z(obs, "robot0_eef_pos")
@@ -139,6 +162,8 @@ class LiftEnvFlow(Flow[LiftAction, LiftState]):
         )
 
     def finalize(self) -> None:
+        if self._web_viewer is not None:
+            self._web_viewer.close()
         if self._env is not None:
             self._env.close()
 
@@ -195,8 +220,13 @@ def build_pipeline(args: argparse.Namespace) -> Pipeline:
             env_name=args.env,
             robot=args.robot,
             has_renderer=args.viewer,
+            visualize=args.visualize,
+            viser_host=args.viser_host,
+            viser_port=args.viser_port,
         ) @ Rate(hz=args.env_hz)
-        policy = HeuristicLiftPolicy(target_height=args.target_height) @ Rate(hz=args.policy_hz)
+        policy = HeuristicLiftPolicy(target_height=args.target_height) @ Rate(
+            hz=args.policy_hz
+        )
         printer = LiftPrinter(print_every=args.print_every) @ Trigger("step")
         pipe.connect(env, policy, sync=Latest())
         pipe.connect(policy, env, sync=Latest())
@@ -205,11 +235,23 @@ def build_pipeline(args: argparse.Namespace) -> Pipeline:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Basic Retriever + robosuite Lift demo.")
+    parser = argparse.ArgumentParser(
+        description="Basic Retriever + robosuite Lift demo."
+    )
     parser.add_argument("--mode", choices=["mock", "robosuite"], default="mock")
     parser.add_argument("--env", default="Lift")
     parser.add_argument("--robot", default="Panda")
-    parser.add_argument("--viewer", action="store_true", help="Enable robosuite's native viewer.")
+    parser.add_argument(
+        "--viewer", action="store_true", help="Enable robosuite's native viewer."
+    )
+    parser.add_argument(
+        "--visualize",
+        choices=["none", "mjviser"],
+        default="none",
+        help="Stream the live MuJoCo scene to a browser with mjviser.",
+    )
+    parser.add_argument("--viser-host", default="127.0.0.1")
+    parser.add_argument("--viser-port", type=int, default=8085)
     parser.add_argument("--steps", type=int, default=20)
     parser.add_argument("--dt", type=float, default=0.05)
     parser.add_argument("--env-hz", type=float, default=20.0)
@@ -221,10 +263,16 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    if args.viewer and args.visualize == "mjviser":
+        raise SystemExit("Use either --viewer or --visualize mjviser, not both.")
+    if args.mode == "mock" and args.visualize == "mjviser":
+        raise SystemExit("mjviser requires --mode robosuite with a real MuJoCo scene.")
     pipe = build_pipeline(args)
     try:
         for _ in range(args.steps):
             pipe.step(dt=args.dt)
+            if args.visualize == "mjviser":
+                time.sleep(args.dt)
     finally:
         pipe.close_stepper()
 

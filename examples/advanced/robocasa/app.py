@@ -14,6 +14,8 @@ import retriever
 from retriever.config import VizConfig
 from retriever.flow import Flow, Latest, Pipeline, Rate, Trigger, io
 
+from .mjviser_bridge import MjviserBridge
+
 
 def _rerun_scalar(value: float) -> Any:
     import rerun as rr
@@ -172,6 +174,9 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
         episode: int = 0,
         hz: float = 20.0,
         viewer: bool = False,
+        visualize: str = "none",
+        viser_host: str = "127.0.0.1",
+        viser_port: int = 8085,
         emit_images: bool = False,
         camera: str = "robot0_agentview_center",
         width: int = 768,
@@ -185,6 +190,9 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
         self.episode = episode
         self.hz = hz
         self.viewer = viewer
+        self.visualize = visualize
+        self.viser_host = viser_host
+        self.viser_port = viser_port
         self.emit_images = emit_images
         self.camera = camera
         self.width = width
@@ -198,6 +206,15 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
         self._next_step_at = 0.0
         self._frame_stride = max(1, round(hz / image_hz))
         self.latest: RoboCasaObservation | None = None
+        self._web_viewer = (
+            MjviserBridge(
+                host=viser_host,
+                port=viser_port,
+                label=f"Retriever RoboCasa {task}",
+            )
+            if visualize == "mjviser"
+            else None
+        )
 
     def init_config(self) -> dict[str, Any]:
         return {
@@ -207,6 +224,9 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
             "episode": self.episode,
             "hz": self.hz,
             "viewer": self.viewer,
+            "visualize": self.visualize,
+            "viser_host": self.viser_host,
+            "viser_port": self.viser_port,
             "emit_images": self.emit_images,
             "camera": self.camera,
             "width": self.width,
@@ -252,6 +272,8 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
             "ep_meta": json.dumps(lerobot.get_episode_meta(path, self.episode)),
         }
         reset_to(self.env, self._initial_state)
+        if self._web_viewer is not None:
+            self._web_viewer.update(self.env.sim)
         print(
             f"RoboCasa {self.task} ready: Retriever connected to "
             f"{self._action_count} recorded actions."
@@ -263,7 +285,9 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
                 self.env.render()
             return self.latest or RoboCasaObservation(source=self.mode, task=self.task)
         observation = (
-            self._step_mock(action) if self.mode == "mock" else self._step_robocasa(action)
+            self._step_mock(action)
+            if self.mode == "mock"
+            else self._step_robocasa(action)
         )
         self.latest = observation
         return observation
@@ -297,12 +321,16 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
 
         if action.episode_step == 0 and self._last_episode_step >= 0:
             reset_to(self.env, self._initial_state)
+            if self._web_viewer is not None:
+                self._web_viewer.restart(self.env.sim)
         sleep_for = self._next_step_at - time.monotonic()
         if sleep_for > 0:
             time.sleep(sleep_for)
         _, reward, _, _ = self.env.step(action.values)
         if self.viewer:
             self.env.render()
+        if self._web_viewer is not None:
+            self._web_viewer.update(self.env.sim)
 
         image = None
         if self.emit_images and action.episode_step % self._frame_stride == 0:
@@ -327,6 +355,8 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
         )
 
     def finalize(self) -> None:
+        if self._web_viewer is not None:
+            self._web_viewer.close()
         if self.env is not None:
             self.env.close()
             self.env = None
@@ -349,7 +379,9 @@ class ObservationPrinter(Flow[RoboCasaObservation, None]):
     def step(self, observation: RoboCasaObservation) -> None:
         key = (observation.cycle, observation.episode_step)
         success_transition = observation.success and not self._last_success
-        should_print = observation.episode_step % self.print_every == 0 or success_transition
+        should_print = (
+            observation.episode_step % self.print_every == 0 or success_transition
+        )
         if should_print and key != self._last_printed:
             print(
                 f"[{observation.source} step={observation.episode_step:04d}] "
@@ -412,7 +444,9 @@ class VideoRecorder(Flow[RoboCasaObservation, None]):
 
 def build_pipeline(args: argparse.Namespace) -> tuple[Pipeline, RoboCasaSimulator]:
     video_path = getattr(args, "video", None)
-    emit_images = (args.visualize == "rerun" or video_path is not None) and not args.viewer
+    emit_images = (
+        args.visualize == "rerun" or video_path is not None
+    ) and not args.viewer
     source = DemoActionSource(
         mode=args.mode,
         task=args.task,
@@ -428,6 +462,9 @@ def build_pipeline(args: argparse.Namespace) -> tuple[Pipeline, RoboCasaSimulato
         episode=args.episode,
         hz=args.hz,
         viewer=args.viewer,
+        visualize=args.visualize,
+        viser_host=getattr(args, "viser_host", "127.0.0.1"),
+        viser_port=getattr(args, "viser_port", 8085),
         emit_images=emit_images,
         camera=args.camera,
         width=args.width,
@@ -475,7 +512,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--width", type=int, default=768)
     parser.add_argument("--height", type=int, default=512)
     parser.add_argument("--viewer", action="store_true")
-    parser.add_argument("--visualize", choices=["none", "rerun"], default="none")
+    parser.add_argument(
+        "--visualize",
+        choices=["none", "rerun", "mjviser"],
+        default="none",
+    )
+    parser.add_argument("--viser-host", default="127.0.0.1")
+    parser.add_argument("--viser-port", type=int, default=8085)
     parser.add_argument(
         "--rerun-mode",
         choices=["spawn", "connect", "record"],
@@ -498,6 +541,10 @@ def main() -> None:
             "--video uses the offscreen MuJoCo renderer and cannot be combined "
             "with --viewer on macOS. Run them as separate commands."
         )
+    if args.viewer and args.visualize == "mjviser":
+        raise SystemExit("Use either --viewer or --visualize mjviser, not both.")
+    if args.mode == "mock" and args.visualize == "mjviser":
+        raise SystemExit("mjviser requires --mode robocasa with a real MuJoCo scene.")
     retriever.init(default_viz=VizConfig(hz=args.image_hz, fields=None))
     pipeline, simulator = build_pipeline(args)
 
@@ -505,7 +552,9 @@ def main() -> None:
         from retriever.lib.rerun import record_session
 
         Path(args.recording).parent.mkdir(parents=True, exist_ok=True)
-        max_steps = args.steps if args.mode == "mock" else max(1, round(args.seconds * args.hz))
+        max_steps = (
+            args.steps if args.mode == "mock" else max(1, round(args.seconds * args.hz))
+        )
         try:
             with record_session(pipeline, args.recording, auto_open=False):
                 for _ in range(max_steps):
@@ -536,7 +585,7 @@ def main() -> None:
     pipeline.run(
         backend="in-process",
         duration=args.seconds,
-        visualize=None if args.visualize == "none" else args.visualize,
+        visualize="rerun" if args.visualize == "rerun" else None,
         blocking=True,
         backend_config={
             "rerun_config": {
