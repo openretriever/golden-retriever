@@ -155,10 +155,13 @@ dora-rs-cli = "==0.3.13"
 onnxruntime = "*"
 mujoco = "*"
 rerun-sdk = "*"
+fastapi = ">=0.100.0"
+uvicorn = { version = "*", extras = ["standard"] }
 
 [feature.twist2.tasks]
 demo-twist2 = { cmd = "mjpython examples/advanced/twist2_simulation/app.py", env = { PYTHONPATH = "." } }
 demo-twist2-rerun = { cmd = "python examples/advanced/twist2_simulation/app.py --no-viewer", env = { PYTHONPATH = "." } }
+demo-twist2-web = { cmd = "python -m examples.advanced.twist2_web_simulation.app", env = { PYTHONPATH = "." } }
 
 # -----------------------------------------------------------------------------
 # Optional: VLM planning stack

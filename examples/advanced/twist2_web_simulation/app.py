@@ -6,7 +6,6 @@ player and ONNX policy, then streams policy actions back over a WebSocket.
 """
 
 import argparse
-import os
 import re
 import socket
 import sys
@@ -14,14 +13,12 @@ import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 import uvicorn
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, HTMLResponse, Response
-
-import retriever
+from retriever.flow import Flow, Latest, Pipeline, Rate, io
 
 TWIST2_SIM_DIR = Path(__file__).resolve().parents[1] / "twist2_simulation"
 if str(TWIST2_SIM_DIR) not in sys.path:
@@ -35,8 +32,6 @@ from examples.advanced.twist2_simulation.flows import (
     Twist2PolicyFlow,
     quatToEuler,
 )
-from retriever.flow import Flow, Latest, Pipeline, Rate, flow_io
-
 
 NUM_ACTIONS = 29
 DEFAULT_DOF_POS = np.array(
@@ -179,13 +174,13 @@ TORQUE_LIMITS = np.array(
 ANKLE_IDX = [4, 5, 10, 11]
 
 
-@flow_io
+@io
 @dataclass
 class BrowserTwist2State:
-    time: Optional[float] = None
-    qpos: Optional[list[float]] = None
-    qvel: Optional[list[float]] = None
-    last_action: Optional[list[float]] = None
+    time: float | None = None
+    qpos: list[float] | None = None
+    qvel: list[float] | None = None
+    last_action: list[float] | None = None
 
 
 _state_lock = threading.Lock()
@@ -284,20 +279,20 @@ async def websocket_policy(websocket: WebSocket):
 
 
 class BrowserStateSource(Flow[None, BrowserTwist2State]):
-    def init(self):
+    def reset(self) -> None:
         self.period_s = 1.0 / 50.0
 
-    def run(self, _):
+    def step(self, _input: None) -> BrowserTwist2State:
         time.sleep(self.period_s)
         with _state_lock:
             return _latest_state
 
 
 class WebProprioFlow(Flow[BrowserTwist2State, EnvOutput]):
-    def init(self):
+    def reset(self) -> None:
         self.last_log_at = 0.0
 
-    def run(self, state: BrowserTwist2State) -> EnvOutput:
+    def step(self, state: BrowserTwist2State) -> EnvOutput:
         if state is None or state.qpos is None or state.qvel is None:
             return EnvOutput(proprio=None, vis=None)
 
@@ -343,15 +338,14 @@ class WebProprioFlow(Flow[BrowserTwist2State, EnvOutput]):
 
 
 class WebPolicySink(Flow[PolicyOutput, None]):
-    def run(self, policy: PolicyOutput):
+    def step(self, policy: PolicyOutput) -> None:
         if policy is None or policy.policy_action is None:
-            return None
+            return
 
         global _latest_policy, _latest_policy_at
         with _policy_lock:
             _latest_policy = policy
             _latest_policy_at = time.time()
-        return None
 
 
 def _start_server(host: str, port: int):
