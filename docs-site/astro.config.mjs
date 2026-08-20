@@ -46,7 +46,8 @@ export default defineConfig({
             { label: 'Perception and Memory', slug: 'examples/perception-memory' },
             { label: 'Language and Grounding', slug: 'examples/language-grounding' },
             { label: 'Pipeline Composition', slug: 'examples/pipeline-composition' },
-            { label: 'Simulation and Visualization', slug: 'examples/simulation-visualization' },
+            { label: 'Pipeline Debugging', slug: 'examples/pipeline-debugging' },
+            { label: 'Simulation and Replay', slug: 'examples/simulation-visualization' },
           ],
         },
         {
