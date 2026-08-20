@@ -314,6 +314,7 @@ demo-robocasa-mock = { cmd = "python -m examples.advanced.robocasa.app --mode mo
 demo-robocasa-replay = { cmd = "python -m examples.advanced.robocasa.app --mode robocasa --task TurnOnMicrowave --seconds 45", env = { PYTHONPATH = "." } }
 demo-robocasa-web = { cmd = "python -m examples.advanced.robocasa.app --mode robocasa --task TurnOnMicrowave --seconds 60 --visualize mjviser", env = { PYTHONPATH = "." } }
 demo-robocasa-composite-web = { cmd = "python -m examples.advanced.robocasa.app --mode robocasa --task PrepareCoffee --seconds 120 --visualize mjviser", env = { PYTHONPATH = "." } }
+demo-robocasa-scenes = { cmd = "python -m examples.advanced.robocasa.launcher", env = { PYTHONPATH = "." } }
 demo-robocasa-rerun = { cmd = "python -m examples.advanced.robocasa.app --mode robocasa --task TurnOnMicrowave --seconds 45 --visualize rerun", env = { PYTHONPATH = "." } }
 demo-robocasa-record = { cmd = "python -m examples.advanced.robocasa.app --mode robocasa --task TurnOnMicrowave --seconds 45 --visualize rerun --rerun-mode record --recording logs/robocasa-replay.rrd", env = { PYTHONPATH = "." } }
 demo-robocasa-video = { cmd = "python -m examples.advanced.robocasa.app --mode robocasa --task TurnOnMicrowave --seconds 45 --video logs/robocasa-replay.mp4", env = { PYTHONPATH = "." } }
