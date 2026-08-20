@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+from html import escape
 from threading import RLock
 from typing import Any
 
@@ -147,7 +148,7 @@ class MjviserBridge:
         self._scene: Any | None = None
         self._gui_lock = RLock()
         self._status_markdown: Any | None = None
-        self._graph_markdown: Any | None = None
+        self._graph_html: Any | None = None
         self._progress: Any | None = None
 
     def start(self, sim: Any) -> None:
@@ -192,13 +193,12 @@ class MjviserBridge:
             return
         _, data = _native_mujoco_state(sim)
         self._scene.update_from_mjdata(data)
-        self.refresh_controls()
 
     def refresh_controls(self) -> None:
         if (
             self.controls is None
             or self._status_markdown is None
-            or self._graph_markdown is None
+            or self._graph_html is None
             or self._progress is None
         ):
             return
@@ -208,14 +208,8 @@ class MjviserBridge:
             status = "Success"
         with self._gui_lock:
             self._status_markdown.content = _status_markdown(snapshot, status)
-            self._graph_markdown.content = _graph_markdown(snapshot, status)
+            self._graph_html.content = _graph_html(snapshot, status)
             self._progress.value = snapshot.progress
-
-    def restart(self, sim: Any) -> None:
-        """Rebuild the browser scene after a simulator model reset."""
-
-        self.close()
-        self.start(sim)
 
     def close(self) -> None:
         if self._server is not None:
@@ -223,7 +217,7 @@ class MjviserBridge:
         self._scene = None
         self._server = None
         self._status_markdown = None
-        self._graph_markdown = None
+        self._graph_html = None
         self._progress = None
 
     def _create_retriever_panel(self, viser: Any) -> None:
@@ -292,7 +286,7 @@ class MjviserBridge:
                 self.refresh_controls()
 
         with panel.add_tab("Graph", viser.Icon.GRAPH):
-            self._graph_markdown = self._server.gui.add_markdown("")
+            self._graph_html = self._server.gui.add_html("")
 
 
 def _status_markdown(snapshot: ReplaySnapshot, status: str) -> str:
@@ -311,18 +305,65 @@ def _status_markdown(snapshot: ReplaySnapshot, status: str) -> str:
     )
 
 
-def _graph_markdown(snapshot: ReplaySnapshot, status: str) -> str:
+def _graph_html(snapshot: ReplaySnapshot, status: str) -> str:
+    status_color = "#15803d" if snapshot.success else "#2563eb"
+    if snapshot.paused and not snapshot.success:
+        status_color = "#a16207"
+    task = snapshot.task
+    status = escape(status)
     return (
-        "## Live Retriever Flow\n"
-        "**DemoActionSource**  \n"
-        f"recorded action `{snapshot.episode_step}`\n\n"
-        "`RoboCasaAction` -> `Latest`\n\n"
-        f"**RoboCasaSimulator** | `{status}`  \n"
-        f"progress `{snapshot.progress:.1%}`\n\n"
-        "`RoboCasaObservation` -> `Latest`\n\n"
-        "**ObservationPrinter**\n\n"
-        "The controls above mutate the same shared state read by the "
-        "Retriever source and simulator Flows."
+        '<div style="font-family: Inter, ui-sans-serif, system-ui, sans-serif; '
+        'padding: 6px 2px 12px; color: #172033;">'
+        '<div style="display:flex; align-items:center; justify-content:space-between; '
+        'margin-bottom:12px;">'
+        '<strong style="font-size:17px;">Live Retriever Flow</strong>'
+        f'<span style="font-size:11px; font-weight:700; color:{status_color}; '
+        f'letter-spacing:0.04em;">{status.upper()}</span></div>'
+        f"{_flow_node('SOURCE', 'DemoActionSource', '#0e7490', '#ecfeff', f'{task} / action {snapshot.episode_step}')}"
+        f"{_flow_edge('RoboCasaAction', 'Latest', '#0e7490')}"
+        f"{_flow_node('SIMULATOR', 'RoboCasaSimulator', '#b45309', '#fffbeb', f'MuJoCo / {snapshot.progress:.1%} complete')}"
+        f"{_flow_edge('RoboCasaObservation', 'Latest', '#b45309')}"
+        f"{_flow_node('TRIGGER', 'ObservationPrinter', '#15803d', '#f0fdf4', f'episode_step / reward {snapshot.reward:.3f}')}"
+        '<div style="margin-top:13px; padding-top:10px; border-top:1px solid #d8dee8; '
+        'font-size:11px; line-height:1.45; color:#667085;">'
+        "Browser controls and graph state share the same thread-safe replay "
+        "state used by the Retriever Flows.</div></div>"
+    )
+
+
+def _flow_node(
+    kind: str,
+    name: str,
+    accent: str,
+    background: str,
+    detail: str,
+) -> str:
+    return (
+        f'<div style="border:1px solid #d8dee8; border-left:4px solid {accent}; '
+        f"background:{background}; border-radius:6px; padding:10px 11px; "
+        'box-shadow:0 1px 2px rgba(16,24,40,0.06);">'
+        '<div style="display:flex; align-items:center; justify-content:space-between; '
+        'gap:8px;">'
+        f'<strong style="font-size:14px; color:#172033;">{escape(name)}</strong>'
+        f'<span style="font-size:9px; font-weight:800; color:{accent}; '
+        f'letter-spacing:0.08em;">{escape(kind)}</span></div>'
+        f'<div style="font-size:11px; color:#667085; margin-top:4px; '
+        f'white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{escape(detail)}</div>'
+        "</div>"
+    )
+
+
+def _flow_edge(payload: str, sync: str, accent: str) -> str:
+    return (
+        '<div style="height:46px; position:relative; margin-left:18px; '
+        f'border-left:2px solid {accent};">'
+        f'<span style="position:absolute; left:10px; top:9px; background:#ffffff; '
+        "border:1px solid #d8dee8; border-radius:4px; padding:3px 6px; "
+        f'font:10px ui-monospace, SFMono-Regular, Menlo, monospace; color:#344054;">{escape(payload)}</span>'
+        f'<span style="position:absolute; right:2px; top:11px; font-size:10px; '
+        f'color:#667085;">{escape(sync)}</span>'
+        f'<span style="position:absolute; left:-5px; bottom:-1px; color:{accent}; '
+        'font-size:14px; line-height:10px;">&#9660;</span></div>'
     )
 
 
