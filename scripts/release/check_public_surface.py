@@ -22,6 +22,7 @@ REQUIRED_PATHS = (
     "README.md",
     "examples/advanced/robocasa/robosuite_lift.py",
     "examples/advanced/robocasa/app.py",
+    "examples/advanced/robocasa/launcher.py",
     "examples/advanced/robocasa/README.md",
     "examples/experimental/visualization/visualize_pipeline.py",
     "examples/experimental/visualization/README.md",
@@ -55,6 +56,7 @@ REQUIRED_TASKS = (
     "demo-robocasa-mock",
     "demo-robocasa-web",
     "demo-robocasa-composite-web",
+    "demo-robocasa-scenes",
     "demo-pipeline-html-viz",
     "demo-robotics-data-eventstream",
     "demo-robotics-data-join",
@@ -129,6 +131,7 @@ DOC_MARKERS = {
         "Connect Retriever to RoboCasa",
         "demo-robocasa-video",
         "demo-robocasa-composite-web",
+        "demo-robocasa-scenes",
         "mjviser",
     ),
     "docs-site/src/content/docs/hub/index.mdx": (
