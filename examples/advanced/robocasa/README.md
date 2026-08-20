@@ -129,6 +129,13 @@ simulator, not a separately stepped WebAssembly scene or an exported XML with
 default joint state. Install `mjviser` in the configured RoboCasa environment;
 the external simulator environment owns the tested MuJoCo compatibility override.
 
+The left **Retriever replay** panel controls the actual recorded-action Flow:
+pause or resume the replay, advance one action while paused, restart the
+episode, or slow execution for inspection. Its **Graph** tab renders a live
+HTML node-and-edge view of the
+`DemoActionSource -> RoboCasaSimulator -> ObservationPrinter` handoff. Restart
+resets MuJoCo in place and increments the displayed replay cycle.
+
 For a longer composite task, download one dataset and replay it through the
 same Flow:
 
