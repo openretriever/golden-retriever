@@ -144,6 +144,14 @@ The `PrepareCoffee` demonstration contains 749 controls and reaches RoboCasa
 success at step 731. The same simulator Flow can later accept a learned policy,
 memory-backed skill, or TAMP executor instead of the recorded action source.
 
+The left **Retriever replay** panel is an experiment console, not a viewer-only
+overlay. Pause or resume the recorded-action Flow, advance one action while
+paused, restart the episode, or slow it down for inspection. Live progress,
+reward, success, and action norm come from `RoboCasaObservation`. Open the
+**Graph** tab for a live HTML node-and-edge view of the typed path from
+`DemoActionSource` through `RoboCasaSimulator` to `ObservationPrinter`; the
+right panel remains dedicated to mjviser's scene controls.
+
 <details>
   <summary>Environment setup (usually handled by an AI coding agent)</summary>
 
