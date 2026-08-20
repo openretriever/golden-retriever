@@ -129,27 +129,37 @@ recorded action unless `--repeat` is set.
 
 ### Live browser replay
 
-Use mjviser when you want to orbit around the live 3D scene in a browser:
+This is the shortest visual proof that Retriever is driving a real manipulation
+stack: recorded actions pass through typed Flows, RoboCasa evaluates the task,
+MuJoCo advances physics, and the browser shows that exact live state. The
+viewer is not a separate animation.
+
+Run the composite kitchen demo, then open `http://localhost:8085`:
 
 ```bash
-retriever run demo-robocasa-web
+retriever run demo-robocasa-composite-web
 ```
 
-Open `http://localhost:8085`. The adapter publishes RoboCasa's current MuJoCo
-state after every Retriever action and hides robosuite's collision geometry by
-default, leaving the authored visual meshes visible.
+The `PrepareCoffee` demonstration contains 749 controls and reaches RoboCasa
+success at step 731. The same simulator Flow can later accept a learned policy,
+memory-backed skill, or TAMP executor instead of the recorded action source.
 
-The same path handles longer composite tasks. Download the selected upstream
-demonstration once, then run:
+<details>
+  <summary>Environment setup (usually handled by an AI coding agent)</summary>
+
+Install RoboCasa, its kitchen assets, and `mjviser` in the same simulation
+environment. Download the selected upstream demonstration once:
 
 ```bash
 python -m robocasa.scripts.download_datasets \
   --tasks PrepareCoffee --split pretrain --source human
-retriever run demo-robocasa-composite-web
 ```
 
-The tested episode contains 749 controls and reaches RoboCasa success at step
-731. The larger kitchen takes longer than `Lift` to publish to the browser.
+The external simulator environment owns tested dependency pins, source checkouts,
+assets, and datasets. The larger kitchen takes longer than `Lift` to publish to
+the browser.
+
+</details>
 
 Choose the view by question:
 
