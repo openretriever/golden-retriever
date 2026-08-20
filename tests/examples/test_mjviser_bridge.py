@@ -3,7 +3,48 @@ from __future__ import annotations
 import sys
 from types import SimpleNamespace
 
-from examples.advanced.robocasa.mjviser_bridge import MjviserBridge
+import pytest
+
+from examples.advanced.robocasa.mjviser_bridge import MjviserBridge, ReplayControls
+
+
+def test_replay_controls_pause_step_restart_and_speed() -> None:
+    controls = ReplayControls(task="PrepareCoffee", episode=2)
+    controls.set_total_steps(749)
+
+    assert controls.claim_next_action() == (True, False)
+
+    controls.set_paused(True)
+    assert controls.claim_next_action() == (False, False)
+
+    controls.request_step()
+    assert controls.claim_next_action() == (True, False)
+    assert controls.claim_next_action() == (False, False)
+
+    controls.set_speed(0.5)
+    controls.update_observation(
+        episode_step=17,
+        cycle=0,
+        progress=18 / 749,
+        reward=0.25,
+        success=False,
+        action_norm=1.5,
+    )
+    snapshot = controls.snapshot()
+    assert snapshot.status == "Paused"
+    assert snapshot.speed == 0.5
+    assert snapshot.episode_step == 17
+    assert snapshot.total_steps == 749
+
+    controls.request_restart()
+    assert controls.claim_next_action() == (True, True)
+    snapshot = controls.snapshot()
+    assert snapshot.status == "Restarting"
+    assert snapshot.paused is False
+    assert snapshot.progress == 0.0
+
+    with pytest.raises(ValueError, match="positive"):
+        controls.set_speed(0.0)
 
 
 def test_bridge_streams_native_robosuite_state(monkeypatch) -> None:

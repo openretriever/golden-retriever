@@ -14,7 +14,7 @@ import retriever
 from retriever.config import VizConfig
 from retriever.flow import Flow, Latest, Pipeline, Rate, Trigger, io
 
-from .mjviser_bridge import MjviserBridge
+from .mjviser_bridge import MjviserBridge, ReplayControls
 
 
 def _rerun_scalar(value: float) -> Any:
@@ -103,6 +103,7 @@ class DemoActionSource(Flow[None, RoboCasaAction]):
         episode: int = 0,
         repeat: bool = False,
         mock_steps: int = 12,
+        controls: ReplayControls | None = None,
     ) -> None:
         self.mode = mode
         self.task = task
@@ -110,6 +111,7 @@ class DemoActionSource(Flow[None, RoboCasaAction]):
         self.episode = episode
         self.repeat = repeat
         self.mock_steps = mock_steps
+        self.controls = controls
         self.actions: np.ndarray | None = None
         self._index = 0
         self._cycle = 0
@@ -139,12 +141,26 @@ class DemoActionSource(Flow[None, RoboCasaAction]):
             )
         self._index = 0
         self._cycle = 0
+        if self.controls is not None:
+            self.controls.set_total_steps(len(self.actions))
 
     def step(self, _input: None = None) -> RoboCasaAction:
         if self.actions is None:
             raise RuntimeError("Demo actions are not initialized")
+        if self.controls is not None:
+            advance, restart = self.controls.claim_next_action()
+            if restart:
+                self._index = 0
+                self._cycle += 1
+            if not advance:
+                return RoboCasaAction(
+                    episode_step=max(0, self._index - 1),
+                    cycle=self._cycle,
+                )
         if self._index >= len(self.actions):
             if not self.repeat:
+                if self.controls is not None:
+                    self.controls.mark_complete()
                 return RoboCasaAction()
             self._index = 0
             self._cycle += 1
@@ -183,6 +199,7 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
         height: int = 512,
         image_hz: float = 5.0,
         mock_steps: int = 12,
+        controls: ReplayControls | None = None,
     ) -> None:
         self.mode = mode
         self.task = task
@@ -199,6 +216,7 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
         self.height = height
         self.image_hz = image_hz
         self.mock_steps = mock_steps
+        self.controls = controls
         self.env: Any | None = None
         self._initial_state: dict[str, Any] | None = None
         self._action_count = mock_steps
@@ -211,6 +229,7 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
                 host=viser_host,
                 port=viser_port,
                 label=f"Retriever RoboCasa {task}",
+                controls=controls,
             )
             if visualize == "mjviser"
             else None
@@ -266,6 +285,8 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
         states = lerobot.get_episode_states(path, self.episode)
         actions = lerobot.get_episode_actions(path, self.episode)
         self._action_count = len(actions)
+        if self.controls is not None:
+            self.controls.set_total_steps(self._action_count)
         self._initial_state = {
             "states": states[0],
             "model": lerobot.get_episode_model_xml(path, self.episode),
@@ -283,6 +304,8 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
         if not action.active or action.values is None:
             if self.viewer and self.env is not None:
                 self.env.render()
+            if self._web_viewer is not None:
+                self._web_viewer.refresh_controls()
             return self.latest or RoboCasaObservation(source=self.mode, task=self.task)
         observation = (
             self._step_mock(action)
@@ -320,9 +343,8 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
         from robocasa.scripts.dataset_scripts.playback_dataset import reset_to
 
         if action.episode_step == 0 and self._last_episode_step >= 0:
-            reset_to(self.env, self._initial_state)
-            if self._web_viewer is not None:
-                self._web_viewer.restart(self.env.sim)
+            reset_to(self.env, {"states": self._initial_state["states"]})
+            self._next_step_at = time.monotonic()
         sleep_for = self._next_step_at - time.monotonic()
         if sleep_for > 0:
             time.sleep(sleep_for)
@@ -340,8 +362,12 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
                 camera_name=self.camera,
             )[::-1]
         self._last_episode_step = action.episode_step
-        self._next_step_at = max(self._next_step_at + (1.0 / self.hz), time.monotonic())
-        return RoboCasaObservation(
+        speed = self.controls.snapshot().speed if self.controls is not None else 1.0
+        self._next_step_at = max(
+            self._next_step_at + (1.0 / (self.hz * speed)),
+            time.monotonic(),
+        )
+        observation = RoboCasaObservation(
             image=image,
             image_updated=image is not None,
             source="robocasa",
@@ -353,6 +379,18 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
             success=bool(self.env._check_success()),
             action_norm=float(np.linalg.norm(action.values)),
         )
+        if self.controls is not None:
+            self.controls.update_observation(
+                episode_step=observation.episode_step,
+                cycle=observation.cycle,
+                progress=observation.progress,
+                reward=observation.reward,
+                success=observation.success,
+                action_norm=observation.action_norm,
+            )
+            if self._web_viewer is not None:
+                self._web_viewer.refresh_controls()
+        return observation
 
     def finalize(self) -> None:
         if self._web_viewer is not None:
@@ -447,6 +485,11 @@ def build_pipeline(args: argparse.Namespace) -> tuple[Pipeline, RoboCasaSimulato
     emit_images = (
         args.visualize == "rerun" or video_path is not None
     ) and not args.viewer
+    controls = (
+        ReplayControls(task=args.task, episode=args.episode)
+        if args.visualize == "mjviser"
+        else None
+    )
     source = DemoActionSource(
         mode=args.mode,
         task=args.task,
@@ -454,6 +497,7 @@ def build_pipeline(args: argparse.Namespace) -> tuple[Pipeline, RoboCasaSimulato
         episode=args.episode,
         repeat=args.repeat,
         mock_steps=args.mock_steps,
+        controls=controls,
     )
     simulator = RoboCasaSimulator(
         mode=args.mode,
@@ -471,6 +515,7 @@ def build_pipeline(args: argparse.Namespace) -> tuple[Pipeline, RoboCasaSimulato
         height=args.height,
         image_hz=args.image_hz,
         mock_steps=args.mock_steps,
+        controls=controls,
     )
     printer = ObservationPrinter(print_every=args.print_every)
 
