@@ -150,7 +150,14 @@ paused, restart the episode, or slow it down for inspection. Live progress,
 reward, success, and action norm come from `RoboCasaObservation`. Open the
 **Graph** tab for a live HTML node-and-edge view of the typed path from
 `DemoActionSource` through `RoboCasaSimulator` to `ObservationPrinter`; the
-right panel remains dedicated to mjviser's scene controls.
+right panel remains dedicated to mjviser's scene controls. The browser opens
+on the unobstructed agent-facing view. Use the left **Camera** control for a
+tracked third-person robot view or overhead overview. Disable **Track camera**
+on the right for a static world frame.
+
+Task selection belongs one level above the run view. A future demo launcher can
+start a fresh Retriever session for any installed RoboCasa dataset, while each
+viewer remains bound to one task and its MuJoCo model.
 
 <details>
   <summary>Environment setup (usually handled by an AI coding agent)</summary>
