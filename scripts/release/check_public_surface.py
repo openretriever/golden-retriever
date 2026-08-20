@@ -34,6 +34,7 @@ REQUIRED_PATHS = (
     "docs-site/src/content/docs/index.mdx",
     "docs-site/src/content/docs/examples/index.mdx",
     "docs-site/src/content/docs/examples/golden-hub-proof.mdx",
+    "docs-site/src/content/docs/examples/pipeline-debugging.mdx",
     "docs-site/src/content/docs/examples/simulation-visualization.mdx",
     "docs-site/src/content/docs/hub/index.mdx",
     "docs-site/src/content/docs/hub/export-catalog.mdx",
@@ -70,6 +71,8 @@ DOC_MARKERS = {
         "GoldenRetriever",
         "Reuse Robot Payloads",
         "Choose a Payload",
+        "Pipeline Debugging",
+        "Simulation and Replay",
     ),
     "docs-site/public/llms.txt": (
         "GoldenRetriever",
@@ -77,6 +80,7 @@ DOC_MARKERS = {
         "demo-robosuite-mock",
         "demo-robocasa-mock",
         "demo-pipeline-html-viz",
+        "https://golden.retriever.build/examples/pipeline-debugging/",
         "https://golden.retriever.build/examples/simulation-visualization/",
         "Do not treat source examples as Retriever Hub packs unless the Hub manifest exports them.",
     ),
@@ -107,13 +111,20 @@ DOC_MARKERS = {
         'hub.use("openretriever/golden-retriever:WorldState")',
         "Arrow round-trip: Action OK",
     ),
-    "docs-site/src/content/docs/examples/simulation-visualization.mdx": (
+    "docs-site/src/content/docs/examples/pipeline-debugging.mdx": (
+        "Pipeline Debugging",
         "Render the graph to HTML",
+        "What to check",
+        "Debugging order",
+        "demo-pipeline-html-viz",
+    ),
+    "docs-site/src/content/docs/examples/simulation-visualization.mdx": (
+        "Simulation and Replay",
+        "Simulator and policy as Flows",
         "Run these in order",
         "Rerun",
-        "Mock robosuite",
         "Connect Retriever to RoboCasa",
-        "demo-pipeline-html-viz",
+        "demo-robocasa-video",
     ),
     "docs-site/src/content/docs/hub/index.mdx": (
         "GoldenRetriever Hub Packs",

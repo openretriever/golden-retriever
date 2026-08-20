@@ -8,7 +8,8 @@ GoldenRetriever is the maintained applied reference layer for Retriever: robot-f
 - GoldenRetriever overview: https://golden.retriever.build/
 - GoldenRetriever Hub proof: https://golden.retriever.build/examples/golden-hub-proof/
 - GoldenRetriever example catalog: https://golden.retriever.build/examples/
-- GoldenRetriever simulation and visualization guide: https://golden.retriever.build/examples/simulation-visualization/
+- GoldenRetriever pipeline debugging guide: https://golden.retriever.build/examples/pipeline-debugging/
+- GoldenRetriever simulation and replay guide: https://golden.retriever.build/examples/simulation-visualization/
 - GoldenRetriever Hub reference: https://golden.retriever.build/hub/
 - GoldenRetriever export catalog: https://golden.retriever.build/hub/export-catalog/
 - GoldenRetriever pack roadmap: https://golden.retriever.build/hub/pack-roadmap/
@@ -21,7 +22,7 @@ GoldenRetriever is not a second runtime package. GoldenRetriever maintains robot
 ## Canonical Path
 
 1. Run `pixi run demo-golden-hub-pack` to prove the GoldenRetriever Hub extension boundary.
-2. Continue to the example catalog for perception, memory, language, composition, simulation, visualization, and robot payload and Hub pack examples.
+2. Continue to the example catalog for perception, memory, language, composition, pipeline debugging, simulation, robot payload, and Hub pack examples.
 3. Use the core Retriever docs only when Flow, Pipeline, clocks, sync, replay, or Hub-loader mechanics are the question.
 4. Promote source examples into Hub packs only when they are import-safe, versioned, smoke-tested, documented, and useful outside this repository.
 
@@ -67,8 +68,8 @@ If a safe command fails, keep the example, task, docs, and expected output align
 Only start these when the user explicitly asks for the relevant environment:
 
 - Webcam/Rerun: `pixi run -e torch demo-webcam-rerun`
-- TWIST2/MuJoCo: `pixi run -e twist2 demo-twist2-rerun`
-- Robosuite mock + HTML graph visualization: use the GoldenRetriever simulation and visualization guide.
+- Pipeline topology and HTML graph visualization: use the GoldenRetriever pipeline debugging guide.
+- Robosuite and RoboCasa integration: use the GoldenRetriever simulation and replay guide.
 - Real robosuite Lift: install the optional robosuite dependency first, then run `pixi run demo-robosuite-lift`
 - Real RoboCasa replay: install RoboCasa and assets from source, download the `TurnOnMicrowave` human dataset, then follow the simulation guide for native MuJoCo or Rerun.
 - Headless RoboCasa trace: add `--visualize rerun --rerun-mode record --recording <path>.rrd` and inspect the artifact locally later.
