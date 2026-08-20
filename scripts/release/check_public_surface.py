@@ -2,8 +2,9 @@
 """Check GoldenRetriever's current public example surface.
 
 The default mode combines static source/docs checks with short runtime smokes
-for the promoted public commands: Hub pack proof, mock-safe robosuite, and HTML
-pipeline visualization. Use ``--static-only`` for a fast source-tree check.
+for the promoted public commands: Hub pack proof, mock-safe robosuite and
+RoboCasa, and HTML pipeline visualization. Use ``--static-only`` for a fast
+source-tree check.
 """
 
 from __future__ import annotations
@@ -15,13 +16,14 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 
 REQUIRED_PATHS = (
     "README.md",
     "examples/advanced/robosuite_lift/app.py",
     "examples/advanced/robosuite_lift/README.md",
+    "examples/advanced/robocasa_replay/app.py",
+    "examples/advanced/robocasa_replay/README.md",
     "examples/experimental/visualization/visualize_pipeline.py",
     "examples/experimental/visualization/README.md",
     "examples/advanced/core_composition/golden_hub_pack_smoke.py",
@@ -49,6 +51,7 @@ REMOVED_PATHS: tuple[str, ...] = (
 REQUIRED_TASKS = (
     "demo-golden-hub-pack",
     "demo-robosuite-mock",
+    "demo-robocasa-mock",
     "demo-pipeline-html-viz",
     "demo-robotics-data-eventstream",
     "demo-robotics-data-join",
@@ -73,6 +76,7 @@ DOC_MARKERS = {
         "GoldenRetriever",
         "demo-golden-hub-pack",
         "demo-robosuite-mock",
+        "demo-robocasa-mock",
         "demo-pipeline-html-viz",
         "https://golden.retriever.build/examples/simulation-visualization/",
         "Do not treat source examples as Retriever Hub packs unless the Hub manifest exports them.",
@@ -109,6 +113,7 @@ DOC_MARKERS = {
         "Run these in order",
         "Rerun",
         "Mock robosuite",
+        "Connect Retriever to RoboCasa",
         "demo-pipeline-html-viz",
     ),
     "docs-site/src/content/docs/hub/index.mdx": (
@@ -175,6 +180,19 @@ SMOKE_CHECKS = (
             "0.01",
         ],
         ("[mock step=", "reward="),
+    ),
+    (
+        "smoke:demo-robocasa-mock",
+        [
+            sys.executable,
+            "-m",
+            "examples.advanced.robocasa_replay.app",
+            "--mode",
+            "mock",
+            "--steps",
+            "14",
+        ],
+        ("[mock step=0011]", "progress=100.0%", "success=True"),
     ),
     (
         "smoke:demo-pipeline-html-viz",
