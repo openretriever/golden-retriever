@@ -12,8 +12,15 @@ DemoActionSource @ 20 Hz
 RoboCasaSimulator @ 20 Hz ---> ObservationPrinter @ Trigger
           |
           +-- native MuJoCo viewer, or
+          +-- live browser scene through mjviser, or
           +-- offscreen camera + telemetry in Rerun
 ```
+
+The layers have separate jobs: RoboCasa defines kitchen tasks and datasets;
+RoboSuite composes the robot, objects, arena, and controllers; MuJoCo advances
+physics; Retriever connects action and observation Flows; mjviser displays the
+live MuJoCo model and data in a browser. Rerun remains the better view for
+camera frames, Flow execution, scalar telemetry, and saved traces.
 
 ## 1. Mock-safe contract
 
@@ -110,6 +117,32 @@ python -m examples.advanced.robocasa.app \
   --mode robocasa --task TurnOnMicrowave --seconds 45 --visualize rerun
 ```
 
+Live browser scene from the same `MjModel` and `MjData` used by RoboCasa:
+
+```bash
+python -m examples.advanced.robocasa.app \
+  --mode robocasa --task TurnOnMicrowave --seconds 60 --visualize mjviser
+```
+
+Open `http://localhost:8085`. This is a zero-copy view of the running
+simulator, not a separately stepped WebAssembly scene or an exported XML with
+default joint state. Install `mjviser` in the configured RoboCasa environment;
+the external simulator environment owns the tested MuJoCo compatibility override.
+
+For a longer composite task, download one dataset and replay it through the
+same Flow:
+
+```bash
+python -m robocasa.scripts.download_datasets \
+  --tasks PrepareCoffee --split pretrain --source human
+python -m examples.advanced.robocasa.app \
+  --mode robocasa --task PrepareCoffee --seconds 120 --visualize mjviser
+```
+
+Episode 0 currently contains 749 recorded controls and reaches RoboCasa's
+success condition near the end of the replay. Scene publication is heavier
+than `Lift`; leave the browser open while the kitchen geometry arrives.
+
 Record the same trace without opening a viewer, suitable for remote workers:
 
 ```bash
@@ -166,3 +199,18 @@ purpose is to make the simulator connection visible and reproducible first.
   second policy contract.
 - Retriever's `record_session` provides the headless Rerun artifact path; this
   example does not maintain a separate visualization runtime.
+
+## Repository boundary
+
+- **GoldenRetriever** owns these typed Flows, adapters, runnable examples, and
+  public demo documentation.
+- **external simulator** owns the reproducible Pixi environment, source checkouts, large
+  kitchen assets, downloaded datasets, run logs, and machine-specific setup.
+- **Retriever Hub** should eventually expose a thin, versioned launcher or
+  policy boundary after its inputs, outputs, dependency contract, and smoke
+  proof are stable. The simulator stack is intentionally absent from the
+  current `golden-retriever` Hub manifest because loading a payload pack must
+  not import GUI, simulator, or asset dependencies.
+
+Future TAMP demos should replace `DemoActionSource` with planner and executor
+Flows while reusing `RoboCasaSimulator` and either visualization path.
