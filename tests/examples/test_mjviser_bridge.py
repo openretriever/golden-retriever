@@ -1,14 +1,19 @@
 from __future__ import annotations
 
 import sys
+from contextlib import nullcontext
 from types import SimpleNamespace
 
+import numpy as np
 import pytest
-
 from examples.advanced.robocasa.mjviser_bridge import (
+    _DEFAULT_CAMERA_PRESETS,
     MjviserBridge,
     ReplayControls,
+    _apply_camera_preset,
+    _camera_presets_from_robot,
     _graph_html,
+    _robot_tracking_body_id,
 )
 
 
@@ -84,7 +89,12 @@ def test_bridge_streams_native_robosuite_state(monkeypatch) -> None:
         def __init__(self, **kwargs) -> None:
             self.kwargs = kwargs
             self.stopped = False
+            self.connect_callbacks = []
             servers.append(self)
+
+        def on_client_connect(self, callback):
+            self.connect_callbacks.append(callback)
+            return callback
 
         def stop(self) -> None:
             self.stopped = True
@@ -97,14 +107,17 @@ def test_bridge_streams_native_robosuite_state(monkeypatch) -> None:
             self.geom_groups_visible = [True] * 6
             self.synced = False
             self.gui_created = False
+            self.gui_kwargs = {}
+            self._tracked_body_id = 1
             self.updates = []
             scenes.append(self)
 
         def _sync_visibilities(self) -> None:
             self.synced = True
 
-        def create_visualization_gui(self) -> None:
+        def create_visualization_gui(self, **kwargs) -> None:
             self.gui_created = True
+            self.gui_kwargs = kwargs
 
         def update_from_mjdata(self, data) -> None:
             self.updates.append(data)
@@ -116,7 +129,11 @@ def test_bridge_streams_native_robosuite_state(monkeypatch) -> None:
         SimpleNamespace(ViserMujocoScene=FakeScene),
     )
 
-    model = object()
+    body_names = ["world", "left_eef_target", "mobilebase0_base", "robot0_link0"]
+    model = SimpleNamespace(
+        nbody=len(body_names),
+        body=lambda body_id: SimpleNamespace(name=body_names[body_id]),
+    )
     data = object()
     sim = SimpleNamespace(
         model=SimpleNamespace(_model=model),
@@ -133,7 +150,48 @@ def test_bridge_streams_native_robosuite_state(monkeypatch) -> None:
     assert scenes[0].geom_groups_visible[0] is False
     assert scenes[0].synced is True
     assert scenes[0].gui_created is True
+    assert scenes[0].gui_kwargs == {"camera_distance": 3.0}
+    assert scenes[0]._tracked_body_id == 2
     assert scenes[0].updates == [data, data]
+    assert len(servers[0].connect_callbacks) == 1
 
     bridge.close()
     assert servers[0].stopped is True
+
+
+def test_robot_tracking_body_prefers_mobile_base() -> None:
+    names = ["world", "left_eef_target", "robot0_base", "robot0_link0", "mobilebase0_base"]
+    model = SimpleNamespace(
+        nbody=len(names),
+        body=lambda body_id: SimpleNamespace(name=names[body_id]),
+    )
+
+    assert _robot_tracking_body_id(model) == 4
+    assert _robot_tracking_body_id(SimpleNamespace(nbody=0)) is None
+
+
+def test_camera_preset_updates_client_atomically() -> None:
+    camera = SimpleNamespace()
+    client = SimpleNamespace(camera=camera, atomic=nullcontext)
+
+    _apply_camera_preset(client, _DEFAULT_CAMERA_PRESETS["Robot"])
+
+    assert camera.position == (0.0, -1.0, 2.6)
+    assert camera.look_at == (0.0, 0.3, 1.0)
+    assert camera.up_direction == (0.0, 0.0, 1.0)
+    assert camera.min_orbit_distance == 0.05
+    assert camera.max_orbit_distance == 20.0
+
+
+def test_camera_presets_follow_robot_base_orientation() -> None:
+    data = SimpleNamespace(xmat=[np.eye(3)])
+
+    presets = _camera_presets_from_robot(data, 0)
+
+    assert tuple(round(value, 3) for value in presets["Robot"].position) == (
+        -1.0,
+        0.0,
+        2.6,
+    )
+    assert presets["Agent"].look_at == (1.0, 0.0, 0.8)
+    assert presets["Overview"].position == (-0.6, 0.0, 5.0)
