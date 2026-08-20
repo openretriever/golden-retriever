@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from html import escape
+from math import radians
 from threading import RLock
 from typing import Any
 
@@ -129,6 +130,30 @@ class ReplayControls:
             self._snapshot = replace(self._snapshot, status="Complete")
 
 
+@dataclass(frozen=True)
+class _CameraPreset:
+    position: tuple[float, float, float]
+    look_at: tuple[float, float, float]
+    fov_degrees: float = 55.0
+
+
+_DEFAULT_CAMERA_PRESETS = {
+    "Robot": _CameraPreset(
+        position=(0.0, -1.0, 2.6),
+        look_at=(0.0, 0.3, 1.0),
+        fov_degrees=65.0,
+    ),
+    "Agent": _CameraPreset(
+        position=(0.0, -0.6, 1.85),
+        look_at=(0.0, 1.0, 0.8),
+    ),
+    "Overview": _CameraPreset(
+        position=(0.0, -0.6, 5.0),
+        look_at=(0.0, 0.5, 0.7),
+    ),
+}
+
+
 class MjviserBridge:
     """Publish an existing robosuite MuJoCo state through mjviser."""
 
@@ -150,6 +175,7 @@ class MjviserBridge:
         self._status_markdown: Any | None = None
         self._graph_html: Any | None = None
         self._progress: Any | None = None
+        self._camera_presets = _DEFAULT_CAMERA_PRESETS
 
     def start(self, sim: Any) -> None:
         if self._scene is not None:
@@ -171,20 +197,25 @@ class MjviserBridge:
             label=self.label,
         )
         self._scene = ViserMujocoScene(self._server, model, num_envs=1)
+        robot_body_id = _robot_tracking_body_id(model)
+        if robot_body_id is not None:
+            # mjviser currently selects the first movable body, which is often an
+            # invisible RoboCasa target. Anchor its tracking offset to the robot.
+            self._scene._tracked_body_id = robot_body_id
+            self._camera_presets = _camera_presets_from_robot(data, robot_body_id)
 
         # robosuite uses group 0 for collision proxies and group 1 for visual geoms.
         # Keep collisions available in the Groups tab, but do not overlay them by default.
         self._scene.geom_groups_visible[0] = False
         self._scene._sync_visibilities()
-        self._scene.create_visualization_gui()
+        self._scene.create_visualization_gui(camera_distance=3.0)
+        self._register_camera_handler()
         if self.controls is not None:
             self._create_retriever_panel(viser)
         self._scene.update_from_mjdata(data)
         self.refresh_controls()
 
-        display_host = (
-            "localhost" if self.host in {"0.0.0.0", "127.0.0.1"} else self.host
-        )
+        display_host = "localhost" if self.host in {"0.0.0.0", "127.0.0.1"} else self.host
         print(f"Retriever mjviser: http://{display_host}:{self.port}")
 
     def update(self, sim: Any) -> None:
@@ -230,6 +261,11 @@ class MjviserBridge:
 
         with panel.add_tab("Run", viser.Icon.PLAYER_PLAY):
             self._status_markdown = self._server.gui.add_markdown("")
+            camera = self._server.gui.add_button_group(
+                "Camera",
+                tuple(self._camera_presets),
+                hint="Switch between third-person, agent, and overview cameras.",
+            )
             self._progress = self._server.gui.add_progress_bar(
                 0.0,
                 color="green",
@@ -285,8 +321,27 @@ class MjviserBridge:
                 self.controls.set_speed(float(speed.value.rstrip("x")))
                 self.refresh_controls()
 
+            @camera.on_click
+            def _(event) -> None:
+                preset = self._camera_presets[camera.value]
+                clients = (
+                    (event.client,)
+                    if event.client is not None
+                    else tuple(self._server.get_clients().values())
+                )
+                for client in clients:
+                    _apply_camera_preset(client, preset)
+
         with panel.add_tab("Graph", viser.Icon.GRAPH):
             self._graph_html = self._server.gui.add_html("")
+
+    def _register_camera_handler(self) -> None:
+        if self._server is None:
+            return
+
+        @self._server.on_client_connect
+        def _(client) -> None:
+            _apply_camera_preset(client, self._camera_presets["Agent"])
 
 
 def _status_markdown(snapshot: ReplaySnapshot, status: str) -> str:
@@ -375,3 +430,77 @@ def _native_mujoco_state(sim: Any) -> tuple[Any, Any]:
     model = getattr(sim.model, "_model", sim.model)
     data = getattr(sim.data, "_data", sim.data)
     return model, data
+
+
+def _robot_tracking_body_id(model: Any) -> int | None:
+    """Choose a stable robot body instead of an invisible control target."""
+
+    candidates: list[tuple[int, int]] = []
+    for body_id in range(int(getattr(model, "nbody", 0))):
+        name = str(getattr(model.body(body_id), "name", "") or "").lower()
+        if name.startswith("mobilebase") and name.endswith("_base"):
+            candidates.append((0, body_id))
+        elif name.startswith("robot") and name.endswith("_link0"):
+            candidates.append((1, body_id))
+        elif name.startswith("robot") and name.endswith("_base"):
+            candidates.append((2, body_id))
+    return min(candidates)[1] if candidates else None
+
+
+def _apply_camera_preset(client: Any, preset: _CameraPreset) -> None:
+    with client.atomic():
+        client.camera.position = preset.position
+        client.camera.look_at = preset.look_at
+        client.camera.up_direction = (0.0, 0.0, 1.0)
+        client.camera.fov = radians(preset.fov_degrees)
+        client.camera.min_orbit_distance = 0.05
+        client.camera.max_orbit_distance = 20.0
+
+
+def _camera_presets_from_robot(
+    data: Any,
+    body_id: int,
+) -> dict[str, _CameraPreset]:
+    """Orient camera presets from the robot base into its workspace."""
+
+    try:
+        matrix = data.xmat[body_id].reshape(3, 3)
+        forward = tuple(float(matrix[index, 0]) for index in range(3))
+    except (AttributeError, IndexError, TypeError, ValueError):
+        return _DEFAULT_CAMERA_PRESETS
+
+    up = (0.0, 0.0, 1.0)
+    return {
+        "Robot": _CameraPreset(
+            position=_vector_sum(
+                _scaled(forward, -1.0),
+                _scaled(up, 2.6),
+            ),
+            look_at=_vector_sum(_scaled(forward, 0.3), _scaled(up, 1.0)),
+            fov_degrees=65.0,
+        ),
+        "Agent": _CameraPreset(
+            position=_vector_sum(_scaled(forward, -0.6), _scaled(up, 1.85)),
+            look_at=_vector_sum(_scaled(forward, 1.0), _scaled(up, 0.8)),
+            fov_degrees=60.0,
+        ),
+        "Overview": _CameraPreset(
+            position=_vector_sum(
+                _scaled(forward, -0.6),
+                _scaled(up, 5.0),
+            ),
+            look_at=_vector_sum(_scaled(forward, 0.5), _scaled(up, 0.7)),
+        ),
+    }
+
+
+def _scaled(vector: tuple[float, float, float], scale: float) -> tuple[float, float, float]:
+    return (vector[0] * scale, vector[1] * scale, vector[2] * scale)
+
+
+def _vector_sum(*vectors: tuple[float, float, float]) -> tuple[float, float, float]:
+    return (
+        sum(vector[0] for vector in vectors),
+        sum(vector[1] for vector in vectors),
+        sum(vector[2] for vector in vectors),
+    )
