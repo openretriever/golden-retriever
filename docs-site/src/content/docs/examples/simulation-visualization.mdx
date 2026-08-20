@@ -134,7 +134,33 @@ stack: recorded actions pass through typed Flows, RoboCasa evaluates the task,
 MuJoCo advances physics, and the browser shows that exact live state. The
 viewer is not a separate animation.
 
-Run the composite kitchen demo, then open `http://localhost:8085`:
+Start the scene launcher, then open `http://localhost:8084`:
+
+```bash
+retriever run demo-robocasa-scenes
+```
+
+The launcher lists downloaded human demonstrations, starts one simulator at a
+time, and opens its live viewer on `http://localhost:8085`. Select
+`TurnOnMicrowave` for the short atomic task or `PrepareCoffee` for the longer
+composite replay. Task switching lives here because each selection replaces
+the RoboCasa environment, demonstration, and MuJoCo model.
+
+<figure>
+  <img
+    src="/media/robocasa/retriever-robocasa-scene-launcher.jpg"
+    alt="Retriever RoboCasa scene launcher with TurnOnMicrowave and PrepareCoffee"
+    loading="lazy"
+    decoding="async"
+    style="width: 100%; height: auto; border-radius: 0.25rem;"
+  />
+  <figcaption>
+    The launcher exposes only locally installed datasets and keeps one
+    task-specific viewer alive at a time.
+  </figcaption>
+</figure>
+
+To start the composite task directly instead, run:
 
 ```bash
 retriever run demo-robocasa-composite-web
@@ -183,9 +209,9 @@ on the right for a static world frame.
   </figcaption>
 </figure>
 
-Task selection belongs one level above the run view. A future demo launcher can
-start a fresh Retriever session for any installed RoboCasa dataset, while each
-viewer remains bound to one task and its MuJoCo model.
+The launcher is the task-level entry point. Each viewer remains bound to one
+task and keeps the run controls, camera presets, and live graph close to the
+simulator state they affect.
 
 <details>
   <summary>Environment setup (usually handled by an AI coding agent)</summary>
@@ -281,5 +307,6 @@ for debugging. A future TAMP demo can replace `DemoActionSource` with planner
 and executor Flows while preserving the simulator and visualization layers.
 
 Source: `examples/advanced/robocasa/robosuite_lift.py`,
-`examples/advanced/robocasa/app.py`, and
+`examples/advanced/robocasa/app.py`,
+`examples/advanced/robocasa/launcher.py`, and
 `examples/advanced/robocasa/mjviser_bridge.py`.

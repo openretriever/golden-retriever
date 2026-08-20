@@ -91,7 +91,25 @@ python -m robocasa.scripts.download_datasets \
 The example lazily imports RoboCasa, so the mock path and normal Golden
 Retriever tests do not require this stack.
 
-## 4. Run a real replay
+## 4. Choose a scene in the browser
+
+Start the local scene launcher, then open `http://localhost:8084`:
+
+```bash
+retriever run demo-robocasa-scenes
+```
+
+The launcher discovers downloaded RoboCasa human demonstrations, so its scene
+list reflects what is runnable on the current machine. Choose a task and
+episode, start it, then open the live viewer on `http://localhost:8085`.
+Starting another scene stops the current viewer first; each RoboCasa task owns
+a different environment, demonstration, and MuJoCo model.
+
+The scene launcher is the entry point for switching tasks. The viewer remains
+the focused experiment console for replay controls, camera presets, and the
+live Retriever graph. At most one simulator child runs at a time.
+
+## 5. Run a real replay directly
 
 Headless physics, suitable for Linux workers:
 
@@ -140,10 +158,10 @@ to switch to a tracked third-person robot view or overhead overview. mjviser's
 **Track camera** toggle changes between following the robot and a static world
 frame.
 
-Keep task selection one level above this run view. A demo launcher can start a
-fresh Retriever session for `PrepareCoffee`, `TurnOnMicrowave`, or another
-installed dataset; the viewer stays bound to one task because switching tasks
-can replace the RoboCasa environment, recorded actions, and MuJoCo model.
+Use `demo-robocasa-scenes` to switch between `PrepareCoffee`,
+`TurnOnMicrowave`, or another installed dataset. The viewer stays bound to one
+task because switching tasks replaces the RoboCasa environment, recorded
+actions, and MuJoCo model.
 
 For a longer composite task, download one dataset and replay it through the
 same Flow:
