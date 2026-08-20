@@ -1,5 +1,5 @@
-import robosuite
 import mujoco
+import robosuite
 
 # 1. Create a standard Robosuite environment
 # "Lift" is a classic task; we'll use the Franka Panda robot
@@ -21,7 +21,7 @@ mj_model = env.sim.model._model
 mj_data = env.sim.data._data
 
 # 4. Use it as a "regular" MuJoCo model
-print(f"Model successfully grabbed!")
+print("Model successfully grabbed!")
 print(f"Robot joints: {mj_model.njnt}")
 print(f"Simulation timestep: {mj_model.opt.timestep}")
 

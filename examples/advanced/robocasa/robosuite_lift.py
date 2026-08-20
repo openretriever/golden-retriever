@@ -174,14 +174,13 @@ class LiftPrinter(Flow[LiftState, None]):
 
     def step(self, state: LiftState) -> None:
         if state.step is None or state.step % self.print_every != 0:
-            return None
+            return
         print(
             f"[{state.source} step={state.step:03d}] "
             f"object_z={_fmt(state.object_height)} "
             f"gripper_z={_fmt(state.gripper_z)} "
             f"reward={_fmt(state.reward)} done={bool(state.done)}"
         )
-        return None
 
 
 def _fmt(value: float | None) -> str:
