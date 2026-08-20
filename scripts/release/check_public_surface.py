@@ -51,7 +51,10 @@ REMOVED_PATHS: tuple[str, ...] = (
 REQUIRED_TASKS = (
     "demo-golden-hub-pack",
     "demo-robosuite-mock",
+    "demo-robosuite-web",
     "demo-robocasa-mock",
+    "demo-robocasa-web",
+    "demo-robocasa-composite-web",
     "demo-pipeline-html-viz",
     "demo-robotics-data-eventstream",
     "demo-robotics-data-join",
@@ -125,6 +128,8 @@ DOC_MARKERS = {
         "Rerun",
         "Connect Retriever to RoboCasa",
         "demo-robocasa-video",
+        "demo-robocasa-composite-web",
+        "mjviser",
     ),
     "docs-site/src/content/docs/hub/index.mdx": (
         "GoldenRetriever Hub Packs",

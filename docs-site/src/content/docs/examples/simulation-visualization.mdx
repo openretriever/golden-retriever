@@ -85,6 +85,11 @@ closes near the block and `reward` tracks the lift:
 Swap `mode="robosuite"` (after installing the optional dependency) and the same
 graph drives the real simulator; `LiftState.source` reports which backend ran.
 
+For a live browser scene, install `mjviser` in the configured simulation
+environment and run `retriever run demo-robosuite-web`. The viewer consumes the
+same native `MjModel` and `MjData` that robosuite advances; it does not launch a
+second simulator.
+
 ## Connect Retriever to RoboCasa
 
 The RoboCasa replay lane makes the simulator boundary concrete:
@@ -121,6 +126,39 @@ Remote workers can add `--rerun-mode record --recording <path>.rrd` to save the
 same trace without spawning a viewer, then inspect it later on a local machine.
 This uses Retriever's deterministic step recorder and stops after the final
 recorded action unless `--repeat` is set.
+
+### Live browser replay
+
+Use mjviser when you want to orbit around the live 3D scene in a browser:
+
+```bash
+retriever run demo-robocasa-web
+```
+
+Open `http://localhost:8085`. The adapter publishes RoboCasa's current MuJoCo
+state after every Retriever action and hides robosuite's collision geometry by
+default, leaving the authored visual meshes visible.
+
+The same path handles longer composite tasks. Download the selected upstream
+demonstration once, then run:
+
+```bash
+python -m robocasa.scripts.download_datasets \
+  --tasks PrepareCoffee --split pretrain --source human
+retriever run demo-robocasa-composite-web
+```
+
+The tested episode contains 749 controls and reaches RoboCasa success at step
+731. The larger kitchen takes longer than `Lift` to publish to the browser.
+
+Choose the view by question:
+
+| View | Best for |
+| --- | --- |
+| Native MuJoCo | Fast local interaction on the simulator host. |
+| mjviser | Browser-based inspection of the live 3D MuJoCo scene. |
+| Rerun | Camera frames, Retriever execution, scalars, and saved traces. |
+| MP4 | Compact review artifacts and documentation clips. |
 
 For a compact shareable artifact, `pixi run demo-robocasa-video` writes the
 offscreen camera stream to `logs/robocasa-replay.mp4`. Use this for run review
@@ -175,5 +213,17 @@ visible instead of hiding them in callbacks. The same typed simulator boundary
 runs against either a mock or a real backend, while Retriever recording and
 Rerun expose observations without changing the policy contract.
 
+The ownership boundary is deliberate. GoldenRetriever owns the Flow adapter,
+examples, and public explanation. A external simulator environment owns Pixi locks, source
+checkouts, large assets, datasets, and machine-specific run configuration.
+Optional simulator dependencies stay outside the Hub manifest so Hub loading remains lightweight.
+
+RoboCasa supplies tasks and demonstrations, robosuite composes environments
+and controllers, MuJoCo executes physics, Retriever orchestrates typed policy
+and simulator Flows, and mjviser or Rerun projects that run into the view needed
+for debugging. A future TAMP demo can replace `DemoActionSource` with planner
+and executor Flows while preserving the simulator and visualization layers.
+
 Source: `examples/advanced/robocasa/robosuite_lift.py`,
-and `examples/advanced/robocasa/app.py`.
+`examples/advanced/robocasa/app.py`, and
+`examples/advanced/robocasa/mjviser_bridge.py`.
