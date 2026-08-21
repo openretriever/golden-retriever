@@ -7,13 +7,13 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+pytest.importorskip("mujoco", reason="mujoco is an optional simulation dependency")
+
 ROOT = Path(__file__).resolve().parents[2]
 MUJOCO_MANIPULATION_DIR = ROOT / "examples" / "advanced" / "mujoco_manipulation"
 for _path in (ROOT, MUJOCO_MANIPULATION_DIR):
     if str(_path) not in sys.path:
         sys.path.insert(0, str(_path))
-
-pytest.importorskip("mujoco", reason="mujoco is an optional simulation dependency")
 
 from flows import Control, ControllerFlow, MujocoEnvFlow  # noqa: E402
 
