@@ -16,7 +16,7 @@
       }
       * { box-sizing: border-box; }
       body { margin: 0; min-width: 320px; min-height: 100vh; }
-      button, input { font: inherit; letter-spacing: 0; }
+      button, input, select, textarea { font: inherit; letter-spacing: 0; }
       button { cursor: pointer; }
       button:disabled { cursor: default; opacity: 0.45; }
       .shell { min-height: 100vh; display: grid; grid-template-columns: 360px minmax(0, 1fr); }
@@ -32,10 +32,16 @@
         background: #fff; color: inherit; text-align: left;
       }
       .scene-row:hover { border-color: #8c9bb0; }
+      .scene-row:disabled { opacity: 1; cursor: not-allowed; background: #f7f8fa; color: #657083; }
+      .scene-row:disabled:hover { border-color: #d9dfe7; }
       .scene-row[aria-pressed="true"] { border-color: #2574c8; box-shadow: inset 3px 0 #2574c8; background: #f5f9fe; }
       .scene-row strong { display: block; margin-bottom: 7px; font-size: 15px; }
       .meta { display: flex; gap: 8px; align-items: center; color: #687386; font-size: 12px; }
       .kind { padding: 2px 6px; border-radius: 3px; background: #e9eef4; color: #3e4b5e; font-weight: 700; }
+      .availability { margin-left: auto; font-weight: 700; }
+      .availability.ready { color: #27854a; }
+      .availability.missing { color: #a04b42; }
+      .reason { display: block; margin-top: 8px; color: #8a4f48; font-size: 12px; line-height: 1.35; }
       .main { min-width: 0; display: grid; grid-template-rows: minmax(340px, 1fr) auto; }
       .preview { position: relative; overflow: hidden; background: #dfe4e9; }
       .preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -51,9 +57,11 @@
       .controls { background: #fff; border-top: 1px solid #dce1e7; padding: 22px 28px 26px; }
       .control-head { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 18px; }
       h2 { margin: 0; font-size: 23px; }
-      .control-grid { display: grid; grid-template-columns: 160px minmax(150px, 1fr) auto auto; gap: 12px; align-items: end; }
+      .control-grid { display: grid; grid-template-columns: 130px 160px minmax(240px, 1fr) auto auto; gap: 12px; align-items: end; }
       label { display: grid; gap: 6px; color: #687386; font-size: 12px; font-weight: 700; }
-      input { width: 100%; height: 42px; border: 1px solid #cfd6df; border-radius: 5px; padding: 0 11px; color: #172033; background: #fff; }
+      input, select, textarea { width: 100%; border: 1px solid #cfd6df; border-radius: 5px; padding: 0 11px; color: #172033; background: #fff; }
+      input, select { height: 42px; }
+      textarea { min-height: 42px; height: 42px; padding-top: 10px; resize: vertical; }
       .button { height: 42px; border: 1px solid transparent; border-radius: 5px; padding: 0 18px; font-weight: 700; white-space: nowrap; }
       .primary { background: #2574c8; color: #fff; }
       .primary:hover { background: #1e63ad; }
@@ -83,7 +91,7 @@
       <aside class="rail">
         <div class="brand"><span class="brand-mark"></span><strong>GoldenRetriever</strong></div>
         <p class="eyebrow">RoboCasa</p>
-        <h1>Installed scenes</h1>
+        <h1>Task catalog</h1>
         <div class="scene-list" id="scene-list"><div class="empty">Loading scenes...</div></div>
       </aside>
       <main class="main">
@@ -98,10 +106,11 @@
           </div>
           <div class="control-grid">
             <label>Episode <input id="episode" type="number" min="0" value="0" /></label>
-            <div></div>
+            <label>Planner <select id="planner"><option value="offline">Offline</option><option value="gemini">Gemini</option></select></label>
+            <label>Goal <textarea id="goal" placeholder="Describe the task goal"></textarea></label>
             <button class="button secondary" id="stop" disabled>Stop</button>
-            <button class="button primary" id="launch" disabled>Launch scene</button>
-            <div></div><div></div><div></div>
+            <button class="button primary" id="launch" disabled>Launch task</button>
+            <div></div><div></div><div></div><div></div>
             <button class="button secondary" id="open" disabled>Open viewer</button>
           </div>
         </section>
@@ -114,6 +123,8 @@
       const kind = document.querySelector("#kind");
       const details = document.querySelector("#details");
       const episode = document.querySelector("#episode");
+      const goal = document.querySelector("#goal");
+      const planner = document.querySelector("#planner");
       const launch = document.querySelector("#launch");
       const stop = document.querySelector("#stop");
       const open = document.querySelector("#open");
@@ -131,7 +142,8 @@
         preview.src = scene.preview;
         preview.alt = `${scene.task} RoboCasa preview`;
         episode.max = String(scene.episodes - 1);
-        launch.disabled = false;
+        goal.value = scene.task;
+        launch.disabled = !scene.available;
         document.querySelectorAll(".scene-row").forEach((row) => {
           row.setAttribute("aria-pressed", String(row.dataset.task === scene.task));
         });
@@ -139,7 +151,7 @@
 
       function renderScenes() {
         if (!scenes.length) {
-          list.innerHTML = '<div class="empty">No local human datasets found.</div>';
+          list.innerHTML = '<div class="empty">RoboCasa task metadata is unavailable.</div>';
           return;
         }
         list.replaceChildren(...scenes.map((scene) => {
@@ -147,11 +159,18 @@
           row.className = "scene-row";
           row.dataset.task = scene.task;
           row.setAttribute("aria-pressed", "false");
-          row.innerHTML = `<strong>${scene.task}</strong><span class="meta"><span class="kind">${scene.kind}</span><span>${scene.split}</span></span>`;
+          row.disabled = !scene.available;
+          const availability = scene.available
+            ? '<span class="availability ready">Ready</span>'
+            : '<span class="availability missing">Dataset needed</span>';
+          const reason = scene.available ? "" : `<span class="reason">${scene.unavailable_reason}</span>`;
+          row.innerHTML = `<strong>${scene.task}</strong><span class="meta"><span class="kind">${scene.kind}</span><span>${scene.split}</span>${availability}</span>${reason}`;
           row.addEventListener("click", () => selectScene(scene));
           return row;
         }));
-        selectScene(scenes.find((scene) => scene.task === "TurnOnMicrowave") || scenes[0]);
+        const initial = scenes.find((scene) => scene.task === "PrepareCoffee" && scene.available)
+          || scenes.find((scene) => scene.available);
+        if (initial) selectScene(initial);
       }
 
       async function updateStatus() {
@@ -162,7 +181,7 @@
         statusText.textContent = current.task ? `${current.state} · ${current.task}` : current.state;
         open.disabled = current.state !== "ready";
         stop.disabled = !["starting", "ready"].includes(current.state);
-        launch.disabled = !selected || current.state === "starting";
+        launch.disabled = !selected || !selected.available || current.state === "starting";
       }
 
       launch.addEventListener("click", async () => {
@@ -170,7 +189,12 @@
         const response = await fetch("/api/launch", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ task: selected.task, episode: Number(episode.value) }),
+          body: JSON.stringify({
+            task: selected.task,
+            episode: Number(episode.value),
+            goal: goal.value,
+            planner: planner.value,
+          }),
         });
         if (!response.ok) {
           const error = await response.json();

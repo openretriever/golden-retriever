@@ -10,7 +10,7 @@ from dataclasses import asdict, dataclass
 from http.client import HTTPConnection, HTTPException
 from pathlib import Path
 from threading import RLock
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -23,6 +23,8 @@ class Scene:
     episodes: int
     horizon: int
     preview: str
+    available: bool = True
+    unavailable_reason: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -31,6 +33,8 @@ class Scene:
 class LaunchRequest(BaseModel):
     task: str
     episode: int = Field(default=0, ge=0)
+    goal: str = Field(default="", max_length=2_000)
+    planner: Literal["offline", "gemini"] = "offline"
 
 
 _PREVIEWS = {
@@ -38,37 +42,87 @@ _PREVIEWS = {
     "PrepareCoffee": "/media/retriever-robocasa-web-console.jpg",
 }
 
+_CURATED_TASKS = (
+    ("PrepareCoffee", "Composite"),
+    ("CoffeeSetupMug", "Atomic"),
+    ("StartCoffeeMachine", "Atomic"),
+    ("TurnOnMicrowave", "Atomic"),
+)
+_CURATED_ORDER = {task: index for index, (task, _kind) in enumerate(_CURATED_TASKS)}
+_DEFAULT_PREVIEW = "/media/turn-on-microwave-replay.jpg"
+_MISSING_DATASET = "Human demonstration dataset is not installed."
+
 
 def discover_scenes() -> list[Scene]:
-    """Return human demonstration datasets that are installed locally."""
+    """Return installed datasets plus the always-visible curated task catalog."""
 
-    from robocasa.utils.dataset_registry import (
-        ATOMIC_TASK_DATASETS,
-        COMPOSITE_TASK_DATASETS,
-    )
-    from robocasa.utils.dataset_registry_utils import get_ds_meta
+    try:
+        from robocasa.utils.dataset_registry import (
+            ATOMIC_TASK_DATASETS,
+            COMPOSITE_TASK_DATASETS,
+        )
+        from robocasa.utils.dataset_registry_utils import get_ds_meta
+    except ImportError:
+        return [
+            _unavailable_scene(task, kind, "RoboCasa is not installed.")
+            for task, kind in _CURATED_TASKS
+        ]
 
-    scenes: list[Scene] = []
+    scenes_by_task: dict[str, Scene] = {}
     groups = (
         ("Atomic", ATOMIC_TASK_DATASETS),
         ("Composite", COMPOSITE_TASK_DATASETS),
     )
     for kind, registry in groups:
         for task in registry:
-            metadata = get_ds_meta(task=task, split="pretrain", source="human")
-            if metadata is None or not Path(metadata["path"]).is_dir():
+            try:
+                metadata = get_ds_meta(task=task, split="pretrain", source="human")
+                path_value = metadata.get("path") if metadata else None
+                dataset_path = Path(path_value) if path_value else None
+            except (KeyError, OSError, TypeError, ValueError):
+                metadata = None
+                dataset_path = None
+            available = dataset_path is not None and dataset_path.is_dir()
+            if not available and task not in _CURATED_ORDER:
                 continue
-            scenes.append(
-                Scene(
-                    task=task,
-                    kind=kind,
-                    split="pretrain",
-                    episodes=100,
-                    horizon=int(metadata["horizon"]),
-                    preview=_PREVIEWS.get(task, "/media/turn-on-microwave-replay.jpg"),
-                )
+            scenes_by_task[task] = Scene(
+                task=task,
+                kind=kind,
+                split="pretrain",
+                episodes=100,
+                horizon=int(metadata.get("horizon", 0)) if metadata else 0,
+                preview=_PREVIEWS.get(task, _DEFAULT_PREVIEW),
+                available=available,
+                unavailable_reason=None if available else _MISSING_DATASET,
             )
-    return sorted(scenes, key=lambda scene: (scene.kind != "Atomic", scene.task))
+
+    for task, kind in _CURATED_TASKS:
+        scenes_by_task.setdefault(
+            task,
+            _unavailable_scene(task, kind, _MISSING_DATASET),
+        )
+
+    return sorted(
+        scenes_by_task.values(),
+        key=lambda scene: (
+            _CURATED_ORDER.get(scene.task, len(_CURATED_ORDER)),
+            scene.kind != "Atomic",
+            scene.task,
+        ),
+    )
+
+
+def _unavailable_scene(task: str, kind: str, reason: str) -> Scene:
+    return Scene(
+        task=task,
+        kind=kind,
+        split="pretrain",
+        episodes=100,
+        horizon=0,
+        preview=_PREVIEWS.get(task, _DEFAULT_PREVIEW),
+        available=False,
+        unavailable_reason=reason,
+    )
 
 
 class ViewerManager:
@@ -82,6 +136,8 @@ class ViewerManager:
         self._process: subprocess.Popen[Any] | None = None
         self._task: str | None = None
         self._episode = 0
+        self._goal = ""
+        self._planner = "offline"
 
     @property
     def viewer_url(self) -> str:
@@ -90,7 +146,15 @@ class ViewerManager:
         )
         return f"http://{display_host}:{self.port}"
 
-    def command(self, *, task: str, split: str, episode: int) -> list[str]:
+    def command(
+        self,
+        *,
+        task: str,
+        split: str,
+        episode: int,
+        goal: str = "",
+        planner: Literal["offline", "gemini"] = "offline",
+    ) -> list[str]:
         return [
             sys.executable,
             "-m",
@@ -103,6 +167,10 @@ class ViewerManager:
             split,
             "--episode",
             str(episode),
+            "--goal",
+            goal.strip() or task,
+            "--planner",
+            planner,
             "--seconds",
             str(self.duration),
             "--hz",
@@ -117,17 +185,34 @@ class ViewerManager:
             "100",
         ]
 
-    def launch(self, scene: Scene, episode: int) -> dict[str, Any]:
+    def launch(
+        self,
+        scene: Scene,
+        episode: int,
+        *,
+        goal: str = "",
+        planner: Literal["offline", "gemini"] = "offline",
+    ) -> dict[str, Any]:
+        if not scene.available:
+            raise ValueError(scene.unavailable_reason or "Dataset is unavailable.")
         if not 0 <= episode < scene.episodes:
             raise ValueError(f"Episode must be between 0 and {scene.episodes - 1}")
         with self._lock:
             self._stop_locked()
             self._process = subprocess.Popen(
-                self.command(task=scene.task, split=scene.split, episode=episode),
+                self.command(
+                    task=scene.task,
+                    split=scene.split,
+                    episode=episode,
+                    goal=goal,
+                    planner=planner,
+                ),
                 cwd=Path(__file__).resolve().parents[3],
             )
             self._task = scene.task
             self._episode = episode
+            self._goal = goal.strip() or scene.task
+            self._planner = planner
             return self.status()
 
     def stop(self) -> dict[str, Any]:
@@ -150,6 +235,8 @@ class ViewerManager:
                 "state": state,
                 "task": self._task,
                 "episode": self._episode,
+                "goal": self._goal,
+                "planner": self._planner,
                 "viewer_url": self.viewer_url,
             }
 
@@ -165,6 +252,8 @@ class ViewerManager:
         self._process = None
         self._task = None
         self._episode = 0
+        self._goal = ""
+        self._planner = "offline"
 
 
 def _port_is_open(host: str, port: int) -> bool:
@@ -214,9 +303,19 @@ def create_app(*, viewer_host: str, viewer_port: int, duration: float):
     async def launch(request: LaunchRequest) -> dict[str, Any]:
         scene = by_task.get(request.task)
         if scene is None:
-            raise HTTPException(status_code=404, detail="Scene is not installed")
+            raise HTTPException(status_code=404, detail="Unknown RoboCasa task")
+        if not scene.available:
+            raise HTTPException(
+                status_code=409,
+                detail=scene.unavailable_reason or "Dataset is unavailable.",
+            )
         try:
-            return manager.launch(scene, request.episode)
+            return manager.launch(
+                scene,
+                request.episode,
+                goal=request.goal,
+                planner=request.planner,
+            )
         except ValueError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
 
