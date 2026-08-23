@@ -14,6 +14,14 @@ import retriever
 from retriever.config import VizConfig
 from retriever.flow import Flow, Latest, Pipeline, Rate, Trigger, io
 
+from .embodied import (
+    EmbodiedGoal,
+    EmbodiedPlannerFlow,
+    ExecutionState,
+    GoalSource,
+    SkillDispatcher,
+    create_planner,
+)
 from .mjviser_bridge import MjviserBridge, ReplayControls
 
 
@@ -91,7 +99,7 @@ def _dataset_path(task: str, split: str) -> Path:
     return path
 
 
-class DemoActionSource(Flow[None, RoboCasaAction]):
+class DemoActionSource(Flow[ExecutionState, RoboCasaAction]):
     """Emit deterministic mock actions or a recorded human demonstration."""
 
     def __init__(
@@ -144,7 +152,7 @@ class DemoActionSource(Flow[None, RoboCasaAction]):
         if self.controls is not None:
             self.controls.set_total_steps(len(self.actions))
 
-    def step(self, _input: None = None) -> RoboCasaAction:
+    def step(self, _input: ExecutionState | None = None) -> RoboCasaAction:
         if self.actions is None:
             raise RuntimeError("Demo actions are not initialized")
         if self.controls is not None:
@@ -200,6 +208,7 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
         image_hz: float = 5.0,
         mock_steps: int = 12,
         controls: ReplayControls | None = None,
+        open_browser: bool = False,
     ) -> None:
         self.mode = mode
         self.task = task
@@ -230,6 +239,7 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
                 port=viser_port,
                 label=f"Retriever RoboCasa {task}",
                 controls=controls,
+                open_browser=open_browser,
             )
             if visualize == "mjviser"
             else None
@@ -379,17 +389,6 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
             success=bool(self.env._check_success()),
             action_norm=float(np.linalg.norm(action.values)),
         )
-        if self.controls is not None:
-            self.controls.update_observation(
-                episode_step=observation.episode_step,
-                cycle=observation.cycle,
-                progress=observation.progress,
-                reward=observation.reward,
-                success=observation.success,
-                action_norm=observation.action_norm,
-            )
-            if self._web_viewer is not None:
-                self._web_viewer.refresh_controls()
         return observation
 
     def finalize(self) -> None:
@@ -401,7 +400,38 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
             print("Closed the Retriever-connected RoboCasa simulator.")
 
 
-class ObservationPrinter(Flow[RoboCasaObservation, None]):
+class TaskVerifier(Flow[RoboCasaObservation, RoboCasaObservation]):
+    """Publish explicit RoboCasa reward and success verification."""
+
+    def __init__(self, *, controls: ReplayControls | None = None) -> None:
+        self.controls = controls
+
+    def step(self, observation: RoboCasaObservation) -> RoboCasaObservation:
+        if self.controls is not None:
+            self.controls.update_observation(
+                episode_step=observation.episode_step,
+                cycle=observation.cycle,
+                progress=observation.progress,
+                reward=observation.reward,
+                success=observation.success,
+                action_norm=observation.action_norm,
+            )
+        # Inputs arrive as Retriever runtime views; emit a concrete @io value.
+        return RoboCasaObservation(
+            image=observation.image,
+            image_updated=observation.image_updated,
+            source=observation.source,
+            task=observation.task,
+            episode_step=observation.episode_step,
+            cycle=observation.cycle,
+            progress=observation.progress,
+            reward=observation.reward,
+            success=observation.success,
+            action_norm=observation.action_norm,
+        )
+
+
+class EventSink(Flow[RoboCasaObservation, None]):
     def __init__(self, *, print_every: int = 4) -> None:
         self.print_every = max(1, int(print_every))
         self._last_printed: tuple[int, int] | None = None
@@ -428,6 +458,10 @@ class ObservationPrinter(Flow[RoboCasaObservation, None]):
             )
             self._last_printed = key
         self._last_success = observation.success
+
+
+# Backward-compatible public name used by the original replay example.
+ObservationPrinter = EventSink
 
 
 class VideoRecorder(Flow[RoboCasaObservation, None]):
@@ -490,6 +524,19 @@ def build_pipeline(args: argparse.Namespace) -> tuple[Pipeline, RoboCasaSimulato
         if args.visualize == "mjviser"
         else None
     )
+    goal = EmbodiedGoal(
+        text=getattr(args, "goal", "") or "",
+        task=args.task,
+        episode=args.episode,
+        planner=getattr(args, "planner", "offline"),
+    )
+    planner = create_planner(goal.planner)
+    initial_plan = planner.plan(goal)
+    if controls is not None:
+        controls.configure_execution(initial_plan.goal, initial_plan)
+        controls.set_goal_handler(
+            lambda submitted: create_planner(submitted.planner).plan(submitted)
+        )
     source = DemoActionSource(
         mode=args.mode,
         task=args.task,
@@ -516,18 +563,30 @@ def build_pipeline(args: argparse.Namespace) -> tuple[Pipeline, RoboCasaSimulato
         image_hz=args.image_hz,
         mock_steps=args.mock_steps,
         controls=controls,
+        open_browser=getattr(args, "open_browser", False),
     )
-    printer = ObservationPrinter(print_every=args.print_every)
+    verifier = TaskVerifier(controls=controls)
+    event_sink = EventSink(print_every=args.print_every)
 
     pipeline = Pipeline("robocasa_demo_replay", on_lag="drop")
     with pipeline:
+        goals = (GoalSource(initial_plan.goal) @ Rate(hz=args.hz)).named("goal_source")
+        planning = (EmbodiedPlannerFlow(planner) @ Trigger("text")).named(
+            "embodied_planner"
+        )
+        dispatch = (SkillDispatcher() @ Trigger("goal")).named("skill_dispatcher")
         actions = (source @ Rate(hz=args.hz, on_lag="drop")).named("demo_actions")
         simulation = (simulator @ Rate(hz=args.hz, on_lag="drop")).named(
             "robocasa_simulator"
         )
-        output = (printer @ Trigger("episode_step")).named("observation_printer")
+        verification = (verifier @ Trigger("episode_step")).named("task_verifier")
+        output = (event_sink @ Trigger("episode_step")).named("event_sink")
+        goals.then(planning, sync=Latest())
+        planning.then(dispatch, sync=Latest())
+        dispatch.then(actions, sync=Latest())
         actions.then(simulation, sync=Latest())
-        simulation.then(output, sync=Latest())
+        simulation.then(verification, sync=Latest())
+        verification.then(output, sync=Latest())
         if video_path is not None:
             video = (
                 VideoRecorder(
@@ -536,7 +595,7 @@ def build_pipeline(args: argparse.Namespace) -> tuple[Pipeline, RoboCasaSimulato
                 )
                 @ Trigger("episode_step")
             ).named("video_recorder")
-            simulation.then(video, sync=Latest())
+            verification.then(video, sync=Latest())
     return pipeline, simulator
 
 
@@ -548,6 +607,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--task", default="TurnOnMicrowave")
     parser.add_argument("--split", choices=["pretrain", "target"], default="pretrain")
     parser.add_argument("--episode", type=int, default=0)
+    parser.add_argument("--goal", default="")
+    parser.add_argument("--planner", choices=["offline", "gemini"], default="offline")
     parser.add_argument("--seconds", type=float, default=45.0)
     parser.add_argument("--steps", type=int, default=14)
     parser.add_argument("--mock-steps", type=int, default=12)
@@ -565,6 +626,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--viser-host", default="127.0.0.1")
     parser.add_argument("--viser-port", type=int, default=8085)
     parser.add_argument(
+        "--open-browser",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Open the mjviser URL after the simulator scene is ready.",
+    )
+    parser.add_argument(
         "--rerun-mode",
         choices=["spawn", "connect", "record"],
         default="spawn",
@@ -579,8 +646,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def main() -> None:
-    args = parse_args()
+def _execute(args: argparse.Namespace) -> None:
     if args.viewer and args.video:
         raise SystemExit(
             "--video uses the offscreen MuJoCo renderer and cannot be combined "
@@ -641,6 +707,55 @@ def main() -> None:
         if args.visualize == "rerun"
         else None,
     )
+
+
+def run(
+    *,
+    task: str = "PrepareCoffee",
+    episode: int = 0,
+    planner: str = "offline",
+    visualize: str = "mjviser",
+    open_browser: bool = True,
+    goal: str = "",
+    split: str = "pretrain",
+    seconds: float = 120.0,
+    hz: float = 20.0,
+) -> None:
+    """Run one verified RoboCasa demonstration through the embodied console."""
+
+    args = argparse.Namespace(
+        mode="robocasa",
+        task=task,
+        split=split,
+        episode=episode,
+        goal=goal,
+        planner=planner,
+        seconds=seconds,
+        steps=14,
+        mock_steps=12,
+        hz=hz,
+        image_hz=5.0,
+        camera="robot0_agentview_center",
+        width=768,
+        height=512,
+        viewer=False,
+        visualize=visualize,
+        viser_host="127.0.0.1",
+        viser_port=8085,
+        open_browser=open_browser,
+        rerun_mode="spawn",
+        rerun_address="127.0.0.1:9876",
+        recording="logs/robocasa-replay.rrd",
+        video=None,
+        video_fps=5.0,
+        repeat=False,
+        print_every=100,
+    )
+    _execute(args)
+
+
+def main() -> None:
+    _execute(parse_args())
 
 
 if __name__ == "__main__":

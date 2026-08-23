@@ -2,7 +2,7 @@ from argparse import Namespace
 from math import ceil
 
 import pytest
-
+from examples.advanced.robocasa import app
 from examples.advanced.robocasa.app import DemoActionSource, build_pipeline
 from examples.advanced.robocasa.mjviser_bridge import ReplayControls
 
@@ -92,3 +92,18 @@ def test_mock_robocasa_video_is_finalized(tmp_path) -> None:
         assert int(capture.get(cv2.CAP_PROP_FRAME_COUNT)) == expected_frames
     finally:
         capture.release()
+
+
+def test_run_builds_concise_offline_console_entrypoint(monkeypatch) -> None:
+    calls = []
+    monkeypatch.setattr(app, "_execute", calls.append)
+
+    app.run(task="CoffeeSetupMug", episode=2, open_browser=False)
+
+    args = calls[0]
+    assert args.mode == "robocasa"
+    assert args.task == "CoffeeSetupMug"
+    assert args.episode == 2
+    assert args.planner == "offline"
+    assert args.visualize == "mjviser"
+    assert args.open_browser is False

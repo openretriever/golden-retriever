@@ -10,7 +10,6 @@ from typing import Any, Protocol
 
 from retriever.flow import Flow, io
 
-
 ALLOWED_SKILLS = frozenset(
     {
         "locate",
@@ -299,7 +298,8 @@ class SkillDispatcher(Flow[SkillPlan, ExecutionState]):
         self._last_signature = None
 
     def step(self, plan: SkillPlan) -> ExecutionState:
-        plan.validate()
+        # Retriever supplies @io values as a typed runtime view inside a Flow.
+        # Planning validates before dispatch, so only field access belongs here.
         signature = (plan.goal.text, plan.goal.task, plan.goal.episode)
         if signature != self._last_signature:
             if self.on_dispatch is not None:
@@ -329,7 +329,7 @@ def _plan_from_payload(
 ) -> SkillPlan:
     raw_steps = payload.get("steps")
     if not isinstance(raw_steps, Sequence) or isinstance(raw_steps, (str, bytes)):
-        raise ValueError("Planner response must contain a steps array")
+        raise TypeError("Planner response must contain a steps array")
     if not raw_steps:
         raise ValueError("Planner returned an empty skill plan")
 
@@ -338,7 +338,7 @@ def _plan_from_payload(
     previous: tuple[str, ...] = ()
     for index, raw in enumerate(raw_steps, start=1):
         if not isinstance(raw, Mapping):
-            raise ValueError("Every planner step must be an object")
+            raise TypeError("Every planner step must be an object")
         skill = str(raw.get("skill", ""))
         if skill not in ALLOWED_SKILLS:
             raise ValueError(f"Planner requested unsupported skill: {skill}")

@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import webbrowser
 from dataclasses import dataclass, replace
 from html import escape
 from math import radians
 from threading import RLock
+from time import monotonic
 from typing import Any
+
+from .embodied import EmbodiedGoal, ExecutionEvent, SkillPlan
 
 
 @dataclass(frozen=True)
@@ -25,6 +29,11 @@ class ReplaySnapshot:
     reward: float = 0.0
     success: bool = False
     action_norm: float = 0.0
+    goal_text: str = ""
+    planner: str = "offline"
+    plan: SkillPlan | None = None
+    current_step_id: str = ""
+    events: tuple[ExecutionEvent, ...] = ()
 
 
 class ReplayControls:
@@ -35,6 +44,61 @@ class ReplayControls:
         self._snapshot = ReplaySnapshot(task=task, episode=episode)
         self._step_budget = 0
         self._restart_requested = False
+        self._started_at = monotonic()
+        self._event_sequence = 0
+        self._goal_handler: Any | None = None
+
+    def set_goal_handler(self, handler: Any) -> None:
+        """Install the planner callback used by the browser goal composer."""
+
+        with self._lock:
+            self._goal_handler = handler
+
+    def submit_goal(self, text: str, planner: str | None = None) -> SkillPlan:
+        with self._lock:
+            handler = self._goal_handler
+            snapshot = self._snapshot
+        if handler is None:
+            raise RuntimeError("No embodied planner is connected")
+        goal = EmbodiedGoal(
+            text=text.strip(),
+            task=snapshot.task,
+            episode=snapshot.episode,
+            planner=planner or snapshot.planner,
+        )
+        plan = handler(goal)
+        self.configure_execution(goal, plan)
+        self.request_restart()
+        return plan
+
+    def configure_execution(self, goal: EmbodiedGoal, plan: SkillPlan) -> None:
+        plan.validate()
+        with self._lock:
+            self._started_at = monotonic()
+            self._event_sequence = 0
+            self._snapshot = replace(
+                self._snapshot,
+                task=goal.task,
+                episode=goal.episode,
+                goal_text=goal.text,
+                planner=plan.source,
+                plan=plan,
+                current_step_id=plan.steps[0].step_id,
+                events=(),
+                status="Ready",
+            )
+            self._append_event(
+                kind="dispatch",
+                status="completed",
+                step_id="",
+                message=f"Plan accepted from {plan.source} planner",
+            )
+            self._append_event(
+                kind="skill",
+                status="running",
+                step_id=plan.steps[0].step_id,
+                message=plan.steps[0].label,
+            )
 
     def snapshot(self) -> ReplaySnapshot:
         with self._lock:
@@ -79,6 +143,27 @@ class ReplayControls:
                 action_norm=0.0,
                 status="Restarting",
             )
+            if self._snapshot.plan is not None:
+                plan = self._snapshot.plan
+                self._started_at = monotonic()
+                self._event_sequence = 0
+                self._snapshot = replace(
+                    self._snapshot,
+                    current_step_id=plan.steps[0].step_id,
+                    events=(),
+                )
+                self._append_event(
+                    kind="dispatch",
+                    status="completed",
+                    step_id="",
+                    message="Episode restarted",
+                )
+                self._append_event(
+                    kind="skill",
+                    status="running",
+                    step_id=plan.steps[0].step_id,
+                    message=plan.steps[0].label,
+                )
 
     def set_speed(self, speed: float) -> None:
         if speed <= 0:
@@ -124,10 +209,71 @@ class ReplayControls:
                 success=bool(success),
                 action_norm=float(action_norm),
             )
+            self._update_plan_events(self._snapshot.progress, bool(success))
 
     def mark_complete(self) -> None:
         with self._lock:
             self._snapshot = replace(self._snapshot, status="Complete")
+
+    def _update_plan_events(self, progress: float, success: bool) -> None:
+        plan = self._snapshot.plan
+        if plan is None:
+            return
+        existing = {
+            (event.step_id, event.status) for event in self._snapshot.events
+        }
+        for step in plan.steps:
+            complete = success or progress >= step.end_fraction
+            if complete and (step.step_id, "completed") not in existing:
+                self._append_event(
+                    kind="skill",
+                    status="completed",
+                    step_id=step.step_id,
+                    message=step.label,
+                )
+                existing.add((step.step_id, "completed"))
+
+        active = plan.step_at(progress)
+        if not success and (active.step_id, "running") not in existing:
+            self._append_event(
+                kind="skill",
+                status="running",
+                step_id=active.step_id,
+                message=active.label,
+            )
+        self._snapshot = replace(
+            self._snapshot,
+            current_step_id="" if success else active.step_id,
+        )
+        if success and ("", "verified") not in existing:
+            self._append_event(
+                kind="verification",
+                status="verified",
+                step_id="",
+                message="RoboCasa task success signal verified",
+            )
+
+    def _append_event(
+        self,
+        *,
+        kind: str,
+        status: str,
+        step_id: str,
+        message: str,
+    ) -> None:
+        self._event_sequence += 1
+        event = ExecutionEvent(
+            sequence=self._event_sequence,
+            kind=kind,
+            status=status,
+            step_id=step_id,
+            message=message,
+            elapsed_seconds=max(0.0, monotonic() - self._started_at),
+        )
+        self._snapshot = replace(
+            self._snapshot,
+            events=(*self._snapshot.events[-63:], event),
+        )
 
 
 @dataclass(frozen=True)
@@ -164,16 +310,20 @@ class MjviserBridge:
         port: int = 8085,
         label: str = "Retriever simulation",
         controls: ReplayControls | None = None,
+        open_browser: bool = False,
     ) -> None:
         self.host = host
         self.port = int(port)
         self.label = label
         self.controls = controls
+        self.open_browser = open_browser
         self._server: Any | None = None
         self._scene: Any | None = None
         self._gui_lock = RLock()
         self._status_markdown: Any | None = None
+        self._plan_html: Any | None = None
         self._graph_html: Any | None = None
+        self._events_html: Any | None = None
         self._progress: Any | None = None
         self._camera_presets = _DEFAULT_CAMERA_PRESETS
 
@@ -216,7 +366,10 @@ class MjviserBridge:
         self.refresh_controls()
 
         display_host = "localhost" if self.host in {"0.0.0.0", "127.0.0.1"} else self.host
-        print(f"Retriever mjviser: http://{display_host}:{self.port}")
+        viewer_url = f"http://{display_host}:{self.port}"
+        print(f"Retriever mjviser: {viewer_url}")
+        if self.open_browser:
+            webbrowser.open(viewer_url)
 
     def update(self, sim: Any) -> None:
         self.start(sim)
@@ -229,7 +382,9 @@ class MjviserBridge:
         if (
             self.controls is None
             or self._status_markdown is None
+            or self._plan_html is None
             or self._graph_html is None
+            or self._events_html is None
             or self._progress is None
         ):
             return
@@ -239,7 +394,9 @@ class MjviserBridge:
             status = "Success"
         with self._gui_lock:
             self._status_markdown.content = _status_markdown(snapshot, status)
+            self._plan_html.content = _plan_html(snapshot)
             self._graph_html.content = _graph_html(snapshot, status)
+            self._events_html.content = _events_html(snapshot)
             self._progress.value = snapshot.progress * 100.0
 
     def close(self) -> None:
@@ -248,7 +405,9 @@ class MjviserBridge:
         self._scene = None
         self._server = None
         self._status_markdown = None
+        self._plan_html = None
         self._graph_html = None
+        self._events_html = None
         self._progress = None
 
     def _create_retriever_panel(self, viser: Any) -> None:
@@ -260,6 +419,22 @@ class MjviserBridge:
         panel.set_width(340)
 
         with panel.add_tab("Run", viser.Icon.PLAYER_PLAY):
+            initial = self.controls.snapshot()
+            goal = self._server.gui.add_text(
+                "Goal",
+                initial.goal_text or f"Run {initial.task}",
+                hint="Plan an allow-listed skill sequence for the selected task.",
+            )
+            planner = self._server.gui.add_dropdown(
+                "Planner",
+                ("offline", "gemini"),
+                initial_value=initial.planner,
+            )
+            run_goal = self._server.gui.add_button(
+                "Run goal",
+                icon=viser.Icon.PLAYER_PLAY,
+                hint="Validate the plan, restart the episode, and execute it.",
+            )
             self._status_markdown = self._server.gui.add_markdown("")
             camera = self._server.gui.add_button_group(
                 "Camera",
@@ -295,6 +470,14 @@ class MjviserBridge:
                 ("0.25x", "0.5x", "1x"),
                 initial_value="1x",
             )
+
+            @run_goal.on_click
+            def _(_) -> None:
+                try:
+                    self.controls.submit_goal(goal.value, planner.value)
+                except (RuntimeError, ValueError) as exc:
+                    run_goal.hint = str(exc)
+                self.refresh_controls()
 
             @pause.on_click
             def _(_) -> None:
@@ -332,8 +515,14 @@ class MjviserBridge:
                 for client in clients:
                     _apply_camera_preset(client, preset)
 
+        with panel.add_tab("Plan", viser.Icon.TIMELINE):
+            self._plan_html = self._server.gui.add_html("")
+
         with panel.add_tab("Graph", viser.Icon.GRAPH):
             self._graph_html = self._server.gui.add_html("")
+
+        with panel.add_tab("Events", viser.Icon.ACTIVITY):
+            self._events_html = self._server.gui.add_html("")
 
     def _register_camera_handler(self) -> None:
         if self._server is None:
@@ -348,8 +537,8 @@ def _status_markdown(snapshot: ReplaySnapshot, status: str) -> str:
     total = snapshot.total_steps
     displayed_step = min(snapshot.episode_step + 1, total) if total else 0
     return (
-        f"## Retriever replay\n"
-        f"**{snapshot.task}** | episode `{snapshot.episode}`\n\n"
+        f"## Retriever console\n"
+        f"**{snapshot.task}** | episode `{snapshot.episode}` | `{snapshot.planner}`\n\n"
         f"| | |\n|---|---:|\n"
         f"| Status | **{status}** |\n"
         f"| Action | `{displayed_step} / {total}` |\n"
@@ -376,15 +565,111 @@ def _graph_html(snapshot: ReplaySnapshot, status: str) -> str:
         '<strong style="font-size:17px;">Live Retriever Flow</strong>'
         f'<span style="font-size:11px; font-weight:700; color:{status_color}; '
         f'letter-spacing:0.04em;">{status.upper()}</span></div>'
+        f"{_flow_node('GOAL', 'GoalSource', '#475569', '#f8fafc', snapshot.goal_text or task)}"
+        f"{_flow_edge('EmbodiedGoal', 'Trigger', '#475569')}"
+        f"{_flow_node('PLAN', 'EmbodiedPlanner', '#7c3aed', '#faf5ff', snapshot.planner)}"
+        f"{_flow_edge('SkillPlan', 'Trigger', '#7c3aed')}"
+        f"{_flow_node('DISPATCH', 'SkillDispatcher', '#0369a1', '#f0f9ff', snapshot.current_step_id or 'verified')}"
+        f"{_flow_edge('ExecutionState', 'Latest', '#0369a1')}"
         f"{_flow_node('SOURCE', 'DemoActionSource', '#0e7490', '#ecfeff', f'{task} / action {displayed_step} of {total}')}"
         f"{_flow_edge('RoboCasaAction', 'Latest', '#0e7490')}"
         f"{_flow_node('SIMULATOR', 'RoboCasaSimulator', '#b45309', '#fffbeb', f'MuJoCo / {snapshot.progress:.1%} complete')}"
         f"{_flow_edge('RoboCasaObservation', 'Latest', '#b45309')}"
-        f"{_flow_node('TRIGGER', 'ObservationPrinter', '#15803d', '#f0fdf4', f'episode_step / reward {snapshot.reward:.3f}')}"
+        f"{_flow_node('VERIFY', 'TaskVerifier', '#15803d', '#f0fdf4', f'reward {snapshot.reward:.3f} / success {snapshot.success}')}"
+        f"{_flow_edge('ExecutionEvent', 'Trigger', '#15803d')}"
+        f"{_flow_node('SINK', 'EventSink', '#be123c', '#fff1f2', f'{len(snapshot.events)} lifecycle events')}"
         '<div style="margin-top:13px; padding-top:10px; border-top:1px solid #d8dee8; '
         'font-size:11px; line-height:1.45; color:#667085;">'
         "Browser controls and graph state share the same thread-safe replay "
         "state used by the Retriever Flows.</div></div>"
+    )
+
+
+def _plan_html(snapshot: ReplaySnapshot) -> str:
+    plan = snapshot.plan
+    if plan is None:
+        return _empty_panel("No plan yet", "Submit a goal from the Run tab.")
+    rows: list[str] = []
+    completed = {
+        event.step_id
+        for event in snapshot.events
+        if event.status == "completed" and event.step_id
+    }
+    for index, step in enumerate(plan.steps, start=1):
+        if step.step_id in completed:
+            state, color, background, symbol = (
+                "Completed",
+                "#15803d",
+                "#f0fdf4",
+                "&#10003;",
+            )
+        elif step.step_id == snapshot.current_step_id:
+            state, color, background, symbol = (
+                "Running",
+                "#2563eb",
+                "#eff6ff",
+                "&#9654;",
+            )
+        else:
+            state, color, background, symbol = (
+                "Pending",
+                "#64748b",
+                "#f8fafc",
+                str(index),
+            )
+        rows.append(
+            '<div style="display:grid;grid-template-columns:28px 1fr auto;gap:9px;'
+            f'align-items:center;padding:10px;border:1px solid #d8dee8;border-left:4px solid {color};'
+            f'border-radius:6px;background:{background};margin-bottom:8px;">'
+            f'<span style="width:24px;height:24px;border-radius:50%;background:{color};color:white;'
+            f'display:grid;place-items:center;font-size:11px;font-weight:800;">{symbol}</span>'
+            f'<div><strong style="font-size:13px;color:#172033;">{escape(step.label)}</strong>'
+            f'<div style="font-size:10px;color:#667085;margin-top:2px;">{escape(step.skill)} | {escape(step.lane)}</div></div>'
+            f'<span style="font-size:9px;font-weight:800;color:{color};text-transform:uppercase;">{state}</span></div>'
+        )
+    return (
+        '<div style="font-family:Inter,ui-sans-serif,system-ui,sans-serif;padding:6px 2px 12px;color:#172033;">'
+        '<div style="font-size:17px;font-weight:750;margin-bottom:3px;">Skill timeline</div>'
+        f'<div style="font-size:11px;color:#667085;margin-bottom:13px;">{escape(plan.source)} plan | {len(plan.steps)} verified phases</div>'
+        + "".join(rows)
+        + "</div>"
+    )
+
+
+def _events_html(snapshot: ReplaySnapshot) -> str:
+    if not snapshot.events:
+        return _empty_panel("No events yet", "Execution events appear after dispatch.")
+    colors = {
+        "completed": "#15803d",
+        "running": "#2563eb",
+        "failed": "#b91c1c",
+        "verified": "#047857",
+    }
+    rows = []
+    for event in reversed(snapshot.events[-24:]):
+        color = colors.get(event.status, "#64748b")
+        rows.append(
+            '<div style="display:grid;grid-template-columns:45px 9px 1fr;gap:8px;'
+            'align-items:start;padding:8px 2px;border-bottom:1px solid #e5e7eb;">'
+            f'<span style="font:10px ui-monospace,SFMono-Regular,Menlo,monospace;color:#667085;">+{event.elapsed_seconds:.1f}s</span>'
+            f'<span style="width:8px;height:8px;border-radius:50%;background:{color};margin-top:3px;"></span>'
+            f'<div><strong style="font-size:11px;color:{color};text-transform:uppercase;">{escape(event.status)}</strong>'
+            f'<div style="font-size:12px;color:#344054;margin-top:2px;line-height:1.35;">{escape(event.message)}</div></div></div>'
+        )
+    return (
+        '<div style="font-family:Inter,ui-sans-serif,system-ui,sans-serif;padding:6px 2px 12px;color:#172033;">'
+        '<div style="font-size:17px;font-weight:750;margin-bottom:10px;">Execution events</div>'
+        + "".join(rows)
+        + "</div>"
+    )
+
+
+def _empty_panel(title: str, detail: str) -> str:
+    return (
+        '<div style="font-family:Inter,ui-sans-serif,system-ui,sans-serif;'
+        'padding:18px 4px;color:#667085;">'
+        f'<strong style="display:block;color:#344054;margin-bottom:5px;">'
+        f"{escape(title)}</strong>{escape(detail)}</div>"
     )
 
 
