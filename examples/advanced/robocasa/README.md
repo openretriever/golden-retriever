@@ -1,25 +1,34 @@
-# RoboCasa Demonstration Replay
+# Retriever Embodied Demo Console
 
-This example connects Retriever to an actual RoboCasa simulator. Recorded human
-actions are emitted by one `Flow`, consumed by a RoboCasa physics `Flow`, and
-published as typed observations for stdout or Rerun.
+This example connects Retriever to an actual RoboCasa simulator through an
+offline-first, inspectable execution path:
 
 ```text
-DemoActionSource @ 20 Hz
-          |
-        Latest
-          v
-RoboCasaSimulator @ 20 Hz ---> ObservationPrinter @ Trigger
-          |
-          +-- native MuJoCo viewer, or
-          +-- live browser scene through mjviser, or
-          +-- offscreen camera + telemetry in Rerun
+Goal -> Planner -> Skill plan -> Verified RoboCasa replay
 ```
 
-The layers have separate jobs: RoboCasa defines kitchen tasks and datasets;
-RoboSuite composes the robot, objects, arena, and controllers; MuJoCo advances
-physics; Retriever connects action and observation Flows; mjviser displays the
-live MuJoCo model and data in a browser. Rerun remains the better view for
+The default planner maps a supported goal to a validated task manifest without
+network access or credentials. Retriever then dispatches a known-good RoboCasa
+demonstration and reports progress, step results, reward, and task verification
+in the browser console.
+
+```text
+GoalSource -> EmbodiedPlanner -> SkillDispatcher -> DemoActionSource
+                                                        |
+                                                      Latest
+                                                        v
+                         EventSink <- TaskVerifier <- RoboCasaSimulator
+                                                        |
+                                                        +-- mjviser browser scene
+                                                        +-- native MuJoCo viewer
+                                                        +-- Rerun or MP4 capture
+```
+
+The ownership boundaries stay narrow: RoboCasa defines kitchen tasks,
+demonstrations, and success signals; RoboSuite composes the robot, objects,
+arena, and controllers; MuJoCo advances physics; Retriever owns goals, typed
+plans, dispatch, replay controls, events, and verification; mjviser renders the
+live `MjModel` and `MjData` in the browser. Rerun remains the better view for
 camera frames, Flow execution, scalar telemetry, and saved traces.
 
 ## 1. Mock-safe contract
@@ -99,8 +108,10 @@ Start the local scene launcher, then open `http://localhost:8084`:
 retriever run demo-robocasa-scenes
 ```
 
-The launcher discovers downloaded RoboCasa human demonstrations, so its scene
-list reflects what is runnable on the current machine. Choose a task and
+The launcher highlights the curated `PrepareCoffee`, `CoffeeSetupMug`,
+`StartCoffeeMachine`, and `TurnOnMicrowave` tasks, and also discovers other
+compatible installed human demonstrations. Missing datasets remain visible
+with an unavailable reason instead of failing during launch. Choose a task and
 episode, start it, then open the live viewer on `http://localhost:8085`.
 Starting another scene stops the current viewer first; each RoboCasa task owns
 a different environment, demonstration, and MuJoCo model.
@@ -110,6 +121,25 @@ the focused experiment console for replay controls, camera presets, and the
 live Retriever graph. At most one simulator child runs at a time.
 
 ## 5. Run a real replay directly
+
+The concise Python entry point uses the offline planner by default:
+
+```python
+from examples.advanced.robocasa.app import run
+
+run(
+    task="PrepareCoffee",
+    episode=0,
+    planner="offline",
+    visualize="mjviser",
+    open_browser=True,
+)
+```
+
+The replay remains deterministic and inspectable: the planner selects an
+allow-listed skill plan, the dispatcher advances phase markers such as locate,
+pick, place, activate, and verify, and RoboCasa supplies the final success
+signal. The existing replay command-line interface remains available.
 
 Headless physics, suitable for Linux workers:
 
@@ -147,21 +177,22 @@ simulator, not a separately stepped WebAssembly scene or an exported XML with
 default joint state. Install `mjviser` in the configured RoboCasa environment;
 the external simulator environment owns the tested MuJoCo compatibility override.
 
-The left **Retriever replay** panel controls the actual recorded-action Flow:
-pause or resume the replay, advance one action while paused, restart the
-episode, or slow execution for inspection. Its **Graph** tab renders a live
-HTML node-and-edge view of the
-`DemoActionSource -> RoboCasaSimulator -> ObservationPrinter` handoff. Restart
-resets MuJoCo in place and increments the displayed replay cycle. New browser
-clients open in the unobstructed agent-facing view; use the **Camera** control
-to switch to a tracked third-person robot view or overhead overview. mjviser's
-**Track camera** toggle changes between following the robot and a static world
-frame.
+The left Retriever console controls the actual recorded-action Flow. **Run**
+pauses, resumes, single-steps, restarts, and changes replay speed. **Plan**
+shows the ordered skill phases and their results. **Graph** renders the live
+seven-stage typed Flow from `GoalSource` through `EventSink`, and **Events**
+shows the compact execution and verification log. Restart resets MuJoCo in
+place and increments the displayed replay cycle. New browser clients open in
+the unobstructed agent-facing view; use the **Camera** control to switch to a
+tracked third-person robot view or overhead overview. mjviser's **Track
+camera** toggle changes between following the robot and a static world frame.
 
 Use `demo-robocasa-scenes` to switch between `PrepareCoffee`,
-`TurnOnMicrowave`, or another installed dataset. The viewer stays bound to one
-task because switching tasks replaces the RoboCasa environment, recorded
-actions, and MuJoCo model.
+`CoffeeSetupMug`, `StartCoffeeMachine`, `TurnOnMicrowave`, or another installed
+dataset. `CoffeeSetupMug` is the initial atomic pick-place example;
+`PrepareCoffee` is the composite example. The viewer stays bound to one task
+because switching tasks replaces the RoboCasa environment, recorded actions,
+and MuJoCo model.
 
 For a longer composite task, download one dataset and replay it through the
 same Flow:
@@ -223,6 +254,28 @@ combined with `--viewer` in the same process.
 This is a recorded-demonstration replay, not a learned policy benchmark. Its
 purpose is to make the simulator connection visible and reproducible first.
 
+## Optional Gemini planner
+
+Set `planner="gemini"` to use the optional Gemini embodied-reasoning planner.
+Its output is parsed as a structured `SkillPlan` and rejected unless every
+step uses the same allow-listed skills accepted by the offline planner. It
+cannot execute code or send arbitrary MuJoCo controls. If credentials or the
+optional client are unavailable, the console falls back to the offline plan.
+
+## Platform support
+
+- **macOS:** primary local path for interactive mjviser and native MuJoCo
+  inspection.
+- **Linux:** interactive or headless replay, including remote experiment
+  workers and saved Rerun artifacts.
+- **Windows:** supported through WSL2 where the Linux simulator and browser
+  networking requirements are available; native Windows is not a tested
+  target.
+
+The console has no ROS or Isaac Sim dependency. The referenced Isaac Sim
+Gemini Robotics project informed interaction patterns only; this implementation
+uses Retriever, RoboCasa, MuJoCo, and mjviser directly.
+
 ## Related building blocks
 
 - [`robosuite_lift.py`](robosuite_lift.py) provides the smaller closed-loop
@@ -248,3 +301,4 @@ purpose is to make the simulator connection visible and reproducible first.
 
 Future TAMP demos should replace `DemoActionSource` with planner and executor
 Flows while reusing `RoboCasaSimulator` and either visualization path.
+
