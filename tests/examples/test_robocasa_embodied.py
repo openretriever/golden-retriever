@@ -3,7 +3,6 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import pytest
-
 from examples.advanced.robocasa.embodied import (
     EmbodiedGoal,
     GeminiEmbodiedPlanner,
