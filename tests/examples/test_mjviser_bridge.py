@@ -6,13 +6,16 @@ from types import SimpleNamespace
 
 import numpy as np
 import pytest
+from examples.advanced.robocasa.embodied import EmbodiedGoal, OfflineEmbodiedPlanner
 from examples.advanced.robocasa.mjviser_bridge import (
     _DEFAULT_CAMERA_PRESETS,
     MjviserBridge,
     ReplayControls,
     _apply_camera_preset,
     _camera_presets_from_robot,
+    _events_html,
     _graph_html,
+    _plan_html,
     _robot_tracking_body_id,
 )
 
@@ -74,11 +77,53 @@ def test_live_graph_html_contains_typed_flow_and_escapes_task() -> None:
     assert "RoboCasaAction" in html
     assert "RoboCasaSimulator" in html
     assert "RoboCasaObservation" in html
-    assert "ObservationPrinter" in html
+    assert "GoalSource" in html
+    assert "EmbodiedPlanner" in html
+    assert "SkillDispatcher" in html
+    assert "TaskVerifier" in html
+    assert "EventSink" in html
     assert "action 25 of 100" in html
     assert "25.0% complete" in html
     assert "Coffee &lt;script&gt;" in html
     assert "Coffee <script>" not in html
+
+
+def test_plan_and_events_follow_replay_progress() -> None:
+    controls = ReplayControls(task="PrepareCoffee", episode=0)
+    goal = EmbodiedGoal(task="PrepareCoffee", text="Make coffee")
+    plan = OfflineEmbodiedPlanner().plan(goal)
+    controls.configure_execution(plan.goal, plan)
+    controls.update_observation(
+        episode_step=400,
+        cycle=0,
+        progress=0.6,
+        reward=0.0,
+        success=False,
+        action_norm=1.0,
+    )
+
+    snapshot = controls.snapshot()
+    statuses = [(event.step_id, event.status) for event in snapshot.events]
+
+    assert snapshot.current_step_id == "step-3"
+    assert statuses[:2] == [("", "completed"), ("step-1", "running")]
+    assert ("step-1", "completed") in statuses
+    assert ("step-2", "completed") in statuses
+    assert ("step-3", "running") in statuses
+    assert "Place the mug under the dispenser" in _plan_html(snapshot)
+    assert "Execution events" in _events_html(snapshot)
+
+    controls.update_observation(
+        episode_step=748,
+        cycle=0,
+        progress=1.0,
+        reward=1.0,
+        success=True,
+        action_norm=0.5,
+    )
+    verified = controls.snapshot()
+    assert verified.current_step_id == ""
+    assert verified.events[-1].status == "verified"
 
 
 def test_bridge_streams_native_robosuite_state(monkeypatch) -> None:
