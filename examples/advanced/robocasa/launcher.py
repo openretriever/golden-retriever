@@ -12,7 +12,11 @@ from pathlib import Path
 from threading import RLock
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+try:
+    from pydantic import BaseModel, Field
+except ImportError:
+    BaseModel = None
+    Field = None
 
 
 @dataclass(frozen=True)
@@ -30,11 +34,18 @@ class Scene:
         return asdict(self)
 
 
-class LaunchRequest(BaseModel):
-    task: str
-    episode: int = Field(default=0, ge=0)
-    goal: str = Field(default="", max_length=2_000)
-    planner: Literal["offline", "gemini"] = "offline"
+if BaseModel is not None and Field is not None:
+
+    class LaunchRequest(BaseModel):
+        task: str
+        episode: int = Field(default=0, ge=0)
+        goal: str = Field(default="", max_length=2_000)
+        planner: Literal["offline", "gemini"] = "offline"
+        execution_mode: Literal["demonstration", "live_planning"] = "demonstration"
+        interface: Literal["console", "viser"] = "console"
+
+else:
+    LaunchRequest = None
 
 
 _PREVIEWS = {
@@ -44,6 +55,19 @@ _PREVIEWS = {
 
 _CURATED_TASKS = (
     ("PrepareCoffee", "Composite"),
+    ("DeliverStraw", "Composite"),
+    ("OpenDrawer", "Atomic"),
+    ("OpenCabinet", "Atomic"),
+    ("PackIdenticalLunches", "Composite"),
+    ("LoadDishwasher", "Composite"),
+    ("LoadFridgeByType", "Composite"),
+    ("ArrangeDrinkware", "Composite"),
+    ("OrganizeCondiments", "Composite"),
+    ("StackBowlsCabinet", "Composite"),
+    ("RestockPantry", "Composite"),
+    ("MicrowaveCorrectMeal", "Composite"),
+    ("PrepareToast", "Composite"),
+    ("SetupFrying", "Composite"),
     ("CoffeeSetupMug", "Atomic"),
     ("StartCoffeeMachine", "Atomic"),
     ("TurnOnMicrowave", "Atomic"),
@@ -126,11 +150,19 @@ def _unavailable_scene(task: str, kind: str, reason: str) -> Scene:
 
 
 class ViewerManager:
-    """Own at most one task-specific mjviser child process."""
+    """Own one task-specific Retriever console and simulator process."""
 
-    def __init__(self, *, host: str, port: int, duration: float) -> None:
+    def __init__(
+        self,
+        *,
+        host: str,
+        port: int,
+        duration: float,
+        console_port: int | None = None,
+    ) -> None:
         self.host = host
         self.port = int(port)
+        self.console_port = int(console_port if console_port is not None else port + 1)
         self.duration = float(duration)
         self._lock = RLock()
         self._process: subprocess.Popen[Any] | None = None
@@ -138,6 +170,8 @@ class ViewerManager:
         self._episode = 0
         self._goal = ""
         self._planner = "offline"
+        self._execution_mode = "demonstration"
+        self._interface: Literal["console", "viser"] = "console"
 
     @property
     def viewer_url(self) -> str:
@@ -145,6 +179,13 @@ class ViewerManager:
             "localhost" if self.host in {"0.0.0.0", "127.0.0.1"} else self.host
         )
         return f"http://{display_host}:{self.port}"
+
+    @property
+    def console_url(self) -> str:
+        display_host = (
+            "localhost" if self.host in {"0.0.0.0", "127.0.0.1"} else self.host
+        )
+        return f"http://{display_host}:{self.console_port}"
 
     def command(
         self,
@@ -154,8 +195,10 @@ class ViewerManager:
         episode: int,
         goal: str = "",
         planner: Literal["offline", "gemini"] = "offline",
+        execution_mode: Literal["demonstration", "live_planning"] = "demonstration",
+        interface: Literal["console", "viser"] = "console",
     ) -> list[str]:
-        return [
+        command = [
             sys.executable,
             "-m",
             "examples.advanced.robocasa.app",
@@ -171,6 +214,8 @@ class ViewerManager:
             goal.strip() or task,
             "--planner",
             planner,
+            "--execution-mode",
+            execution_mode,
             "--seconds",
             str(self.duration),
             "--hz",
@@ -181,9 +226,16 @@ class ViewerManager:
             self.host,
             "--viser-port",
             str(self.port),
+            "--console-host",
+            self.host,
+            "--console-port",
+            str(self.console_port),
             "--print-every",
             "100",
         ]
+        if interface == "viser":
+            command.append("--native-viser-controls")
+        return command
 
     def launch(
         self,
@@ -192,6 +244,8 @@ class ViewerManager:
         *,
         goal: str = "",
         planner: Literal["offline", "gemini"] = "offline",
+        execution_mode: Literal["demonstration", "live_planning"] = "demonstration",
+        interface: Literal["console", "viser"] = "console",
     ) -> dict[str, Any]:
         if not scene.available:
             raise ValueError(scene.unavailable_reason or "Dataset is unavailable.")
@@ -206,6 +260,8 @@ class ViewerManager:
                     episode=episode,
                     goal=goal,
                     planner=planner,
+                    execution_mode=execution_mode,
+                    interface=interface,
                 ),
                 cwd=Path(__file__).resolve().parents[3],
             )
@@ -213,6 +269,8 @@ class ViewerManager:
             self._episode = episode
             self._goal = goal.strip() or scene.task
             self._planner = planner
+            self._execution_mode = execution_mode
+            self._interface = interface
             return self.status()
 
     def stop(self) -> dict[str, Any]:
@@ -227,7 +285,10 @@ class ViewerManager:
                 state = "idle"
             elif process.poll() is not None:
                 state = "stopped" if process.returncode == 0 else "failed"
-            elif _port_is_open(self.host, self.port):
+            elif _port_is_open(
+                self.host,
+                self.port if self._interface == "viser" else self.console_port,
+            ):
                 state = "ready"
             else:
                 state = "starting"
@@ -237,7 +298,13 @@ class ViewerManager:
                 "episode": self._episode,
                 "goal": self._goal,
                 "planner": self._planner,
+                "execution_mode": self._execution_mode,
+                "interface": self._interface,
                 "viewer_url": self.viewer_url,
+                "console_url": self.console_url,
+                "open_url": (
+                    self.viewer_url if self._interface == "viser" else self.console_url
+                ),
             }
 
     def _stop_locked(self) -> None:
@@ -254,6 +321,8 @@ class ViewerManager:
         self._episode = 0
         self._goal = ""
         self._planner = "offline"
+        self._execution_mode = "demonstration"
+        self._interface = "console"
 
 
 def _port_is_open(host: str, port: int) -> bool:
@@ -268,14 +337,28 @@ def _port_is_open(host: str, port: int) -> bool:
         connection.close()
 
 
-def create_app(*, viewer_host: str, viewer_port: int, duration: float):
+def create_app(
+    *,
+    viewer_host: str,
+    viewer_port: int,
+    duration: float,
+    console_port: int | None = None,
+):
     from fastapi import FastAPI, HTTPException
     from fastapi.responses import HTMLResponse
     from fastapi.staticfiles import StaticFiles
 
+    if LaunchRequest is None:
+        raise RuntimeError("The RoboCasa launcher requires the web extra.")
+
     scenes = discover_scenes()
     by_task = {scene.task: scene for scene in scenes}
-    manager = ViewerManager(host=viewer_host, port=viewer_port, duration=duration)
+    manager = ViewerManager(
+        host=viewer_host,
+        port=viewer_port,
+        duration=duration,
+        console_port=console_port,
+    )
 
     @asynccontextmanager
     async def lifespan(_app):
@@ -315,6 +398,8 @@ def create_app(*, viewer_host: str, viewer_port: int, duration: float):
                 request.episode,
                 goal=request.goal,
                 planner=request.planner,
+                execution_mode=request.execution_mode,
+                interface=request.interface,
             )
         except ValueError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
@@ -332,6 +417,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--port", type=int, default=8084)
     parser.add_argument("--viewer-host", default="127.0.0.1")
     parser.add_argument("--viewer-port", type=int, default=8085)
+    parser.add_argument("--console-port", type=int, default=8086)
     parser.add_argument("--duration", type=float, default=180.0)
     return parser.parse_args()
 
@@ -344,6 +430,7 @@ def main() -> None:
         viewer_host=args.viewer_host,
         viewer_port=args.viewer_port,
         duration=args.duration,
+        console_port=args.console_port,
     )
     print(f"Retriever RoboCasa scenes: http://localhost:{args.port}")
     uvicorn.run(app, host=args.host, port=args.port, log_level="warning")

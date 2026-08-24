@@ -1,12 +1,18 @@
 from __future__ import annotations
 
+import importlib.util
 import sys
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+
+FASTAPI_AVAILABLE = importlib.util.find_spec("fastapi") is not None
+if FASTAPI_AVAILABLE:
+    from fastapi.testclient import TestClient
+
 from examples.advanced.robocasa import launcher
 from examples.advanced.robocasa.launcher import Scene, ViewerManager
-from fastapi.testclient import TestClient
 
 SCENE = Scene(
     task="TurnOnMicrowave",
@@ -54,6 +60,19 @@ def test_discovery_always_includes_curated_tasks(monkeypatch, tmp_path: Path) ->
 
     assert [scene.task for scene in scenes] == [
         "PrepareCoffee",
+        "DeliverStraw",
+        "OpenDrawer",
+        "OpenCabinet",
+        "PackIdenticalLunches",
+        "LoadDishwasher",
+        "LoadFridgeByType",
+        "ArrangeDrinkware",
+        "OrganizeCondiments",
+        "StackBowlsCabinet",
+        "RestockPantry",
+        "MicrowaveCorrectMeal",
+        "PrepareToast",
+        "SetupFrying",
         "CoffeeSetupMug",
         "StartCoffeeMachine",
         "TurnOnMicrowave",
@@ -71,6 +90,7 @@ def test_viewer_command_runs_existing_retriever_robocasa_app() -> None:
         episode=3,
         goal="Warm the soup",
         planner="gemini",
+        interface="viser",
     )
 
     assert command[1:3] == ["-m", "examples.advanced.robocasa.app"]
@@ -80,6 +100,7 @@ def test_viewer_command_runs_existing_retriever_robocasa_app() -> None:
     assert command[command.index("--viser-port") + 1] == "8085"
     assert command[command.index("--goal") + 1] == "Warm the soup"
     assert command[command.index("--planner") + 1] == "gemini"
+    assert "--native-viser-controls" in command
     assert command[0] == sys.executable
 
 
@@ -120,6 +141,63 @@ def test_viewer_manager_replaces_and_stops_child(monkeypatch) -> None:
     assert stopped["state"] == "idle"
 
 
+def test_viewer_manager_checks_selected_interface_port(monkeypatch) -> None:
+    checked_ports = []
+
+    class RunningProcess:
+        returncode = None
+
+        def poll(self):
+            return None
+
+    monkeypatch.setattr(
+        launcher,
+        "_port_is_open",
+        lambda _host, port: checked_ports.append(port) or True,
+    )
+    manager = ViewerManager(
+        host="127.0.0.1",
+        port=8085,
+        console_port=8086,
+        duration=180,
+    )
+    manager._process = RunningProcess()
+
+    manager._interface = "viser"
+    assert manager.status()["state"] == "ready"
+    manager._interface = "console"
+    assert manager.status()["state"] == "ready"
+
+    assert checked_ports == [8085, 8086]
+
+
+def test_viewer_command_keeps_standalone_console_renderer_neutral() -> None:
+    manager = ViewerManager(host="127.0.0.1", port=8085, duration=180)
+
+    command = manager.command(
+        task=SCENE.task,
+        split=SCENE.split,
+        episode=0,
+        interface="console",
+    )
+
+    assert "--native-viser-controls" not in command
+
+
+def test_viewer_command_forwards_live_planning_mode() -> None:
+    manager = ViewerManager(host="127.0.0.1", port=8085, duration=180)
+
+    command = manager.command(
+        task=SCENE.task,
+        split=SCENE.split,
+        episode=0,
+        execution_mode="live_planning",
+        interface="console",
+    )
+
+    assert command[command.index("--execution-mode") + 1] == "live_planning"
+
+
 def test_viewer_manager_rejects_unavailable_scene(monkeypatch) -> None:
     monkeypatch.setattr(
         launcher.subprocess,
@@ -146,6 +224,7 @@ def test_viewer_manager_rejects_unavailable_scene(monkeypatch) -> None:
         raise AssertionError("Unavailable scene was launched")
 
 
+@pytest.mark.skipif(not FASTAPI_AVAILABLE, reason="FastAPI extra is not installed")
 def test_launcher_lists_installed_scenes(monkeypatch) -> None:
     stops = []
     monkeypatch.setattr(launcher, "discover_scenes", lambda: [SCENE])
@@ -179,6 +258,7 @@ def test_launcher_lists_installed_scenes(monkeypatch) -> None:
     assert stops == [True]
 
 
+@pytest.mark.skipif(not FASTAPI_AVAILABLE, reason="FastAPI extra is not installed")
 def test_launcher_reports_unavailable_dataset_without_launching(monkeypatch) -> None:
     unavailable = Scene(
         task="PrepareCoffee",
@@ -216,15 +296,15 @@ def test_launcher_reports_unavailable_dataset_without_launching(monkeypatch) -> 
     assert response.status_code == 409
 
 
+@pytest.mark.skipif(not FASTAPI_AVAILABLE, reason="FastAPI extra is not installed")
 def test_launcher_forwards_goal_and_planner(monkeypatch) -> None:
     launches = []
     manager = SimpleNamespace(
         status=dict,
         stop=lambda: None,
-        launch=lambda scene, episode, **kwargs: launches.append(
-            (scene.task, episode, kwargs)
-        )
-        or {"state": "starting"},
+        launch=lambda scene, episode, **kwargs: (
+            launches.append((scene.task, episode, kwargs)) or {"state": "starting"}
+        ),
     )
     monkeypatch.setattr(launcher, "discover_scenes", lambda: [SCENE])
     monkeypatch.setattr(launcher, "ViewerManager", lambda **_kwargs: manager)
@@ -238,6 +318,8 @@ def test_launcher_forwards_goal_and_planner(monkeypatch) -> None:
                 "episode": 2,
                 "goal": "Heat dinner",
                 "planner": "gemini",
+                "execution_mode": "live_planning",
+                "interface": "viser",
             },
         )
 
@@ -246,6 +328,11 @@ def test_launcher_forwards_goal_and_planner(monkeypatch) -> None:
         (
             "TurnOnMicrowave",
             2,
-            {"goal": "Heat dinner", "planner": "gemini"},
+            {
+                "goal": "Heat dinner",
+                "planner": "gemini",
+                "execution_mode": "live_planning",
+                "interface": "viser",
+            },
         )
     ]
