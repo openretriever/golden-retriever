@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import sys
 from contextlib import nullcontext
+from threading import Event, Thread
 from types import SimpleNamespace
 
 import numpy as np
 import pytest
+
 from examples.advanced.robocasa.embodied import EmbodiedGoal, OfflineEmbodiedPlanner
 from examples.advanced.robocasa.mjviser_bridge import (
     _DEFAULT_CAMERA_PRESETS,
@@ -54,9 +56,71 @@ def test_replay_controls_pause_step_restart_and_speed() -> None:
     assert snapshot.status == "Restarting"
     assert snapshot.paused is False
     assert snapshot.progress == 0.0
+    assert snapshot.cycle == 1
 
     with pytest.raises(ValueError, match="positive"):
         controls.set_speed(0.0)
+
+
+def test_restart_ignores_late_observations_from_previous_cycle() -> None:
+    controls = ReplayControls(task="PrepareCoffee", episode=0)
+    controls.set_total_steps(10)
+    controls.update_observation(
+        episode_step=9,
+        cycle=0,
+        progress=1.0,
+        reward=1.0,
+        success=True,
+        action_norm=0.5,
+    )
+
+    controls.request_restart()
+    controls.update_observation(
+        episode_step=9,
+        cycle=0,
+        progress=1.0,
+        reward=1.0,
+        success=True,
+        action_norm=0.5,
+    )
+
+    snapshot = controls.snapshot()
+    assert snapshot.cycle == 1
+    assert snapshot.status == "Restarting"
+    assert snapshot.success is False
+    assert snapshot.progress == 0.0
+
+    assert controls.claim_next_action() == (True, True)
+    controls.update_observation(
+        episode_step=0,
+        cycle=1,
+        progress=0.0,
+        reward=0.0,
+        success=False,
+        action_norm=0.25,
+    )
+    assert controls.snapshot().status == "Running"
+
+
+def test_repeated_restart_requests_advance_one_cycle_each() -> None:
+    controls = ReplayControls(task="PrepareCoffee", episode=0)
+
+    controls.request_restart()
+    controls.request_restart()
+    assert controls.snapshot().cycle == 1
+    assert controls.claim_next_action() == (True, True)
+
+    controls.update_observation(
+        episode_step=0,
+        cycle=1,
+        progress=0.0,
+        reward=0.0,
+        success=False,
+        action_norm=0.25,
+    )
+    controls.request_restart()
+    assert controls.snapshot().cycle == 2
+    assert controls.claim_next_action() == (True, True)
 
 
 def test_live_graph_html_contains_typed_flow_and_escapes_task() -> None:
@@ -124,6 +188,212 @@ def test_plan_and_events_follow_replay_progress() -> None:
     verified = controls.snapshot()
     assert verified.current_step_id == ""
     assert verified.events[-1].status == "verified"
+
+
+def test_plan_advances_across_hierarchical_stages() -> None:
+    controls = ReplayControls(task="PrepareCoffee", episode=0)
+    plan = OfflineEmbodiedPlanner().plan(
+        EmbodiedGoal(task="PrepareCoffee", text="Make coffee")
+    )
+    controls.configure_execution(plan.goal, plan)
+
+    stages = []
+    for step in plan.steps:
+        if not stages or stages[-1][0] != step.stage_id:
+            stages.append((step.stage_id, []))
+        stages[-1][1].append(step)
+
+    seen_stages = []
+    completed_step_ids: set[str] = set()
+    for stage_id, stage_steps in stages:
+        progress = (stage_steps[0].start_fraction + stage_steps[-1].end_fraction) / 2.0
+        controls.update_observation(
+            episode_step=round(progress * 749),
+            cycle=0,
+            progress=progress,
+            reward=0.0,
+            success=False,
+            action_norm=1.0,
+        )
+        snapshot = controls.snapshot()
+        active_step = next(
+            step for step in plan.steps if step.step_id == snapshot.current_step_id
+        )
+        seen_stages.append(active_step.stage_id)
+        completed_events = {
+            event.step_id
+            for event in snapshot.events
+            if event.status == "completed" and event.step_id
+        }
+        assert completed_step_ids <= completed_events
+        assert any(
+            event.step_id == active_step.step_id and event.status == "running"
+            for event in snapshot.events
+        )
+        completed_step_ids.update(step.step_id for step in stage_steps)
+
+    assert seen_stages == [stage_id for stage_id, _ in stages]
+
+
+def test_success_status_remains_terminal_after_replay_completion() -> None:
+    controls = ReplayControls(task="PrepareCoffee", episode=0)
+    plan = OfflineEmbodiedPlanner().plan(
+        EmbodiedGoal(task="PrepareCoffee", text="Make coffee")
+    )
+    controls.configure_execution(plan.goal, plan)
+    controls.update_observation(
+        episode_step=748,
+        cycle=0,
+        progress=1.0,
+        reward=1.0,
+        success=True,
+        action_norm=0.5,
+    )
+
+    controls.mark_complete()
+    controls.set_paused(True)
+    controls.set_paused(False)
+    controls.request_step()
+    controls.update_observation(
+        episode_step=749,
+        cycle=0,
+        progress=1.0,
+        reward=0.0,
+        success=False,
+        action_norm=0.0,
+    )
+
+    snapshot = controls.snapshot()
+    assert snapshot.status == "Success"
+    assert snapshot.success is True
+    assert snapshot.paused is False
+    assert snapshot.current_step_id == ""
+    assert sum(event.status == "verified" for event in snapshot.events) == 1
+    assert not any(event.status == "failed" for event in snapshot.events)
+    assert controls.claim_next_action() == (True, False)
+
+
+def test_late_success_replaces_a_stale_terminal_failure() -> None:
+    controls = ReplayControls(task="PrepareCoffee", episode=0)
+    plan = OfflineEmbodiedPlanner().plan(
+        EmbodiedGoal(task="PrepareCoffee", text="Make coffee")
+    )
+    controls.configure_execution(plan.goal, plan)
+    controls.set_total_steps(750)
+    controls.mark_complete()
+    controls.update_observation(
+        episode_step=749,
+        cycle=0,
+        progress=1.0,
+        reward=0.0,
+        success=False,
+        action_norm=0.0,
+    )
+
+    controls.update_observation(
+        episode_step=731,
+        cycle=0,
+        progress=0.977,
+        reward=1.0,
+        success=True,
+        action_norm=0.5,
+    )
+
+    snapshot = controls.snapshot()
+    assert snapshot.status == "Success"
+    assert snapshot.success is True
+    assert not any(event.status == "failed" for event in snapshot.events)
+    assert sum(event.status == "verified" for event in snapshot.events) == 1
+
+
+def test_failed_status_records_unverified_terminal_outcome() -> None:
+    controls = ReplayControls(task="PrepareCoffee", episode=0)
+    plan = OfflineEmbodiedPlanner().plan(
+        EmbodiedGoal(task="PrepareCoffee", text="Make coffee")
+    )
+    controls.configure_execution(plan.goal, plan)
+    controls.set_total_steps(750)
+    controls.mark_complete()
+
+    controls.update_observation(
+        episode_step=749,
+        cycle=0,
+        progress=1.0,
+        reward=0.0,
+        success=False,
+        action_norm=0.0,
+    )
+
+    snapshot = controls.snapshot()
+    assert snapshot.status == "Failed"
+    assert snapshot.current_step_id == ""
+    assert snapshot.events[-1].kind == "verification"
+    assert snapshot.events[-1].status == "failed"
+
+
+def test_verification_step_remains_active_until_success() -> None:
+    controls = ReplayControls(task="PrepareCoffee", episode=0)
+    plan = OfflineEmbodiedPlanner().plan(
+        EmbodiedGoal(task="PrepareCoffee", text="Make coffee")
+    )
+    controls.configure_execution(plan.goal, plan)
+    controls.set_total_steps(749)
+    controls.update_observation(
+        episode_step=748,
+        cycle=0,
+        progress=1.0,
+        reward=0.0,
+        success=False,
+        action_norm=0.5,
+    )
+
+    snapshot = controls.snapshot()
+    verification_step = plan.steps[-1]
+
+    assert verification_step.skill == "verify"
+    assert snapshot.current_step_id == verification_step.step_id
+    assert not any(
+        event.step_id == verification_step.step_id and event.status == "completed"
+        for event in snapshot.events
+    )
+
+    html = _plan_html(snapshot)
+    assert html.count(">Completed<") == len(plan.steps) - 1
+    assert ">Running<" in html
+
+
+def test_latest_goal_wins_when_planners_complete_out_of_order() -> None:
+    controls = ReplayControls(task="PrepareCoffee", episode=0)
+    planner = OfflineEmbodiedPlanner()
+    older_started = Event()
+    release_older = Event()
+    older_errors: list[Exception] = []
+
+    def delayed_plan(goal: EmbodiedGoal):
+        if goal.text == "older goal":
+            older_started.set()
+            assert release_older.wait(timeout=2.0)
+        return planner.plan(goal)
+
+    def submit_older() -> None:
+        try:
+            controls.submit_goal("older goal")
+        except RuntimeError as exc:
+            older_errors.append(exc)
+
+    controls.set_goal_handler(delayed_plan)
+    older_thread = Thread(target=submit_older)
+    older_thread.start()
+    assert older_started.wait(timeout=1.0)
+
+    newest_plan = controls.submit_goal("newest goal")
+    release_older.set()
+    older_thread.join(timeout=2.0)
+
+    assert newest_plan.goal.text == "newest goal"
+    assert controls.snapshot().goal_text == "newest goal"
+    assert len(older_errors) == 1
+    assert "superseded" in str(older_errors[0]).lower()
 
 
 def test_bridge_streams_native_robosuite_state(monkeypatch) -> None:
@@ -205,7 +475,13 @@ def test_bridge_streams_native_robosuite_state(monkeypatch) -> None:
 
 
 def test_robot_tracking_body_prefers_mobile_base() -> None:
-    names = ["world", "left_eef_target", "robot0_base", "robot0_link0", "mobilebase0_base"]
+    names = [
+        "world",
+        "left_eef_target",
+        "robot0_base",
+        "robot0_link0",
+        "mobilebase0_base",
+    ]
     model = SimpleNamespace(
         nbody=len(names),
         body=lambda body_id: SimpleNamespace(name=names[body_id]),
