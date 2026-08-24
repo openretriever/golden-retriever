@@ -23,6 +23,7 @@ from .embodied import (
     create_planner,
 )
 from .mjviser_bridge import MjviserBridge, ReplayControls
+from .web_console import RetrieverWebConsole
 
 
 def _rerun_scalar(value: float) -> Any:
@@ -97,6 +98,12 @@ def _dataset_path(task: str, split: str) -> Path:
             f"--split {split} --source human`."
         )
     return path
+
+
+def _reset_to_episode(env: Any, initial_state: dict[str, Any]) -> None:
+    from robocasa.scripts.dataset_scripts.playback_dataset import reset_to
+
+    reset_to(env, initial_state)
 
 
 class DemoActionSource(Flow[ExecutionState, RoboCasaAction]):
@@ -201,6 +208,9 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
         visualize: str = "none",
         viser_host: str = "127.0.0.1",
         viser_port: int = 8085,
+        console_host: str = "127.0.0.1",
+        console_port: int = 8086,
+        native_viser_controls: bool = False,
         emit_images: bool = False,
         camera: str = "robot0_agentview_center",
         width: int = 768,
@@ -219,6 +229,9 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
         self.visualize = visualize
         self.viser_host = viser_host
         self.viser_port = viser_port
+        self.console_host = console_host
+        self.console_port = console_port
+        self.native_viser_controls = native_viser_controls
         self.emit_images = emit_images
         self.camera = camera
         self.width = width
@@ -230,6 +243,7 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
         self._initial_state: dict[str, Any] | None = None
         self._action_count = mock_steps
         self._last_episode_step = -1
+        self._active_cycle: int | None = None
         self._next_step_at = 0.0
         self._frame_stride = max(1, round(hz / image_hz))
         self.latest: RoboCasaObservation | None = None
@@ -238,10 +252,25 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
                 host=viser_host,
                 port=viser_port,
                 label=f"Retriever RoboCasa {task}",
-                controls=controls,
-                open_browser=open_browser,
+                controls=controls if native_viser_controls else None,
+                open_browser=False,
             )
             if visualize == "mjviser"
+            else None
+        )
+        display_host = (
+            "localhost" if viser_host in {"0.0.0.0", "127.0.0.1"} else viser_host
+        )
+        self._web_console = (
+            RetrieverWebConsole(
+                controls,
+                f"http://{display_host}:{viser_port}",
+                host=console_host,
+                port=console_port,
+                camera_handler=self._web_viewer.apply_camera_preset,
+                open_browser=open_browser,
+            )
+            if self._web_viewer is not None and controls is not None
             else None
         )
 
@@ -256,6 +285,9 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
             "visualize": self.visualize,
             "viser_host": self.viser_host,
             "viser_port": self.viser_port,
+            "console_host": self.console_host,
+            "console_port": self.console_port,
+            "native_viser_controls": self.native_viser_controls,
             "emit_images": self.emit_images,
             "camera": self.camera,
             "width": self.width,
@@ -266,6 +298,7 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
 
     def reset(self) -> None:
         self._last_episode_step = -1
+        self._active_cycle = None
         self._next_step_at = time.monotonic()
         self.latest = None
         if self.mode == "mock" or self.env is not None:
@@ -274,7 +307,6 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
         try:
             import robocasa  # noqa: F401
             import robosuite
-            from robocasa.scripts.dataset_scripts.playback_dataset import reset_to
             from robocasa.utils import lerobot_utils as lerobot
         except ImportError as exc:
             raise RuntimeError(
@@ -302,9 +334,11 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
             "model": lerobot.get_episode_model_xml(path, self.episode),
             "ep_meta": json.dumps(lerobot.get_episode_meta(path, self.episode)),
         }
-        reset_to(self.env, self._initial_state)
+        _reset_to_episode(self.env, self._initial_state)
         if self._web_viewer is not None:
             self._web_viewer.update(self.env.sim)
+        if self._web_console is not None:
+            self._web_console.start()
         print(
             f"RoboCasa {self.task} ready: Retriever connected to "
             f"{self._action_count} recorded actions."
@@ -350,11 +384,13 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
         if self.env is None or self._initial_state is None:
             raise RuntimeError("RoboCasa environment is not initialized")
 
-        from robocasa.scripts.dataset_scripts.playback_dataset import reset_to
-
-        if action.episode_step == 0 and self._last_episode_step >= 0:
-            reset_to(self.env, {"states": self._initial_state["states"]})
+        if self._active_cycle is not None and action.cycle < self._active_cycle:
+            return self.latest or RoboCasaObservation(source=self.mode, task=self.task)
+        if self._active_cycle is not None and action.cycle != self._active_cycle:
+            _reset_to_episode(self.env, self._initial_state)
+            self._last_episode_step = -1
             self._next_step_at = time.monotonic()
+        self._active_cycle = action.cycle
         sleep_for = self._next_step_at - time.monotonic()
         if sleep_for > 0:
             time.sleep(sleep_for)
@@ -392,12 +428,27 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
         return observation
 
     def finalize(self) -> None:
+        cleanup_error: Exception | None = None
+        if self._web_console is not None:
+            try:
+                self._web_console.close()
+            except Exception as exc:  # noqa: BLE001 - preserve remaining cleanup
+                cleanup_error = exc
         if self._web_viewer is not None:
-            self._web_viewer.close()
+            try:
+                self._web_viewer.close()
+            except Exception as exc:  # noqa: BLE001 - preserve remaining cleanup
+                cleanup_error = cleanup_error or exc
         if self.env is not None:
-            self.env.close()
-            self.env = None
-            print("Closed the Retriever-connected RoboCasa simulator.")
+            try:
+                self.env.close()
+            except Exception as exc:  # noqa: BLE001 - simulator cleanup is external
+                cleanup_error = cleanup_error or exc
+            finally:
+                self.env = None
+                print("Closed the Retriever-connected RoboCasa simulator.")
+        if cleanup_error is not None:
+            raise cleanup_error
 
 
 class TaskVerifier(Flow[RoboCasaObservation, RoboCasaObservation]):
@@ -529,6 +580,7 @@ def build_pipeline(args: argparse.Namespace) -> tuple[Pipeline, RoboCasaSimulato
         task=args.task,
         episode=args.episode,
         planner=getattr(args, "planner", "offline"),
+        execution_mode=getattr(args, "execution_mode", "demonstration"),
     )
     planner = create_planner(goal.planner)
     initial_plan = planner.plan(goal)
@@ -556,6 +608,9 @@ def build_pipeline(args: argparse.Namespace) -> tuple[Pipeline, RoboCasaSimulato
         visualize=args.visualize,
         viser_host=getattr(args, "viser_host", "127.0.0.1"),
         viser_port=getattr(args, "viser_port", 8085),
+        console_host=getattr(args, "console_host", "127.0.0.1"),
+        console_port=getattr(args, "console_port", 8086),
+        native_viser_controls=getattr(args, "native_viser_controls", False),
         emit_images=emit_images,
         camera=args.camera,
         width=args.width,
@@ -609,6 +664,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--episode", type=int, default=0)
     parser.add_argument("--goal", default="")
     parser.add_argument("--planner", choices=["offline", "gemini"], default="offline")
+    parser.add_argument(
+        "--execution-mode",
+        choices=["demonstration", "live_planning"],
+        default="demonstration",
+        help=(
+            "Replay a pinned demonstrated plan or plan allow-listed skills at "
+            "goal submission time; both modes execute a verified trajectory."
+        ),
+    )
     parser.add_argument("--seconds", type=float, default=45.0)
     parser.add_argument("--steps", type=int, default=14)
     parser.add_argument("--mock-steps", type=int, default=12)
@@ -625,11 +689,19 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--viser-host", default="127.0.0.1")
     parser.add_argument("--viser-port", type=int, default=8085)
+    parser.add_argument("--console-host", default="127.0.0.1")
+    parser.add_argument("--console-port", type=int, default=8086)
+    parser.add_argument(
+        "--native-viser-controls",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Also expose Retriever controls inside mjviser for debugging.",
+    )
     parser.add_argument(
         "--open-browser",
         action=argparse.BooleanOptionalAction,
         default=False,
-        help="Open the mjviser URL after the simulator scene is ready.",
+        help="Open the Retriever console after the simulator scene is ready.",
     )
     parser.add_argument(
         "--rerun-mode",
@@ -714,6 +786,7 @@ def run(
     task: str = "PrepareCoffee",
     episode: int = 0,
     planner: str = "offline",
+    execution_mode: str = "demonstration",
     visualize: str = "mjviser",
     open_browser: bool = True,
     goal: str = "",
@@ -730,6 +803,7 @@ def run(
         episode=episode,
         goal=goal,
         planner=planner,
+        execution_mode=execution_mode,
         seconds=seconds,
         steps=14,
         mock_steps=12,
@@ -742,6 +816,9 @@ def run(
         visualize=visualize,
         viser_host="127.0.0.1",
         viser_port=8085,
+        console_host="127.0.0.1",
+        console_port=8086,
+        native_viser_controls=False,
         open_browser=open_browser,
         rerun_mode="spawn",
         rerun_address="127.0.0.1:9876",
