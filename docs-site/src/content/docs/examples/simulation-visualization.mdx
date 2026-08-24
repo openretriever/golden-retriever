@@ -115,7 +115,8 @@ GoalSource -> EmbodiedPlanner -> SkillDispatcher -> DemoActionSource
 
 RoboCasa owns tasks, demonstrations, and success signals. RoboSuite composes
 the environment and controller, MuJoCo executes physics, Retriever owns goals,
-plans, dispatch, controls, events, and verification, and mjviser renders the
+plans, dispatch, controls, events, and verification. Retriever's standalone
+web console embeds mjviser as a replaceable viewport; mjviser only renders the
 same live `MjModel` and `MjData` in the browser.
 
 After installing RoboCasa from source, downloading its kitchen assets, and
@@ -152,14 +153,18 @@ Start the scene launcher, then open `http://localhost:8084`:
 retriever run demo-robocasa-scenes
 ```
 
-The launcher lists downloaded human demonstrations, starts one simulator at a
-time, and opens its live viewer on `http://localhost:8085`. Curated entries are
-`PrepareCoffee`, `CoffeeSetupMug`, `StartCoffeeMachine`, and
-`TurnOnMicrowave`; other compatible installed datasets remain selectable.
-Unavailable datasets stay visible with a setup reason. `CoffeeSetupMug` is the
-initial atomic pick-place example and `PrepareCoffee` is the composite replay.
-Task switching lives here because each selection replaces the RoboCasa
-environment, demonstration, and MuJoCo model.
+The launcher lists downloaded human demonstrations and starts one simulator at
+a time. Choose **Retriever console** to open `http://localhost:8086` with the
+mjviser renderer embedded from `http://localhost:8085`, or **Viser native** for
+the original dockable local-debug workspace. Curated entries include atomic
+tasks (`CoffeeSetupMug`, `StartCoffeeMachine`, `TurnOnMicrowave`) and composite
+tasks (`PrepareCoffee`, `PackIdenticalLunches`, `LoadDishwasher`,
+`OrganizeCondiments`, `StackBowlsCabinet`, `RestockPantry`). Other compatible
+installed datasets remain selectable. Unavailable datasets stay visible with a
+setup reason. `CoffeeSetupMug` is the initial atomic pick-place example and
+`PrepareCoffee` is the installed composite reference run. Task switching lives
+here because each selection replaces the RoboCasa environment, demonstration,
+and MuJoCo model.
 
 <figure>
   <img
@@ -199,14 +204,49 @@ The `PrepareCoffee` demonstration contains 749 controls and reaches RoboCasa
 success at step 731. The same simulator Flow can later accept a learned policy,
 memory-backed skill, or TAMP executor instead of the recorded action source.
 
-The left Retriever panel is an experiment console, not a viewer-only overlay.
+### Execution modes and composite plans
+
+The current public example executes **demonstrated trajectory replay**, which
+is available now. The offline or optional Gemini planner produces an
+allow-listed `SkillPlan`, but `DemoActionSource` supplies the low-level controls
+from the selected RoboCasa demonstration. Choosing Gemini therefore changes the
+proposed plan structure; it does not turn the replay into a live
+model-generated trajectory.
+
+Composite manifests organize that plan into ordered **subplans**, with one or
+more dependency-ordered **skills** inside each subplan. The dashboard advances
+both levels from replay progress and preserves completed items alongside the
+active skill. RoboCasa reward and success remain the explicit final verifier.
+For `PrepareCoffee`, the subplans are inspect workspace, position the mug, brew
+coffee, and verify outcome. The curated catalog also names genuine RoboCasa
+composites such as `PackIdenticalLunches`, `LoadDishwasher`,
+`OrganizeCondiments`, `StackBowlsCabinet`, and `RestockPantry`. These entries
+remain visible when their datasets are absent, with the missing requirement
+shown explicitly instead of allowing a launch that will fail.
+
+**Live planner execution is an extension point.** A policy, DMP, TAMP executor,
+or remote planner can replace `DemoActionSource` while preserving the typed
+simulator, event, console, and verification boundaries. The interfaces are
+ready for that integration, but the current public demo does not claim that
+this low-level live-control path is implemented.
+
+The left Retriever panel is a standalone experiment console, not a Viser
+overlay. It communicates with Retriever through a small JSON API and treats the
+renderer as an iframe URL, so another local or remote renderer can replace
+mjviser without changing planning or experiment controls.
 **Run** controls the recorded-action Flow and reports live progress, reward,
-success, and action norm from `RoboCasaObservation`. **Plan** advances through
-the ordered locate, pick, place, activate, and verify phases. **Graph** shows
+success, and action norm from `RoboCasaObservation`. **Plan** shows ordered
+subplans and advances their nested skills with the trajectory. **Graph** shows
 the seven typed Retriever stages, and **Events** gives a compact execution and
-verification log. The right panel remains dedicated to mjviser's scene
-controls. Use the left **Camera** control for agent-facing, tracked robot, and
-overhead views; disable **Track camera** on the right for a static world frame.
+verification log. Run also provides a compact planner conversation for text
+goals, planner selection, plan acceptance, and the final verified result. The
+transcript is derived from the same typed Retriever state and events rather
+than owning a parallel command path. The embedded viewport remains dedicated to mjviser's scene
+controls. Use the console **Camera** control for agent-facing, tracked robot,
+and overhead views; disable **Track camera** inside the viewport for a static
+world frame. The optional `--native-viser-controls` panel remains a supported
+Viser-native frontend over the same Retriever state; the standalone console is
+the renderer-independent boundary for portable and remote use.
 
 <figure>
   <img
@@ -333,13 +373,14 @@ that narrow boundary without duplicating simulator code or assets.
 
 RoboCasa supplies tasks and demonstrations, robosuite composes environments
 and controllers, MuJoCo executes physics, Retriever orchestrates typed policy
-and simulator Flows, and mjviser or Rerun projects that run into the view needed
-for debugging. A future TAMP demo can replace `DemoActionSource` with planner
+and simulator Flows, and a replaceable renderer adapter projects that run into
+the view needed for debugging. A future TAMP demo can replace `DemoActionSource` with planner
 and executor Flows while preserving the simulator and visualization layers.
 
 
 
 Source: `examples/advanced/robocasa/robosuite_lift.py`,
 `examples/advanced/robocasa/app.py`,
-`examples/advanced/robocasa/launcher.py`, and
+`examples/advanced/robocasa/launcher.py`,
+`examples/advanced/robocasa/web_console.py`, and
 `examples/advanced/robocasa/mjviser_bridge.py`.
