@@ -1,9 +1,15 @@
 from argparse import Namespace
 from math import ceil
 
+import numpy as np
 import pytest
 from examples.advanced.robocasa import app
-from examples.advanced.robocasa.app import DemoActionSource, build_pipeline
+from examples.advanced.robocasa.app import (
+    DemoActionSource,
+    RoboCasaAction,
+    RoboCasaSimulator,
+    build_pipeline,
+)
 from examples.advanced.robocasa.mjviser_bridge import ReplayControls
 
 
@@ -69,6 +75,47 @@ def test_demo_action_source_obeys_browser_replay_controls() -> None:
     assert restarted.episode_step == 0
     assert restarted.cycle == 1
     assert controls.snapshot().total_steps == 4
+
+
+def test_real_simulator_restart_restores_complete_episode_state(monkeypatch) -> None:
+    class FakeEnvironment:
+        def step(self, _action):
+            return None, 0.0, False, {}
+
+        def _check_success(self) -> bool:
+            return False
+
+    environment = FakeEnvironment()
+    initial_state = {
+        "states": object(),
+        "model": "<mujoco />",
+        "ep_meta": '{"task": "PrepareCoffee"}',
+    }
+    reset_calls = []
+    monkeypatch.setattr(
+        app,
+        "_reset_to_episode",
+        lambda env, state: reset_calls.append((env, state)),
+    )
+    simulator = RoboCasaSimulator(mode="robocasa", hz=1_000.0)
+    simulator.env = environment
+    simulator._initial_state = initial_state
+    simulator._action_count = 2
+    simulator._active_cycle = 0
+
+    observation = simulator._step_robocasa(
+        RoboCasaAction(
+            values=np.zeros(1),
+            episode_step=0,
+            cycle=1,
+            active=True,
+        )
+    )
+
+    assert reset_calls == [(environment, initial_state)]
+    assert simulator._active_cycle == 1
+    assert observation.cycle == 1
+    assert observation.episode_step == 0
 
 
 def test_mock_robocasa_video_is_finalized(tmp_path) -> None:
