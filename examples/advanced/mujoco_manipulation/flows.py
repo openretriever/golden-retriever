@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from typing import Optional
 import time
 import numpy as np
-import rerun as rr
 from retriever.flow import Flow, io
 from env import MujocoEnv
 
@@ -66,9 +65,12 @@ class MujocoEnvFlow(Flow[Control, State]):
 class ControllerFlow(Flow[State, Control]):
     def init(self):
         # Jacobian Transpose Control Gains
-        self.kp_cart = 200.0  # Cartesian stiffness (N/m)
-        self.kd_joint = 5.0   # Joint damping (Nms/rad)
+        self.kp_cart = 1500.0  # Cartesian stiffness (N/m)
+        self.kd_cart = 80.0    # Cartesian damping on tracking-error velocity (Ns/m)
+        self.kd_joint = 5.0    # Joint damping (Nms/rad)
         self.tick = 0
+        self._prev_target_pos = None
+        self._prev_time = None
 
     def run(self, inp: State) -> Control:
         if inp.qpos is None or inp.jacobian is None:
@@ -81,32 +83,51 @@ class ControllerFlow(Flow[State, Control]):
         # Ignore Z error since it's planar
         err_cart[2] = 0.0
 
-        # 2. Virtual Spring Force (F = Kp * dx)
-        f_cart = self.kp_cart * err_cart
-        
-        # 3. Jacobian Transpose (Tau = J^T * F)
+        # 2. Estimate target velocity via finite difference. A pure position
+        # spring always lags a continuously moving setpoint; feeding forward
+        # the target's own velocity lets the controller track it instead of
+        # perpetually chasing where it used to be.
+        target_vel = np.zeros(3)
+        if self._prev_target_pos is not None and inp.time > self._prev_time:
+            dt = inp.time - self._prev_time
+            target_vel = (inp.target_pos - self._prev_target_pos) / dt
+        self._prev_target_pos = inp.target_pos.copy()
+        self._prev_time = inp.time
+
+        # Tip velocity in task space, from the site Jacobian.
+        tip_vel = inp.jacobian @ inp.qvel
+        vel_err_cart = target_vel - tip_vel
+        vel_err_cart[2] = 0.0
+
+        # 3. Cartesian PD (+ velocity feedforward) force
+        f_cart = self.kp_cart * err_cart + self.kd_cart * vel_err_cart
+
+        # 4. Jacobian Transpose (Tau = J^T * F)
         # Jacobian is 3x2 (3D pos, 2 joints)
         # f_cart is 3x1
         # tau is 2x1
         J = inp.jacobian
-        tau = J.T @ f_cart 
+        tau = J.T @ f_cart
 
-        # 4. Joint Damping (Stability)
+        # 5. Joint Damping (Stability)
         tau -= self.kd_joint * inp.qvel
 
         # Clip control
         tau = np.clip(tau, -200, 200)
-        
+
         self.tick += 1
         if self.tick % 50 == 0:
             dist = np.linalg.norm(err_cart)
             print(f"[Controller] t={inp.time:.2f}s, dist={dist:.3f}m, F={np.linalg.norm(f_cart):.1f}N")
-             
+
         return Control(ctrl=tau)
 
 class RerunLoggerFlow(Flow[State, None]):
     """Logs MuJoCo state to Rerun for visualization."""
     def init(self):
+        import rerun as rr
+
+        self._rr = rr
         rr.init("mujoco_manipulation", spawn=True)
         print("[Rerun] Visualization started. Check the Rerun window!")
         self.start_time = time.time()
@@ -118,27 +139,29 @@ class RerunLoggerFlow(Flow[State, None]):
         if inp is None or inp.time is None:
             return
 
+        rr = self._rr
+
         # Use actual wall-clock time offset by sim time
         # This matches sim duration (0, dt, 2dt...) to real time (now, now+dt...)
         real_time = self.start_time + inp.time
         rr.set_time_seconds("sim_time", real_time)
-        
+
         # Add a sequence timeline (sim_step) to avoid "1970" date confusion if desired
         # We estimate step from time since we don't pass step count explicitly in State
         # Or just let it be. 'sim_time' is correct seconds.
         # But let's add it for clarity.
         sim_step = int(inp.time / 0.005)
         rr.set_time_sequence("sim_step", sim_step)
-        
+
         if inp.qpos is not None:
              rr.log("state/joint1", rr.Scalars([float(inp.qpos[0])]))
              rr.log("state/joint2", rr.Scalars([float(inp.qpos[1])]))
-             
+
         if inp.image is not None:
             rr.log("camera/render", rr.Image(inp.image))
-            
+
         if inp.tip_pos is not None:
             rr.log("world/tip", rr.Points3D([inp.tip_pos], colors=[0,0,255], radii=0.03))
-            
+
         if inp.target_pos is not None:
             rr.log("world/target", rr.Points3D([inp.target_pos], colors=[255,0,0], radii=0.03))
