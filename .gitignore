@@ -18,6 +18,7 @@ venv/
 # IDEs
 .vscode/
 .idea/
+.DS_Store
 
 # Pixi
 .pixi/
@@ -68,4 +69,3 @@ retriever_dist/
 docs-site/node_modules/
 docs-site/dist/
 docs-site/.astro/
-
