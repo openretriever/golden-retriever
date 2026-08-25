@@ -7,8 +7,11 @@ import pytest
 from examples.advanced.robocasa.embodied import (
     TASK_MANIFESTS,
     EmbodiedGoal,
+    EmbodiedPlannerFlow,
     GeminiEmbodiedPlanner,
+    GoalSource,
     OfflineEmbodiedPlanner,
+    SkillDispatcher,
     SkillPlan,
     SkillStep,
     _plan_from_payload,
@@ -39,6 +42,7 @@ def test_offline_planner_builds_dependency_ordered_coffee_plan() -> None:
     ]
     assert plan.step_at(0.5).skill == "place"
     assert plan.step_at(1.0).skill == "verify"
+    assert plan.verification_step_id == plan.steps[-1].step_id
 
 
 def test_offline_planner_builds_typed_drawer_plan() -> None:
@@ -115,6 +119,57 @@ def test_skill_plan_rejects_unknown_dependencies_and_skills() -> None:
         ).validate()
 
 
+def test_skill_plan_uses_unique_optional_verification_semantics() -> None:
+    goal = EmbodiedGoal(text="Move it", task="CoffeeSetupMug")
+    action_only = SkillPlan(
+        goal=goal,
+        steps=(SkillStep(step_id="pick", skill="pick"),),
+        source="gemini",
+    )
+    assert action_only.validate() is action_only
+    assert action_only.verification_step_id == ""
+
+    verified = SkillPlan(
+        goal=goal,
+        steps=(
+            SkillStep(
+                step_id="check",
+                skill="verify",
+                start_fraction=0.0,
+                end_fraction=0.8,
+            ),
+            SkillStep(
+                step_id="cleanup",
+                skill="close",
+                depends_on=("check",),
+                start_fraction=0.8,
+                end_fraction=1.0,
+            ),
+        ),
+    )
+    assert verified.validate() is verified
+    assert verified.verification_step_id == "check"
+
+    with pytest.raises(ValueError, match="at most one verification"):
+        SkillPlan(
+            goal=goal,
+            steps=(
+                SkillStep(
+                    step_id="check-1",
+                    skill="verify",
+                    start_fraction=0.0,
+                    end_fraction=0.5,
+                ),
+                SkillStep(
+                    step_id="check-2",
+                    skill="verify",
+                    depends_on=("check-1",),
+                    start_fraction=0.5,
+                    end_fraction=1.0,
+                ),
+            ),
+        ).validate()
+
 @pytest.mark.parametrize(
     "task, expected_stages",
     [
@@ -190,6 +245,7 @@ def test_gemini_planner_accepts_only_allow_listed_structured_steps() -> None:
     assert plan.source == "gemini"
     assert [step.skill for step in plan.steps] == ["pick", "place"]
     assert all(step.stage_id == "execution" for step in plan.steps)
+    assert plan.verification_step_id == ""
 
     with pytest.raises(ValueError, match="unsupported skill"):
         _plan_from_payload(
@@ -207,3 +263,159 @@ def test_gemini_without_credentials_uses_offline_fallback(monkeypatch) -> None:
     )
 
     assert plan.source == "offline"
+
+
+@pytest.mark.parametrize(
+    "client",
+    [
+        SimpleNamespace(
+            models=SimpleNamespace(
+                generate_content=lambda **_kwargs: (_ for _ in ()).throw(
+                    OSError("offline")
+                )
+            )
+        ),
+        SimpleNamespace(
+            models=SimpleNamespace(
+                generate_content=lambda **_kwargs: SimpleNamespace(text="not json")
+            )
+        ),
+    ],
+)
+def test_gemini_operational_failures_use_offline_fallback(client) -> None:
+    plan = GeminiEmbodiedPlanner(client=client).plan(
+        EmbodiedGoal(text="Make coffee", task="PrepareCoffee", planner="gemini")
+    )
+
+    assert plan.source == "offline"
+
+
+def test_gemini_rejects_invalid_structured_skills_without_fallback() -> None:
+    client = SimpleNamespace(
+        models=SimpleNamespace(
+            generate_content=lambda **_kwargs: SimpleNamespace(
+                text='{"steps":[{"skill":"run_python","label":"No"}]}'
+            )
+        )
+    )
+
+    with pytest.raises(ValueError, match="unsupported skill"):
+        GeminiEmbodiedPlanner(client=client).plan(
+            EmbodiedGoal(text="Bad plan", task="PrepareCoffee", planner="gemini")
+        )
+
+
+def test_embodied_planner_flow_reuses_unchanged_plan() -> None:
+    class CountingPlanner:
+        calls = 0
+
+        def plan(self, goal: EmbodiedGoal) -> SkillPlan:
+            self.calls += 1
+            return OfflineEmbodiedPlanner().plan(goal)
+
+    planner = CountingPlanner()
+    goal = EmbodiedGoal(text="Make coffee", task="PrepareCoffee")
+    initial_plan = planner.plan(goal)
+    flow = EmbodiedPlannerFlow(planner, initial_plan=initial_plan)
+
+    assert flow.step(goal) is initial_plan
+    assert flow.step(goal) is initial_plan
+    assert planner.calls == 1
+
+    changed = EmbodiedGoal(text="Make coffee again", task="PrepareCoffee")
+    assert flow.step(changed).goal == changed
+    assert planner.calls == 2
+
+
+def test_goal_source_and_planner_flow_accept_browser_goal_updates() -> None:
+    initial = EmbodiedGoal(
+        text="Make coffee",
+        task="PrepareCoffee",
+        planner="offline",
+    )
+    source = GoalSource(initial)
+    planners: list[str] = []
+
+    def create(name: str):
+        planners.append(name)
+        return OfflineEmbodiedPlanner()
+
+    flow = EmbodiedPlannerFlow(
+        OfflineEmbodiedPlanner(),
+        initial_plan=OfflineEmbodiedPlanner().plan(initial),
+        planner_factory=create,
+    )
+    submitted = EmbodiedGoal(
+        text="Prepare another coffee",
+        task="PrepareCoffee",
+        planner="gemini",
+    )
+
+    plan = flow.step(submitted)
+    source.set_goal(plan.goal)
+
+    assert source.step() == plan.goal
+    assert plan.goal.text == submitted.text
+    assert plan.goal.task == submitted.task
+    assert plan.goal.planner == "offline"
+    assert planners == ["gemini"]
+
+
+def test_skill_dispatcher_deduplicates_only_identical_execution_plans() -> None:
+    dispatched: list[SkillPlan] = []
+    dispatcher = SkillDispatcher(on_dispatch=lambda _goal, plan: dispatched.append(plan))
+    base = _plan_from_payload(
+        EmbodiedGoal(
+            text="Move the mug",
+            task="CoffeeSetupMug",
+            planner="gemini",
+            execution_mode="demonstration",
+        ),
+        {"steps": [{"skill": "pick", "label": "Pick mug"}]},
+        source="gemini",
+    )
+
+    assert dispatcher.step(base).plan is base
+    dispatcher.step(base)
+    assert dispatched == [base]
+
+    variants = (
+        SkillPlan(
+            goal=EmbodiedGoal(
+                text=base.goal.text,
+                task=base.goal.task,
+                episode=base.goal.episode,
+                planner="offline",
+                execution_mode=base.goal.execution_mode,
+            ),
+            steps=base.steps,
+            source=base.source,
+        ),
+        SkillPlan(
+            goal=EmbodiedGoal(
+                text=base.goal.text,
+                task=base.goal.task,
+                episode=base.goal.episode,
+                planner=base.goal.planner,
+                execution_mode="live_planning",
+            ),
+            steps=base.steps,
+            source=base.source,
+        ),
+        SkillPlan(goal=base.goal, steps=base.steps, source="offline"),
+        SkillPlan(
+            goal=base.goal,
+            steps=(
+                SkillStep(
+                    step_id="step-1",
+                    skill="pick",
+                    label="Pick the cup",
+                ),
+            ),
+            source=base.source,
+        ),
+    )
+    for variant in variants:
+        dispatcher.step(variant)
+
+    assert dispatched == [base, *variants]
