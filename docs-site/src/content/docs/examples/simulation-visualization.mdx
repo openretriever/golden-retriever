@@ -96,7 +96,7 @@ The Retriever Embodied Demo Console makes the simulator boundary concrete. Its
 offline-first path needs no model credentials:
 
 ```text
-Goal -> Planner -> Skill plan -> Verified RoboCasa replay
+Goal -> Planner -> Skill plan -> Recorded replay -> Task verification
 ```
 
 The full Flow remains inspectable:
@@ -114,21 +114,23 @@ GoalSource -> EmbodiedPlanner -> SkillDispatcher -> DemoActionSource
 ```
 
 RoboCasa owns tasks, demonstrations, and success signals. RoboSuite composes
-the environment and controller, MuJoCo executes physics, Retriever owns goals,
-plans, dispatch, controls, events, and verification. Retriever's standalone
+the environment and controller. Demonstration mode restores recorded states;
+action-replay mode advances MuJoCo. Retriever owns goals, plans, dispatch,
+controls, events, and verification. Retriever's standalone
 web console embeds mjviser as a replaceable viewport; mjviser only renders the
 same live `MjModel` and `MjData` in the browser.
 
 After installing RoboCasa from source, downloading its kitchen assets, and
-downloading the `TurnOnMicrowave` human demonstration, run real physics:
+downloading the `TurnOnMicrowave` human demonstration, run the replay:
 
 ```bash
 python -m examples.advanced.robocasa.app \
   --mode robocasa --task TurnOnMicrowave --seconds 45
 ```
 
-The duration includes environment construction; leave startup budget for MJCF
-and asset initialization in addition to the replay itself.
+Environment construction completes before the requested replay duration begins.
+The first MJCF and asset initialization can still take roughly 15 seconds on a
+laptop.
 
 Add `--visualize rerun` for MuJoCo camera frames plus Retriever telemetry. On
 macOS, use `mjpython ... --viewer` for the native MuJoCo viewer; native viewer
@@ -142,10 +144,10 @@ recorded action unless `--repeat` is set.
 
 ### Live browser replay
 
-This is the shortest visual proof that Retriever is driving a real manipulation
-stack: recorded actions pass through typed Flows, RoboCasa evaluates the task,
-MuJoCo advances physics, and the browser shows that exact live state. The
-viewer is not a separate animation.
+This is the shortest visual proof that Retriever is connected to a real
+manipulation stack: recorded data passes through typed Flows, RoboCasa
+evaluates the task, and the browser shows the same in-process simulator state.
+The viewer is not a separate animation.
 
 Start the scene launcher, then open `http://localhost:8084`:
 
@@ -172,7 +174,7 @@ and MuJoCo model.
     alt="Retriever RoboCasa scene launcher with TurnOnMicrowave and PrepareCoffee"
     loading="lazy"
     decoding="async"
-    style="width: 100%; height: auto; border-radius: 0.25rem;"
+    style="display: block; width: 100%; max-width: 64rem; height: auto; margin-inline: auto; border-radius: 0.25rem;"
   />
   <figcaption>
     The launcher marks installed datasets as ready, explains unavailable
@@ -200,23 +202,26 @@ run(
 )
 ```
 
-The `PrepareCoffee` demonstration contains 749 controls and reaches RoboCasa
-success at step 731. The same simulator Flow can later accept a learned policy,
-memory-backed skill, or TAMP executor instead of the recorded action source.
+The console reads the recorded step count and final success signal from the
+installed `PrepareCoffee` episode. The same simulator Flow can later accept a
+learned policy, memory-backed skill, or TAMP executor instead of the recorded
+demonstration source.
 
 ### Execution modes and composite plans
 
 The current public example executes **demonstrated trajectory replay**, which
 is available now. The offline or optional Gemini planner produces an
-allow-listed `SkillPlan`, but `DemoActionSource` supplies the low-level controls
-from the selected RoboCasa demonstration. Choosing Gemini therefore changes the
-proposed plan structure; it does not turn the replay into a live
+allow-listed `SkillPlan`, but `DemoActionSource` supplies recorded states and
+actions from the selected RoboCasa demonstration. Choosing Gemini therefore
+changes the proposed plan structure; it does not turn the replay into a live
 model-generated trajectory.
 
 Composite manifests organize that plan into ordered **subplans**, with one or
 more dependency-ordered **skills** inside each subplan. The dashboard advances
-both levels from replay progress and preserves completed items alongside the
-active skill. RoboCasa reward and success remain the explicit final verifier.
+both levels using curated normalized-progress annotations and preserves passed
+items alongside the current phase. Those phase boundaries are readable replay
+annotations, not independently detected skill-completion events. RoboCasa
+reward and success remain the explicit final verifier.
 For `PrepareCoffee`, the subplans are inspect workspace, position the mug, brew
 coffee, and verify outcome. The curated catalog also names genuine RoboCasa
 composites such as `PackIdenticalLunches`, `LoadDishwasher`,
@@ -224,7 +229,7 @@ composites such as `PackIdenticalLunches`, `LoadDishwasher`,
 remain visible when their datasets are absent, with the missing requirement
 shown explicitly instead of allowing a launch that will fail.
 
-**Live planner execution is an extension point.** A policy, DMP, TAMP executor,
+**Dynamic planner execution is an extension point.** A policy, DMP, TAMP executor,
 or remote planner can replace `DemoActionSource` while preserving the typed
 simulator, event, console, and verification boundaries. The interfaces are
 ready for that integration, but the current public demo does not claim that
@@ -234,8 +239,8 @@ The left Retriever panel is a standalone experiment console, not a Viser
 overlay. It communicates with Retriever through a small JSON API and treats the
 renderer as an iframe URL, so another local or remote renderer can replace
 mjviser without changing planning or experiment controls.
-**Run** controls the recorded-action Flow and reports live progress, reward,
-success, and action norm from `RoboCasaObservation`. **Plan** shows ordered
+**Run** controls the recorded replay Flow and reports current progress, reward,
+success, and the dataset action norm from `RoboCasaObservation`. **Plan** shows ordered
 subplans and advances their nested skills with the trajectory. **Graph** shows
 the seven typed Retriever stages, and **Events** gives a compact execution and
 verification log. Run also provides a compact planner conversation for text
@@ -254,11 +259,11 @@ the renderer-independent boundary for portable and remote use.
     alt="Retriever replay controls beside a live RoboCasa PrepareCoffee scene in mjviser"
     loading="lazy"
     decoding="async"
-    style="width: 100%; height: auto; border-radius: 0.25rem;"
+  style="display: block; width: 100%; max-width: 64rem; height: auto; margin-inline: auto; border-radius: 0.25rem;"
   />
   <figcaption>
-    The live graph exposes the full Retriever execution path while mjviser
-    renders the same RoboCasa state.
+    The pipeline map shows the current Retriever stages while mjviser renders
+    the same RoboCasa state.
   </figcaption>
 </figure>
 
@@ -268,7 +273,7 @@ the renderer-independent boundary for portable and remote use.
     alt="Rerun showing Retriever events, simulation metrics, and a RoboCasa camera stream"
     loading="lazy"
     decoding="async"
-    style="width: 100%; height: auto; border-radius: 0.25rem;"
+    style="display: block; width: 100%; max-width: 64rem; height: auto; margin-inline: auto; border-radius: 0.25rem;"
   />
   <figcaption>
     Rerun aligns Retriever events and metrics with the simulator camera stream
@@ -277,7 +282,7 @@ the renderer-independent boundary for portable and remote use.
 </figure>
 
 The launcher is the task-level entry point. Each viewer remains bound to one
-task and keeps the run controls, camera presets, and live graph close to the
+task and keeps the run controls, camera presets, and pipeline map close to the
 simulator state they affect.
 
 The optional Gemini planner emits only structured, allow-listed skills. It
@@ -295,9 +300,8 @@ python -m robocasa.scripts.download_datasets \
   --tasks PrepareCoffee --split pretrain --source human
 ```
 
-The external simulator environment owns tested dependency pins, source checkouts,
-assets, and datasets. The larger kitchen takes longer than `Lift` to publish to
-the browser.
+Large assets and datasets remain outside version control. The larger kitchen takes longer than `Lift` to publish
+to the browser.
 
 </details>
 
@@ -321,7 +325,7 @@ routine videos remain generated artifacts and stay out of Git.
     playsInline
     preload="metadata"
     poster="/media/robocasa/turn-on-microwave-replay.jpg"
-    style="width: 100%; height: auto; max-height: 72vh; background: #000; border-radius: 0.5rem;"
+    style="display: block; width: 100%; max-width: 64rem; height: auto; max-height: 72vh; margin-inline: auto; background: #000; border-radius: 0.5rem;"
   >
     <source
       src="/media/robocasa/turn-on-microwave-replay.mp4"
@@ -353,7 +357,7 @@ before the next:
 
 1. **Mock robosuite** — `retriever run demo-robosuite-mock` runs the env↔policy loop deterministically, without a robosuite install.
 2. **Mock RoboCasa contract** — `retriever run demo-robocasa-mock` verifies the recorded-action → simulator → observation graph without RoboCasa.
-3. **Real RoboCasa / Rerun** — replay a human demonstration through real RoboCasa physics after the mock trace looks right.
+3. **Real RoboCasa / Rerun** — replay a human demonstration through RoboCasa after the mock trace looks right.
 4. **Real robosuite / Rerun** — swap `mode="robosuite"` (optional dependency) only after the mock trace looks right.
 
 ## Design notes
@@ -364,15 +368,19 @@ runs against either a mock or a real backend, while Retriever recording and
 Rerun expose observations without changing the policy contract.
 
 The ownership boundary is deliberate. GoldenRetriever owns the Flow adapter,
-examples, and public explanation. A external simulator environment owns Pixi locks, source
-checkouts, large assets, datasets, and machine-specific run configuration.
+examples, and public explanation. Large assets, datasets, and machine-specific caches remain outside version control.
 Optional simulator dependencies stay outside the Hub manifest so Hub loading remains lightweight.
 
 RoboCasa supplies tasks and demonstrations, robosuite composes environments
-and controllers, MuJoCo executes physics, Retriever orchestrates typed policy
-and simulator Flows, and a replaceable renderer adapter projects that run into
+and controllers, demonstration mode restores recorded states, and action-replay
+mode advances MuJoCo. Retriever orchestrates typed policy and simulator Flows,
+and a replaceable renderer adapter projects that run into
 the view needed for debugging. A future TAMP demo can replace `DemoActionSource` with planner
 and executor Flows while preserving the simulator and visualization layers.
+
+The public console has no ROS or Isaac Sim dependency. It is tested
+interactively on macOS; Linux is the intended headless target. WSL2 is
+experimental and currently unverified. 
 
 Source: `examples/advanced/robocasa/robosuite_lift.py`,
 `examples/advanced/robocasa/app.py`,
