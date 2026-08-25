@@ -6,6 +6,7 @@ import json
 import os
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
+from threading import RLock
 from typing import Any, Protocol
 
 from retriever.flow import Flow, io
@@ -63,6 +64,14 @@ class SkillPlan:
     steps: tuple[SkillStep, ...] = ()
     source: str = "offline"
 
+    @property
+    def verification_step_id(self) -> str:
+        """Return the explicitly typed verification step, when one exists."""
+        return next(
+            (step.step_id for step in self.steps if step.skill == "verify"),
+            "",
+        )
+
     def validate(self) -> SkillPlan:
         if not self.steps:
             raise ValueError("A skill plan must contain at least one step")
@@ -72,6 +81,7 @@ class SkillPlan:
         closed_stages: set[str] = set()
         active_stage = ""
         previous_end = 0.0
+        verification_steps: list[str] = []
         for step in self.steps:
             if not step.step_id or step.step_id in seen:
                 raise ValueError(f"Skill step IDs must be unique: {step.step_id!r}")
@@ -96,7 +106,11 @@ class SkillPlan:
             if step.start_fraction < previous_end:
                 raise ValueError("Skill progress intervals must be ordered")
             seen.add(step.step_id)
+            if step.skill == "verify":
+                verification_steps.append(step.step_id)
             previous_end = step.end_fraction
+        if len(verification_steps) > 1:
+            raise ValueError("A skill plan may contain at most one verification step")
         return self
 
     def step_at(self, progress: float) -> SkillStep:
@@ -1013,28 +1027,41 @@ class GeminiEmbodiedPlanner:
                 return self.fallback.plan(goal)
             try:
                 from google import genai
-            except ImportError as exc:
-                raise RuntimeError(
-                    "Gemini planning requires the optional google-genai package"
-                ) from exc
-            self._client = genai.Client(api_key=api_key)
+                self._client = genai.Client(api_key=api_key)
+            except (ImportError, OSError, RuntimeError, ValueError):
+                return self.fallback.plan(goal)
 
         prompt = (
             "Return JSON only. Plan the selected RoboCasa task using the allowed "
             f"skills {sorted(ALLOWED_SKILLS)}. Each step needs skill and label. "
             f"Task: {goal.task}. Goal: {goal.text}"
         )
-        response = self._client.models.generate_content(
-            model=self.model,
-            contents=prompt,
-        )
-        payload = json.loads(_response_text(response))
+        try:
+            response = self._client.models.generate_content(
+                model=self.model,
+                contents=prompt,
+            )
+            payload = json.loads(_response_text(response))
+        except (AttributeError, json.JSONDecodeError, OSError, RuntimeError, TypeError):
+            return self.fallback.plan(goal)
         return _plan_from_payload(goal, payload, source="gemini")
 
 
 class GoalSource(Flow[None, EmbodiedGoal]):
     def __init__(self, goal: EmbodiedGoal) -> None:
-        self.goal = goal
+        self._goal = goal
+        self._lock = RLock()
+
+    @property
+    def goal(self) -> EmbodiedGoal:
+        with self._lock:
+            return self._goal
+
+    def set_goal(self, goal: EmbodiedGoal) -> None:
+        """Publish a browser-submitted goal on the next Retriever tick."""
+
+        with self._lock:
+            self._goal = goal
 
     def init_config(self) -> dict[str, Any]:
         return {"goal": self.goal.text, "task": self.goal.task}
@@ -1044,14 +1071,94 @@ class GoalSource(Flow[None, EmbodiedGoal]):
 
 
 class EmbodiedPlannerFlow(Flow[EmbodiedGoal, SkillPlan]):
-    def __init__(self, planner: Planner) -> None:
+    def __init__(
+        self,
+        planner: Planner,
+        *,
+        initial_plan: SkillPlan | None = None,
+        planner_factory: Callable[[str], Planner] | None = None,
+    ) -> None:
         self.planner = planner
+        self.planner_factory = planner_factory
+        self._plan = initial_plan
+        self._planner_name = (
+            initial_plan.goal.planner if initial_plan is not None else None
+        )
+        self._signature = (
+            _goal_signature(initial_plan.goal) if initial_plan is not None else None
+        )
+        self._generation = 0
+        self._lock = RLock()
 
     def init_config(self) -> dict[str, Any]:
         return {"planner": type(self.planner).__name__}
 
     def step(self, goal: EmbodiedGoal) -> SkillPlan:
-        return self.planner.plan(goal)
+        with self._lock:
+            signature = _goal_signature(goal)
+            if signature == self._signature and self._plan is not None:
+                return self._plan
+            if (
+                self.planner_factory is not None
+                and goal.planner != self._planner_name
+            ):
+                self.planner = self.planner_factory(goal.planner)
+                self._planner_name = goal.planner
+            planner = self.planner
+            self._generation += 1
+            generation = self._generation
+
+        plan = planner.plan(goal)
+
+        with self._lock:
+            if generation != self._generation:
+                raise RuntimeError("Planner result was superseded")
+            self._plan = plan
+            self._signature = signature
+            return plan
+
+
+def _goal_signature(goal: EmbodiedGoal) -> tuple[str, str, int, str, str]:
+    return (
+        goal.text,
+        goal.task,
+        goal.episode,
+        goal.planner,
+        goal.execution_mode,
+    )
+
+
+def materialize_skill_plan(plan: Any) -> SkillPlan:
+    """Copy a plan from Retriever's typed runtime view into its public contract."""
+    if isinstance(plan, SkillPlan):
+        return plan.validate()
+
+    goal = plan.goal
+    materialized = SkillPlan(
+        goal=EmbodiedGoal(
+            text=goal.text,
+            task=goal.task,
+            episode=int(goal.episode),
+            planner=goal.planner,
+            execution_mode=goal.execution_mode,
+        ),
+        steps=tuple(
+            SkillStep(
+                step_id=step.step_id,
+                skill=step.skill,
+                label=step.label,
+                stage_id=step.stage_id,
+                stage_label=step.stage_label,
+                lane=step.lane,
+                depends_on=tuple(step.depends_on),
+                start_fraction=float(step.start_fraction),
+                end_fraction=float(step.end_fraction),
+            )
+            for step in plan.steps
+        ),
+        source=plan.source,
+    )
+    return materialized.validate()
 
 
 class SkillDispatcher(Flow[SkillPlan, ExecutionState]):
@@ -1061,15 +1168,16 @@ class SkillDispatcher(Flow[SkillPlan, ExecutionState]):
         on_dispatch: Callable[[EmbodiedGoal, SkillPlan], None] | None = None,
     ) -> None:
         self.on_dispatch = on_dispatch
-        self._last_signature: tuple[str, str, int] | None = None
+        self._last_signature: SkillPlan | None = None
 
     def reset(self) -> None:
         self._last_signature = None
 
     def step(self, plan: SkillPlan) -> ExecutionState:
         # Retriever supplies @io values as a typed runtime view inside a Flow.
-        # Planning validates before dispatch, so only field access belongs here.
-        signature = (plan.goal.text, plan.goal.task, plan.goal.episode)
+        # Validate at the execution boundary because external planners may produce plans.
+        plan = materialize_skill_plan(plan)
+        signature = plan
         if signature != self._last_signature:
             if self.on_dispatch is not None:
                 self.on_dispatch(plan.goal, plan)

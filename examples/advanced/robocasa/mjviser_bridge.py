@@ -3,404 +3,15 @@
 from __future__ import annotations
 
 import webbrowser
-from dataclasses import dataclass, replace
+from contextlib import suppress
+from dataclasses import dataclass
 from html import escape
 from math import radians
-from threading import RLock
+from threading import RLock, Thread
 from time import monotonic
 from typing import Any
 
-from .embodied import EmbodiedGoal, ExecutionEvent, SkillPlan
-
-
-@dataclass(frozen=True)
-class ReplaySnapshot:
-    """Immutable browser-facing view of a demonstration replay."""
-
-    task: str
-    episode: int
-    status: str = "Loading"
-    paused: bool = False
-    speed: float = 1.0
-    episode_step: int = 0
-    total_steps: int = 0
-    cycle: int = 0
-    progress: float = 0.0
-    reward: float = 0.0
-    success: bool = False
-    action_norm: float = 0.0
-    goal_text: str = ""
-    planner: str = "offline"
-    execution_mode: str = "demonstration"
-    plan: SkillPlan | None = None
-    current_step_id: str = ""
-    events: tuple[ExecutionEvent, ...] = ()
-
-
-class ReplayControls:
-    """Thread-safe controls shared by Viser callbacks and Retriever Flows."""
-
-    def __init__(self, *, task: str, episode: int) -> None:
-        self._lock = RLock()
-        self._snapshot = ReplaySnapshot(task=task, episode=episode)
-        self._step_budget = 0
-        self._restart_requested = False
-        self._started_at = monotonic()
-        self._event_sequence = 0
-        self._goal_handler: Any | None = None
-        self._goal_generation = 0
-        self._source_exhausted = False
-
-    def set_goal_handler(self, handler: Any) -> None:
-        """Install the planner callback used by the browser goal composer."""
-
-        with self._lock:
-            self._goal_handler = handler
-
-    def submit_goal(
-        self,
-        text: str,
-        planner: str | None = None,
-        execution_mode: str | None = None,
-    ) -> SkillPlan:
-        with self._lock:
-            handler = self._goal_handler
-            snapshot = self._snapshot
-            self._goal_generation += 1
-            generation = self._goal_generation
-        if handler is None:
-            raise RuntimeError("No embodied planner is connected")
-        goal = EmbodiedGoal(
-            text=text.strip(),
-            task=snapshot.task,
-            episode=snapshot.episode,
-            planner=planner or snapshot.planner,
-            execution_mode=execution_mode or snapshot.execution_mode,
-        )
-        plan = handler(goal)
-        plan.validate()
-        with self._lock:
-            if generation != self._goal_generation:
-                raise RuntimeError("Goal was superseded by a newer request")
-            self._configure_execution_locked(goal, plan)
-            self._request_restart_locked()
-        return plan
-
-    def configure_execution(self, goal: EmbodiedGoal, plan: SkillPlan) -> None:
-        plan.validate()
-        with self._lock:
-            self._goal_generation += 1
-            self._configure_execution_locked(goal, plan)
-
-    def cancel_pending_goals(self) -> None:
-        """Prevent an in-flight planner response from mutating this run."""
-
-        with self._lock:
-            self._goal_generation += 1
-
-    def snapshot(self) -> ReplaySnapshot:
-        with self._lock:
-            return self._snapshot
-
-    def set_total_steps(self, total_steps: int) -> None:
-        with self._lock:
-            self._source_exhausted = False
-            self._snapshot = replace(
-                self._snapshot,
-                total_steps=max(0, int(total_steps)),
-                status="Ready",
-            )
-
-    def set_paused(self, paused: bool) -> None:
-        with self._lock:
-            if self._is_terminal_locked():
-                return
-            self._snapshot = replace(
-                self._snapshot,
-                paused=paused,
-                status="Paused" if paused else "Running",
-            )
-
-    def request_step(self) -> None:
-        with self._lock:
-            if self._is_terminal_locked():
-                return
-            self._step_budget += 1
-            self._snapshot = replace(
-                self._snapshot,
-                paused=True,
-                status="Stepping",
-            )
-
-    def request_restart(self) -> None:
-        with self._lock:
-            self._request_restart_locked()
-
-    def set_speed(self, speed: float) -> None:
-        if speed <= 0:
-            raise ValueError("Replay speed must be positive")
-        with self._lock:
-            self._snapshot = replace(self._snapshot, speed=float(speed))
-
-    def claim_next_action(self) -> tuple[bool, bool]:
-        """Return whether the source may advance and whether it should restart."""
-
-        with self._lock:
-            if self._restart_requested:
-                self._restart_requested = False
-                return True, True
-            if not self._snapshot.paused:
-                return True, False
-            if self._step_budget > 0:
-                self._step_budget -= 1
-                return True, False
-            return False, False
-
-    def update_observation(
-        self,
-        *,
-        episode_step: int,
-        cycle: int,
-        progress: float,
-        reward: float,
-        success: bool,
-        action_norm: float,
-    ) -> None:
-        with self._lock:
-            if int(cycle) < self._snapshot.cycle:
-                return
-            success = self._snapshot.success or bool(success)
-            final_observation = (
-                self._snapshot.total_steps > 0
-                and int(episode_step) >= self._snapshot.total_steps - 1
-            )
-            if success:
-                status = "Success"
-            elif self._source_exhausted:
-                status = "Failed" if final_observation else "Verifying"
-            elif self._snapshot.paused and not success:
-                status = "Paused"
-            else:
-                status = "Running"
-            self._snapshot = replace(
-                self._snapshot,
-                status=status,
-                episode_step=int(episode_step),
-                cycle=int(cycle),
-                progress=min(1.0, max(0.0, float(progress))),
-                reward=float(reward),
-                success=success,
-                action_norm=float(action_norm),
-            )
-            self._update_plan_events(
-                self._snapshot.progress,
-                success,
-                terminal_failure=self._source_exhausted and final_observation,
-            )
-
-    def mark_complete(self) -> None:
-        with self._lock:
-            self._source_exhausted = True
-            verified = self._snapshot.success or any(
-                event.kind == "verification" and event.status == "verified"
-                for event in self._snapshot.events
-            )
-            final_observation = (
-                self._snapshot.total_steps > 0
-                and self._snapshot.episode_step >= self._snapshot.total_steps - 1
-            )
-            status = (
-                "Success"
-                if verified
-                else "Failed"
-                if final_observation
-                else "Verifying"
-            )
-            self._snapshot = replace(
-                self._snapshot,
-                status=status,
-                success=verified,
-            )
-            self._update_plan_events(
-                self._snapshot.progress,
-                verified,
-                terminal_failure=final_observation and not verified,
-            )
-
-    def _is_terminal_locked(self) -> bool:
-        return self._snapshot.success or self._source_exhausted
-
-    def _configure_execution_locked(
-        self,
-        goal: EmbodiedGoal,
-        plan: SkillPlan,
-    ) -> None:
-        self._started_at = monotonic()
-        self._event_sequence = 0
-        self._source_exhausted = False
-        self._snapshot = replace(
-            self._snapshot,
-            task=goal.task,
-            episode=goal.episode,
-            goal_text=goal.text,
-            planner=plan.source,
-            execution_mode=goal.execution_mode,
-            plan=plan,
-            current_step_id=plan.steps[0].step_id,
-            events=(),
-            status="Ready",
-        )
-        self._append_event(
-            kind="dispatch",
-            status="completed",
-            step_id="",
-            message=(
-                f"Plan accepted from {plan.source} planner "
-                f"({goal.execution_mode.replace('_', ' ')})"
-            ),
-        )
-        self._append_event(
-            kind="skill",
-            status="running",
-            step_id=plan.steps[0].step_id,
-            message=plan.steps[0].label,
-        )
-
-    def _request_restart_locked(self) -> None:
-        if not self._restart_requested:
-            next_cycle = self._snapshot.cycle + 1
-        else:
-            next_cycle = self._snapshot.cycle
-        self._restart_requested = True
-        self._source_exhausted = False
-        self._step_budget = 0
-        self._snapshot = replace(
-            self._snapshot,
-            paused=False,
-            episode_step=0,
-            cycle=next_cycle,
-            progress=0.0,
-            reward=0.0,
-            success=False,
-            action_norm=0.0,
-            status="Restarting",
-        )
-        if self._snapshot.plan is not None:
-            plan = self._snapshot.plan
-            self._started_at = monotonic()
-            self._event_sequence = 0
-            self._snapshot = replace(
-                self._snapshot,
-                current_step_id=plan.steps[0].step_id,
-                events=(),
-            )
-            self._append_event(
-                kind="dispatch",
-                status="completed",
-                step_id="",
-                message="Episode restarted",
-            )
-            self._append_event(
-                kind="skill",
-                status="running",
-                step_id=plan.steps[0].step_id,
-                message=plan.steps[0].label,
-            )
-
-    def _update_plan_events(
-        self,
-        progress: float,
-        success: bool,
-        *,
-        terminal_failure: bool = False,
-    ) -> None:
-        plan = self._snapshot.plan
-        if plan is None:
-            return
-        if success:
-            self._snapshot = replace(
-                self._snapshot,
-                events=tuple(
-                    event
-                    for event in self._snapshot.events
-                    if event.status != "failed"
-                ),
-            )
-        existing = {(event.step_id, event.status) for event in self._snapshot.events}
-        verified = ("", "verified") in existing
-        terminal_failure = terminal_failure and not success and not verified
-        for step in plan.steps:
-            is_verification = step.skill == "verify"
-            complete = success or (
-                not is_verification and progress >= step.end_fraction
-            )
-            if complete and (step.step_id, "completed") not in existing:
-                self._append_event(
-                    kind="skill",
-                    status="completed",
-                    step_id=step.step_id,
-                    message=step.label,
-                )
-                existing.add((step.step_id, "completed"))
-
-        active = plan.step_at(progress)
-        if terminal_failure:
-            verification = plan.steps[-1]
-            if (verification.step_id, "failed") not in existing:
-                self._append_event(
-                    kind="skill",
-                    status="failed",
-                    step_id=verification.step_id,
-                    message=verification.label,
-                )
-                existing.add((verification.step_id, "failed"))
-        elif not success and (active.step_id, "running") not in existing:
-            self._append_event(
-                kind="skill",
-                status="running",
-                step_id=active.step_id,
-                message=active.label,
-            )
-        self._snapshot = replace(
-            self._snapshot,
-            current_step_id="" if success or terminal_failure else active.step_id,
-        )
-        if success and ("", "verified") not in existing:
-            self._append_event(
-                kind="verification",
-                status="verified",
-                step_id="",
-                message="RoboCasa task success signal verified",
-            )
-        if terminal_failure and ("", "failed") not in existing:
-            self._append_event(
-                kind="verification",
-                status="failed",
-                step_id="",
-                message="RoboCasa task success signal was not observed",
-            )
-
-    def _append_event(
-        self,
-        *,
-        kind: str,
-        status: str,
-        step_id: str,
-        message: str,
-    ) -> None:
-        self._event_sequence += 1
-        event = ExecutionEvent(
-            sequence=self._event_sequence,
-            kind=kind,
-            status=status,
-            step_id=step_id,
-            message=message,
-            elapsed_seconds=max(0.0, monotonic() - self._started_at),
-        )
-        self._snapshot = replace(
-            self._snapshot,
-            events=(*self._snapshot.events[-63:], event),
-        )
+from .runtime import ReplayControls, ReplaySnapshot, present_replay
 
 
 @dataclass(frozen=True)
@@ -446,107 +57,174 @@ class MjviserBridge:
         self.open_browser = open_browser
         self._server: Any | None = None
         self._scene: Any | None = None
+        self._lifecycle_lock = RLock()
         self._gui_lock = RLock()
         self._status_markdown: Any | None = None
         self._plan_html: Any | None = None
         self._graph_html: Any | None = None
         self._events_html: Any | None = None
         self._progress: Any | None = None
-        self._camera_presets = _DEFAULT_CAMERA_PRESETS
+        self._run_goal_button: Any | None = None
+        self._goal_input: Any | None = None
+        self._planner_dropdown: Any | None = None
+        self._execution_mode_dropdown: Any | None = None
+        self._camera_group: Any | None = None
+        self._speed_dropdown: Any | None = None
+        self._pause_button: Any | None = None
+        self._resume_button: Any | None = None
+        self._step_button: Any | None = None
+        self._restart_button: Any | None = None
+        self._last_goal_text = ""
+        self._camera_presets = dict(_DEFAULT_CAMERA_PRESETS)
+        self._selected_camera_preset = (
+            controls.snapshot().camera_preset if controls is not None else "Agent"
+        )
         self._next_control_refresh_at = 0.0
 
     def start(self, sim: Any) -> None:
-        if self._scene is not None:
-            return
+        with self._lifecycle_lock:
+            if self._scene is not None:
+                return
 
-        try:
-            import viser
-            from mjviser import ViserMujocoScene
-        except ImportError as exc:
-            raise RuntimeError(
-                "mjviser is not installed. Install the optional simulation dependencies "
-                'with `python -m pip install -e ".[robosuite]"`.'
-            ) from exc
+            try:
+                import viser
+                from mjviser import ViserMujocoScene
+            except ImportError as exc:
+                raise RuntimeError(
+                    "mjviser is not installed. Install the optional simulation "
+                    "dependencies "
+                    'with `python -m pip install -e ".[robosuite]"`.'
+                ) from exc
 
-        model, data = _native_mujoco_state(sim)
-        self._server = viser.ViserServer(
-            host=self.host,
-            port=self.port,
-            label=self.label,
-        )
-        self._scene = ViserMujocoScene(self._server, model, num_envs=1)
-        robot_body_id = _robot_tracking_body_id(model)
-        if robot_body_id is not None:
-            # mjviser currently selects the first movable body, which is often an
-            # invisible RoboCasa target. Anchor its tracking offset to the robot.
-            self._scene._tracked_body_id = robot_body_id
-            self._camera_presets = _camera_presets_from_robot(data, robot_body_id)
+            model, data = _native_mujoco_state(sim)
+            server: Any | None = None
+            self._clear_runtime_state_locked()
+            try:
+                server = viser.ViserServer(
+                    host=self.host,
+                    port=self.port,
+                    label=self.label,
+                )
+                scene = ViserMujocoScene(server, model, num_envs=1)
+                self._server = server
+                self._scene = scene
+                robot_body_id = _robot_tracking_body_id(model)
+                if robot_body_id is not None:
+                    # mjviser currently selects the first movable body, which is
+                    # often an invisible RoboCasa target. Anchor tracking to the robot.
+                    _set_scene_tracking_body(scene, robot_body_id)
+                    self._camera_presets = _camera_presets_from_robot(
+                        data, robot_body_id
+                    )
 
-        # robosuite uses group 0 for collision proxies and group 1 for visual geoms.
-        # Keep collisions available in the Groups tab, but do not overlay them by default.
-        self._scene.geom_groups_visible[0] = False
-        self._scene._sync_visibilities()
-        self._scene.create_visualization_gui(camera_distance=3.0)
-        self._register_camera_handler()
-        if self.controls is not None:
-            self._create_retriever_panel(viser)
-        self._scene.update_from_mjdata(data)
-        self.refresh_controls()
+                # robosuite uses group 0 for collision proxies and group 1 for
+                # visual geoms. Keep collisions in the Groups tab, but hidden.
+                if len(scene.geom_groups_visible) > 0:
+                    scene.geom_groups_visible[0] = False
+                _sync_scene_visibilities(scene)
+                scene.create_visualization_gui(camera_distance=3.0)
+                self._register_camera_handler()
+                if self.controls is not None:
+                    self._create_retriever_panel(viser)
+                scene.update_from_mjdata(data)
+                self.refresh_controls()
+            except BaseException:
+                self._clear_runtime_state_locked()
+                if server is not None:
+                    with suppress(Exception):
+                        server.stop()
+                raise
 
-        display_host = (
-            "localhost" if self.host in {"0.0.0.0", "127.0.0.1"} else self.host
-        )
-        viewer_url = f"http://{display_host}:{self.port}"
+        viewer_url = _viewer_url(self.host, self.port)
         print(f"Retriever mjviser: {viewer_url}")
         if self.open_browser:
-            webbrowser.open(viewer_url)
+            try:
+                webbrowser.open(viewer_url)
+            except (OSError, webbrowser.Error) as exc:
+                print(f"Retriever mjviser: could not open a browser ({exc})")
 
     def update(self, sim: Any) -> None:
         self.start(sim)
-        if self._scene is None:
-            return
-        _, data = _native_mujoco_state(sim)
-        self._scene.update_from_mjdata(data)
-        now = monotonic()
-        if now >= self._next_control_refresh_at:
-            self.refresh_controls()
-            self._next_control_refresh_at = now + 0.1
+        with self._lifecycle_lock:
+            if self._scene is None:
+                return
+            _, data = _native_mujoco_state(sim)
+            self._scene.update_from_mjdata(data)
+            now = monotonic()
+            if now >= self._next_control_refresh_at:
+                self.refresh_controls()
+                self._next_control_refresh_at = now + 0.1
 
     def apply_camera_preset(self, name: str) -> None:
         """Apply a named camera preset to every connected mjviser client."""
 
-        if name not in self._camera_presets:
-            raise ValueError(f"Unknown camera preset: {name}")
-        if self._server is None:
-            raise RuntimeError("mjviser is not running")
-        preset = self._camera_presets[name]
-        for client in tuple(self._server.get_clients().values()):
-            _apply_camera_preset(client, preset)
+        with self._lifecycle_lock:
+            if name not in self._camera_presets:
+                raise ValueError(f"Unknown camera preset: {name}")
+            if self._server is None:
+                raise RuntimeError("mjviser is not running")
+            self._selected_camera_preset = name
+            preset = self._camera_presets[name]
+            for client in tuple(self._server.get_clients().values()):
+                _apply_camera_preset(client, preset)
+            if self.controls is not None:
+                self.controls.set_camera_preset(name)
 
     def refresh_controls(self) -> None:
-        if (
-            self.controls is None
-            or self._status_markdown is None
-            or self._plan_html is None
-            or self._graph_html is None
-            or self._events_html is None
-            or self._progress is None
-        ):
-            return
-        snapshot = self.controls.snapshot()
-        status = snapshot.status
-        if snapshot.success:
-            status = "Success"
-        with self._gui_lock:
-            self._status_markdown.content = _status_markdown(snapshot, status)
-            self._plan_html.content = _plan_html(snapshot)
-            self._graph_html.content = _graph_html(snapshot, status)
-            self._events_html.content = _events_html(snapshot)
-            self._progress.value = snapshot.progress * 100.0
+        with self._lifecycle_lock:
+            if (
+                self.controls is None
+                or self._status_markdown is None
+                or self._plan_html is None
+                or self._graph_html is None
+                or self._events_html is None
+                or self._progress is None
+            ):
+                return
+            snapshot = self.controls.snapshot()
+            status = present_replay(snapshot).status
+            with self._gui_lock:
+                self._status_markdown.content = _status_markdown(snapshot, status)
+                self._plan_html.content = _plan_html(snapshot)
+                self._graph_html.content = _graph_html(snapshot, status)
+                self._events_html.content = _events_html(snapshot)
+                self._progress.value = snapshot.progress * 100.0
+                _set_gui_value(self._planner_dropdown, snapshot.planner)
+                _set_gui_value(
+                    self._execution_mode_dropdown,
+                    snapshot.execution_mode,
+                )
+                _set_gui_value(self._camera_group, snapshot.camera_preset)
+                _set_gui_value(self._speed_dropdown, f"{snapshot.speed:g}x")
+                if snapshot.goal_text != self._last_goal_text:
+                    _set_gui_value(self._goal_input, snapshot.goal_text)
+                    self._last_goal_text = snapshot.goal_text
+                _set_gui_disabled(self._run_goal_button, snapshot.planning)
+                terminal = present_replay(snapshot).terminal
+                _set_gui_disabled(
+                    self._pause_button,
+                    snapshot.planning or terminal or snapshot.paused,
+                )
+                _set_gui_disabled(
+                    self._resume_button,
+                    snapshot.planning or terminal or not snapshot.paused,
+                )
+                _set_gui_disabled(
+                    self._step_button,
+                    snapshot.planning or terminal or not snapshot.paused,
+                )
+                _set_gui_disabled(self._restart_button, snapshot.planning)
 
     def close(self) -> None:
-        if self._server is not None:
-            self._server.stop()
+        if self.controls is not None:
+            self.controls.cancel_pending_goals()
+        with self._lifecycle_lock:
+            server = self._server
+            self._clear_runtime_state_locked()
+        if server is not None:
+            server.stop()
+
+    def _clear_runtime_state_locked(self) -> None:
         self._scene = None
         self._server = None
         self._status_markdown = None
@@ -554,6 +232,18 @@ class MjviserBridge:
         self._graph_html = None
         self._events_html = None
         self._progress = None
+        self._run_goal_button = None
+        self._goal_input = None
+        self._planner_dropdown = None
+        self._execution_mode_dropdown = None
+        self._camera_group = None
+        self._speed_dropdown = None
+        self._pause_button = None
+        self._resume_button = None
+        self._step_button = None
+        self._restart_button = None
+        self._last_goal_text = ""
+        self._camera_presets = dict(_DEFAULT_CAMERA_PRESETS)
         self._next_control_refresh_at = 0.0
 
     def _create_retriever_panel(self, viser: Any) -> None:
@@ -582,7 +272,7 @@ class MjviserBridge:
                 initial_value=initial.execution_mode,
                 hint=(
                     "Live planning generates the visible skill plan now; both "
-                    "modes execute the verified RoboCasa trajectory."
+                    "modes replay recorded RoboCasa data, then verify the task."
                 ),
             )
             run_goal = self._server.gui.add_button(
@@ -596,6 +286,7 @@ class MjviserBridge:
                 tuple(self._camera_presets),
                 hint="Switch between third-person, agent, and overview cameras.",
             )
+            camera.value = self._selected_camera_preset
             self._progress = self._server.gui.add_progress_bar(
                 0.0,
                 color="green",
@@ -603,17 +294,17 @@ class MjviserBridge:
             pause = self._server.gui.add_button(
                 "Pause",
                 icon=viser.Icon.PLAYER_PAUSE,
-                hint="Pause before the next recorded action.",
+                hint="Pause before the next recorded replay step.",
             )
             resume = self._server.gui.add_button(
                 "Resume",
                 icon=viser.Icon.PLAYER_PLAY,
-                hint="Continue replaying recorded actions.",
+                hint="Continue replaying recorded data.",
             )
             step = self._server.gui.add_button(
                 "Step",
                 icon=viser.Icon.PLAYER_TRACK_NEXT,
-                hint="Advance exactly one recorded action, then stay paused.",
+                hint="Advance exactly one recorded replay step, then stay paused.",
             )
             restart = self._server.gui.add_button(
                 "Restart episode",
@@ -625,18 +316,47 @@ class MjviserBridge:
                 ("0.25x", "0.5x", "1x"),
                 initial_value="1x",
             )
+            self._run_goal_button = run_goal
+            self._goal_input = goal
+            self._planner_dropdown = planner
+            self._execution_mode_dropdown = execution_mode
+            self._camera_group = camera
+            self._speed_dropdown = speed
+            self._pause_button = pause
+            self._resume_button = resume
+            self._step_button = step
+            self._restart_button = restart
+            self._last_goal_text = initial.goal_text
 
             @run_goal.on_click
             def _(_) -> None:
-                try:
-                    self.controls.submit_goal(
-                        goal.value,
-                        planner.value,
-                        execution_mode.value,
-                    )
-                except (RuntimeError, ValueError) as exc:
-                    run_goal.hint = str(exc)
-                self.refresh_controls()
+                text = goal.value
+                planner_name = planner.value
+                mode = execution_mode.value
+                run_goal.hint = "Planning..."
+                _set_gui_disabled(run_goal, True)
+
+                def submit() -> None:
+                    try:
+                        self.controls.submit_goal(
+                            text,
+                            planner_name,
+                            mode,
+                            timeout=30.0,
+                        )
+                        run_goal.hint = (
+                            "Plan accepted; restarting the selected episode."
+                        )
+                    except Exception as exc:
+                        run_goal.hint = str(exc)
+                    finally:
+                        self.refresh_controls()
+
+                Thread(
+                    target=submit,
+                    name="retriever-viser-goal",
+                    daemon=True,
+                ).start()
 
             @pause.on_click
             def _(_) -> None:
@@ -664,15 +384,8 @@ class MjviserBridge:
                 self.refresh_controls()
 
             @camera.on_click
-            def _(event) -> None:
-                preset = self._camera_presets[camera.value]
-                clients = (
-                    (event.client,)
-                    if event.client is not None
-                    else tuple(self._server.get_clients().values())
-                )
-                for client in clients:
-                    _apply_camera_preset(client, preset)
+            def _(_) -> None:
+                self.apply_camera_preset(camera.value)
 
         with panel.add_tab("Plan", viser.Icon.TIMELINE):
             self._plan_html = self._server.gui.add_html("")
@@ -689,7 +402,28 @@ class MjviserBridge:
 
         @self._server.on_client_connect
         def _(client) -> None:
-            _apply_camera_preset(client, self._camera_presets["Agent"])
+            with self._lifecycle_lock:
+                if self._server is None:
+                    return
+                name = self._selected_camera_preset
+                preset = self._camera_presets.get(
+                    name, self._camera_presets["Agent"]
+                )
+                _apply_camera_preset(client, preset)
+
+
+def _set_gui_value(handle: Any | None, value: Any) -> None:
+    if handle is None or getattr(handle, "value", None) == value:
+        return
+    with suppress(Exception):
+        handle.value = value
+
+
+def _set_gui_disabled(handle: Any | None, disabled: bool) -> None:
+    if handle is None:
+        return
+    with suppress(Exception):
+        handle.disabled = disabled
 
 
 def _status_markdown(snapshot: ReplaySnapshot, status: str) -> str:
@@ -704,13 +438,15 @@ def _status_markdown(snapshot: ReplaySnapshot, status: str) -> str:
         f"| Action | `{displayed_step} / {total}` |\n"
         f"| Cycle | `{snapshot.cycle}` |\n"
         f"| Reward | `{snapshot.reward:.3f}` |\n"
-        f"| Action norm | `{snapshot.action_norm:.3f}` |\n"
+        f"| Dataset action norm | `{snapshot.action_norm:.3f}` |\n"
         f"| Speed | `{snapshot.speed:g}x` |"
     )
 
 
 def _graph_html(snapshot: ReplaySnapshot, status: str) -> str:
     status_color = "#15803d" if snapshot.success else "#2563eb"
+    if status == "Failed":
+        status_color = "#b91c1c"
     if snapshot.paused and not snapshot.success:
         status_color = "#a16207"
     task = snapshot.task
@@ -732,14 +468,18 @@ def _graph_html(snapshot: ReplaySnapshot, status: str) -> str:
     dispatch_detail = (
         f"{active_step.stage_label} / {active_step.label}"
         if active_step is not None
-        else "verified"
+        else "verification failed"
+        if status == "Failed"
+        else "task verified"
+        if snapshot.success
+        else "awaiting execution"
     )
     return (
         '<div style="font-family: Inter, ui-sans-serif, system-ui, sans-serif; '
         'padding: 6px 2px 12px; color: #172033;">'
         '<div style="display:flex; align-items:center; justify-content:space-between; '
         'margin-bottom:12px;">'
-        '<strong style="font-size:17px;">Live Retriever Flow</strong>'
+        '<strong style="font-size:17px;">Retriever pipeline map</strong>'
         f'<span style="font-size:11px; font-weight:700; color:{status_color}; '
         f'letter-spacing:0.04em;">{status.upper()}</span></div>'
         f"{_flow_node('GOAL', 'GoalSource', '#475569', '#f8fafc', snapshot.goal_text or task)}"
@@ -777,6 +517,11 @@ def _plan_html(snapshot: ReplaySnapshot) -> str:
         for event in snapshot.events
         if event.status == "completed" and event.step_id
     }
+    failed = {
+        event.step_id
+        for event in snapshot.events
+        if event.status == "failed" and event.step_id
+    }
     stage_rows: list[str] = []
     for stage_index, (_stage_id, stage_label, stage_steps) in enumerate(
         stages, start=1
@@ -784,10 +529,12 @@ def _plan_html(snapshot: ReplaySnapshot) -> str:
         rows: list[str] = []
         states: list[str] = []
         for index, step in stage_steps:
-            if step.step_id == snapshot.current_step_id:
-                state, color, symbol = "Running", "#2563eb", "&#9654;"
+            if step.step_id in failed:
+                state, color, symbol = "Failed", "#b91c1c", "!"
+            elif step.step_id == snapshot.current_step_id:
+                state, color, symbol = "Current", "#2563eb", "&#9654;"
             elif step.step_id in completed:
-                state, color, symbol = "Completed", "#15803d", "&#10003;"
+                state, color, symbol = "Passed", "#15803d", "&#10003;"
             else:
                 state, color, symbol = "Pending", "#64748b", str(index)
             states.append(state)
@@ -800,11 +547,13 @@ def _plan_html(snapshot: ReplaySnapshot) -> str:
                 f'<div style="font-size:9px;color:#667085;margin-top:2px;">{escape(step.skill)} | {escape(step.lane)}</div></div>'
                 f'<span style="font-size:8px;font-weight:800;color:{color};text-transform:uppercase;">{state}</span></div>'
             )
-        if all(state == "Completed" for state in states):
-            stage_state, stage_color, stage_symbol = "Done", "#15803d", "&#10003;"
-        elif "Running" in states:
+        if "Failed" in states:
+            stage_state, stage_color, stage_symbol = "Failed", "#b91c1c", "!"
+        elif all(state == "Passed" for state in states):
+            stage_state, stage_color, stage_symbol = "Passed", "#15803d", "&#10003;"
+        elif "Current" in states:
             stage_state, stage_color, stage_symbol = (
-                "Running",
+                "Current",
                 "#2563eb",
                 str(stage_index),
             )
@@ -914,6 +663,46 @@ def _native_mujoco_state(sim: Any) -> tuple[Any, Any]:
     return model, data
 
 
+def _set_scene_tracking_body(scene: Any, body_id: int) -> None:
+    """Bridge current and future mjviser tracking APIs in one place."""
+
+    setter = getattr(scene, "set_tracked_body", None)
+    if callable(setter):
+        setter(body_id)
+        return
+    if hasattr(scene, "tracked_body_id"):
+        scene.tracked_body_id = body_id
+        return
+    if hasattr(scene, "_tracked_body_id"):
+        scene._tracked_body_id = body_id
+        return
+    raise RuntimeError("This mjviser version does not expose body tracking")
+
+
+def _sync_scene_visibilities(scene: Any) -> None:
+    """Apply geom visibility through whichever mjviser API is available."""
+
+    sync = getattr(scene, "sync_visibilities", None)
+    if not callable(sync):
+        sync = getattr(scene, "_sync_visibilities", None)
+    if not callable(sync):
+        raise RuntimeError("This mjviser version cannot synchronize geom groups")
+    sync()
+
+
+def _viewer_url(host: str, port: int) -> str:
+    """Return a browser-safe local URL for IPv4, IPv6, and wildcard binds."""
+
+    display_host = (
+        "localhost"
+        if host in {"0.0.0.0", "127.0.0.1", "::", "::1"}
+        else host
+    )
+    if ":" in display_host and not display_host.startswith("["):
+        display_host = f"[{display_host}]"
+    return f"http://{display_host}:{port}"
+
+
 def _robot_tracking_body_id(model: Any) -> int | None:
     """Choose a stable robot body instead of an invisible control target."""
 
@@ -951,27 +740,50 @@ def _camera_presets_from_robot(
     except (AttributeError, IndexError, TypeError, ValueError):
         return _DEFAULT_CAMERA_PRESETS
 
+    try:
+        origin = tuple(float(value) for value in data.xpos[body_id])
+    except (AttributeError, IndexError, TypeError, ValueError):
+        origin = (0.0, 0.0, 0.0)
+
     up = (0.0, 0.0, 1.0)
     return {
         "Robot": _CameraPreset(
             position=_vector_sum(
+                origin,
                 _scaled(forward, -1.0),
                 _scaled(up, 2.6),
             ),
-            look_at=_vector_sum(_scaled(forward, 0.3), _scaled(up, 1.0)),
+            look_at=_vector_sum(
+                origin,
+                _scaled(forward, 0.3),
+                _scaled(up, 1.0),
+            ),
             fov_degrees=65.0,
         ),
         "Agent": _CameraPreset(
-            position=_vector_sum(_scaled(forward, -0.6), _scaled(up, 1.85)),
-            look_at=_vector_sum(_scaled(forward, 1.0), _scaled(up, 0.8)),
+            position=_vector_sum(
+                origin,
+                _scaled(forward, -0.6),
+                _scaled(up, 1.85),
+            ),
+            look_at=_vector_sum(
+                origin,
+                _scaled(forward, 1.0),
+                _scaled(up, 0.8),
+            ),
             fov_degrees=60.0,
         ),
         "Overview": _CameraPreset(
             position=_vector_sum(
+                origin,
                 _scaled(forward, -0.6),
                 _scaled(up, 5.0),
             ),
-            look_at=_vector_sum(_scaled(forward, 0.5), _scaled(up, 0.7)),
+            look_at=_vector_sum(
+                origin,
+                _scaled(forward, 0.5),
+                _scaled(up, 0.7),
+            ),
         ),
     }
 
