@@ -59,14 +59,20 @@
         box-shadow: 0 1px 2px rgba(20, 28, 40, 0.06);
       }
       .preview img { width: 100%; height: 100%; object-fit: contain; display: block; }
+      .preview-empty {
+        position: absolute; inset: 0; display: grid; place-items: center;
+        padding: 24px; color: #687386; text-align: center;
+      }
       .status {
         position: absolute; top: 18px; right: 18px; display: flex; align-items: center;
         gap: 8px; padding: 9px 11px; border-radius: 5px; background: rgba(20, 28, 40, 0.88);
-        color: #fff; font-size: 13px; backdrop-filter: blur(8px);
+        max-width: min(32rem, calc(100% - 36px)); color: #fff; font-size: 13px;
+        overflow-wrap: anywhere; backdrop-filter: blur(8px);
       }
       .dot { width: 8px; height: 8px; border-radius: 50%; background: #9da7b4; }
       .status[data-state="ready"] .dot { background: #45b96b; }
       .status[data-state="starting"] .dot { background: #e0aa32; }
+      .status[data-state="stopping"] .dot { background: #e0aa32; }
       .status[data-state="failed"] .dot { background: #df5b5b; }
       .controls {
         margin: 18px 28px 28px; padding: 20px 22px 22px; background: #fff;
@@ -140,7 +146,8 @@
       <main class="main">
         <section class="preview">
           <img id="preview" alt="" />
-          <div class="status" id="status" data-state="idle"><span class="dot"></span><span id="status-text">Idle</span></div>
+          <div class="preview-empty" id="preview-empty" hidden>Preview media is not included in this installation.</div>
+          <div class="status" id="status" data-state="idle" role="status" aria-live="polite"><span class="dot"></span><span id="status-text">Idle</span></div>
         </section>
         <section class="controls">
           <div class="control-head">
@@ -150,7 +157,7 @@
           <div class="control-grid">
             <label>Episode <input id="episode" type="number" min="0" value="0" /></label>
             <label>Planner <select id="planner"><option value="offline">Offline</option><option value="gemini">Gemini</option></select></label>
-            <label>Execution <select id="execution-mode"><option value="demonstration">Demonstration replay</option><option value="live_planning">Live skill planning</option></select></label>
+            <label>Execution <select id="execution-mode"><option value="demonstration">Deterministic demonstration</option><option value="live_planning">Dynamic skill plan + action replay</option></select></label>
             <label>Interface <select id="interface"><option value="console">Retriever console</option><option value="viser">Viser native</option></select></label>
             <label>Goal <textarea id="goal" placeholder="Describe the task goal"></textarea></label>
             <div class="command-actions">
@@ -165,6 +172,7 @@
     <script>
       const list = document.querySelector("#scene-list");
       const preview = document.querySelector("#preview");
+      const previewEmpty = document.querySelector("#preview-empty");
       const task = document.querySelector("#task");
       const kind = document.querySelector("#kind");
       const details = document.querySelector("#details");
@@ -182,25 +190,41 @@
       let selected = null;
       let consoleUrl = "http://localhost:8086";
       let openUrl = consoleUrl;
+      let currentStatus = { state: "idle", task: null, interface: "console" };
+      let statusPollBusy = false;
+      let actionBusy = false;
+      let requestGeneration = 0;
 
       function selectScene(scene) {
         selected = scene;
         task.textContent = scene.task;
         kind.textContent = `${scene.kind} task`;
-        details.textContent = `${scene.episodes} episodes · horizon ${scene.horizon}`;
-        preview.src = scene.preview;
-        preview.alt = `${scene.task} RoboCasa preview`;
-        episode.max = String(scene.episodes - 1);
+        const episodeLabel = scene.episodes > 0
+          ? `${scene.episodes} episodes`
+          : "Episode count unavailable";
+        details.textContent = `${episodeLabel} · horizon ${scene.horizon}`;
+        const hasPreview = Boolean(scene.preview);
+        preview.hidden = !hasPreview;
+        previewEmpty.hidden = hasPreview;
+        preview.src = scene.preview || "";
+        preview.alt = hasPreview ? `${scene.task} RoboCasa preview` : "";
+        const maxEpisode = Math.max(0, scene.episodes - 1);
+        if (scene.episodes > 0) episode.max = String(maxEpisode);
+        else episode.removeAttribute("max");
+        episode.value = String(Math.min(Math.max(0, Number(episode.value) || 0), maxEpisode));
         goal.value = scene.task;
-        launch.disabled = !scene.available;
         document.querySelectorAll(".scene-row").forEach((row) => {
           row.setAttribute("aria-pressed", String(row.dataset.task === scene.task));
         });
+        applyStatus(currentStatus);
       }
 
       function renderScenes() {
         if (!scenes.length) {
-          list.innerHTML = '<div class="empty">RoboCasa task metadata is unavailable.</div>';
+          const empty = document.createElement("div");
+          empty.className = "empty";
+          empty.textContent = "No runnable RoboCasa tasks were found.";
+          list.replaceChildren(empty);
           return;
         }
         list.replaceChildren(...scenes.map((scene) => {
@@ -209,11 +233,27 @@
           row.dataset.task = scene.task;
           row.setAttribute("aria-pressed", "false");
           row.disabled = !scene.available;
-          const availability = scene.available
-            ? '<span class="availability ready">Ready</span>'
-            : '<span class="availability missing">Dataset needed</span>';
-          const reason = scene.available ? "" : `<span class="reason">${scene.unavailable_reason}</span>`;
-          row.innerHTML = `<strong>${scene.task}</strong><span class="meta"><span class="kind">${scene.kind}</span><span>${scene.split}</span>${availability}</span>${reason}`;
+
+          const title = document.createElement("strong");
+          title.textContent = scene.task;
+          const meta = document.createElement("span");
+          meta.className = "meta";
+          const kindLabel = document.createElement("span");
+          kindLabel.className = "kind";
+          kindLabel.textContent = scene.kind;
+          const split = document.createElement("span");
+          split.textContent = scene.split;
+          const availability = document.createElement("span");
+          availability.className = `availability ${scene.available ? "ready" : "missing"}`;
+          availability.textContent = scene.available ? "Ready" : "Dataset needed";
+          meta.append(kindLabel, split, availability);
+          row.append(title, meta);
+          if (!scene.available && scene.unavailable_reason) {
+            const reason = document.createElement("span");
+            reason.className = "reason";
+            reason.textContent = scene.unavailable_reason;
+            row.append(reason);
+          }
           row.addEventListener("click", () => selectScene(scene));
           return row;
         }));
@@ -222,51 +262,165 @@
         if (initial) selectScene(initial);
       }
 
-      async function updateStatus() {
-        const response = await fetch("/api/status");
-        const current = await response.json();
-        consoleUrl = current.console_url || current.viewer_url;
-        openUrl = current.open_url || consoleUrl;
-        open.textContent = current.interface === "viser" ? "Open Viser dashboard" : "Open console";
-        status.dataset.state = current.state;
-        statusText.textContent = current.task ? `${current.state} · ${current.task}` : current.state;
-        open.disabled = current.state !== "ready";
-        stop.disabled = !["starting", "ready"].includes(current.state);
-        launch.disabled = !selected || !selected.available || current.state === "starting";
+      function applyStatus(next) {
+        currentStatus = { ...currentStatus, ...next };
+        if (next.state && next.state !== "failed" && !("error" in next)) {
+          currentStatus.error = null;
+        }
+        consoleUrl = currentStatus.console_url || currentStatus.viewer_url || consoleUrl;
+        openUrl = currentStatus.open_url || consoleUrl;
+        open.textContent = currentStatus.interface === "viser"
+          ? "Open Viser dashboard"
+          : "Open console";
+        status.dataset.state = currentStatus.state;
+        const label = currentStatus.error || (
+          currentStatus.task
+            ? `${currentStatus.state} · ${currentStatus.task}`
+            : currentStatus.state
+        );
+        statusText.textContent = label;
+        open.disabled = actionBusy || currentStatus.state !== "ready";
+        stop.disabled = actionBusy || !["starting", "ready"].includes(currentStatus.state);
+        launch.disabled = actionBusy
+          || currentStatus.state === "starting"
+          || !selected
+          || !selected.available;
+      }
+
+      async function responsePayload(response) {
+        try {
+          return await response.json();
+        } catch (_error) {
+          return {};
+        }
+      }
+
+      function renderSceneError(message) {
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        const text = document.createElement("p");
+        text.textContent = message;
+        const retry = document.createElement("button");
+        retry.type = "button";
+        retry.className = "secondary";
+        retry.textContent = "Retry";
+        retry.addEventListener("click", loadScenes);
+        empty.append(text, retry);
+        list.replaceChildren(empty);
+      }
+
+      async function request(url, options = {}, timeoutMs = 5000) {
+        const controller = new AbortController();
+        const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          return await fetch(url, { cache: "no-store", ...options, signal: controller.signal });
+        } finally {
+          window.clearTimeout(timeout);
+        }
+      }
+
+      async function updateStatus(expectedGeneration = requestGeneration) {
+        if (statusPollBusy) return;
+        statusPollBusy = true;
+        try {
+          const response = await request("/api/status");
+          if (!response.ok) return;
+          const current = await response.json();
+          if (expectedGeneration === requestGeneration) applyStatus(current);
+        } catch (_error) {
+          if (expectedGeneration === requestGeneration) {
+            applyStatus({ state: "failed", error: "Launcher connection lost" });
+          }
+        } finally {
+          statusPollBusy = false;
+        }
       }
 
       launch.addEventListener("click", async () => {
-        launch.disabled = true;
-        const response = await fetch("/api/launch", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+        const generation = ++requestGeneration;
+        actionBusy = true;
+        applyStatus({ state: "starting", task: selected.task, error: null });
+        try {
+          const response = await request("/api/launch", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              task: selected.task,
+              episode: Number(episode.value),
+              goal: goal.value,
+              planner: planner.value,
+              execution_mode: executionMode.value,
+              interface: interfaceMode.value,
+            }),
+          }, 30000);
+          const payload = await responsePayload(response);
+          if (generation !== requestGeneration) return;
+          applyStatus(response.ok ? payload : {
+            state: "failed",
             task: selected.task,
-            episode: Number(episode.value),
-            goal: goal.value,
-            planner: planner.value,
-            execution_mode: executionMode.value,
-            interface: interfaceMode.value,
-          }),
-        });
-        if (!response.ok) {
-          const error = await response.json();
-          status.dataset.state = "failed";
-          statusText.textContent = error.detail || "Launch failed";
+            error: payload.detail || "Launch failed",
+          });
+        } catch (_error) {
+          if (generation === requestGeneration) {
+            applyStatus({
+              state: "failed",
+              task: selected.task,
+              error: "Could not reach the launcher",
+            });
+          }
+        } finally {
+          if (generation === requestGeneration) {
+            actionBusy = false;
+            applyStatus(currentStatus);
+            await updateStatus(generation);
+          }
         }
-        await updateStatus();
       });
 
       stop.addEventListener("click", async () => {
-        await fetch("/api/stop", { method: "POST" });
-        await updateStatus();
+        const generation = ++requestGeneration;
+        actionBusy = true;
+        applyStatus({ state: "stopping", error: null });
+        try {
+          const response = await request("/api/stop", { method: "POST" }, 30000);
+          if (response.ok && generation === requestGeneration) {
+            applyStatus(await responsePayload(response));
+          } else if (generation === requestGeneration) {
+            const payload = await responsePayload(response);
+            applyStatus({
+              state: "failed",
+              error: payload.detail || "Stop failed",
+            });
+          }
+        } catch (_error) {
+          if (generation === requestGeneration) {
+            applyStatus({ state: "failed", error: "Could not reach the launcher" });
+          }
+        } finally {
+          if (generation === requestGeneration) {
+            actionBusy = false;
+            applyStatus(currentStatus);
+            await updateStatus(generation);
+          }
+        }
       });
       open.addEventListener("click", () => window.open(openUrl, "retriever-robocasa-console"));
 
-      fetch("/api/scenes").then((response) => response.json()).then((data) => {
-        scenes = data;
-        renderScenes();
-      });
+      async function loadScenes() {
+        try {
+          const response = await request("/api/scenes");
+          const payload = await responsePayload(response);
+          if (!response.ok || !Array.isArray(payload)) {
+            throw new Error(payload.detail || "Task catalog is unavailable");
+          }
+          scenes = payload;
+          renderScenes();
+        } catch (error) {
+          renderSceneError(error.name === "AbortError" ? "Task catalog timed out." : error.message);
+        }
+      }
+
+      loadScenes();
       updateStatus();
       setInterval(updateStatus, 1000);
     </script>
