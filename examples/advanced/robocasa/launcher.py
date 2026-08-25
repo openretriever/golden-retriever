@@ -3,14 +3,22 @@
 from __future__ import annotations
 
 import argparse
+import asyncio
+import json
+import os
+import signal
 import subprocess
 import sys
 from contextlib import asynccontextmanager
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
+from http import HTTPStatus
 from http.client import HTTPConnection, HTTPException
 from pathlib import Path
 from threading import RLock
+from time import monotonic, sleep
 from typing import Any, Literal
+from urllib.parse import urlsplit
+from uuid import uuid4
 
 try:
     from pydantic import BaseModel, Field
@@ -113,7 +121,7 @@ def discover_scenes() -> list[Scene]:
                 task=task,
                 kind=kind,
                 split="pretrain",
-                episodes=100,
+                episodes=_dataset_episode_count(metadata, dataset_path),
                 horizon=int(metadata.get("horizon", 0)) if metadata else 0,
                 preview=_PREVIEWS.get(task, _DEFAULT_PREVIEW),
                 available=available,
@@ -141,12 +149,39 @@ def _unavailable_scene(task: str, kind: str, reason: str) -> Scene:
         task=task,
         kind=kind,
         split="pretrain",
-        episodes=100,
+        episodes=0,
         horizon=0,
         preview=_PREVIEWS.get(task, _DEFAULT_PREVIEW),
         available=False,
         unavailable_reason=reason,
     )
+
+
+def _dataset_episode_count(
+    metadata: dict[str, Any] | None,
+    dataset_path: Path | None,
+) -> int:
+    """Read an installed dataset's episode count without opening its payload."""
+
+    for key in ("total_episodes", "num_episodes", "num_demos", "episodes"):
+        value = metadata.get(key) if metadata else None
+        if isinstance(value, int) and value > 0:
+            return value
+
+    if dataset_path is not None:
+        for info_path in (
+            dataset_path / "meta" / "info.json",
+            dataset_path / "info.json",
+        ):
+            try:
+                info = json.loads(info_path.read_text(encoding="utf-8"))
+            except (FileNotFoundError, OSError, TypeError, ValueError):
+                continue
+            for key in ("total_episodes", "num_episodes", "num_demos", "episodes"):
+                value = info.get(key)
+                if isinstance(value, int) and value > 0:
+                    return value
+    return 0
 
 
 class ViewerManager:
@@ -166,12 +201,15 @@ class ViewerManager:
         self.duration = float(duration)
         self._lock = RLock()
         self._process: subprocess.Popen[Any] | None = None
+        self._process_group_id: int | None = None
         self._task: str | None = None
         self._episode = 0
         self._goal = ""
         self._planner = "offline"
         self._execution_mode = "demonstration"
         self._interface: Literal["console", "viser"] = "console"
+        self._launch_id = ""
+        self._last_error: str | None = None
 
     @property
     def viewer_url(self) -> str:
@@ -197,6 +235,7 @@ class ViewerManager:
         planner: Literal["offline", "gemini"] = "offline",
         execution_mode: Literal["demonstration", "live_planning"] = "demonstration",
         interface: Literal["console", "viser"] = "console",
+        launch_id: str = "",
     ) -> list[str]:
         command = [
             sys.executable,
@@ -230,6 +269,8 @@ class ViewerManager:
             self.host,
             "--console-port",
             str(self.console_port),
+            "--launch-id",
+            launch_id,
             "--print-every",
             "100",
         ]
@@ -249,80 +290,181 @@ class ViewerManager:
     ) -> dict[str, Any]:
         if not scene.available:
             raise ValueError(scene.unavailable_reason or "Dataset is unavailable.")
-        if not 0 <= episode < scene.episodes:
+        if scene.episodes > 0 and not 0 <= episode < scene.episodes:
             raise ValueError(f"Episode must be between 0 and {scene.episodes - 1}")
         with self._lock:
-            self._stop_locked()
-            self._process = subprocess.Popen(
-                self.command(
-                    task=scene.task,
-                    split=scene.split,
-                    episode=episode,
-                    goal=goal,
-                    planner=planner,
-                    execution_mode=execution_mode,
-                    interface=interface,
-                ),
-                cwd=Path(__file__).resolve().parents[3],
-            )
+            if not self._stop_locked():
+                raise RuntimeError(
+                    self._last_error or "Could not stop the active simulator"
+                )
             self._task = scene.task
             self._episode = episode
             self._goal = goal.strip() or scene.task
             self._planner = planner
             self._execution_mode = execution_mode
             self._interface = interface
-            return self.status()
+            self._launch_id = uuid4().hex
+            try:
+                self._process = subprocess.Popen(
+                    self.command(
+                        task=scene.task,
+                        split=scene.split,
+                        episode=episode,
+                        goal=goal,
+                        planner=planner,
+                        execution_mode=execution_mode,
+                        interface=interface,
+                        launch_id=self._launch_id,
+                    ),
+                    cwd=Path(__file__).resolve().parents[3],
+                    start_new_session=os.name == "posix",
+                )
+                if os.name == "posix":
+                    self._process_group_id = getattr(self._process, "pid", None)
+            except OSError as exc:
+                self._process_group_id = None
+                self._last_error = str(exc)
+                raise RuntimeError(f"Could not start RoboCasa: {exc}") from exc
+        return self.status()
 
     def stop(self) -> dict[str, Any]:
         with self._lock:
             self._stop_locked()
-            return self.status()
+        return self.status()
 
     def status(self) -> dict[str, Any]:
         with self._lock:
             process = self._process
-            if process is None:
-                state = "idle"
-            elif process.poll() is not None:
-                state = "stopped" if process.returncode == 0 else "failed"
-            elif _port_is_open(
-                self.host,
-                self.port if self._interface == "viser" else self.console_port,
-            ):
-                state = "ready"
-            else:
-                state = "starting"
-            return {
-                "state": state,
+            returncode = process.poll() if process is not None else None
+            if returncode not in {None, 0} and self._last_error is None:
+                self._last_error = f"Simulator process exited with code {returncode}."
+            status = {
                 "task": self._task,
                 "episode": self._episode,
                 "goal": self._goal,
                 "planner": self._planner,
                 "execution_mode": self._execution_mode,
                 "interface": self._interface,
+                "launch_id": self._launch_id,
                 "viewer_url": self.viewer_url,
                 "console_url": self.console_url,
                 "open_url": (
                     self.viewer_url if self._interface == "viser" else self.console_url
                 ),
+                "error": self._last_error,
             }
+        if process is None:
+            state = "failed" if status["error"] else "idle"
+        elif status["error"]:
+            state = "failed"
+        elif returncode is not None:
+            state = "stopped"
+        elif _console_matches_run(
+            self.host,
+            self.console_port,
+            task=status["task"],
+            episode=status["episode"],
+            launch_id=status["launch_id"],
+        ) and (
+            status["interface"] == "console"
+            or (status["interface"] == "viser" and _port_is_open(self.host, self.port))
+        ):
+            state = "ready"
+        else:
+            state = "starting"
+        return {"state": state, **status}
 
-    def _stop_locked(self) -> None:
+    def _stop_locked(self) -> bool:
         process = self._process
+        process_group_id = self._process_group_id
+        if process is not None and (
+            process.poll() is None or process_group_id is not None
+        ):
+            _signal_process(
+                process,
+                signal.SIGTERM,
+                process_group_id=process_group_id,
+            )
         if process is not None and process.poll() is None:
-            process.terminate()
             try:
                 process.wait(timeout=10)
             except subprocess.TimeoutExpired:
-                process.kill()
-                process.wait(timeout=5)
+                _signal_process(
+                    process,
+                    signal.SIGKILL,
+                    process_group_id=process_group_id,
+                )
+                try:
+                    process.wait(timeout=5)
+                except subprocess.TimeoutExpired as exc:
+                    self._last_error = f"Simulator process could not be stopped: {exc}"
+                    return False
+        if process_group_id is not None and _process_group_exists(process_group_id):
+            _signal_process(
+                process,
+                signal.SIGKILL,
+                process_group_id=process_group_id,
+            )
+            if not _wait_for_process_group_exit(process_group_id):
+                self._last_error = "Simulator process group could not be stopped"
+                return False
+
         self._process = None
+        self._process_group_id = None
         self._task = None
         self._episode = 0
         self._goal = ""
         self._planner = "offline"
         self._execution_mode = "demonstration"
         self._interface = "console"
+        self._launch_id = ""
+        self._last_error = None
+        return True
+
+
+def _signal_process(
+    process: subprocess.Popen[Any],
+    sig: signal.Signals,
+    *,
+    process_group_id: int | None = None,
+) -> None:
+    if os.name == "posix" and process_group_id is not None:
+        try:
+            os.killpg(process_group_id, sig)
+            return
+        except ProcessLookupError:
+            return
+        except OSError:
+            pass
+    if sig == signal.SIGTERM:
+        process.terminate()
+    else:
+        process.kill()
+
+
+def _process_group_exists(process_group_id: int) -> bool:
+    if os.name != "posix":
+        return False
+    try:
+        os.killpg(process_group_id, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def _wait_for_process_group_exit(
+    process_group_id: int,
+    *,
+    timeout: float = 5.0,
+) -> bool:
+    deadline = monotonic() + timeout
+    while _process_group_exists(process_group_id):
+        if monotonic() >= deadline:
+            return False
+        sleep(0.05)
+    return True
 
 
 def _port_is_open(host: str, port: int) -> bool:
@@ -337,6 +479,71 @@ def _port_is_open(host: str, port: int) -> bool:
         connection.close()
 
 
+def _console_matches_run(
+    host: str,
+    port: int,
+    *,
+    task: str | None,
+    episode: int,
+    launch_id: str,
+) -> bool:
+    """Reject a stale console left over from a previous task or episode."""
+
+    connect_host = "127.0.0.1" if host == "0.0.0.0" else host
+    connection = HTTPConnection(connect_host, port, timeout=0.2)
+    try:
+        connection.request("GET", "/api/config")
+        response = connection.getresponse()
+        if response.status != HTTPStatus.OK:
+            return False
+        payload = json.loads(response.read())
+        return (
+            payload.get("task") == task
+            and payload.get("episode") == episode
+            and payload.get("launch_id") == launch_id
+        )
+    except (HTTPException, json.JSONDecodeError, OSError, TypeError, ValueError):
+        return False
+    finally:
+        connection.close()
+
+
+def _request_origin(request: Any) -> tuple[str, str, int | None] | None:
+    parsed = urlsplit(str(request.base_url))
+    try:
+        return parsed.scheme.lower(), (parsed.hostname or "").lower(), parsed.port
+    except ValueError:
+        return None
+
+
+def _header_origin(value: str) -> tuple[str, str, int | None] | None:
+    parsed = urlsplit(value)
+    if (
+        parsed.scheme.lower() not in {"http", "https"}
+        or not parsed.hostname
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.path not in {"", "/"}
+        or parsed.query
+        or parsed.fragment
+    ):
+        return None
+    try:
+        return parsed.scheme.lower(), parsed.hostname.lower(), parsed.port
+    except ValueError:
+        return None
+
+
+def _post_has_body(request: Any) -> bool:
+    content_length = request.headers.get("content-length")
+    if content_length is not None:
+        try:
+            return int(content_length) > 0
+        except ValueError:
+            return True
+    return bool(request.headers.get("transfer-encoding"))
+
+
 def create_app(
     *,
     viewer_host: str,
@@ -344,15 +551,14 @@ def create_app(
     duration: float,
     console_port: int | None = None,
 ):
-    from fastapi import FastAPI, HTTPException
-    from fastapi.responses import HTMLResponse
+    from fastapi import FastAPI, HTTPException, Request
+    from fastapi.responses import HTMLResponse, JSONResponse
     from fastapi.staticfiles import StaticFiles
 
     if LaunchRequest is None:
         raise RuntimeError("The RoboCasa launcher requires the web extra.")
 
     scenes = discover_scenes()
-    by_task = {scene.task: scene for scene in scenes}
     manager = ViewerManager(
         host=viewer_host,
         port=viewer_port,
@@ -363,12 +569,42 @@ def create_app(
     @asynccontextmanager
     async def lifespan(_app):
         yield
-        manager.stop()
+        await asyncio.to_thread(manager.stop)
 
     app = FastAPI(title="Retriever RoboCasa Scenes", lifespan=lifespan)
     static_dir = Path(__file__).with_name("static")
     media_dir = Path(__file__).resolve().parents[3] / "docs-site/public/media/robocasa"
-    app.mount("/media", StaticFiles(directory=media_dir), name="media")
+    if media_dir.is_dir():
+        app.mount("/media", StaticFiles(directory=media_dir), name="media")
+    else:
+        scenes = [replace(scene, preview="") for scene in scenes]
+    by_task = {scene.task: scene for scene in scenes}
+
+    @app.middleware("http")
+    async def protect_local_mutations(request: Request, call_next):
+        if request.method == "POST":
+            origin = request.headers.get("origin")
+            if origin is not None:
+                supplied_origin = _header_origin(origin)
+                if supplied_origin is None or supplied_origin != _request_origin(
+                    request
+                ):
+                    return JSONResponse(
+                        status_code=HTTPStatus.FORBIDDEN,
+                        content={
+                            "detail": "Cross-origin launcher requests are not allowed."
+                        },
+                    )
+            if _post_has_body(request):
+                media_type = request.headers.get("content-type", "").split(";", 1)[0]
+                if media_type.strip().lower() != "application/json":
+                    return JSONResponse(
+                        status_code=HTTPStatus.UNSUPPORTED_MEDIA_TYPE,
+                        content={
+                            "detail": "POST request bodies must use application/json."
+                        },
+                    )
+        return await call_next(request)
 
     @app.get("/", response_class=HTMLResponse)
     async def index() -> str:
@@ -380,7 +616,7 @@ def create_app(
 
     @app.get("/api/status")
     async def status() -> dict[str, Any]:
-        return manager.status()
+        return await asyncio.to_thread(manager.status)
 
     @app.post("/api/launch")
     async def launch(request: LaunchRequest) -> dict[str, Any]:
@@ -393,7 +629,8 @@ def create_app(
                 detail=scene.unavailable_reason or "Dataset is unavailable.",
             )
         try:
-            return manager.launch(
+            return await asyncio.to_thread(
+                manager.launch,
                 scene,
                 request.episode,
                 goal=request.goal,
@@ -403,10 +640,12 @@ def create_app(
             )
         except ValueError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     @app.post("/api/stop")
     async def stop() -> dict[str, Any]:
-        return manager.stop()
+        return await asyncio.to_thread(manager.stop)
 
     return app
 

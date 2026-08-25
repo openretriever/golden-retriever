@@ -270,10 +270,12 @@
       }
       .plan-stage[data-state="active"] .stage-index { border-color: var(--blue); background: var(--blue-soft); color: var(--blue); }
       .plan-stage[data-state="complete"] .stage-index { border-color: #86b997; background: var(--green-soft); color: var(--green); }
+      .plan-stage[data-state="failed"] .stage-index { border-color: #d88a82; background: #fff1ef; color: var(--red); }
       .stage-title { min-width: 0; overflow-wrap: anywhere; color: var(--ink); font-size: 12px; font-weight: 760; }
       .stage-state { color: var(--muted); font-size: 9px; font-weight: 760; text-transform: uppercase; }
       .plan-stage[data-state="active"] .stage-state { color: var(--blue); }
       .plan-stage[data-state="complete"] .stage-state { color: var(--green); }
+      .plan-stage[data-state="failed"] .stage-state { color: var(--red); }
       .stage-list { position: relative; display: grid; gap: 0; margin-left: 10px; padding-left: 11px; border-left: 1px solid var(--line); }
       .plan-step { position: relative; display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 10px; min-width: 0; padding-bottom: 16px; }
       .plan-step:last-child { padding-bottom: 0; }
@@ -295,6 +297,7 @@
       }
       .plan-step[data-state="active"] .step-index { border-color: var(--blue); background: var(--blue); color: #fff; }
       .plan-step[data-state="complete"] .step-index { border-color: var(--green); background: var(--green-soft); color: var(--green); }
+      .plan-step[data-state="failed"] .step-index { border-color: var(--red); background: #fff1ef; color: var(--red); }
       .step-body { min-width: 0; padding-top: 1px; }
       .step-label { margin: 0 0 4px; overflow-wrap: anywhere; color: var(--ink); font-size: 12px; line-height: 1.35; font-weight: 700; }
       .plan-step[data-state="pending"] .step-label { color: #6d7887; font-weight: 620; }
@@ -311,6 +314,7 @@
       }
       .graph-node[data-state="active"] { border-color: var(--blue); box-shadow: inset 3px 0 var(--blue); background: #f5f9fd; }
       .graph-node[data-state="complete"] { border-color: #92bea1; box-shadow: inset 3px 0 var(--green); }
+      .graph-node[data-state="failed"] { border-color: #d88a82; box-shadow: inset 3px 0 var(--red); background: #fff8f7; }
       .graph-name { display: block; min-width: 0; overflow-wrap: anywhere; color: var(--ink); font-size: 12px; font-weight: 740; }
       .graph-role { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; }
       .graph-arrow { height: 18px; display: grid; place-items: center; color: #8c98a7; font-size: 14px; line-height: 1; }
@@ -458,7 +462,7 @@
                 <div class="metric"><span class="metric-label">Cycle</span><span class="metric-value" id="metric-cycle">--</span></div>
                 <div class="metric"><span class="metric-label">Speed</span><span class="metric-value" id="metric-speed">--</span></div>
                 <div class="metric"><span class="metric-label">Reward</span><span class="metric-value" id="metric-reward">--</span></div>
-                <div class="metric"><span class="metric-label">Action norm</span><span class="metric-value" id="metric-action">--</span></div>
+                <div class="metric"><span class="metric-label">Dataset action norm</span><span class="metric-value" id="metric-action">--</span></div>
                 <div class="metric"><span class="metric-label">Success</span><span class="metric-value" id="metric-success">--</span></div>
               </div>
             </div>
@@ -470,7 +474,7 @@
               </div>
             </div>
 
-            <div class="section">
+            <div class="section" id="camera-section">
               <h2 class="section-title">Camera</h2>
               <div class="segmented" role="group" aria-label="Camera preset">
                 <button class="segment" type="button" data-camera="Robot" aria-pressed="true" title="Use the robot camera">Robot</button>
@@ -533,7 +537,7 @@
                   <label>Execution
                     <select id="execution-mode-select">
                       <option value="demonstration">Demonstration replay</option>
-                      <option value="live_planning">Live skill planning</option>
+                      <option value="live_planning">Dynamic skill plan + action replay</option>
                     </select>
                   </label>
                 </div>
@@ -596,6 +600,15 @@
           ["TaskVerifier", "Outcome check"],
           ["EventSink", "Lifecycle events"],
         ];
+        const flowNodeIndexes = {
+          goal_source: 0,
+          embodied_planner: 1,
+          skill_dispatcher: 2,
+          demo_actions: 3,
+          robocasa_simulator: 4,
+          task_verifier: 5,
+          event_sink: 6,
+        };
 
         const elements = {
           taskName: $("#task-name"),
@@ -640,6 +653,7 @@
           metricReward: $("#metric-reward"),
           metricAction: $("#metric-action"),
           metricSuccess: $("#metric-success"),
+          cameraSection: $("#camera-section"),
         };
 
         let latestState = null;
@@ -692,6 +706,10 @@
           return "idle";
         }
 
+        function displayStatusFor(state) {
+          return String(state?.presentation?.status || state?.status || "Ready");
+        }
+
         function toneForEventStatus(status) {
           const normalized = String(status || "").toLowerCase();
           if (["completed", "success", "verified"].includes(normalized)) return "success";
@@ -711,7 +729,7 @@
           elements.connectionDot.dataset.state = state;
           elements.connectionText.textContent = text;
           elements.viewerLive.dataset.state = state;
-          elements.viewerLive.textContent = state === "connected" ? "Live" : state === "disconnected" ? "Offline" : "Connecting";
+          elements.viewerLive.textContent = state === "connected" ? "Connected" : state === "disconnected" ? "Offline" : "Connecting";
         }
 
         function setViewerOverlay(state, title, detail) {
@@ -722,15 +740,19 @@
         }
 
         function setControlsDisabled(disabled) {
-          const terminal = Boolean(latestState?.success) || ["complete", "completed", "verified"].includes(String(latestState?.status || "").toLowerCase());
-          elements.pauseResume.disabled = disabled || terminal;
-          elements.stepCommand.disabled = disabled || terminal || !latestState?.paused;
-          elements.restartCommand.disabled = disabled;
-          elements.speedSelect.disabled = disabled || terminal;
-          elements.goalInput.disabled = disabled;
-          elements.plannerSelect.disabled = disabled;
-          elements.executionModeSelect.disabled = disabled;
-          elements.goalSubmit.disabled = disabled;
+          const status = String(latestState?.status || "").toLowerCase();
+          const terminal = Boolean(latestState?.terminal || latestState?.success)
+            || ["success", "verified", "failed"].includes(status);
+          const transitioning = Boolean(latestState?.planning)
+            || ["loading", "restarting"].includes(status);
+          elements.pauseResume.disabled = disabled || terminal || transitioning;
+          elements.stepCommand.disabled = disabled || terminal || transitioning || !latestState?.paused;
+          elements.restartCommand.disabled = disabled || transitioning;
+          elements.speedSelect.disabled = disabled || terminal || transitioning;
+          elements.goalInput.disabled = disabled || transitioning;
+          elements.plannerSelect.disabled = disabled || transitioning;
+          elements.executionModeSelect.disabled = disabled || transitioning;
+          elements.goalSubmit.disabled = disabled || transitioning;
           $$("[data-camera]").forEach((button) => { button.disabled = disabled; });
         }
 
@@ -765,22 +787,24 @@
 
         function renderGraph() {
           graphNodes[3][1] = latestState?.execution_mode === "live_planning"
-            ? "Verified trajectory after live plan"
-            : "Demonstration trajectory";
-          const tone = latestState ? toneForStatus(latestState.status, latestState.paused, latestState.success) : "idle";
-          let activeIndex = 0;
-          if (latestState) {
-            if (latestState.success) activeIndex = 6;
-            else if (finite(latestState.progress) >= 0.96) activeIndex = 5;
-            else if (finite(latestState.progress) > 0) activeIndex = 4;
-            else if (latestState.plan?.steps?.length) activeIndex = 3;
-            else if (latestState.goal_text) activeIndex = 1;
-          }
+            ? "Recorded actions after dynamic plan"
+            : "Demonstration replay";
+          const tone = latestState
+            ? (latestState.presentation?.tone || toneForStatus(latestState.status, latestState.paused, latestState.success))
+            : "idle";
+          const failed = tone === "error";
+          const activeIndex = latestState
+            ? (flowNodeIndexes[latestState.active_flow_node] ?? 0)
+            : 0;
           elements.graph.replaceChildren();
           graphNodes.forEach(([name, role], index) => {
             const node = document.createElement("div");
             node.className = "graph-node";
-            node.dataset.state = index < activeIndex ? "complete" : index === activeIndex && latestState ? "active" : "pending";
+            node.dataset.state = index < activeIndex
+              ? "complete"
+              : index === activeIndex && latestState
+                ? (failed ? "failed" : "active")
+                : "pending";
             const nodeName = document.createElement("span");
             nodeName.className = "graph-name";
             nodeName.textContent = name;
@@ -797,12 +821,15 @@
               elements.graph.append(arrow);
             }
           });
-          elements.graphState.textContent = latestState ? (tone === "success" ? "Verified" : tone === "paused" ? "Paused" : "Live") : "Waiting";
+          elements.graphState.textContent = latestState
+            ? (tone === "success" ? "Verified" : tone === "paused" ? "Paused" : failed ? "Failed" : "Current")
+            : "Waiting";
         }
 
-        function renderPlan(plan, progress, currentStepId) {
+        function renderPlan(plan, progress, currentStepId, events) {
           const steps = Array.isArray(plan?.steps) ? plan.steps : [];
-          const signature = JSON.stringify([plan?.source, steps, currentStepId, Math.round(progress * 1000)]);
+          const lifecycleEvents = Array.isArray(events) ? events : [];
+          const signature = JSON.stringify([plan?.source, steps, currentStepId, Math.round(progress * 1000), lifecycleEvents]);
           if (signature === lastPlanSignature) return;
           lastPlanSignature = signature;
           elements.planSource.textContent = plan?.source || "--";
@@ -827,12 +854,30 @@
           });
           elements.planCount.textContent = `${staged.length} ${staged.length === 1 ? "subplan" : "subplans"} · ${steps.length} skills`;
 
+          const completedSteps = new Set(
+            lifecycleEvents
+              .filter((event) => event.status === "completed" && event.step_id)
+              .map((event) => event.step_id),
+          );
+          const failedSteps = new Set(
+            lifecycleEvents
+              .filter((event) => event.status === "failed" && event.step_id)
+              .map((event) => event.step_id),
+          );
+          const hasLifecycleState = lifecycleEvents.some(
+            (event) => event.step_id && ["running", "completed", "failed"].includes(event.status),
+          );
           const stepState = (step) => {
             const start = clamp(step.start_fraction, 0, 1);
             const end = clamp(step.end_fraction, start, 1);
             let state = "pending";
-            if (progress >= end && currentStepId !== step.step_id) state = "complete";
-            if (currentStepId === step.step_id || (progress >= start && progress < end)) state = "active";
+            if (failedSteps.has(step.step_id)) state = "failed";
+            else if (currentStepId === step.step_id) state = "active";
+            else if (completedSteps.has(step.step_id)) state = "complete";
+            else if (!hasLifecycleState) {
+              if (progress >= end) state = "complete";
+              else if (progress >= start) state = "active";
+            }
             return { state, start, end };
           };
 
@@ -840,7 +885,9 @@
             const states = stage.steps.map(({ step }) => stepState(step).state);
             const stageState = states.every((state) => state === "complete")
               ? "complete"
-              : states.includes("active")
+              : states.includes("failed")
+                ? "failed"
+                : states.includes("active")
                 ? "active"
                 : "pending";
             const section = document.createElement("section");
@@ -850,13 +897,13 @@
             header.className = "stage-header";
             const stageMarker = document.createElement("span");
             stageMarker.className = "stage-index";
-            stageMarker.textContent = stageState === "complete" ? "✓" : String(stageIndex + 1);
+            stageMarker.textContent = stageState === "complete" ? "✓" : stageState === "failed" ? "!" : String(stageIndex + 1);
             const stageTitle = document.createElement("span");
             stageTitle.className = "stage-title";
             stageTitle.textContent = stage.label;
             const stageStatus = document.createElement("span");
             stageStatus.className = "stage-state";
-            stageStatus.textContent = stageState === "active" ? "Running" : stageState === "complete" ? "Done" : "Queued";
+            stageStatus.textContent = stageState === "active" ? "Current" : stageState === "complete" ? "Passed" : stageState === "failed" ? "Failed" : "Queued";
             header.append(stageMarker, stageTitle, stageStatus);
             const list = document.createElement("div");
             list.className = "stage-list";
@@ -869,7 +916,7 @@
               row.dataset.state = state;
               const marker = document.createElement("span");
               marker.className = "step-index";
-              marker.textContent = state === "complete" ? "✓" : String(index + 1);
+              marker.textContent = state === "complete" ? "✓" : state === "failed" ? "!" : String(index + 1);
               const body = document.createElement("div");
               body.className = "step-body";
               const label = document.createElement("p");
@@ -894,7 +941,7 @@
           });
         }
 
-        function renderEvents(events) {
+        function renderEvents(events, cycle) {
           const rows = Array.isArray(events) ? events : [];
           const signature = JSON.stringify(rows);
           if (signature === lastEventsSignature) return;
@@ -938,7 +985,7 @@
 
           const outcome = [...rows].reverse().find((event) => ["verified", "failed"].includes(event.status));
           if (outcome) {
-            const outcomeSignature = JSON.stringify([outcome.sequence, outcome.status, outcome.message]);
+            const outcomeSignature = JSON.stringify([cycle, outcome.sequence, outcome.status, outcome.message]);
             if (outcomeSignature !== lastConversationOutcome) {
               lastConversationOutcome = outcomeSignature;
               appendConversationMessage(
@@ -953,8 +1000,8 @@
         function renderState(state) {
           latestState = state;
           const progress = clamp(state.progress, 0, 1);
-          const status = String(state.status || (state.paused ? "paused" : "ready"));
-          const tone = toneForStatus(status, state.paused, state.success);
+          const status = displayStatusFor(state);
+          const tone = state.presentation?.tone || toneForStatus(status, state.paused, state.success);
           const task = state.task || "RoboCasa task";
           const episode = state.episode ?? "--";
           const speed = finite(state.speed, 1);
@@ -962,7 +1009,7 @@
           elements.taskName.textContent = task;
           elements.viewerLabel.textContent = task;
           elements.connectionText.textContent = `Episode ${episode} · ${status}`;
-          elements.statusBadge.textContent = state.paused ? "Paused" : status;
+          elements.statusBadge.textContent = status;
           elements.statusBadge.dataset.tone = tone;
           elements.metricStep.textContent = `${finite(state.episode_step, 0)} / ${finite(state.total_steps, 0)}`;
           elements.metricCycle.textContent = String(finite(state.cycle, 0));
@@ -974,6 +1021,11 @@
           elements.progressValue.textContent = `${Math.round(progress * 100)}%`;
           elements.progressFill.style.width = `${progress * 100}%`;
           elements.progressTrack.setAttribute("aria-valuenow", String(Math.round(progress * 100)));
+          if (state.camera_preset) {
+            $$('[data-camera]').forEach((button) => {
+              button.setAttribute("aria-pressed", String(button.dataset.camera === state.camera_preset));
+            });
+          }
 
           if (document.activeElement !== elements.speedSelect) {
             const matchingSpeed = $$(`option`, elements.speedSelect).find((option) => Number(option.value) === speed);
@@ -981,21 +1033,28 @@
           }
           if (document.activeElement !== elements.plannerSelect && state.planner) elements.plannerSelect.value = state.planner;
           if (document.activeElement !== elements.executionModeSelect && state.execution_mode) elements.executionModeSelect.value = state.execution_mode;
-          const modeLabel = state.execution_mode === "live_planning" ? "Live skill plan" : "Demonstration";
+          const modeLabel = state.execution_mode === "live_planning" ? "Dynamic skill plan" : "Demonstration replay";
           elements.conversationPlanner.textContent = `${state.planner || "offline"} · ${modeLabel}`;
 
           elements.pauseResumeLabel.textContent = state.paused ? "Resume" : "Pause";
           elements.pauseResume.title = state.paused ? "Resume execution" : "Pause execution";
           elements.pauseResumeIcon.setAttribute("d", state.paused ? "m8 5 11 7-11 7V5Z" : "M8 5v14M16 5v14");
           elements.currentSkill.textContent = state.current_step_id || "No active skill";
-          setControlsDisabled(failedPolls >= 3 || pendingCommands > 0);
-          renderPlan(state.plan, progress, state.current_step_id);
-          renderEvents(state.events);
+          setControlsDisabled(failedPolls >= 3 || pendingCommands > 0 || state.planning);
+          renderPlan(state.plan, progress, state.current_step_id, state.events);
+          renderEvents(state.events, state.cycle);
           renderGraph();
         }
 
-        async function fetchJson(url, options = {}) {
-          const response = await fetch(url, { cache: "no-store", ...options });
+        async function requestJson(url, options = {}, timeoutMs = 5000) {
+          const controller = new AbortController();
+          const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+          let response;
+          try {
+            response = await fetch(url, { cache: "no-store", ...options, signal: controller.signal });
+          } finally {
+            window.clearTimeout(timeout);
+          }
           if (!response.ok) {
             const responseText = await response.text();
             let detail = responseText;
@@ -1008,23 +1067,16 @@
           return response.json();
         }
 
-        async function postJson(url, body) {
-          const response = await fetch(url, {
+        function fetchJson(url) {
+          return requestJson(url);
+        }
+
+        async function postJson(url, body, timeoutMs = 5000) {
+          return requestJson(url, {
             method: "POST",
-            cache: "no-store",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(body || {}),
-          });
-          if (!response.ok) {
-            const responseText = await response.text();
-            let detail = responseText;
-            try {
-              const payload = JSON.parse(responseText);
-              detail = payload.error || payload.detail || payload.message || responseText;
-            } catch (_error) {}
-            throw new Error(detail || `${response.status} ${response.statusText}`);
-          }
-          return response.json();
+          }, timeoutMs);
         }
 
         async function loadConfig() {
@@ -1034,6 +1086,23 @@
             if (config.task && !latestState) {
               elements.taskName.textContent = config.task;
               elements.viewerLabel.textContent = config.task;
+            }
+            if (config.camera_preset && !latestState) {
+              $$('[data-camera]').forEach((button) => {
+                button.setAttribute("aria-pressed", String(button.dataset.camera === config.camera_preset));
+              });
+            }
+            const cameraPresets = Array.isArray(config.capabilities?.camera_presets)
+              ? new Set(config.capabilities.camera_presets)
+              : null;
+            if (cameraPresets) {
+              let visibleCameras = 0;
+              $$('[data-camera]').forEach((button) => {
+                const visible = cameraPresets.has(button.dataset.camera);
+                button.hidden = !visible;
+                if (visible) visibleCameras += 1;
+              });
+              elements.cameraSection.hidden = visibleCameras === 0;
             }
             if (!nextUrl) {
               setViewerOverlay("waiting", "Simulator not available", "The server has not supplied a viewer URL yet.");
@@ -1058,7 +1127,7 @@
             const state = await fetchJson("/api/state");
             if (requestEpoch !== stateEpoch) return;
             failedPolls = 0;
-            setConnection("connected", `Episode ${state.episode ?? "--"} · ${state.status || "ready"}`);
+            setConnection("connected", `Episode ${state.episode ?? "--"} · ${displayStatusFor(state)}`);
             if (iframeReady) setViewerOverlay("ready", "", "");
             renderState(state);
           } catch (error) {
@@ -1110,7 +1179,7 @@
           postCommand(paused ? "/api/resume" : "/api/pause", {}, paused ? "Execution resumed" : "Execution paused");
         });
         elements.stepCommand.addEventListener("click", () => postCommand("/api/step", {}, "Advanced one action"));
-        elements.restartCommand.addEventListener("click", () => postCommand("/api/restart", {}, "Episode restarted"));
+        elements.restartCommand.addEventListener("click", () => postCommand("/api/restart", {}, "Restart requested"));
         elements.speedSelect.addEventListener("change", (event) => {
           postCommand("/api/speed", { speed: Number(event.target.value) }, `Playback set to ${event.target.value}x`);
         });
@@ -1128,12 +1197,19 @@
           lastConversationOutcome = "";
           elements.goalInput.value = "";
           pendingCommands += 1;
+          stateEpoch += 1;
           setControlsDisabled(true);
           try {
-            const result = await postJson("/api/goal", { text, planner, execution_mode: executionMode });
+            const result = await postJson(
+              "/api/goal",
+              { text, planner, execution_mode: executionMode },
+              35000,
+            );
+            stateEpoch += 1;
             appendConversationMessage("assistant", result.reply || "The plan was accepted and the episode is restarting.");
             if (result.state) renderState(result.state);
             showToast("Plan accepted");
+            await pollState();
           } catch (error) {
             showToast(error.message || "Goal planning failed", true);
             appendConversationMessage("assistant", "The goal could not be planned. Check the execution log and try again.", "error");
@@ -1145,8 +1221,10 @@
         $$("[data-camera]").forEach((button) => {
           button.addEventListener("click", async () => {
             const preset = button.dataset.camera;
-            await postCommand("/api/camera", { preset }, `${preset} camera selected`);
-            $$("[data-camera]").forEach((candidate) => candidate.setAttribute("aria-pressed", String(candidate === button)));
+            const result = await postCommand("/api/camera", { preset }, `${preset} camera selected`);
+            if (result) {
+              $$("[data-camera]").forEach((candidate) => candidate.setAttribute("aria-pressed", String(candidate === button)));
+            }
           });
         });
 

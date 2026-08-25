@@ -1,10 +1,11 @@
-"""Replay RoboCasa demonstration actions through a connected Retriever graph."""
+"""Replay RoboCasa demonstrations through a connected Retriever graph."""
 
 from __future__ import annotations
 
 import argparse
 import json
 import time
+from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -21,6 +22,7 @@ from .embodied import (
     GoalSource,
     SkillDispatcher,
     create_planner,
+    materialize_skill_plan,
 )
 from .mjviser_bridge import MjviserBridge, ReplayControls
 from .web_console import RetrieverWebConsole
@@ -37,6 +39,7 @@ def _rerun_scalar(value: float) -> Any:
 @dataclass
 class RoboCasaAction:
     values: np.ndarray | None = None
+    recorded_state: np.ndarray | None = None
     episode_step: int = 0
     cycle: int = 0
     active: bool = False
@@ -107,7 +110,7 @@ def _reset_to_episode(env: Any, initial_state: dict[str, Any]) -> None:
 
 
 class DemoActionSource(Flow[ExecutionState, RoboCasaAction]):
-    """Emit deterministic mock actions or a recorded human demonstration."""
+    """Emit a recorded demonstration selected by a validated skill plan."""
 
     def __init__(
         self,
@@ -128,8 +131,10 @@ class DemoActionSource(Flow[ExecutionState, RoboCasaAction]):
         self.mock_steps = mock_steps
         self.controls = controls
         self.actions: np.ndarray | None = None
+        self.states: np.ndarray | None = None
         self._index = 0
         self._cycle = 0
+        self._completed_cycle: int | None = None
 
     def init_config(self) -> dict[str, Any]:
         return {
@@ -145,50 +150,87 @@ class DemoActionSource(Flow[ExecutionState, RoboCasaAction]):
         if self.mode == "robocasa":
             from robocasa.utils import lerobot_utils as lerobot
 
-            self.actions = lerobot.get_episode_actions(
-                _dataset_path(self.task, self.split), self.episode
-            )
+            path = _dataset_path(self.task, self.split)
+            self.actions = lerobot.get_episode_actions(path, self.episode)
+            self.states = lerobot.get_episode_states(path, self.episode)
+            if self.states is not None and len(self.states) != len(self.actions):
+                raise ValueError(
+                    "RoboCasa demonstration states and actions must have matching "
+                    f"lengths, got {len(self.states)} states and "
+                    f"{len(self.actions)} actions"
+                )
         else:
             phases = np.linspace(0.0, np.pi, self.mock_steps, dtype=np.float32)
             self.actions = np.stack(
                 [np.sin(phases), np.cos(phases), np.full_like(phases, 0.25)],
                 axis=1,
             )
+            self.states = None
         self._index = 0
         self._cycle = 0
+        self._completed_cycle = None
         if self.controls is not None:
             self.controls.set_total_steps(len(self.actions))
 
-    def step(self, _input: ExecutionState | None = None) -> RoboCasaAction:
+    def step(self, execution: ExecutionState | None = None) -> RoboCasaAction:
         if self.actions is None:
             raise RuntimeError("Demo actions are not initialized")
+        if execution is not None:
+            planned_goal = materialize_skill_plan(execution.plan).goal
+            if (planned_goal.task, planned_goal.episode) != (self.task, self.episode):
+                raise ValueError(
+                    "The dispatched plan does not match the loaded demonstration: "
+                    f"plan={planned_goal.task} episode {planned_goal.episode}, "
+                    f"replay={self.task} episode {self.episode}. Switch tasks through "
+                    "the launcher so the dataset and simulator are replaced together."
+                )
         if self.controls is not None:
-            advance, restart = self.controls.claim_next_action()
-            if restart:
+            advance, restart_cycle = self.controls.claim_next_action()
+            if restart_cycle is not None:
                 self._index = 0
-                self._cycle += 1
+                self._cycle = restart_cycle
+                self._completed_cycle = None
             if not advance:
+                if self._index >= len(self.actions) and not self.repeat:
+                    self._mark_complete_once()
                 return RoboCasaAction(
                     episode_step=max(0, self._index - 1),
                     cycle=self._cycle,
                 )
         if self._index >= len(self.actions):
             if not self.repeat:
-                if self.controls is not None:
-                    self.controls.mark_complete()
-                return RoboCasaAction()
+                self._mark_complete_once()
+                return RoboCasaAction(
+                    episode_step=max(0, len(self.actions) - 1),
+                    cycle=self._cycle,
+                )
+            self._mark_complete_once()
             self._index = 0
-            self._cycle += 1
+            self._cycle = (
+                self.controls.begin_repeat_cycle()
+                if self.controls is not None
+                else self._cycle + 1
+            )
+            self._completed_cycle = None
 
         episode_step = self._index
         values = self.actions[episode_step]
         self._index += 1
         return RoboCasaAction(
             values=values,
+            recorded_state=(
+                self.states[episode_step] if self.states is not None else None
+            ),
             episode_step=episode_step,
             cycle=self._cycle,
             active=True,
         )
+
+    def _mark_complete_once(self) -> None:
+        if self.controls is None or self._completed_cycle == self._cycle:
+            return
+        self.controls.mark_complete()
+        self._completed_cycle = self._cycle
 
 
 class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
@@ -219,6 +261,7 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
         mock_steps: int = 12,
         controls: ReplayControls | None = None,
         open_browser: bool = False,
+        launch_id: str = "",
     ) -> None:
         self.mode = mode
         self.task = task
@@ -269,6 +312,7 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
                 port=console_port,
                 camera_handler=self._web_viewer.apply_camera_preset,
                 open_browser=open_browser,
+                launch_id=launch_id,
             )
             if self._web_viewer is not None and controls is not None
             else None
@@ -301,7 +345,14 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
         self._active_cycle = None
         self._next_step_at = time.monotonic()
         self.latest = None
-        if self.mode == "mock" or self.env is not None:
+        if self.mode == "mock":
+            return
+        if self.env is not None:
+            if self._initial_state is None:
+                raise RuntimeError("RoboCasa initial episode state is unavailable")
+            _reset_to_episode(self.env, self._initial_state)
+            if self._web_viewer is not None:
+                self._web_viewer.update(self.env.sim)
             return
 
         try:
@@ -322,30 +373,47 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
         env_kwargs["has_offscreen_renderer"] = self.emit_images
         env_kwargs["use_camera_obs"] = False
         env_kwargs["renderer"] = "mjviewer"
-        self.env = robosuite.make(**env_kwargs)
-
-        states = lerobot.get_episode_states(path, self.episode)
-        actions = lerobot.get_episode_actions(path, self.episode)
-        self._action_count = len(actions)
-        if self.controls is not None:
-            self.controls.set_total_steps(self._action_count)
-        self._initial_state = {
-            "states": states[0],
-            "model": lerobot.get_episode_model_xml(path, self.episode),
-            "ep_meta": json.dumps(lerobot.get_episode_meta(path, self.episode)),
-        }
-        _reset_to_episode(self.env, self._initial_state)
-        if self._web_viewer is not None:
-            self._web_viewer.update(self.env.sim)
-        if self._web_console is not None:
-            self._web_console.start()
+        env = robosuite.make(**env_kwargs)
+        try:
+            states = lerobot.get_episode_states(path, self.episode)
+            actions = lerobot.get_episode_actions(path, self.episode)
+            action_count = len(actions)
+            initial_state = {
+                "states": states[0],
+                "model": lerobot.get_episode_model_xml(path, self.episode),
+                "ep_meta": json.dumps(lerobot.get_episode_meta(path, self.episode)),
+            }
+            _reset_to_episode(env, initial_state)
+            self.env = env
+            self._action_count = action_count
+            self._initial_state = initial_state
+            if self.controls is not None:
+                self.controls.set_total_steps(self._action_count)
+            if self._web_viewer is not None:
+                self._web_viewer.update(self.env.sim)
+            if self._web_console is not None:
+                self._web_console.start()
+        except BaseException:
+            self.env = None
+            self._initial_state = None
+            if self._web_console is not None:
+                with suppress(Exception):
+                    self._web_console.close()
+            if self._web_viewer is not None:
+                with suppress(Exception):
+                    self._web_viewer.close()
+            with suppress(Exception):
+                env.close()
+            raise
         print(
             f"RoboCasa {self.task} ready: Retriever connected to "
             f"{self._action_count} recorded actions."
         )
 
     def step(self, action: RoboCasaAction) -> RoboCasaObservation:
-        if not action.active or action.values is None:
+        if not action.active or (
+            action.values is None and action.recorded_state is None
+        ):
             if self.viewer and self.env is not None:
                 self.env.render()
             if self._web_viewer is not None:
@@ -358,6 +426,12 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
         )
         self.latest = observation
         return observation
+
+    def refresh_controls(self) -> None:
+        """Refresh renderer controls after a complete Retriever pipeline tick."""
+
+        if self._web_viewer is not None:
+            self._web_viewer.refresh_controls()
 
     def _step_mock(self, action: RoboCasaAction) -> RoboCasaObservation:
         progress = action.episode_step / max(1, self.mock_steps - 1)
@@ -386,15 +460,34 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
 
         if self._active_cycle is not None and action.cycle < self._active_cycle:
             return self.latest or RoboCasaObservation(source=self.mode, task=self.task)
-        if self._active_cycle is not None and action.cycle != self._active_cycle:
+        cycle_changed = self._active_cycle is None or action.cycle != self._active_cycle
+        if self._active_cycle is not None and cycle_changed:
             _reset_to_episode(self.env, self._initial_state)
             self._last_episode_step = -1
             self._next_step_at = time.monotonic()
         self._active_cycle = action.cycle
+        if action.episode_step <= self._last_episode_step:
+            return self.latest or RoboCasaObservation(source=self.mode, task=self.task)
+        expected_step = self._last_episode_step + 1
+        if action.recorded_state is None and action.episode_step != expected_step:
+            raise RuntimeError(
+                "Open-loop RoboCasa action replay skipped a recorded action: "
+                f"expected step {expected_step}, received {action.episode_step}. "
+                "Use demonstration mode for deterministic state playback."
+            )
         sleep_for = self._next_step_at - time.monotonic()
         if sleep_for > 0:
             time.sleep(sleep_for)
-        _, reward, _, _ = self.env.step(action.values)
+        if action.recorded_state is not None:
+            _reset_to_episode(self.env, {"states": action.recorded_state})
+            success = bool(self.env._check_success())
+            reward_fn = getattr(self.env, "reward", None)
+            reward = float(reward_fn()) if callable(reward_fn) else float(success)
+        else:
+            if action.values is None:
+                raise RuntimeError("Action playback requires recorded action values")
+            _, reward, _, _ = self.env.step(action.values)
+            success = bool(self.env._check_success())
         if self.viewer:
             self.env.render()
         if self._web_viewer is not None:
@@ -422,8 +515,12 @@ class RoboCasaSimulator(Flow[RoboCasaAction, RoboCasaObservation]):
             cycle=action.cycle,
             progress=action.episode_step / max(1, self._action_count - 1),
             reward=float(reward),
-            success=bool(self.env._check_success()),
-            action_norm=float(np.linalg.norm(action.values)),
+            success=success,
+            action_norm=(
+                float(np.linalg.norm(action.values))
+                if action.values is not None
+                else 0.0
+            ),
         )
         return observation
 
@@ -456,8 +553,15 @@ class TaskVerifier(Flow[RoboCasaObservation, RoboCasaObservation]):
 
     def __init__(self, *, controls: ReplayControls | None = None) -> None:
         self.controls = controls
+        self._cycle: int | None = None
+        self._latest: RoboCasaObservation | None = None
 
-    def step(self, observation: RoboCasaObservation) -> RoboCasaObservation:
+    def reset(self) -> None:
+        self._cycle = None
+        self._latest = None
+
+    def _publish(self, observation: RoboCasaObservation) -> RoboCasaObservation:
+        self._latest = observation
         if self.controls is not None:
             self.controls.update_observation(
                 episode_step=observation.episode_step,
@@ -467,8 +571,10 @@ class TaskVerifier(Flow[RoboCasaObservation, RoboCasaObservation]):
                 success=observation.success,
                 action_norm=observation.action_norm,
             )
-        # Inputs arrive as Retriever runtime views; emit a concrete @io value.
-        return RoboCasaObservation(
+        return observation
+
+    def step(self, observation: RoboCasaObservation) -> RoboCasaObservation:
+        concrete = RoboCasaObservation(
             image=observation.image,
             image_updated=observation.image_updated,
             source=observation.source,
@@ -480,6 +586,18 @@ class TaskVerifier(Flow[RoboCasaObservation, RoboCasaObservation]):
             success=observation.success,
             action_norm=observation.action_norm,
         )
+        if self._cycle is not None and concrete.cycle < self._cycle:
+            return self._latest or concrete
+        if self._cycle != concrete.cycle:
+            self._cycle = concrete.cycle
+            self._latest = None
+        if self._latest is not None and concrete.episode_step < self._latest.episode_step:
+            return self._latest
+        concrete.progress = max(
+            concrete.progress,
+            self._latest.progress if self._latest is not None else 0.0,
+        )
+        return self._publish(concrete)
 
 
 class EventSink(Flow[RoboCasaObservation, None]):
@@ -584,10 +702,23 @@ def build_pipeline(args: argparse.Namespace) -> tuple[Pipeline, RoboCasaSimulato
     )
     planner = create_planner(goal.planner)
     initial_plan = planner.plan(goal)
+    goal_source = GoalSource(initial_plan.goal)
+    planning_flow = EmbodiedPlannerFlow(
+        planner,
+        initial_plan=initial_plan,
+        planner_factory=create_planner,
+    )
     if controls is not None:
         controls.configure_execution(initial_plan.goal, initial_plan)
+
+        def submit_goal(submitted: EmbodiedGoal) -> SkillPlan:
+            return planning_flow.step(submitted)
+
         controls.set_goal_handler(
-            lambda submitted: create_planner(submitted.planner).plan(submitted)
+            submit_goal,
+            on_accept=lambda accepted_goal, _plan: goal_source.set_goal(
+                accepted_goal
+            ),
         )
     source = DemoActionSource(
         mode=args.mode,
@@ -619,19 +750,25 @@ def build_pipeline(args: argparse.Namespace) -> tuple[Pipeline, RoboCasaSimulato
         mock_steps=args.mock_steps,
         controls=controls,
         open_browser=getattr(args, "open_browser", False),
+        launch_id=getattr(args, "launch_id", ""),
     )
     verifier = TaskVerifier(controls=controls)
     event_sink = EventSink(print_every=args.print_every)
 
-    pipeline = Pipeline("robocasa_demo_replay", on_lag="drop")
+    pipeline = Pipeline("robocasa_demo_replay", on_lag="catch_up")
     with pipeline:
-        goals = (GoalSource(initial_plan.goal) @ Rate(hz=args.hz)).named("goal_source")
-        planning = (EmbodiedPlannerFlow(planner) @ Trigger("text")).named(
+        goals = (goal_source @ Rate(hz=args.hz)).named("goal_source")
+        planning = (
+            planning_flow
+            @ Trigger("text", "task", "episode", "planner", "execution_mode")
+        ).named(
             "embodied_planner"
         )
         dispatch = (SkillDispatcher() @ Trigger("goal")).named("skill_dispatcher")
-        actions = (source @ Rate(hz=args.hz, on_lag="drop")).named("demo_actions")
-        simulation = (simulator @ Rate(hz=args.hz, on_lag="drop")).named(
+        actions = (source @ Rate(hz=args.hz, on_lag="catch_up")).named(
+            "demo_actions"
+        )
+        simulation = (simulator @ Trigger("cycle", "episode_step")).named(
             "robocasa_simulator"
         )
         verification = (verifier @ Trigger("episode_step")).named("task_verifier")
@@ -670,7 +807,8 @@ def parse_args() -> argparse.Namespace:
         default="demonstration",
         help=(
             "Replay a pinned demonstrated plan or plan allow-listed skills at "
-            "goal submission time; both modes execute a verified trajectory."
+            "goal submission time; both modes execute recorded replay data and "
+            "report RoboCasa task verification."
         ),
     )
     parser.add_argument("--seconds", type=float, default=45.0)
@@ -691,6 +829,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--viser-port", type=int, default=8085)
     parser.add_argument("--console-host", default="127.0.0.1")
     parser.add_argument("--console-port", type=int, default=8086)
+    parser.add_argument("--launch-id", default="")
     parser.add_argument(
         "--native-viser-controls",
         action=argparse.BooleanOptionalAction,
@@ -765,20 +904,29 @@ def _execute(args: argparse.Namespace) -> None:
             "macOS native viewer mode streams Retriever telemetry to Rerun; "
             "use headless mode for Rerun camera frames."
         )
-    pipeline.run(
-        backend="in-process",
-        duration=args.seconds,
-        visualize="rerun" if args.visualize == "rerun" else None,
-        blocking=True,
-        backend_config={
-            "rerun_config": {
-                "spawn": args.rerun_mode == "spawn",
-                "connect_addr": args.rerun_address,
-            }
-        }
-        if args.visualize == "rerun"
-        else None,
-    )
+    if args.visualize == "rerun":
+        pipeline.run(
+            backend="in-process",
+            duration=args.seconds,
+            visualize="rerun",
+            blocking=True,
+            backend_config={
+                "rerun_config": {
+                    "spawn": args.rerun_mode == "spawn",
+                    "connect_addr": args.rerun_address,
+                }
+            },
+        )
+        return
+
+    # Step-counted execution keeps expensive RoboCasa initialization outside the
+    # requested replay duration and leaves the console alive for restart controls.
+    try:
+        for _ in range(max(1, round(args.seconds * args.hz))):
+            pipeline.step(dt=1.0 / args.hz)
+            simulator.refresh_controls()
+    finally:
+        pipeline.close_stepper()
 
 
 def run(
@@ -818,6 +966,7 @@ def run(
         viser_port=8085,
         console_host="127.0.0.1",
         console_port=8086,
+        launch_id="",
         native_viser_controls=False,
         open_browser=open_browser,
         rerun_mode="spawn",
