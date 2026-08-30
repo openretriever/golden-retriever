@@ -160,8 +160,7 @@ def discover_baseline_scenes(*, horizon: int = 1200) -> list[Scene]:
     """Project typed baseline manifests into the shared launcher catalog."""
 
     return [
-        _baseline_scene(spec, horizon=horizon)
-        for spec in discover_method_baselines()
+        _baseline_scene(spec, horizon=horizon) for spec in discover_method_baselines()
     ]
 
 
