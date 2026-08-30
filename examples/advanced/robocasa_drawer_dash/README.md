@@ -53,12 +53,14 @@ only ever run once:
 ```bash
 pixi run python -m pip install -e ".[drawer_dash]"   # + RoboCasa, from source
 pixi run demo-drawer-dash-assets                     # fixtures_lw + objs_lw meshes
-pixi run demo-drawer-dash-viewer                     # http://localhost:8087
+pixi run demo-drawer-dash                            # opens the browser
 ```
 
-The viewer builds `scene.xml` itself on first run, so there is no separate
-build step to remember. It runs under plain `python` — no `mjpython`, no
-native window — and streams the live simulation to the browser.
+`demo-drawer-dash` is the browser demo: it builds `scene.xml` itself on first
+run, opens the page for you, and streams the live simulation. It runs under
+plain `python` — no `mjpython`, no native window. Pass `-- --no-open` to serve
+without opening a browser, `-- --port 9000` to move it, `-- --hold` to start
+paused.
 
 Its "grasp" panel is the point of the thing: **holding handle** reads `yes` or
 `no` tick by tick, and when it reads `no` the drawer stops moving, because
@@ -85,7 +87,7 @@ pushes each visual geom once as a triangle mesh and then moves it per frame;
 ## 3. The other simulator lanes
 
 ```bash
-pixi run demo-drawer-dash          # the routine, through Retriever Flows
+pixi run demo-drawer-dash-flow     # the routine, through Retriever Flows
 pixi run demo-drawer-dash-verify   # the assertions, headless
 pixi run demo-drawer-dash-scene    # rebuild scene.xml explicitly
 ```

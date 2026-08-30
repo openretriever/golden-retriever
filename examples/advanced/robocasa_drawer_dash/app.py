@@ -13,7 +13,10 @@ building the scene (see this example's README for the RoboCasa asset packs):
 
   pixi run python -m pip install -e ".[drawer_dash]"
   pixi run demo-drawer-dash-assets
-  pixi run demo-drawer-dash
+  pixi run demo-drawer-dash-flow
+
+`pixi run demo-drawer-dash` is the browser demo rather than this lane; see
+`viewer.py`.
 
 The mock lane reproduces the choreography's timeline and the drawer travel it
 commands, so the phase sequence, the grasp window and the open/shut thresholds

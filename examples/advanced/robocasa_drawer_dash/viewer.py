@@ -3,9 +3,10 @@
 Runs under plain `python` — no `mjpython`, no native window — and streams the
 simulation to a viser page:
 
-    pixi run demo-drawer-dash-viewer            # http://localhost:8087
-    pixi run demo-drawer-dash-viewer --port 9000
-    pixi run demo-drawer-dash-viewer --hold     # start with the routine paused
+    pixi run demo-drawer-dash              # opens http://localhost:8087
+    pixi run demo-drawer-dash -- --port 9000
+    pixi run demo-drawer-dash -- --hold    # start with the routine paused
+    pixi run demo-drawer-dash -- --no-open # serve without opening a browser
 
 The "grasp" panel reports what the arm is doing, how far the drawer has come
 out, and whether a finger pad is touching the handle right now. Nothing drives
@@ -26,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import time
+import webbrowser
 from pathlib import Path
 
 import mujoco
@@ -164,6 +166,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--port", type=int, default=8087)
     parser.add_argument("--hold", action="store_true",
                         help="Start with the routine paused, arm at its home pose.")
+    parser.add_argument("--no-open", dest="open_browser", action="store_false",
+                        help="Do not open a browser; just serve and print the URL.")
+    parser.set_defaults(open_browser=True)
     return parser.parse_args()
 
 
@@ -204,7 +209,12 @@ def main() -> None:
     print(f"slide travel: {routine.travel:.3f} m, drawers are passive "
           f"(no actuator) — only the grasp moves them")
     print(f"routine: {len(PHASES)} phases, {TOTAL_SECONDS:.0f} s per cycle")
-    print(f"drawer dash: http://localhost:{args.port}")
+    url = f"http://localhost:{args.port}"
+    print(f"drawer dash: {url}")
+    if args.open_browser:
+        # This lane exists to be looked at, so opening the page is the
+        # default; `--no-open` is there for headless and CI use.
+        webbrowser.open(url)
 
     bottles = [mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, n)
                for n in ROLLING_BOTTLES]

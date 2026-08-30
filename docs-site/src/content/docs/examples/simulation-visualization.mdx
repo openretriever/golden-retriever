@@ -195,12 +195,16 @@ simulator dependencies and RoboCasa's `fixtures_lw` and `objs_lw` asset packs
 installed:
 
 ```bash
-pixi run demo-drawer-dash-viewer   # http://localhost:8087
+pixi run demo-drawer-dash   # builds the scene, opens the browser
 ```
 
-It builds the scene on first run, streams the live simulation to a viser page
-under plain `python`, and reports **holding handle** tick by tick — which is
-the claim made watchable: when that reads `no`, the drawer stops moving.
+That is the default lane for this example: it builds the scene on first run,
+opens the page itself, streams the live simulation to a viser page under plain
+`python`, and reports **holding handle** and **holding jar** tick by tick —
+which is the claim made watchable: when those read `no`, nothing moves.
+
+The terminal lane, which runs the same routine through Retriever Flows and
+prints its state, is `demo-drawer-dash-flow`.
 
 The viewer talks to viser directly rather than through `mjviser`, which needs
 `mujoco>=3.6`; RoboSuite's controllers do not survive the 3.10 `mj_fullM`
