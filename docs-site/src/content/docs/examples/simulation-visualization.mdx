@@ -147,6 +147,43 @@ The generated graph, embedded from the artifact:
   loading="lazy"
 ></iframe>
 
+## Drawer dash: the grasp is the proof
+
+`demo-drawer-dash-mock` runs a second simulation lane: a Panda on an Omron
+mobile base takes hold of a drawer handle and pulls the drawer open, with two
+loose spice jars rolling around inside it.
+
+![four stages: lining up on the handle, gripping it, the drawer pulled out with two spice jars rolling inside, and pushed shut again](../../../assets/media/drawer-dash/drawer-dash-stages.jpg)
+
+What makes it worth running is what the scene leaves out. The drawer's slide
+joint carries **no actuator** — it is passive and damped — so the drawer cannot
+open unless something is physically holding it. The routine squares up to the
+handle bar, closes the fingers across it, and then drives the *hand* out by
+41 cm; the drawer follows because the fingers are on it.
+
+```bash
+retriever run demo-drawer-dash-mock
+```
+
+```text
+[mock step=0012] phase=grip handle      drawer=0.000m grasped=True progress=30.5% success=False
+[mock step=0020] phase=pull drawer open drawer=0.409m grasped=True progress=54.9% success=False
+[mock step=0024] phase=push drawer shut drawer=0.115m grasped=True progress=67.1% success=False
+[mock step=0036] phase=withdraw         drawer=0.000m grasped=False progress=100.0% success=True
+```
+
+The nine-phase choreography lives in `plan.py` as plain data with no MuJoCo or
+RoboCasa import, so the mock lane, the tests and the simulator all replay one
+schedule rather than three that have to be kept in step. The mock reproduces
+the timeline, the commanded travel and the pass thresholds; it does not
+reproduce contact. For that, the MuJoCo lane needs the optional simulator
+dependencies and RoboCasa's fixture and object asset packs, and
+`demo-drawer-dash-verify` is what actually asserts the claim — no actuator on
+any slide joint, a finger pad touching the handle for 100% of the pull and
+push, and the drawer out past 0.35 m and back shut under that grasp alone.
+
+Source: `examples/advanced/robocasa_drawer_dash/`.
+
 ## Run these in order
 
 Run the visual lane from lightest to heaviest so each layer is verified before the next:
@@ -154,6 +191,7 @@ Run the visual lane from lightest to heaviest so each layer is verified before t
 1. **Render the graph to HTML** — `retriever run demo-pipeline-html-viz` renders the graph structure with no simulator or model.
 2. **Mock robosuite** — `retriever run demo-robosuite-mock` runs the env↔policy loop deterministically, without a robosuite install.
 3. **Real robosuite / Rerun** — swap `mode="robosuite"` (optional dependency) only after the mock trace looks right.
+4. **Drawer dash** — `retriever run demo-drawer-dash-mock` for the routine, then the MuJoCo lane once the optional simulator dependencies and RoboCasa assets are in place.
 
 ## Design notes
 
