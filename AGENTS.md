@@ -82,6 +82,27 @@ one.
 
 - Do not introduce references to private infrastructure, internal
   hostnames, or unpublished project names into this repository.
+- Treat projects, repositories, datasets, features, workspaces, hosts, and
+  research directions learned only from conversations or the local environment
+  as confidential unless they are already public here or the user explicitly
+  approves disclosure.
+- Never describe confidential work merely to say that it is excluded, private,
+  downstream, or owned elsewhere. Omit the reference entirely and describe only
+  the public interface that exists in this repository.
+- Before committing or pushing, scan both the proposed tree and the branch
+  history for confidential names and descriptions; checking only the final file
+  contents is insufficient.
+- Do not commit conversation transcripts, prompt or tool logs, agent names or
+  identities, model or provider metadata, task or worktree IDs, or agent
+  scratch files. Public code, docs, commit messages, and artifacts should
+  describe project behavior and source provenance, not which agent produced
+  them.
+- Do not commit machine-specific absolute paths, local account names,
+  temporary-file locations, credentials, access codes, or private dataset
+  locations. Use documented environment variables and repository-relative
+  paths instead.
+- Keep these rules canonical in `AGENTS.md`. Files for other coding tools may
+  point here, but must not maintain a separate copy that can drift.
 
 ## Forbidden actions
 
