@@ -150,37 +150,45 @@ The generated graph, embedded from the artifact:
 ## Drawer dash: the grasp is the proof
 
 `demo-drawer-dash-mock` runs a second simulation lane: a Panda on an Omron
-mobile base takes hold of a drawer handle and pulls the drawer open, with two
-loose spice jars rolling around inside it.
+mobile base pulls a drawer open by its handle, fetches a seasoning jar off the
+worktop, sets it down inside the drawer, and shoves the drawer shut again.
 
-![four stages: lining up on the handle, gripping it, the drawer pulled out with two spice jars rolling inside, and pushed shut again](../../../assets/media/drawer-dash/drawer-dash-stages.jpg)
+![four stages of the routine: lining up on the handle, gripping it, the drawer pulled open with the spice jars inside, and shut again with the worktop cleared](../../../assets/media/drawer-dash/drawer-dash-stages.jpg)
 
 What makes it worth running is what the scene leaves out. The drawer's slide
 joint carries **no actuator** — it is passive and damped — so the drawer cannot
-open unless something is physically holding it. The routine squares up to the
-handle bar, closes the fingers across it, and then drives the *hand* out by
-41 cm; the drawer follows because the fingers are on it.
+open unless something is physically holding it, and nothing attaches the jar to
+the gripper either. Both move only while the fingers are on them.
 
 ```bash
 retriever run demo-drawer-dash-mock
 ```
 
 ```text
-[mock step=0012] phase=grip handle      drawer=0.000m grasped=True progress=30.5% success=False
-[mock step=0020] phase=pull drawer open drawer=0.409m grasped=True progress=54.9% success=False
-[mock step=0024] phase=push drawer shut drawer=0.115m grasped=True progress=67.1% success=False
-[mock step=0036] phase=withdraw         drawer=0.000m grasped=False progress=100.0% success=True
+[mock step=0010] phase=grip handle      drawer=0.000m holding=handle  progress=9.0% success=False
+[mock step=0020] phase=back off         drawer=0.399m holding=nothing progress=20.3% success=False
+[mock step=0050] phase=carry to drawer  drawer=0.399m holding=jar     progress=54.1% success=False
+[mock step=0080] phase=push drawer shut drawer=0.176m holding=handle  progress=87.8% success=False
+[mock step=0100] phase=withdraw         drawer=0.006m holding=nothing progress=100.0% success=True
 ```
 
-The nine-phase choreography lives in `plan.py` as plain data with no MuJoCo or
+The 24-phase choreography lives in `plan.py` as plain data with no MuJoCo or
 RoboCasa import, so the mock lane, the tests and the simulator all replay one
-schedule rather than three that have to be kept in step. The mock reproduces
-the timeline, the commanded travel and the pass thresholds; it does not
-reproduce contact. For that, the MuJoCo lane needs the optional simulator
-dependencies and RoboCasa's fixture and object asset packs, and
+schedule rather than three that have to be kept in step. Its shape is dictated
+by the scene: the drawer has to be open before anything can go in it, the
+Omron torso has to rise for the worktop and drop again for the drawer's
+interior, and the arm has to travel around the open drawer rather than fold
+home through it.
+
+The mock reproduces the timeline, the commanded travel and the pass thresholds;
+it does not reproduce contact. For that, the MuJoCo lane needs the optional
+simulator dependencies and RoboCasa's fixture and object asset packs, and
 `demo-drawer-dash-verify` is what actually asserts the claim — no actuator on
 any slide joint, a finger pad touching the handle for 100% of the pull and
-push, and the drawer out past 0.35 m and back shut under that grasp alone.
+push, the fingers on the jar for at least 90% of every phase that carries it,
+and the jar inside the drawer and standing up at the moment it is released.
+
+Source: `examples/advanced/robocasa_drawer_dash/`.
 
 There is a browser viewer for it too. From a clone, with the optional
 simulator dependencies and RoboCasa's `fixtures_lw` and `objs_lw` asset packs
