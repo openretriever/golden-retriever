@@ -101,7 +101,6 @@ class ReplayControls:
         self._goal_generation = 0
         self._active_planner_generation: int | None = None
         self._source_exhausted = False
-        self._success_seen = False
         self._outcome_sealed = False
 
     def set_goal_handler(
@@ -152,8 +151,14 @@ class ReplayControls:
             planner=planner or snapshot.planner,
             execution_mode=execution_mode or snapshot.execution_mode,
         )
+        timed_out = False
         try:
-            plan = self._run_planner(handler, goal, timeout=timeout)
+            plan = self._run_planner(
+                handler,
+                goal,
+                timeout=timeout,
+                generation=generation,
+            )
             plan.validate()
             with self._lock:
                 if generation != self._goal_generation:
@@ -168,8 +173,12 @@ class ReplayControls:
                 if accept_handler is not None:
                     accept_handler(plan.goal, plan)
             return plan
+        except PlannerTimeoutError:
+            timed_out = True
+            raise
         finally:
-            self._finish_planner(generation)
+            if not timed_out:
+                self._finish_planner(generation)
 
     def _run_planner(
         self,
@@ -177,6 +186,7 @@ class ReplayControls:
         goal: EmbodiedGoal,
         *,
         timeout: float | None,
+        generation: int,
     ) -> SkillPlan:
         if timeout is None:
             return handler(goal)
@@ -184,15 +194,18 @@ class ReplayControls:
             raise ValueError("Planner timeout must be positive")
 
         completed = Event()
+        release_when_complete = Event()
         result: dict[str, Any] = {}
 
         def plan_goal() -> None:
             try:
                 result["plan"] = handler(goal)
-            except Exception as exc:  # pragma: no cover - forwarded below
+            except Exception as exc:  # noqa: BLE001  # pragma: no cover
                 result["error"] = exc
             finally:
                 completed.set()
+                if release_when_complete.is_set():
+                    self._finish_planner(generation)
 
         Thread(
             target=plan_goal,
@@ -200,9 +213,10 @@ class ReplayControls:
             daemon=True,
         ).start()
         if not completed.wait(timeout=timeout):
-            raise PlannerTimeoutError(
-                f"Planner timed out after {timeout:g} seconds"
-            )
+            release_when_complete.set()
+            if completed.is_set():
+                self._finish_planner(generation)
+            raise PlannerTimeoutError(f"Planner timed out after {timeout:g} seconds")
         error = result.get("error")
         if error is not None:
             raise error
@@ -220,9 +234,7 @@ class ReplayControls:
                 self._snapshot,
                 planning=False,
                 active_flow_node=(
-                    "demo_actions"
-                    if self._snapshot.plan is not None
-                    else "goal_source"
+                    "demo_actions" if self._snapshot.plan is not None else "goal_source"
                 ),
             )
 
@@ -242,9 +254,7 @@ class ReplayControls:
                 self._snapshot,
                 planning=False,
                 active_flow_node=(
-                    "demo_actions"
-                    if self._snapshot.plan is not None
-                    else "goal_source"
+                    "demo_actions" if self._snapshot.plan is not None else "goal_source"
                 ),
             )
 
@@ -353,8 +363,7 @@ class ReplayControls:
                 self._snapshot.total_steps > 0
                 and int(episode_step) >= self._snapshot.total_steps - 1
             )
-            self._success_seen = self._success_seen or bool(success)
-            verified = self._success_seen and final_observation
+            verified = bool(success) and final_observation
             if self._source_exhausted and final_observation:
                 self._outcome_sealed = True
             if verified:
@@ -395,7 +404,7 @@ class ReplayControls:
                 self._snapshot.total_steps > 0
                 and self._snapshot.episode_step >= self._snapshot.total_steps - 1
             )
-            verified = self._success_seen and final_observation
+            verified = self._snapshot.success and final_observation
             if final_observation:
                 self._outcome_sealed = True
             status = (
@@ -410,9 +419,7 @@ class ReplayControls:
                 status=status,
                 success=verified,
                 active_flow_node=(
-                    "event_sink"
-                    if verified or final_observation
-                    else "task_verifier"
+                    "event_sink" if verified or final_observation else "task_verifier"
                 ),
             )
             self._update_plan_events(
@@ -436,7 +443,6 @@ class ReplayControls:
         self._started_at = monotonic()
         self._event_sequence = 0
         self._source_exhausted = False
-        self._success_seen = False
         self._outcome_sealed = False
         self._snapshot = replace(
             self._snapshot,
@@ -516,7 +522,6 @@ class ReplayControls:
         previous_outcome: tuple[int, bool] | None = None,
     ) -> None:
         self._source_exhausted = False
-        self._success_seen = False
         self._outcome_sealed = False
         self._step_budget = 0
         plan = self._snapshot.plan
@@ -534,9 +539,7 @@ class ReplayControls:
             status=status,
             active_flow_node="demo_actions",
             total_steps=(
-                self._snapshot.total_steps
-                if total_steps is None
-                else total_steps
+                self._snapshot.total_steps if total_steps is None else total_steps
             ),
             current_step_id=plan.steps[0].step_id if plan is not None else "",
             events=(),
@@ -581,9 +584,7 @@ class ReplayControls:
             self._snapshot = replace(
                 self._snapshot,
                 events=tuple(
-                    event
-                    for event in self._snapshot.events
-                    if event.status != "failed"
+                    event for event in self._snapshot.events if event.status != "failed"
                 ),
             )
         existing = {(event.step_id, event.status) for event in self._snapshot.events}
