@@ -193,9 +193,25 @@ TASK_MANIFESTS: Mapping[str, TaskManifest] = {
         default_goal="Open the drawer",
         aliases=("open drawer", "pull open the drawer"),
         steps=(
-            ManifestStep("locate", "Locate the drawer handle", "inspect", "Inspect workspace", 0.00, 0.22),
-            ManifestStep("open", "Pull the drawer open", "manipulate", "Open drawer", 0.22, 0.92),
-            ManifestStep("verify", "Verify the drawer is open", "verify", "Verify outcome", 0.92, 1.00),
+            ManifestStep(
+                "locate",
+                "Locate the drawer handle",
+                "inspect",
+                "Inspect workspace",
+                0.00,
+                0.22,
+            ),
+            ManifestStep(
+                "open", "Pull the drawer open", "manipulate", "Open drawer", 0.22, 0.92
+            ),
+            ManifestStep(
+                "verify",
+                "Verify the drawer is open",
+                "verify",
+                "Verify outcome",
+                0.92,
+                1.00,
+            ),
         ),
     ),
     "OpenCabinet": TaskManifest(
@@ -203,21 +219,81 @@ TASK_MANIFESTS: Mapping[str, TaskManifest] = {
         default_goal="Open the cabinet",
         aliases=("open cabinet", "open the cupboard"),
         steps=(
-            ManifestStep("locate", "Locate the cabinet handle", "inspect", "Inspect workspace", 0.00, 0.20),
-            ManifestStep("open", "Swing the cabinet door open", "manipulate", "Open cabinet", 0.20, 0.92),
-            ManifestStep("verify", "Verify the cabinet is open", "verify", "Verify outcome", 0.92, 1.00),
+            ManifestStep(
+                "locate",
+                "Locate the cabinet handle",
+                "inspect",
+                "Inspect workspace",
+                0.00,
+                0.20,
+            ),
+            ManifestStep(
+                "open",
+                "Swing the cabinet door open",
+                "manipulate",
+                "Open cabinet",
+                0.20,
+                0.92,
+            ),
+            ManifestStep(
+                "verify",
+                "Verify the cabinet is open",
+                "verify",
+                "Verify outcome",
+                0.92,
+                1.00,
+            ),
         ),
     ),
     "DeliverStraw": TaskManifest(
         task="DeliverStraw",
         default_goal="Take the straw from the drawer and place it in the glass",
-        aliases=("deliver straw", "straw from the drawer", "place the straw in the glass"),
+        aliases=(
+            "deliver straw",
+            "straw from the drawer",
+            "place the straw in the glass",
+        ),
         steps=(
-            ManifestStep("locate", "Locate the drawer and glass", "inspect", "Inspect workspace", 0.00, 0.10),
-            ManifestStep("open", "Open the drawer containing the straw", "retrieve-straw", "Retrieve the straw", 0.10, 0.34),
-            ManifestStep("pick", "Pick the straw from the drawer", "retrieve-straw", "Retrieve the straw", 0.34, 0.62),
-            ManifestStep("place", "Place the straw inside the glass", "deliver-straw", "Deliver the straw", 0.62, 0.94),
-            ManifestStep("verify", "Verify the straw is in the glass", "verify", "Verify outcome", 0.94, 1.00),
+            ManifestStep(
+                "locate",
+                "Locate the drawer and glass",
+                "inspect",
+                "Inspect workspace",
+                0.00,
+                0.10,
+            ),
+            ManifestStep(
+                "open",
+                "Open the drawer containing the straw",
+                "retrieve-straw",
+                "Retrieve the straw",
+                0.10,
+                0.34,
+            ),
+            ManifestStep(
+                "pick",
+                "Pick the straw from the drawer",
+                "retrieve-straw",
+                "Retrieve the straw",
+                0.34,
+                0.62,
+            ),
+            ManifestStep(
+                "place",
+                "Place the straw inside the glass",
+                "deliver-straw",
+                "Deliver the straw",
+                0.62,
+                0.94,
+            ),
+            ManifestStep(
+                "verify",
+                "Verify the straw is in the glass",
+                "verify",
+                "Verify outcome",
+                0.94,
+                1.00,
+            ),
         ),
     ),
     "PrepareCoffee": TaskManifest(
@@ -1027,6 +1103,7 @@ class GeminiEmbodiedPlanner:
                 return self.fallback.plan(goal)
             try:
                 from google import genai
+
                 self._client = genai.Client(api_key=api_key)
             except (ImportError, OSError, RuntimeError, ValueError):
                 return self.fallback.plan(goal)
@@ -1098,10 +1175,7 @@ class EmbodiedPlannerFlow(Flow[EmbodiedGoal, SkillPlan]):
             signature = _goal_signature(goal)
             if signature == self._signature and self._plan is not None:
                 return self._plan
-            if (
-                self.planner_factory is not None
-                and goal.planner != self._planner_name
-            ):
+            if self.planner_factory is not None and goal.planner != self._planner_name:
                 self.planner = self.planner_factory(goal.planner)
                 self._planner_name = goal.planner
             planner = self.planner
