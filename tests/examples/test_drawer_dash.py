@@ -134,3 +134,60 @@ def test_mujoco_lane_explains_itself_when_the_scene_is_missing() -> None:
 
     message = str(excinfo.value)
     assert "demo-drawer-dash-mock" in message or "scene" in message
+
+
+def test_the_mock_lane_never_reaches_for_the_viewer() -> None:
+    # The viewer is an optional lane; importing the example must not pull it,
+    # or the mock-safe path would inherit MuJoCo and viser.
+    assert "examples.advanced.robocasa_drawer_dash.viewer" not in sys.modules
+    assert "examples.advanced.robocasa_drawer_dash.scene" not in sys.modules
+    assert "viser" not in sys.modules
+
+
+class TestViewerGeometry:
+    """Geometry helpers for the browser viewer.
+
+    Skipped wherever the optional simulator dependencies are absent, which
+    includes the default environment and CI.
+    """
+
+    @staticmethod
+    def _viewer():
+        pytest.importorskip("mujoco")
+        pytest.importorskip("viser")
+        from examples.advanced.robocasa_drawer_dash import viewer
+
+        return viewer
+
+    def test_box_mesh_is_a_closed_twelve_triangle_box(self) -> None:
+        viewer = self._viewer()
+        verts, faces = viewer._box_mesh([0.5, 0.25, 0.1])
+
+        assert verts.shape == (8, 3)
+        assert faces.shape == (12, 3)
+        # Every edge shared by exactly two triangles: the box has no holes.
+        edges: dict[tuple[int, int], int] = {}
+        for tri in faces:
+            for a, b in ((0, 1), (1, 2), (2, 0)):
+                key = tuple(sorted((int(tri[a]), int(tri[b]))))
+                edges[key] = edges.get(key, 0) + 1
+        assert set(edges.values()) == {2}
+
+    def test_cylinder_mesh_closes_both_caps(self) -> None:
+        viewer = self._viewer()
+        segments = 24
+        verts, faces = viewer._cylinder_mesh(0.03, 0.2, segments=segments)
+
+        assert verts.shape == (2 * segments + 2, 3)
+        assert faces.shape == (4 * segments, 3)
+        assert verts[:, 2].min() == pytest.approx(-0.2)
+        assert verts[:, 2].max() == pytest.approx(0.2)
+
+    def test_unbounded_plane_still_gets_drawn(self) -> None:
+        viewer = self._viewer()
+        # A MuJoCo plane with size 0 is infinite; it has to become something
+        # finite or the floor simply does not appear in the browser.
+        verts, faces = viewer._plane_mesh([0.0, 0.0, 0.05])
+
+        assert faces.shape == (2, 3)
+        assert abs(verts[:, 0]).max() > 0.0
