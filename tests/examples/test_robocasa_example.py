@@ -62,6 +62,47 @@ def test_mock_robocasa_replay_reaches_success_without_simulator() -> None:
     assert simulator.env is None
 
 
+def test_interactive_loop_uses_wall_clock_pacing() -> None:
+    class Clock:
+        now = 0.0
+
+        def __call__(self) -> float:
+            return self.now
+
+        def sleep(self, duration: float) -> None:
+            self.now += duration
+
+    class Pipeline:
+        steps = 0
+
+        def step(self, *, dt: float) -> None:
+            assert dt == pytest.approx(0.05)
+            self.steps += 1
+
+    class Simulator:
+        refreshes = 0
+
+        def refresh_controls(self) -> None:
+            self.refreshes += 1
+
+    clock = Clock()
+    pipeline = Pipeline()
+    simulator = Simulator()
+
+    app._run_paced_pipeline(
+        pipeline,
+        simulator,
+        seconds=1.0,
+        hz=20.0,
+        clock=clock,
+        sleep=clock.sleep,
+    )
+
+    assert pipeline.steps == 20
+    assert simulator.refreshes == 20
+    assert clock.now == pytest.approx(1.0)
+
+
 def test_demo_action_source_obeys_browser_replay_controls() -> None:
     controls = ReplayControls(task="TurnOnMicrowave", episode=0)
     source = DemoActionSource(mock_steps=4, controls=controls)
@@ -188,7 +229,7 @@ def test_restart_survives_repeated_total_step_initialization() -> None:
     assert restart_cycle == 1
 
 
-def test_transient_success_is_latched_until_final_verification() -> None:
+def test_transient_success_does_not_override_final_verification() -> None:
     controls = ReplayControls(task="PrepareCoffee", episode=0)
     controls.set_total_steps(3)
 
@@ -211,8 +252,8 @@ def test_transient_success_is_latched_until_final_verification() -> None:
     controls.mark_complete()
 
     snapshot = controls.snapshot()
-    assert snapshot.status == "Success"
-    assert snapshot.success is True
+    assert snapshot.status == "Failed"
+    assert snapshot.success is False
 
 
 def test_simulator_reset_restores_existing_environment(monkeypatch) -> None:
