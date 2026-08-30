@@ -1,0 +1,8 @@
+# Simulator versions used for the public macOS reproduction on 2026-08-29.
+# Install these in a dedicated Python 3.11 environment after GoldenRetriever.
+mujoco==3.3.1
+viser==1.1.0
+mjviser==0.0.14
+rerun-sdk==0.22.1
+robosuite @ git+https://github.com/ARISE-Initiative/robosuite.git@5ce6643f3092639d08f7b0f90ed1c6a84f50552c
+robocasa @ git+https://github.com/robocasa/robocasa.git@921c9a5736a8d0ea5589657898aadcfa55a6a195
