@@ -164,6 +164,18 @@ demo-twist2-rerun = { cmd = "python examples/advanced/twist2_simulation/app.py -
 demo-twist2-web = { cmd = "python -m examples.advanced.twist2_web_simulation.app", env = { PYTHONPATH = "." } }
 
 # -----------------------------------------------------------------------------
+# Optional: Simulation test stack (lean, CI-gating)
+# -----------------------------------------------------------------------------
+# Just mujoco, not the full twist2 bundle (dora-rs/onnxruntime/rerun-sdk) - this
+# is only for running the headless physics regression test in CI, not the
+# interactive demo.
+[feature.simulation_test.pypi-dependencies]
+mujoco = "*"
+
+[feature.simulation_test.tasks]
+test-simulation = { cmd = "python -m pytest tests/examples/test_mujoco_manipulation_convergence.py", env = { PYTHONPATH = "." } }
+
+# -----------------------------------------------------------------------------
 # Optional: VLM planning stack
 # -----------------------------------------------------------------------------
 [feature.vlm_planning]
@@ -249,6 +261,7 @@ vlm = { features = ["py311", "bundled_core", "golden_retriever", "vlm_planning"]
 llm = { features = ["py311", "bundled_core", "golden_retriever", "vlm_planning"] }
 torch = { features = ["py311", "bundled_core", "golden_retriever", "cpu"] }
 twist2 = { features = ["py311", "bundled_core", "twist2"] }
+simulation-test = { features = ["py311", "bundled_core", "simulation_test"] }
 cpu = { features = ["py311", "bundled_core", "cpu"] }
 gpu = { features = ["py311", "bundled_core", "gpu"] }
 ros = { features = ["bundled_core", "ros"] }

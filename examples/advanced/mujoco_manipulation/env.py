@@ -5,6 +5,7 @@ import numpy as np
 # Simple 2-link arm model
 MODEL_XML = """
 <mujoco>
+  <compiler angle="radian"/>
   <option timestep="0.005" integrator="RK4" gravity="0 0 -9.81"/>
   <worldbody>
     <light pos="0 0 1"/>
@@ -37,7 +38,15 @@ class MujocoEnv:
     def __init__(self, xml_string=MODEL_XML):
         self.model = mujoco.MjModel.from_xml_string(xml_string)
         self.data = mujoco.MjData(self.model)
-        self.renderer = mujoco.Renderer(self.model)
+        self._renderer = None
+
+    @property
+    def renderer(self):
+        # Lazy: constructing a Renderer requires a GL context, which
+        # physics-only callers (e.g. headless tests) never need.
+        if self._renderer is None:
+            self._renderer = mujoco.Renderer(self.model)
+        return self._renderer
 
     def reset(self):
         mujoco.mj_resetData(self.model, self.data)
