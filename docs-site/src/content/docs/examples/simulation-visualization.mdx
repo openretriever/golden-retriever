@@ -90,6 +90,18 @@ environment and run `retriever run demo-robosuite-web`. The viewer consumes the
 same native `MjModel` and `MjData` that robosuite advances; it does not launch a
 second simulator.
 
+### Compare methods through one bounded harness
+
+`MethodHarness` keeps method evaluation separate from the dashboard and
+simulator implementation. It accepts GoldenRetriever's existing
+`PolicyObservation -> ActionChunk` contract, checks action shape, horizon,
+finite values, magnitude, and source, and emits ordered events plus native task
+verification. The catalog's **Scripted privileged cube lift** is a deterministic
+integration smoke, not a learned-policy result. It does not execute generated
+Python or accept arbitrary simulator commands. See the
+[reproduced-results report](https://github.com/openretriever/golden-retriever/blob/main/examples/advanced/robocasa/REPRODUCED_RESULTS.md)
+for the measured run.
+
 ## Connect Retriever to RoboCasa
 
 The Retriever Embodied Demo Console makes the simulator boundary concrete. Its
@@ -120,8 +132,22 @@ controls, events, and verification. Retriever's standalone
 web console embeds mjviser as a replaceable viewport; mjviser only renders the
 same live `MjModel` and `MjData` in the browser.
 
-After installing RoboCasa from source, downloading its kitchen assets, and
-downloading the `TurnOnMicrowave` human demonstration, run the replay:
+Create a dedicated Python 3.11 environment and install the tested simulator
+snapshot before downloading assets:
+
+```bash
+python3.11 -m venv .venv-robocasa
+source .venv-robocasa/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e .
+python -m pip install -r examples/advanced/robocasa/requirements-simulator.txt
+python -m robocasa.scripts.setup_macros
+python -m robocasa.scripts.download_kitchen_assets
+python -m robocasa.scripts.download_datasets \
+  --tasks TurnOnMicrowave --split pretrain --source human
+```
+
+Then run the replay:
 
 ```bash
 python -m examples.advanced.robocasa.app \
@@ -300,9 +326,9 @@ python -m robocasa.scripts.download_datasets \
   --tasks PrepareCoffee --split pretrain --source human
 ```
 
-An external simulation environment owns dependency pins, source checkouts,
-assets, and datasets. The larger kitchen takes longer than `Lift` to publish
-to the browser.
+GoldenRetriever publishes the validated requirements snapshot. The external
+simulation environment owns the installed packages, assets, and datasets. The
+larger kitchen takes longer than `Lift` to publish to the browser.
 
 </details>
 
@@ -350,6 +376,18 @@ lane already owns GoldenRetriever's `PolicyObservation -> ActionChunk`
 contract; future policy wiring should add a small action-chunk adapter instead
 of defining another policy interface. See the full setup and expected output
 in [`examples/advanced/robocasa/README.md`](https://github.com/openretriever/golden-retriever/tree/main/examples/advanced/robocasa).
+
+### Platform and reference boundaries
+
+The reproduced interactive configuration is macOS on Apple Silicon with
+Python 3.11. Linux x86_64 and WSL2 are intended renderer-neutral/headless paths,
+but are not yet verified by this branch; native Windows is unsupported. The
+console has no ROS or Isaac Sim dependency. The
+[IsaacSim Gemini Robotics project at `2b510c8`](https://github.com/mincasurong/IsaacSim_GeminiRobotics/tree/2b510c814ac759bdf1f3d71b16f8ed16ce8aa7eb)
+(Apache-2.0) informed interaction patterns only, and
+[Cap-X at `53e9966`](https://github.com/capgym/cap-x/tree/53e9966d7a8e2fa7494676772bccc35280f5c0ed)
+(MIT) informed benchmark axes. Neither repository is a runtime dependency and
+no source code was copied from either reference.
 
 ## Run these in order
 
