@@ -21,6 +21,7 @@ from .embodied import (
     ExecutionState,
     GoalSource,
     SkillDispatcher,
+    SkillPlan,
     create_planner,
     materialize_skill_plan,
 )
@@ -591,7 +592,10 @@ class TaskVerifier(Flow[RoboCasaObservation, RoboCasaObservation]):
         if self._cycle != concrete.cycle:
             self._cycle = concrete.cycle
             self._latest = None
-        if self._latest is not None and concrete.episode_step < self._latest.episode_step:
+        if (
+            self._latest is not None
+            and concrete.episode_step < self._latest.episode_step
+        ):
             return self._latest
         concrete.progress = max(
             concrete.progress,
@@ -683,6 +687,30 @@ class VideoRecorder(Flow[RoboCasaObservation, None]):
             print(f"Saved {self._frames} camera frames to {self.path}.")
 
 
+def _run_paced_pipeline(
+    pipeline: Pipeline,
+    simulator: RoboCasaSimulator,
+    *,
+    seconds: float,
+    hz: float,
+    clock: Any = time.monotonic,
+    sleep: Any = time.sleep,
+) -> None:
+    """Run against wall time so paused and terminal consoles remain responsive."""
+
+    if hz <= 0:
+        raise ValueError("Replay frequency must be positive")
+    period = 1.0 / hz
+    deadline = clock() + max(0.0, seconds)
+    while clock() < deadline:
+        tick_started = clock()
+        pipeline.step(dt=period)
+        simulator.refresh_controls()
+        remaining = period - (clock() - tick_started)
+        if remaining > 0:
+            sleep(remaining)
+
+
 def build_pipeline(args: argparse.Namespace) -> tuple[Pipeline, RoboCasaSimulator]:
     video_path = getattr(args, "video", None)
     emit_images = (
@@ -716,9 +744,7 @@ def build_pipeline(args: argparse.Namespace) -> tuple[Pipeline, RoboCasaSimulato
 
         controls.set_goal_handler(
             submit_goal,
-            on_accept=lambda accepted_goal, _plan: goal_source.set_goal(
-                accepted_goal
-            ),
+            on_accept=lambda accepted_goal, _plan: goal_source.set_goal(accepted_goal),
         )
     source = DemoActionSource(
         mode=args.mode,
@@ -761,13 +787,9 @@ def build_pipeline(args: argparse.Namespace) -> tuple[Pipeline, RoboCasaSimulato
         planning = (
             planning_flow
             @ Trigger("text", "task", "episode", "planner", "execution_mode")
-        ).named(
-            "embodied_planner"
-        )
+        ).named("embodied_planner")
         dispatch = (SkillDispatcher() @ Trigger("goal")).named("skill_dispatcher")
-        actions = (source @ Rate(hz=args.hz, on_lag="catch_up")).named(
-            "demo_actions"
-        )
+        actions = (source @ Rate(hz=args.hz, on_lag="catch_up")).named("demo_actions")
         simulation = (simulator @ Trigger("cycle", "episode_step")).named(
             "robocasa_simulator"
         )
@@ -919,12 +941,13 @@ def _execute(args: argparse.Namespace) -> None:
         )
         return
 
-    # Step-counted execution keeps expensive RoboCasa initialization outside the
-    # requested replay duration and leaves the console alive for restart controls.
     try:
-        for _ in range(max(1, round(args.seconds * args.hz))):
-            pipeline.step(dt=1.0 / args.hz)
-            simulator.refresh_controls()
+        _run_paced_pipeline(
+            pipeline,
+            simulator,
+            seconds=args.seconds,
+            hz=args.hz,
+        )
     finally:
         pipeline.close_stepper()
 
