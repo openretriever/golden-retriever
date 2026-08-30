@@ -70,9 +70,11 @@ Only start these when the user explicitly asks for the relevant environment:
 - Webcam/Rerun: `pixi run -e torch demo-webcam-rerun`
 - Pipeline topology and HTML graph visualization: use the GoldenRetriever pipeline debugging guide.
 - Robosuite and RoboCasa integration: use the GoldenRetriever simulation and replay guide.
-- Real robosuite Lift: install the optional robosuite dependency first, then run `pixi run demo-robosuite-lift`
-- Real RoboCasa replay: install RoboCasa and assets from source, download the `TurnOnMicrowave` human dataset, then follow the simulation guide for native MuJoCo or Rerun.
+- Real simulator setup: create a Python 3.11 environment and install `examples/advanced/robocasa/requirements-simulator.txt`; this pins the macOS reproduction snapshot.
+- Real robosuite Lift: run `pixi run demo-robosuite-lift`; the scripted result is an integration smoke, not a learned-policy result.
+- Real RoboCasa replay: install the upstream kitchen assets, download the `TurnOnMicrowave` human dataset, then follow the simulation guide for native MuJoCo, mjviser, or Rerun.
 - Headless RoboCasa trace: add `--visualize rerun --rerun-mode record --recording <path>.rrd` and inspect the artifact locally later.
+- Platform status: macOS 26 on Apple Silicon is reproduced; Linux and WSL2 are intended but unverified; native Windows is unsupported.
 - Model-backed perception/memory: use the documented optional model-backed examples after the mock path is green.
 
 ## Agent Guidance
