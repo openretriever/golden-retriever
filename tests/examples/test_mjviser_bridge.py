@@ -3,6 +3,7 @@ from __future__ import annotations
 import sys
 from contextlib import nullcontext
 from threading import Event, Thread
+from time import sleep
 from types import SimpleNamespace
 
 import numpy as np
@@ -589,13 +590,18 @@ def test_timed_out_planner_cannot_restart_the_replay_later() -> None:
     with pytest.raises(RuntimeError, match="timed out"):
         controls.submit_goal("Make coffee", timeout=0.01)
     assert started.wait(timeout=1.0)
-    assert controls.snapshot().planning is False
+    assert controls.snapshot().planning is True
 
-    accepted = controls.submit_goal("Prepare tea")
-    assert accepted.goal.text == "Prepare tea"
+    with pytest.raises(RuntimeError, match="already running"):
+        controls.submit_goal("Prepare tea")
     release.set()
+    for _ in range(100):
+        if not controls.snapshot().planning:
+            break
+        sleep(0.01)
 
-    assert controls.snapshot().goal_text == "Prepare tea"
+    assert controls.snapshot().planning is False
+    assert controls.snapshot().goal_text != "Make coffee"
     assert controls.claim_next_action()[0] is True
 
 
@@ -681,6 +687,7 @@ def test_bridge_streams_native_robosuite_state(monkeypatch) -> None:
             self.model = model
             self.num_envs = num_envs
             self.geom_groups_visible = [True] * 6
+            self.site_groups_visible = [True] * 6
             self.synced = False
             self.gui_created = False
             self.gui_kwargs = {}
@@ -724,6 +731,11 @@ def test_bridge_streams_native_robosuite_state(monkeypatch) -> None:
     assert scenes[0].model is model
     assert scenes[0].num_envs == 1
     assert scenes[0].geom_groups_visible[0] is False
+    assert scenes[0].geom_groups_visible[1] is True
+    assert scenes[0].geom_groups_visible[2] is False
+    assert scenes[0].site_groups_visible[0] is False
+    assert scenes[0].site_groups_visible[1] is True
+    assert scenes[0].site_groups_visible[2] is False
     assert scenes[0].synced is True
     assert scenes[0].gui_created is True
     assert scenes[0].gui_kwargs == {"camera_distance": 3.0}
@@ -910,11 +922,12 @@ def test_robot_tracking_body_prefers_mobile_base() -> None:
 def test_camera_preset_updates_client_atomically() -> None:
     camera = SimpleNamespace()
     client = SimpleNamespace(camera=camera, atomic=nullcontext)
+    preset = _DEFAULT_CAMERA_PRESETS["Robot"]
 
-    _apply_camera_preset(client, _DEFAULT_CAMERA_PRESETS["Robot"])
+    _apply_camera_preset(client, preset)
 
-    assert camera.position == (0.0, -1.0, 2.6)
-    assert camera.look_at == (0.0, 0.3, 1.0)
+    assert camera.position == preset.position
+    assert camera.look_at == preset.look_at
     assert camera.up_direction == (0.0, 0.0, 1.0)
     assert camera.min_orbit_distance == 0.05
     assert camera.max_orbit_distance == 20.0
