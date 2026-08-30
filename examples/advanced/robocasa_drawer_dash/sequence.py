@@ -21,8 +21,20 @@ from examples.advanced.robocasa_drawer_dash.plan import (
     GRASPING,
     HANDLE_BODY,
     HANDLE_GEOM,
+    HANDLE_TO_INTERIOR,
+    TRANSIT_STANDOFF,
+    TRANSIT_Z,
+    HOLDING_JAR,
+    JAR_CLEAR_Z,
+    JAR_GRASP_Z,
+    JAR_SQUEEZE,
+    MOVING_DRAWER,
     OPEN,
     PHASES,
+    SLOT_CLEAR_Z,
+    SLOT_PLACE_Z,
+    SLOT_X,
+    SLOT_Y_FROM_CENTRE,
     SQUEEZE,
     STANDOFF,
     STROKE,
@@ -32,8 +44,13 @@ from examples.advanced.robocasa_drawer_dash.plan import (
     smoothstep,
 )
 
+WORKTOP_JAR_BODY = "cinnamon_main"
+
 __all__ = [
     "GRASP_ROTATION",
+    "JAR_ROTATION",
+    "HOLDING_JAR",
+    "MOVING_DRAWER",
     "GRASPING",
     "PHASES",
     "STROKE",
@@ -54,6 +71,18 @@ GRASP_ROTATION = np.array([
     [0.0, 1.0, 0.0],
     [0.0, 0.0, 1.0],
     [1.0, 0.0, 0.0],
+])
+
+
+# Gripper pose for the seasoning jar. The jar is an upright cylinder, so the
+# hand comes straight down on it and the fingers close horizontally across the
+# barrel -- the opposite of the handle, which is pinched top to bottom.
+#   local x (the closing axis) -> world +x
+#   local z (the approach axis) -> world -z, straight down
+JAR_ROTATION = np.array([
+    [1.0, 0.0, 0.0],
+    [0.0, -1.0, 0.0],
+    [0.0, 0.0, -1.0],
 ])
 
 
@@ -83,7 +112,13 @@ class Choreography:
         self.handle_geoms = {g for g in range(model.ngeom)
                              if model.geom_bodyid[g] == self.handle_body}
 
+        self.jar_body = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY,
+                                          WORKTOP_JAR_BODY)
+        self.jar_geoms = {g for g in range(model.ngeom)
+                          if model.geom_bodyid[g] == self.jar_body}
+
         self.anchor: np.ndarray | None = None
+        self.jar_rest: np.ndarray | None = None
         self.reset()
 
     # -- state --------------------------------------------------------------
@@ -91,6 +126,11 @@ class Choreography:
         self.index = 0
         self.ticks = 0
         self.anchor = None
+        # Where the jar is standing before anything touches it. Captured once,
+        # because once it is grasped its own position follows the hand and
+        # aiming at it would chase itself.
+        self.jar_rest = (self.data.xpos[self.jar_body].copy()
+                         if self.jar_body >= 0 else None)
 
     @property
     def phase(self) -> Phase:
@@ -108,15 +148,37 @@ class Choreography:
         """How far the top drawer is pulled out, in metres."""
         return abs(float(self.data.qpos[self.model.jnt_qposadr[self.drawer_joint]]))
 
-    def gripping(self) -> bool:
-        """True while a finger pad is in contact with the handle."""
+    def _touching(self, targets: set[int]) -> bool:
         for c in range(self.data.ncon):
             contact = self.data.contact[c]
             a, b = contact.geom1, contact.geom2
-            if ((a in self.pad_geoms and b in self.handle_geoms)
-                    or (b in self.pad_geoms and a in self.handle_geoms)):
+            if ((a in self.pad_geoms and b in targets)
+                    or (b in self.pad_geoms and a in targets)):
                 return True
         return False
+
+    def gripping(self) -> bool:
+        """True while a finger pad is in contact with the handle."""
+        return self._touching(self.handle_geoms)
+
+    def holding_jar(self) -> bool:
+        """True while a finger pad is in contact with the seasoning jar."""
+        return self._touching(self.jar_geoms)
+
+    @property
+    def jar_position(self) -> np.ndarray:
+        """Where the seasoning jar has got to."""
+        return self.data.xpos[self.jar_body].copy()
+
+    @property
+    def slot(self) -> np.ndarray:
+        """The spot in the drawer the jar is put down on, in world coordinates.
+
+        Measured back from the handle bar, so it travels out with the drawer
+        instead of staying where the drawer used to be.
+        """
+        centre_y = float(self.bar[1]) + HANDLE_TO_INTERIOR
+        return np.array([SLOT_X, centre_y + SLOT_Y_FROM_CENTRE, 0.0])
 
     def target_pose(self, phase: Phase, blend: float):
         """Where the hand is asked to be this tick, or None to go home."""
@@ -126,6 +188,22 @@ class Choreography:
             return self.bar + np.array([0.0, -STANDOFF, 0.0]), GRASP_ROTATION
         if phase.mode == "engage":
             return self.bar, GRASP_ROTATION
+        if phase.mode == "transit_front":
+            # Directly above the handle bar: in front of the drawer, over it,
+            # never through it.
+            return np.array([self.bar[0], self.bar[1], TRANSIT_Z]), JAR_ROTATION
+        if phase.mode == "transit_worktop":
+            rest = self.jar_rest if self.jar_rest is not None else self.jar_position
+            return (np.array([rest[0], rest[1] - TRANSIT_STANDOFF, TRANSIT_Z]),
+                    JAR_ROTATION)
+        if phase.mode in {"jar_clear", "jar_grasp"}:
+            rest = self.jar_rest if self.jar_rest is not None else self.jar_position
+            height = JAR_CLEAR_Z if phase.mode == "jar_clear" else JAR_GRASP_Z
+            return np.array([rest[0], rest[1], height]), JAR_ROTATION
+        if phase.mode in {"slot_clear", "slot_place"}:
+            slot = self.slot
+            height = SLOT_CLEAR_Z if phase.mode == "slot_clear" else SLOT_PLACE_Z
+            return np.array([slot[0], slot[1], height]), JAR_ROTATION
         # carry: drive the hand along -y from where the bar was when we grabbed
         start, end = phase.stroke
         pulled = start + (end - start) * blend
@@ -141,13 +219,14 @@ class Choreography:
         """
         dt = self.model.opt.timestep if dt is None else dt
 
-        if phase.mode == "carry":
-            if self.anchor is None:
-                # Remember where the bar was when we took hold of it. The hand
-                # is commanded from there; the drawer has to come along.
-                self.anchor = self.bar
-        else:
-            self.anchor = None
+        if phase.mode == "carry" and self.anchor is None:
+            # Remember where the bar was when we first took hold of it. The
+            # hand is commanded from there; the drawer has to come along. It
+            # is kept for the rest of the routine rather than cleared between
+            # phases, because "push drawer shut" comes back to it long after
+            # the pull -- with the whole jar errand in between -- and measures
+            # its stroke from the same origin.
+            self.anchor = self.bar
 
         pose = self.target_pose(phase, blend)
         if pose is None:
@@ -155,6 +234,7 @@ class Choreography:
         else:
             self.arm.reach(pose[0], pose[1], dt=dt)
         self.arm.set_gripper(phase.grip)
+        self.arm.set_torso(phase.torso)
         return phase
 
     def step(self, dt: float | None = None) -> Phase:

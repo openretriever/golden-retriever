@@ -100,6 +100,16 @@ ARM_KP = (4500.0, 4500.0, 3500.0, 3500.0, 2000.0, 2000.0, 500.0)
 ARM_KV = (450.0, 450.0, 350.0, 350.0, 200.0, 200.0, 50.0)
 ARM_FORCE = (87.0, 87.0, 87.0, 87.0, 12.0, 12.0, 12.0)
 
+# Where the seasoning jar stands on the worktop, and how high the Omron torso
+# is held. The pair is load-bearing: at torso 0 the jar is 26 cm out of reach,
+# and at the torso's full 0.34 m the drawer handle goes out of square. 0.20
+# reaches the jar to 8 mm while leaving the handle grasp exact.
+WORKTOP_BOTTLE_XY = (0.0, -0.215)
+# The keyframe parks the torso down, which is where the handle work wants it;
+# the routine raises it when it goes for the jar. See plan.TORSO_UP.
+TORSO_HOME = 0.0
+TORSO_RANGE = (0.0, 0.34)
+
 ARM_JOINTS = tuple(f"robot0_joint{i}" for i in range(1, 8))
 FINGER_JOINTS = ("gripper0_finger_joint1", "gripper0_finger_joint2")
 # The Omron base can drive and raise its torso. Nothing here does, so each of
@@ -192,8 +202,11 @@ def _replace_actuators(root: ET.Element, slide_joints: list[str]) -> None:
                       ctrlrange=f"{low} {high}",
                       forcerange=f"{-FINGER_FORCE} {FINGER_FORCE}")
     for joint in BASE_JOINTS:
+        extra = {}
+        if joint.endswith("torso_height"):
+            extra["ctrlrange"] = f"{TORSO_RANGE[0]} {TORSO_RANGE[1]}"
         ET.SubElement(actuator, "position", name=f"{joint}_act", joint=joint,
-                      kp="12000", kv="1200", forcerange="-4000 4000")
+                      kp="12000", kv="1200", forcerange="-4000 4000", **extra)
     # No actuator on the drawer slides. They are passive, damped joints: the
     # only thing that can open a drawer in this scene is something pulling it.
 
@@ -311,7 +324,11 @@ def build_world():
         worldbody.append(body)
 
     worktop_z = carcass_top + 0.030
-    add_bottle("cinnamon", BOTTLE_ASSETS["cinnamon"], (0.13, -0.04), worktop_z)
+    # Near the front edge, not the middle: the middle of the worktop is out of
+    # this arm's reach even with the torso fully raised, and the routine picks
+    # this jar up. Its centre stays a jar-radius clear of the edge so it is
+    # standing on the worktop rather than overhanging it.
+    add_bottle("cinnamon", BOTTLE_ASSETS["cinnamon"], WORKTOP_BOTTLE_XY, worktop_z)
 
     # Interior floor of the top drawer: the carcass panel the contents sit on.
     inner_z = _drawer_z(NUM_DRAWERS - 1) - DRAWER_H / 2 + 0.045
@@ -344,6 +361,9 @@ def _home_keyframe(xml: str) -> str:
     for joint, sign in zip(FINGER_JOINTS, FINGER_SIGNS):
         jid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, joint)
         data.qpos[model.jnt_qposadr[jid]] = sign * GRIPPER_HOME
+    torso = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT,
+                              "mobilebase0_joint_torso_height")
+    data.qpos[model.jnt_qposadr[torso]] = TORSO_HOME
     mujoco.mj_forward(model, data)
 
     ctrl = np.zeros(model.nu)
@@ -353,6 +373,8 @@ def _home_keyframe(xml: str) -> str:
     for joint, sign in zip(FINGER_JOINTS, FINGER_SIGNS):
         aid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_ACTUATOR, f"{joint}_act")
         ctrl[aid] = sign * GRIPPER_HOME
+    ctrl[mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_ACTUATOR,
+                           "mobilebase0_joint_torso_height_act")] = TORSO_HOME
 
     root = ET.fromstring(xml)
     keyframe = ET.SubElement(root, "keyframe")

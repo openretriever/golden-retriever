@@ -29,8 +29,11 @@ from typing import Any
 
 from retriever.flow import Flow, Latest, Pipeline, Rate, Trigger, io
 
+WORKTOP_JAR = "cinnamon_main"
+
 from examples.advanced.robocasa_drawer_dash.plan import (
     GRASPING,
+    HOLDING_JAR,
     OPENED_MIN,
     PHASES,
     SHUT_MAX,
@@ -38,6 +41,9 @@ from examples.advanced.robocasa_drawer_dash.plan import (
     TOTAL_SECONDS,
     phase_at,
 )
+
+# The phase after which the seasoning is in the drawer.
+JAR_RELEASED = "let go of jar"
 
 
 @io
@@ -50,6 +56,7 @@ class DrawerDashAction:
     grip: float | None = None
     stroke: float | None = None
     grasping: bool | None = None
+    holding_jar: bool | None = None
     elapsed: float | None = None
 
 
@@ -61,6 +68,8 @@ class DrawerDashState:
     drawer_open: float | None = None
     peak_open: float | None = None
     grasped: bool | None = None
+    holding_jar: bool | None = None
+    jar_stowed: bool | None = None
     progress: float | None = None
     done: bool | None = None
     success: bool | None = None
@@ -91,6 +100,7 @@ class ChoreographyPolicy(Flow[DrawerDashState, DrawerDashAction]):
             grip=phase.grip,
             stroke=stroke,
             grasping=phase.label in GRASPING,
+            holding_jar=phase.label in HOLDING_JAR,
             elapsed=self.elapsed,
         )
         self.elapsed += 1.0 / self.hz
@@ -113,6 +123,8 @@ class DrawerDashSimulator(Flow[DrawerDashAction, DrawerDashState]):
         self.peak_open = 0.0
         self.drawer_open = 0.0
         self.grasped = False
+        self.holding_jar = False
+        self.jar_stowed = False
         self._rig: Any | None = None
 
         if self.mode == "mujoco":
@@ -152,7 +164,8 @@ class DrawerDashSimulator(Flow[DrawerDashAction, DrawerDashState]):
         phase = None if action is None else action.phase
         # The same claim `verify.py` asserts: it came far enough out, and it
         # went back shut. Only true once the routine has actually finished.
-        success = done and self.peak_open >= OPENED_MIN and self.drawer_open <= SHUT_MAX
+        success = (done and self.peak_open >= OPENED_MIN
+                   and self.drawer_open <= SHUT_MAX and self.jar_stowed)
         return DrawerDashState(
             step=self.step_idx,
             source=source,
@@ -160,6 +173,8 @@ class DrawerDashSimulator(Flow[DrawerDashAction, DrawerDashState]):
             drawer_open=self.drawer_open,
             peak_open=self.peak_open,
             grasped=self.grasped,
+            holding_jar=self.holding_jar,
+            jar_stowed=self.jar_stowed,
             progress=progress,
             done=done,
             success=success,
@@ -171,10 +186,14 @@ class DrawerDashSimulator(Flow[DrawerDashAction, DrawerDashState]):
         # does reproduce is the timeline, the travel and the thresholds.
         if action is not None:
             self.grasped = bool(action.grasping)
+            self.holding_jar = bool(action.holding_jar)
             commanded = 0.0 if action.stroke is None else float(action.stroke)
             if self.grasped:
                 self.drawer_open = min(STROKE, max(0.0, commanded))
             self.peak_open = max(self.peak_open, self.drawer_open)
+            # The jar is in the drawer from the moment the fingers open on it.
+            if action.phase == JAR_RELEASED:
+                self.jar_stowed = True
         return self._finish(source="mock", action=action)
 
     def _step_mujoco(self, action: DrawerDashAction | None) -> DrawerDashState:
@@ -184,6 +203,9 @@ class DrawerDashSimulator(Flow[DrawerDashAction, DrawerDashState]):
             self._rig.apply(action, seconds=1.0 / self.hz)
         self.drawer_open = float(self._rig.plan.drawer_open)
         self.grasped = bool(self._rig.plan.gripping())
+        self.holding_jar = bool(self._rig.plan.holding_jar())
+        if action is not None and action.phase == JAR_RELEASED:
+            self.jar_stowed = bool(self._rig.in_drawer(WORKTOP_JAR))
         self.peak_open = max(self.peak_open, self.drawer_open)
         return self._finish(source="mujoco", action=action)
 
@@ -204,7 +226,7 @@ class DrawerDashPrinter(Flow[DrawerDashState, None]):
             f"[{state.source} step={state.step:04d}] "
             f"phase={_pad(state.phase)} "
             f"drawer={_fmt(state.drawer_open)}m "
-            f"grasped={bool(state.grasped)} "
+            f"holding={'handle' if state.grasped else ('jar' if state.holding_jar else 'nothing'):7s} "
             f"progress={_pct(state.progress)} success={bool(state.success)}"
         )
         return None
@@ -252,7 +274,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--scene", default=None, help="Path to a generated scene.xml.")
     parser.add_argument("--camera", default="threequarter", help="Scene camera for the mujoco lane.")
-    parser.add_argument("--steps", type=int, default=38, help="Pipeline steps to run.")
+    parser.add_argument("--steps", type=int, default=94, help="Pipeline steps to run.")
     parser.add_argument("--dt", type=float, default=0.5, help="Seconds of wall clock per step.")
     parser.add_argument("--hz", type=float, default=2.0, help="Routine clock rate.")
     parser.add_argument("--print-every", type=int, default=4)
@@ -273,7 +295,8 @@ def main() -> None:
         print(
             f"\nroutine complete: peak drawer travel {_fmt(final.peak_open)} m "
             f"(needs >= {OPENED_MIN}), shut to {_fmt(final.drawer_open)} m "
-            f"(needs <= {SHUT_MAX}), {len(PHASES)} phases over {TOTAL_SECONDS:.1f} s "
+            f"(needs <= {SHUT_MAX}), seasoning stowed={bool(final.jar_stowed)}, "
+            f"{len(PHASES)} phases over {TOTAL_SECONDS:.1f} s "
             f"-> success={bool(final.success)}"
         )
 

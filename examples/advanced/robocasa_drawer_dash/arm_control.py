@@ -18,6 +18,7 @@ import numpy as np
 ARM_JOINTS = tuple(f"robot0_joint{i}" for i in range(1, 8))
 FINGER_JOINTS = ("gripper0_finger_joint1", "gripper0_finger_joint2")
 GRIP_SITE = "gripper0_grip_site"
+TORSO_ACTUATOR = "mobilebase0_joint_torso_height_act"
 
 DAMPING = 0.12       # DLS lambda; larger is steadier near singularities
 TIP_SPEED = 0.60     # metres per second the gripper is allowed to travel
@@ -49,6 +50,8 @@ class Arm:
             mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_ACTUATOR, f"{n}_act")
             for n in FINGER_JOINTS])
         self.site_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SITE, GRIP_SITE)
+        self.torso_act = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_ACTUATOR,
+                                           TORSO_ACTUATOR)
 
         self.limits = model.jnt_range[self.joint_ids].copy()
         # Whatever the home keyframe put in ctrl is the starting target.
@@ -96,6 +99,18 @@ class Arm:
         """
         value = float(np.clip(opening, 0.0, OPEN))
         self.data.ctrl[self.finger_act_ids] = [s * value for s in FINGER_SIGNS]
+
+    def set_torso(self, height: float) -> None:
+        """Command the Omron torso lift, in metres.
+
+        The worktop and the inside of an open drawer are not both in reach
+        from one torso height, so the routine moves it: up to fetch the
+        seasoning, down to put it away and to work the handle.
+        """
+        if self.torso_act < 0:
+            return
+        low, high = self.model.actuator_ctrlrange[self.torso_act]
+        self.data.ctrl[self.torso_act] = float(np.clip(height, low, high))
 
     def reach(self, point, rotation=None, dt: float | None = None) -> float:
         """Advance the gripper towards `point` (and `rotation`) by one tick.
