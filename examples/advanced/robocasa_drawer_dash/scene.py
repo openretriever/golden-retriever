@@ -362,6 +362,29 @@ def _home_keyframe(xml: str) -> str:
     return ET.tostring(root, encoding="unicode")
 
 
+def ensure_scene(path: Path | None = None) -> Path:
+    """Return a usable `scene.xml`, building it first if it is not there yet.
+
+    The file is generated rather than committed — it references meshes by
+    absolute path inside whichever RoboCasa install produced it — so a fresh
+    clone has no scene until something asks for one. The viewer and the MuJoCo
+    lane both call this so that a clone plus the asset packs is enough to run
+    them, with no separate build step to remember.
+    """
+    path = path or (HERE / "scene.xml")
+    if path.exists():
+        return path
+    try:
+        return write_scene(path)
+    except ImportError as exc:
+        raise RuntimeError(
+            "building the scene needs RoboCasa and RoboSuite. Install them with "
+            '`pixi run python -m pip install -e ".[drawer_dash]"` plus RoboCasa '
+            "from source, then fetch the meshes with `pixi run "
+            "demo-drawer-dash-assets`. See this example's README."
+        ) from exc
+
+
 def write_scene(path: Path | None = None) -> Path:
     path = path or (HERE / "scene.xml")
     world = build_world()

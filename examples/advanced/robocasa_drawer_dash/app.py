@@ -12,7 +12,7 @@ Run against MuJoCo after installing the optional simulator dependencies and
 building the scene (see this example's README for the RoboCasa asset packs):
 
   pixi run python -m pip install -e ".[drawer_dash]"
-  pixi run demo-drawer-dash-scene
+  pixi run demo-drawer-dash-assets
   pixi run demo-drawer-dash
 
 The mock lane reproduces the choreography's timeline and the drawer travel it
@@ -130,14 +130,11 @@ class DrawerDashSimulator(Flow[DrawerDashAction, DrawerDashState]):
                 "or run `pixi run demo-drawer-dash-mock` for the mock-safe smoke test."
             ) from exc
 
-        scene = Path(self.scene) if self.scene else Path(__file__).resolve().parent / "scene.xml"
-        if not scene.exists():
-            raise RuntimeError(
-                f"scene file {scene.name} has not been generated. Build it with "
-                "`pixi run demo-drawer-dash-scene`, which needs RoboCasa and its "
-                "fixture and object asset packs. See this example's README."
-            )
-        return Rig(scene, camera=self.camera)
+        from examples.advanced.robocasa_drawer_dash.scene import ensure_scene
+
+        # Built on first use rather than demanded up front, so a fresh clone
+        # with the asset packs installed can run this lane straight away.
+        return Rig(ensure_scene(Path(self.scene) if self.scene else None), camera=self.camera)
 
     def step(self, action: DrawerDashAction | None) -> DrawerDashState:
         self.step_idx += 1

@@ -221,6 +221,10 @@ robosuite = [
 drawer_dash = [
     "robosuite",
     "mujoco==3.3.1",
+    # The browser viewer talks to viser directly. `mjviser` would be the
+    # obvious dependency, but it requires mujoco>=3.6 and RoboSuite's
+    # controllers do not survive the 3.10 mj_fullM signature change.
+    "viser>=1.0",
 ]
 
 
