@@ -30,6 +30,8 @@ import numpy as np
 from examples.advanced.robocasa_drawer_dash.arm_control import Arm
 from examples.advanced.robocasa_drawer_dash.plan import (
     GRASPING,
+    HANDLE_TO_INTERIOR,
+    HOLDING_JAR,
     OPENED_MIN,
     PHASES,
     SHUT_MAX,
@@ -39,19 +41,29 @@ from examples.advanced.robocasa_drawer_dash.sequence import GRASP_ROTATION, Chor
 
 HERE = Path(__file__).resolve().parent
 
-POSE_TOL = 0.02        # metres the hand may sit off its commanded point
+POSE_TOL = 0.02        # metres the hand may sit off its commanded point...
+REACH_TOL = 0.05       # ...except on the free-space moves of the jar errand,
+                       # which only have to arrive near enough to grasp from
+JAR_POSE_TOL = 0.035   # and the jar itself, which is a 48 mm cylinder taken in
+                       # an 80 mm gripper: it does not need the handle's
+                       # millimetre pinch, and holding it to that bar would be
+                       # measuring the wrong thing
 ANGLE_TOL = np.radians(5.0)   # how far off square the gripper may be
+REACH_ANGLE_TOL = np.radians(25.0)  # likewise, off square, away from a grasp
 HOME_TOL = 0.05        # radians per joint once the arm has withdrawn
 CONTACT_TOL = 0.95     # fraction of a carry phase a pad must touch the handle
 GRIP_TOL = 0.50        # ... and of the phase where it is still closing
 # OPENED_MIN / SHUT_MAX come from plan.py, shared with the mock lane.
 
-WORKTOP_BOTTLE = "cinnamon_main"          # stands on the dresser worktop
+WORKTOP_BOTTLE = "cinnamon_main"          # starts on the worktop; is put away
 DRAWER_BOTTLES = ("cayenne_main", "paprika_main")  # lie loose in the top drawer
 
-WORKTOP_BOTTLE_MIN_Z = 1.10   # it stands at ~1.156 on the worktop
+WORKTOP_BOTTLE_START_Z = 1.10  # it stands at ~1.156 on the worktop
 DRAWER_BOTTLE_MIN_Z = 0.85    # the drawer's inner floor is at ~0.885
-UPRIGHT_TOL = np.radians(20)  # how far the worktop bottle may lean
+DRAWER_INTERIOR_TOP_Z = 1.06  # the drawer's rim
+DRAWER_HALF_WIDTH = 0.25
+PLACED_UPRIGHT_TOL = np.radians(25)  # lean allowed at the moment it is set down
+JAR_CONTACT_TOL = 0.90        # fraction of a carrying phase the jar must be held
 ROLL_MIN = 1.0                # radians a loose bottle must roll over the run
 
 
@@ -79,6 +91,10 @@ class Rig:
         bid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_BODY, name)
         return float(self.data.xpos[bid][2])
 
+    def body_pos(self, name: str):
+        bid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_BODY, name)
+        return self.data.xpos[bid].copy()
+
     def body_y(self, name: str) -> float:
         bid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_BODY, name)
         return float(self.data.xpos[bid][1])
@@ -98,6 +114,21 @@ class Rig:
             bid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_BODY, name)
             spin = float(np.linalg.norm(self.data.cvel[bid][:3]))
             self.rolled[name] = self.rolled.get(name, 0.0) + spin * dt
+
+    def in_drawer(self, name: str) -> bool:
+        """True while the named body is inside the top drawer's interior.
+
+        Measured against the drawer wherever it currently is, so it holds
+        whether the drawer is open, shut, or somewhere in between.
+        """
+        bid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_BODY, name)
+        pos = self.data.xpos[bid]
+        centre_y = float(self.plan.bar[1]) + HANDLE_TO_INTERIOR
+        return bool(
+            abs(float(pos[0])) < DRAWER_HALF_WIDTH
+            and abs(float(pos[1]) - centre_y) < DRAWER_HALF_WIDTH
+            and DRAWER_BOTTLE_MIN_Z < float(pos[2]) < DRAWER_INTERIOR_TOP_Z
+        )
 
     def home_error(self) -> float:
         """Largest joint-angle gap between the arm and its home pose."""
@@ -171,6 +202,7 @@ class Rig:
         steps = max(1, int(round(phase.seconds / self.model.opt.timestep)))
         every = max(1, int(round(1.0 / (fps * self.model.opt.timestep))))
         held = 0
+        jar_held = 0
         worst_angle = 0.0
         for s in range(steps):
             self.plan.step()
@@ -178,9 +210,13 @@ class Rig:
             self.accumulate_roll()
             if self.plan.gripping():
                 held += 1
+            if self.plan.holding_jar():
+                jar_held += 1
             if phase.mode != "home":
-                worst_angle = max(worst_angle,
-                                  self.arm.misalignment(GRASP_ROTATION))
+                commanded = self.plan.target_pose(phase, s / steps)
+                if commanded is not None:
+                    worst_angle = max(worst_angle,
+                                      self.arm.misalignment(commanded[1]))
             if render and s % every == 0:
                 self.capture()
         self.marks[phase.label] = max(0, len(self.frames) - 1)
@@ -189,7 +225,9 @@ class Rig:
         return {
             "label": phase.label,
             "contact": held / steps,
-            "angle": self.arm.misalignment(GRASP_ROTATION),
+            "jar_contact": jar_held / steps,
+            "jar_in_drawer": self.in_drawer(WORKTOP_BOTTLE),
+            "angle": self.arm.misalignment(pose[1]) if pose else 0.0,
             "worst_angle": worst_angle,
             "pose_error": self.arm.distance_to(pose[0]) if pose else float("nan"),
             "drawer": self.plan.drawer_open,
@@ -235,14 +273,21 @@ def main() -> int:
               f"   drawer_bottle_y={rig.body_y(DRAWER_BOTTLES[0]):+.3f}")
 
         if phase.mode != "home":
-            if r["pose_error"] > POSE_TOL:
+            if label in GRASPING:
+                pose_tol = POSE_TOL
+            elif label in HOLDING_JAR:
+                pose_tol = JAR_POSE_TOL
+            else:
+                pose_tol = REACH_TOL
+            angle_tol = ANGLE_TOL if label in GRASPING else REACH_ANGLE_TOL
+            if r["pose_error"] > pose_tol:
                 failures.append(f"{label}: hand ended {r['pose_error']:.3f} m off "
-                                f"its commanded point (limit {POSE_TOL:.2f} m)")
-            if r["angle"] > ANGLE_TOL:
+                                f"its commanded point (limit {pose_tol:.2f} m)")
+            if r["angle"] > angle_tol:
                 failures.append(
                     f"{label}: gripper ended {np.degrees(r['angle']):.1f}deg off "
-                    f"square to the handle "
-                    f"(limit {np.degrees(ANGLE_TOL):.0f}deg)")
+                    f"square to what it was reaching for "
+                    f"(limit {np.degrees(angle_tol):.0f}deg)")
             # Once it is holding the bar it has to stay square for the whole
             # phase, not merely arrive square. Earlier phases start from the
             # home pose, which is a quarter turn away by definition.
@@ -252,6 +297,24 @@ def main() -> int:
                     f"{np.degrees(r['worst_angle']):.1f}deg off square while "
                     f"holding the handle "
                     f"(limit {np.degrees(ANGLE_TOL):.0f}deg)")
+
+        if label in HOLDING_JAR:
+            if r["jar_contact"] < JAR_CONTACT_TOL:
+                failures.append(
+                    f"{label}: fingers held the seasoning jar for only "
+                    f"{r['jar_contact'] * 100:.0f}% of the phase "
+                    f"(need {JAR_CONTACT_TOL * 100:.0f}%)")
+
+        if label == "lower into drawer":
+            if not r["jar_in_drawer"]:
+                failures.append(
+                    "the seasoning jar was not inside the drawer when the "
+                    "gripper was ready to let go of it")
+            if rig.tilt(WORKTOP_BOTTLE) > PLACED_UPRIGHT_TOL:
+                failures.append(
+                    "the seasoning jar was set down leaning "
+                    f"{np.degrees(rig.tilt(WORKTOP_BOTTLE)):.0f}deg off upright "
+                    f"(limit {np.degrees(PLACED_UPRIGHT_TOL):.0f}deg)")
 
         if label in GRASPING:
             floor = GRIP_TOL if phase.mode == "engage" else CONTACT_TOL
@@ -283,12 +346,21 @@ def main() -> int:
                 failures.append(
                     f"arm did not return home: worst joint off by {error:.3f} rad")
 
-    if rig.body_z(WORKTOP_BOTTLE) < WORKTOP_BOTTLE_MIN_Z:
-        failures.append(f"the worktop bottle fell to "
-                        f"z={rig.body_z(WORKTOP_BOTTLE):.3f}")
-    if rig.tilt(WORKTOP_BOTTLE) > UPRIGHT_TOL:
-        failures.append(f"the worktop bottle toppled: leaning "
-                        f"{np.degrees(rig.tilt(WORKTOP_BOTTLE)):.0f}deg")
+    if not rig.in_drawer(WORKTOP_BOTTLE):
+        failures.append(
+            f"{WORKTOP_BOTTLE} did not end up in the drawer "
+            f"(pos={np.round(rig.body_pos(WORKTOP_BOTTLE), 3)})")
+    elif rig.body_z(WORKTOP_BOTTLE) >= WORKTOP_BOTTLE_START_Z:
+        failures.append(f"{WORKTOP_BOTTLE} never left the worktop "
+                        f"(z={rig.body_z(WORKTOP_BOTTLE):.3f})")
+    else:
+        # It is checked for being upright at the moment it is set down, not
+        # here. Shoving the drawer shut afterwards topples a free-standing
+        # jar, the same way it rolls the two lying loose next to it -- that is
+        # the scene behaving, not the placement failing.
+        print(f"\n{WORKTOP_BOTTLE:14s} was put away in the drawer, ending at "
+              f"z={rig.body_z(WORKTOP_BOTTLE):.3f} leaning "
+              f"{np.degrees(rig.tilt(WORKTOP_BOTTLE)):.0f}deg")
 
     print()
     for n in DRAWER_BOTTLES:

@@ -22,7 +22,7 @@ def _mock_args(**overrides: object) -> Namespace:
         "mode": "mock",
         "scene": None,
         "camera": "threequarter",
-        "steps": 38,
+        "steps": 94,
         "dt": 0.5,
         "hz": 2.0,
         "print_every": 100,
@@ -78,14 +78,16 @@ def test_drawer_only_moves_while_the_handle_is_grasped() -> None:
 
     opened = simulator.step(
         DrawerDashAction(phase="pull drawer open", phase_index=4, blend=1.0,
-                         grip=plan.SQUEEZE, stroke=plan.STROKE, grasping=True, elapsed=8.0)
+                         grip=plan.SQUEEZE, stroke=plan.STROKE, grasping=True,
+                         holding_jar=False, elapsed=8.0)
     )
     assert opened.drawer_open == pytest.approx(plan.STROKE)
 
     # Same commanded stroke, but nothing is holding the bar.
     released = simulator.step(
         DrawerDashAction(phase="line up", phase_index=1, blend=1.0,
-                         grip=plan.OPEN, stroke=plan.STROKE, grasping=False, elapsed=9.0)
+                         grip=plan.OPEN, stroke=plan.STROKE, grasping=False,
+                         holding_jar=False, elapsed=9.0)
     )
     assert released.grasped is False
     assert released.drawer_open == pytest.approx(plan.STROKE)  # holds, does not advance
@@ -121,8 +123,45 @@ def test_grasping_phases_are_the_ones_that_command_a_squeeze() -> None:
     for phase in plan.PHASES:
         if phase.label in plan.GRASPING:
             assert phase.grip == plan.SQUEEZE
+        elif phase.label in plan.HOLDING_JAR:
+            # The jar is a 48 mm cylinder, not an 18 mm bar: closing all the
+            # way would stall the fingers deep inside it.
+            assert phase.grip == plan.JAR_SQUEEZE
         else:
             assert phase.grip == plan.OPEN
+
+
+def test_the_errand_happens_while_the_drawer_stands_open() -> None:
+    labels = [p.label for p in plan.PHASES]
+    # Nothing can be put into a shut drawer, so the whole jar errand has to
+    # fall between the pull and the push.
+    pull, push = labels.index("pull drawer open"), labels.index("push drawer shut")
+    for label in plan.HOLDING_JAR:
+        assert pull < labels.index(label) < push
+
+
+def test_the_wrist_returns_to_neutral_between_the_two_grasps() -> None:
+    # The handle and the jar want wrists a quarter turn apart, and the arm
+    # will not make that turn at full stretch. Every switch between them has
+    # to pass through a transit phase.
+    labels = [p.label for p in plan.PHASES]
+    modes = {p.label: p.mode for p in plan.PHASES}
+    first_jar = min(labels.index(x) for x in plan.HOLDING_JAR)
+    last_jar = max(labels.index(x) for x in plan.HOLDING_JAR)
+    before = {modes[l] for l in labels[labels.index("back off"):first_jar]}
+    after = {modes[l] for l in labels[last_jar:labels.index("back to handle")]}
+    assert "transit_front" in before
+    assert "transit_front" in after
+
+
+def test_the_torso_rises_for_the_worktop_and_drops_for_the_drawer() -> None:
+    torso = {p.label: p.torso for p in plan.PHASES}
+    # The jar is fetched from a worktop the arm cannot reach with the torso
+    # down, and put into a drawer it cannot reach with the torso up.
+    assert torso["down to jar"] == plan.TORSO_UP
+    assert torso["grip jar"] == plan.TORSO_UP
+    assert torso["lower into drawer"] == plan.TORSO_DOWN
+    assert torso["pull drawer open"] == plan.TORSO_DOWN
 
 
 def test_mujoco_lane_explains_itself_when_the_scene_is_missing() -> None:
