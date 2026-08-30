@@ -23,9 +23,9 @@ class _CameraPreset:
 
 _DEFAULT_CAMERA_PRESETS = {
     "Robot": _CameraPreset(
-        position=(0.0, -1.0, 2.6),
-        look_at=(0.0, 0.3, 1.0),
-        fov_degrees=65.0,
+        position=(1.35, -1.35, 1.55),
+        look_at=(0.0, 0.4, 0.72),
+        fov_degrees=52.0,
     ),
     "Agent": _CameraPreset(
         position=(0.0, -0.6, 1.85),
@@ -49,12 +49,15 @@ class MjviserBridge:
         label: str = "Retriever simulation",
         controls: ReplayControls | None = None,
         open_browser: bool = False,
+        camera_preset: str = "Agent",
+        robot_oriented_camera: bool = True,
     ) -> None:
         self.host = host
         self.port = int(port)
         self.label = label
         self.controls = controls
         self.open_browser = open_browser
+        self.robot_oriented_camera = robot_oriented_camera
         self._server: Any | None = None
         self._scene: Any | None = None
         self._lifecycle_lock = RLock()
@@ -76,8 +79,10 @@ class MjviserBridge:
         self._restart_button: Any | None = None
         self._last_goal_text = ""
         self._camera_presets = dict(_DEFAULT_CAMERA_PRESETS)
+        if camera_preset not in _DEFAULT_CAMERA_PRESETS:
+            raise ValueError(f"Unknown camera preset: {camera_preset}")
         self._selected_camera_preset = (
-            controls.snapshot().camera_preset if controls is not None else "Agent"
+            controls.snapshot().camera_preset if controls is not None else camera_preset
         )
         self._next_control_refresh_at = 0.0
 
@@ -91,9 +96,9 @@ class MjviserBridge:
                 from mjviser import ViserMujocoScene
             except ImportError as exc:
                 raise RuntimeError(
-                    "mjviser is not installed. Install the optional simulation "
-                    "dependencies "
-                    'with `python -m pip install -e ".[robosuite]"`.'
+                    "mjviser is not installed. Install the pinned simulator "
+                    "requirements from "
+                    "`examples/advanced/robocasa/requirements-simulator.txt`."
                 ) from exc
 
             model, data = _native_mujoco_state(sim)
@@ -113,16 +118,21 @@ class MjviserBridge:
                     # mjviser currently selects the first movable body, which is
                     # often an invisible RoboCasa target. Anchor tracking to the robot.
                     _set_scene_tracking_body(scene, robot_body_id)
-                    self._camera_presets = _camera_presets_from_robot(
-                        data, robot_body_id
-                    )
+                    if self.robot_oriented_camera:
+                        self._camera_presets = _camera_presets_from_robot(
+                            data, robot_body_id
+                        )
 
-                # robosuite uses group 0 for collision proxies and group 1 for
-                # visual geoms. Keep collisions in the Groups tab, but hidden.
-                if len(scene.geom_groups_visible) > 0:
-                    scene.geom_groups_visible[0] = False
-                _sync_scene_visibilities(scene)
                 scene.create_visualization_gui(camera_distance=3.0)
+                # robosuite uses group 0 for collision proxies, group 1 for
+                # visual geoms, and group 2 for debug targets. The latter can
+                # include an end-effector target initialized below the floor.
+                for group_id in (0, 2):
+                    if len(scene.geom_groups_visible) > group_id:
+                        scene.geom_groups_visible[group_id] = False
+                    if len(scene.site_groups_visible) > group_id:
+                        scene.site_groups_visible[group_id] = False
+                _sync_scene_visibilities(scene)
                 self._register_camera_handler()
                 if self.controls is not None:
                     self._create_retriever_panel(viser)
@@ -347,7 +357,7 @@ class MjviserBridge:
                         run_goal.hint = (
                             "Plan accepted; restarting the selected episode."
                         )
-                    except Exception as exc:
+                    except Exception as exc:  # noqa: BLE001 - GUI command boundary
                         run_goal.hint = str(exc)
                     finally:
                         self.refresh_controls()
@@ -406,9 +416,7 @@ class MjviserBridge:
                 if self._server is None:
                     return
                 name = self._selected_camera_preset
-                preset = self._camera_presets.get(
-                    name, self._camera_presets["Agent"]
-                )
+                preset = self._camera_presets.get(name, self._camera_presets["Agent"])
                 _apply_camera_preset(client, preset)
 
 
@@ -686,7 +694,7 @@ def _sync_scene_visibilities(scene: Any) -> None:
     if not callable(sync):
         sync = getattr(scene, "_sync_visibilities", None)
     if not callable(sync):
-        raise RuntimeError("This mjviser version cannot synchronize geom groups")
+        raise TypeError("This mjviser version cannot synchronize geom groups")
     sync()
 
 
@@ -694,9 +702,7 @@ def _viewer_url(host: str, port: int) -> str:
     """Return a browser-safe local URL for IPv4, IPv6, and wildcard binds."""
 
     display_host = (
-        "localhost"
-        if host in {"0.0.0.0", "127.0.0.1", "::", "::1"}
-        else host
+        "localhost" if host in {"0.0.0.0", "127.0.0.1", "::", "::1"} else host
     )
     if ":" in display_host and not display_host.startswith("["):
         display_host = f"[{display_host}]"
