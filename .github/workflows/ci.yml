@@ -24,6 +24,8 @@ jobs:
           cache: true
       - name: Tests
         run: pixi run test
+      - name: Simulation tests (MuJoCo)
+        run: pixi run -e simulation-test test-simulation
       - name: Docs build
         run: pixi run -e docs docs-build
       - name: Golden smoke demo
