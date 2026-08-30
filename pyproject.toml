@@ -103,7 +103,7 @@ golden = [
     "transformers",
     "openai",
     "accelerate",
-    "google-generativeai",
+    "google-genai",
     "pillow-heif",
     "pyheif",
 
@@ -149,7 +149,7 @@ golden = [
     "py-cpuinfo>=9.0.0",
 
     # Other
-    "rerun",
+    "rerun-sdk",
     "wandb",
     "bitsandbytes",
     "gym",
@@ -211,7 +211,9 @@ vlm_planning = [
 ]
 
 robosuite = [
-    "robosuite",
+    "robosuite>=1.5,<1.6",
+    "mujoco>=3.3,<3.4",
+    "mjviser==0.0.14",
 ]
 
 
