@@ -86,12 +86,37 @@ mjpython examples/advanced/robocasa/robosuite_inspection.py
 That inspection script was originally contributed by Sebastian Castro and is
 kept as a separate entry point within this family.
 
+### Bounded methods harness
+
+The scene catalog also exposes a small methods harness for comparing embodied
+execution approaches without coupling the dashboard to one simulator or model.
+`MethodHarness` accepts the existing `PolicyObservation -> ActionChunk`
+boundary, validates horizon, shape, finite values, magnitude, and source, then
+records ordered events and native task verification. The included
+**Scripted privileged cube lift** is a deterministic integration smoke, not a
+learned-policy result. Generated Python and arbitrary simulator commands are
+not accepted. Real harness trials default to seed `0`; pass `--seed` to make a
+different seed explicit in reports and reproduction commands.
+
+See [`REPRODUCED_RESULTS.md`](REPRODUCED_RESULTS.md) for the tested environment,
+exact command, and current result.
+
 ## 3. Install the real RoboCasa lane
 
-RoboCasa currently needs source checkouts plus its kitchen assets. Keep those
-large dependencies outside Golden Retriever and install them editable into the
-environment used to run this example. Follow the upstream RoboCasa setup, then
-download one human demonstration dataset:
+Use a dedicated Python 3.11 environment. The requirements file pins the exact
+RoboSuite, RoboCasa, MuJoCo, mjviser, Viser, and Rerun revisions used for the
+macOS reproduction:
+
+```bash
+python3.11 -m venv .venv-robocasa
+source .venv-robocasa/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e .
+python -m pip install -r examples/advanced/robocasa/requirements-simulator.txt
+```
+
+RoboCasa also needs its kitchen assets and at least one human demonstration
+dataset. Run the upstream setup in that same environment:
 
 ```bash
 python -m robocasa.scripts.setup_macros
@@ -99,6 +124,9 @@ python -m robocasa.scripts.download_kitchen_assets
 python -m robocasa.scripts.download_datasets \
   --tasks TurnOnMicrowave --split pretrain --source human
 ```
+
+The dataset and asset downloads retain their upstream licenses. Do not commit
+the downloaded payloads to GoldenRetriever.
 
 The example lazily imports RoboCasa, so the mock path and normal Golden
 Retriever tests do not require this stack.
@@ -184,7 +212,8 @@ dashboard scenarios. Their entries remain visible when datasets are absent,
 with the missing dataset or setup requirement shown explicitly; only installed
 demonstrations can be executed.
 
-Headless demonstration replay (Linux is the intended remote-worker target):
+Headless demonstration replay (the Linux remote-worker path is not yet part of
+the reproduced-results matrix):
 
 ```bash
 python -m examples.advanced.robocasa.app \
@@ -302,8 +331,9 @@ combined with `--viewer` in the same process.
   checks, images, and telemetry remain behind a typed `Flow` boundary.
 - End-of-demonstration is an explicit `active=False` signal; this avoids
   accidentally reusing a retained `Latest()` action after the source stops.
-- The same graph is tested interactively on macOS and is designed for
-  headless Linux workers.
+- The same graph is tested interactively on macOS. Its renderer-neutral API is
+  designed for headless Linux workers, but that path still needs a published
+  smoke result.
 - A policy, planner, or memory system can replace `DemoActionSource` without
   changing the simulator contract.
 
@@ -320,16 +350,22 @@ optional client are unavailable, the console falls back to the offline plan.
 
 ## Platform support
 
-- **macOS:** primary local path for interactive mjviser and native MuJoCo
-  inspection.
-- **Linux:** intended target for interactive or headless replay; verify the
-  installed graphics stack and datasets on each worker.
-- **Windows:** WSL2 is experimental and currently unverified; native Windows is
-  not a tested target.
+- **macOS on Apple Silicon:** reproduced with Python 3.11 using the pinned
+  simulator requirements. Interactive mjviser and native MuJoCo inspection are
+  the primary local paths.
+- **Linux x86_64:** intended for interactive or headless replay, but currently
+  unverified in this branch. A Linux smoke run is required before claiming
+  support.
+- **WSL2:** expected to follow the Linux headless path with forwarded browser
+  ports; currently unverified. Native Windows is unsupported.
 
-The console has no ROS or Isaac Sim dependency. The referenced Isaac Sim
-Gemini Robotics project informed interaction patterns only; this implementation
-uses Retriever, RoboCasa, MuJoCo, and mjviser directly.
+The console has no ROS or Isaac Sim dependency. The
+[IsaacSim Gemini Robotics project](https://github.com/mincasurong/IsaacSim_GeminiRobotics/tree/2b510c814ac759bdf1f3d71b16f8ed16ce8aa7eb)
+(Apache-2.0) informed interaction patterns only. No source code was copied; this
+implementation uses Retriever, RoboCasa, MuJoCo, and mjviser directly. The
+methods harness similarly treats
+[Cap-X](https://github.com/capgym/cap-x/tree/53e9966d7a8e2fa7494676772bccc35280f5c0ed)
+(MIT) as a benchmark-design reference rather than a runtime dependency.
 
 The renderer boundary is intentionally replaceable. The console speaks only to
 Retriever's JSON control and state API, while the simulator supplies a viewport
@@ -349,10 +385,9 @@ from leaking into planning and experiment controls.
 
 ## Repository boundary
 
-- **GoldenRetriever** owns these typed Flows, adapters, runnable examples, and
-  public demo documentation.
-- **External simulation environments** own reproducible dependency locks,
-  source checkouts, large
+- **GoldenRetriever** owns these typed Flows, adapters, runnable examples, the
+  validated simulator requirements snapshot, and public demo documentation.
+- **External simulation environments** own installed source checkouts, large
   kitchen assets, downloaded datasets, run logs, and machine-specific setup.
 - **Retriever Hub** should eventually expose a thin, versioned launcher or
   policy boundary after its inputs, outputs, dependency contract, and smoke
