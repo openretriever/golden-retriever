@@ -2,16 +2,20 @@
 
 from __future__ import annotations
 
+import hmac
+import ipaddress
 import json
 import webbrowser
 from collections.abc import Callable
 from dataclasses import asdict
 from http import HTTPStatus
+from http.client import HTTPConnection, HTTPSConnection
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from threading import Thread
 from typing import Any
 from urllib.parse import urlsplit
+from uuid import uuid4
 
 from .embodied import EXECUTION_MODES
 from .runtime import (
@@ -23,6 +27,9 @@ from .runtime import (
     ReplaySnapshot,
     present_replay,
 )
+
+_MAX_REQUEST_BYTES = 64 * 1024
+_MAX_GOAL_LENGTH = 2_000
 
 
 class _CommandNotFoundError(ValueError):
@@ -77,7 +84,8 @@ class RetrieverWebConsole:
         self.port = int(port)
         self.camera_handler = camera_handler
         self.open_browser = open_browser
-        self.launch_id = launch_id
+        self.launch_id = launch_id or uuid4().hex
+        self.control_token = uuid4().hex
         self.planner_timeout = float(planner_timeout)
         self._server: ThreadingHTTPServer | None = None
         self._thread: Thread | None = None
@@ -102,9 +110,20 @@ class RetrieverWebConsole:
                         Path(__file__)
                         .with_name("static")
                         .joinpath("console.html")
-                        .read_bytes()
+                        .read_text(encoding="utf-8")
                     )
-                    self._send_bytes(HTTPStatus.OK, "text/html; charset=utf-8", html)
+                    html = html.replace(
+                        "__RETRIEVER_CONTROL_TOKEN__",
+                        json.dumps(console.control_token),
+                    ).replace(
+                        "__RETRIEVER_LAUNCH_ID__",
+                        json.dumps(console.launch_id),
+                    )
+                    self._send_bytes(
+                        HTTPStatus.OK,
+                        "text/html; charset=utf-8",
+                        html.encode("utf-8"),
+                    )
                     return
                 if self.path == "/api/config":
                     snapshot = console.controls.snapshot()
@@ -113,6 +132,7 @@ class RetrieverWebConsole:
                         {
                             "schema_version": 1,
                             "viewer_url": console.viewer_url,
+                            "viewer_ready": console.viewer_is_ready(),
                             "task": snapshot.task,
                             "episode": snapshot.episode,
                             "launch_id": console.launch_id,
@@ -138,12 +158,35 @@ class RetrieverWebConsole:
                 self._send_json(HTTPStatus.NOT_FOUND, {"error": "Not found"})
 
             def do_POST(self) -> None:
+                if not self._is_allowed_host():
+                    self._send_error(
+                        HTTPStatus.FORBIDDEN,
+                        "host_forbidden",
+                        "Console commands require a local or explicitly configured host",
+                    )
+                    return
                 origin = self.headers.get("Origin")
                 if origin and not self._is_same_origin(origin):
                     self._send_error(
                         HTTPStatus.FORBIDDEN,
                         "cross_origin_forbidden",
                         "Cross-origin console commands are not allowed",
+                    )
+                    return
+                supplied_token = self.headers.get("X-Retriever-Token", "")
+                if not hmac.compare_digest(supplied_token, console.control_token):
+                    self._send_error(
+                        HTTPStatus.FORBIDDEN,
+                        "invalid_control_token",
+                        "Console control token is missing or invalid",
+                    )
+                    return
+                supplied_launch = self.headers.get("X-Retriever-Launch-ID", "")
+                if not hmac.compare_digest(supplied_launch, console.launch_id):
+                    self._send_error(
+                        HTTPStatus.CONFLICT,
+                        "stale_launch",
+                        "This console belongs to an older simulator run; reload it",
                     )
                     return
                 if self.headers.get_content_type() != "application/json":
@@ -155,6 +198,13 @@ class RetrieverWebConsole:
                     return
                 try:
                     length = int(self.headers.get("Content-Length", "0"))
+                    if length < 0 or length > _MAX_REQUEST_BYTES:
+                        self._send_error(
+                            HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
+                            "request_too_large",
+                            f"Request body must be at most {_MAX_REQUEST_BYTES} bytes",
+                        )
+                        return
                     raw = self.rfile.read(length) if length else b"{}"
                     payload = json.loads(raw or b"{}")
                     if not isinstance(payload, dict):
@@ -182,7 +232,7 @@ class RetrieverWebConsole:
                 except (TypeError, ValueError, json.JSONDecodeError) as exc:
                     self._send_error(HTTPStatus.BAD_REQUEST, "invalid_request", exc)
                     return
-                except Exception as exc:  # pragma: no cover - defensive HTTP boundary
+                except Exception as exc:  # noqa: BLE001  # pragma: no cover
                     self._send_error(
                         HTTPStatus.INTERNAL_SERVER_ERROR,
                         "internal_error",
@@ -213,6 +263,22 @@ class RetrieverWebConsole:
                 parsed = urlsplit(origin)
                 host = self.headers.get("Host", "")
                 return parsed.scheme == "http" and parsed.netloc == host
+
+            def _is_allowed_host(self) -> bool:
+                raw_host = self.headers.get("Host", "")
+                parsed = urlsplit(f"http://{raw_host}")
+                hostname = (parsed.hostname or "").lower()
+                if hostname in {"localhost", "127.0.0.1", "::1"}:
+                    return True
+                configured = console.host.lower().strip("[]")
+                try:
+                    address = ipaddress.ip_address(hostname)
+                    return address.is_loopback or hostname == configured
+                except ValueError:
+                    return (
+                        configured not in {"", "0.0.0.0", "::"}
+                        and hostname == configured
+                    )
 
             def _send_bytes(
                 self,
@@ -258,6 +324,31 @@ class RetrieverWebConsole:
         self._server = None
         self._thread = None
 
+    def viewer_is_ready(self) -> bool:
+        """Probe the configured renderer without trusting iframe load events."""
+
+        parsed = urlsplit(self.viewer_url)
+        if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+            return False
+        connection_type = (
+            HTTPSConnection if parsed.scheme == "https" else HTTPConnection
+        )
+        try:
+            connection = connection_type(
+                parsed.hostname,
+                parsed.port,
+                timeout=0.25,
+            )
+            connection.request("GET", parsed.path or "/")
+            response = connection.getresponse()
+            response.read(1)
+            return response.status < HTTPStatus.INTERNAL_SERVER_ERROR
+        except OSError:
+            return False
+        finally:
+            if "connection" in locals():
+                connection.close()
+
     def handle_command(self, path: str, payload: dict[str, Any]) -> dict[str, Any]:
         """Apply one browser command without coupling it to an HTTP framework."""
 
@@ -281,6 +372,10 @@ class RetrieverWebConsole:
             text = str(payload.get("text", "")).strip()
             if not text:
                 raise ValueError("Goal text is required")
+            if len(text) > _MAX_GOAL_LENGTH:
+                raise ValueError(
+                    f"Goal text must be at most {_MAX_GOAL_LENGTH} characters"
+                )
             planner = str(payload.get("planner") or "offline")
             execution_mode = str(payload.get("execution_mode") or "demonstration")
             if execution_mode not in EXECUTION_MODES:
