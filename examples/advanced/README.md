@@ -73,7 +73,7 @@ pixi run -e twist2 demo-twist2-rerun
 - `webcam_rerun/`: webcam or mock perception with Rerun visualization and record/replay helpers.
 - `twist2_simulation/`: MuJoCo/TWIST2 simulator integration with Rerun and optional native viewer.
 - `robosuite_lift/`: mock-safe robosuite Lift smoke path plus optional real robosuite mode.
-- `robocasa_drawer_dash/`: a Panda opens a drawer by grasping its handle; mock-safe lane plus an optional MuJoCo/RoboCasa lane.
+- `robocasa_drawer_dash/`: a Panda opens a drawer by grasping its handle; mock-safe lane plus optional MuJoCo/RoboCasa lanes and a browser viewer.
 - `mujoco_manipulation/`: MuJoCo manipulation with Rerun logging.
 - `hierarchical_physics_demo/`: Rerun plus HTML pipeline visualization for physics demos.
 - `../experimental/visualization/`: deterministic IR/HTML pipeline visualization utility.

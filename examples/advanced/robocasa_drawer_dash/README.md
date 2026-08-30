@@ -40,30 +40,49 @@ The mock reproduces the timeline, the commanded travel and the pass thresholds.
 It does not reproduce contact: only the MuJoCo lane can show that the *grasp* is
 what moves the drawer, and `verify.py` is what asserts it.
 
-## 2. The simulator lane
+## 2. The interactive viewer
 
-This lane needs optional dependencies and a multi-gigabyte asset download, so
-it is not on the default path:
+Three commands from a fresh clone. The middle one is a ~2.8 GB download and is
+only ever run once:
 
 ```bash
-pixi run python -m pip install -e ".[drawer_dash]"
+pixi run python -m pip install -e ".[drawer_dash]"   # + RoboCasa, from source
+pixi run demo-drawer-dash-assets                     # fixtures_lw + objs_lw meshes
+pixi run demo-drawer-dash-viewer                     # http://localhost:8087
 ```
 
-RoboCasa is not published on PyPI — install it from source, then fetch the two
-asset packs this scene draws on (`fixtures_lw` for the cabinet panels and
-handles, the Lightwheel objects for the spice jars):
+The viewer builds `scene.xml` itself on first run, so there is no separate
+build step to remember. It runs under plain `python` — no `mjpython`, no
+native window — and streams the live simulation to the browser.
+
+Its "grasp" panel is the point of the thing: **holding handle** reads `yes` or
+`no` tick by tick, and when it reads `no` the drawer stops moving, because
+nothing else in the scene can move it. **bottles rolled** counts how far the
+two loose jars have spun, which separates rolling from being dragged along.
+`restart routine` resets to the home keyframe; unticking `run routine` parks
+the arm at its home pose.
+
+RoboCasa is not published on PyPI — install it from source. Its assets are
+fetched by the task above, which wraps
+`robocasa.scripts.download_kitchen_assets`; this scene needs `fixtures_lw` for
+the cabinet panels and handles, and `objs_lw` for the spice jars.
+
+### Why not mjviser
+
+`mjviser` is the obvious way to put a MuJoCo model in a viser page, and it is
+what an earlier draft of this scene used. It requires `mujoco>=3.6`, but
+RoboSuite's controllers do not survive the `mj_fullM` signature change in 3.10,
+and `scene.py` needs RoboSuite to build the robot at all — so this example is
+pinned to `mujoco==3.3.1` and talks to viser directly instead. `viewer.py`
+pushes each visual geom once as a triangle mesh and then moves it per frame;
+126 geoms and about 277k triangles for this scene.
+
+## 3. The other simulator lanes
 
 ```bash
-python -m robocasa.scripts.download_kitchen_assets --type fixtures_lw
-python -m robocasa.scripts.download_kitchen_assets --type objs_lw
-```
-
-Then build the scene and run it:
-
-```bash
-pixi run demo-drawer-dash-scene    # writes scene.xml next to this README
 pixi run demo-drawer-dash          # the routine, through Retriever Flows
 pixi run demo-drawer-dash-verify   # the assertions, headless
+pixi run demo-drawer-dash-scene    # rebuild scene.xml explicitly
 ```
 
 `scene.xml` is generated, not committed: it references the mesh and texture
@@ -111,6 +130,7 @@ Three things had to be right before any of this worked:
 | `sequence.py` | executes a phase against a real model: phase to gripper pose |
 | `arm_control.py` | damped least-squares Cartesian control for the Panda |
 | `verify.py` | the headless assertions, plus video and contact-sheet capture |
+| `viewer.py` | the browser viewer: MuJoCo geoms pushed to viser, and the grasp readouts |
 
 `app.py` imports nothing heavier than the runtime, so the example stays
 import-safe with no simulator installed; the MuJoCo modules are pulled in only

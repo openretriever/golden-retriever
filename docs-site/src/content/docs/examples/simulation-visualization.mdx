@@ -182,6 +182,22 @@ dependencies and RoboCasa's fixture and object asset packs, and
 any slide joint, a finger pad touching the handle for 100% of the pull and
 push, and the drawer out past 0.35 m and back shut under that grasp alone.
 
+There is a browser viewer for it too. From a clone, with the optional
+simulator dependencies and RoboCasa's `fixtures_lw` and `objs_lw` asset packs
+installed:
+
+```bash
+pixi run demo-drawer-dash-viewer   # http://localhost:8087
+```
+
+It builds the scene on first run, streams the live simulation to a viser page
+under plain `python`, and reports **holding handle** tick by tick — which is
+the claim made watchable: when that reads `no`, the drawer stops moving.
+
+The viewer talks to viser directly rather than through `mjviser`, which needs
+`mujoco>=3.6`; RoboSuite's controllers do not survive the 3.10 `mj_fullM`
+signature change, so this lane stays pinned to 3.3.1.
+
 Source: `examples/advanced/robocasa_drawer_dash/`.
 
 ## Run these in order
