@@ -209,7 +209,13 @@ def main() -> None:
     print(f"slide travel: {routine.travel:.3f} m, drawers are passive "
           f"(no actuator) — only the grasp moves them")
     print(f"routine: {len(PHASES)} phases, {TOTAL_SECONDS:.0f} s per cycle")
-    url = f"http://localhost:{args.port}"
+    # Ask viser what it actually bound to. If the requested port is taken it
+    # quietly serves on the next free one, and announcing the requested port
+    # instead sends you to whatever else is already listening there.
+    port = server.get_port()
+    url = f"http://localhost:{port}"
+    if port != args.port:
+        print(f"port {args.port} was already in use; serving on {port} instead")
     print(f"drawer dash: {url}")
     if args.open_browser:
         # This lane exists to be looked at, so opening the page is the
