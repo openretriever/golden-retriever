@@ -45,10 +45,8 @@ def test_launcher_template_clamps_episode_and_announces_status() -> None:
     assert 'scene.provider || "RoboCasa"' in template
 
 
-def test_cap_method_manifest_is_explicit_about_capabilities() -> None:
-    baselines = discover_method_baselines(
-        lambda name: name in {"robosuite", "mjviser"}
-    )
+def test_method_manifest_is_explicit_about_capabilities() -> None:
+    baselines = discover_method_baselines(lambda name: name in {"robosuite", "mjviser"})
 
     assert [baseline.tier for baseline in baselines] == ["S1", "S2", "M3"]
     assert baselines[0].available is True
