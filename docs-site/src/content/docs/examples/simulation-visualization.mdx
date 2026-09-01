@@ -78,14 +78,18 @@ closes near the block and `reward` tracks the lift:
 ```text
 [mock step=002] object_z=0.820 gripper_z=0.940 reward=0.000 done=False
 [mock step=004] object_z=0.820 gripper_z=0.900 reward=0.000 done=False
-[mock step=006] object_z=0.841 gripper_z=0.904 reward=0.021 done=False
-[mock step=008] object_z=0.883 gripper_z=0.952 reward=0.063 done=False
-[mock step=010] object_z=0.925 gripper_z=1.000 reward=0.105 done=False
-[mock step=012] object_z=0.967 gripper_z=1.048 reward=0.147 done=False
+[mock step=006] object_z=0.820 gripper_z=0.872 reward=0.000 done=False
+[mock step=008] object_z=0.820 gripper_z=0.856 reward=0.000 done=False
+[mock step=010] object_z=0.820 gripper_z=0.840 reward=0.000 done=False
+[mock step=012] object_z=0.820 gripper_z=0.824 reward=0.000 done=False
+[mock step=014] object_z=0.855 gripper_z=0.864 reward=0.035 done=False
+[mock step=016] object_z=0.925 gripper_z=0.944 reward=0.105 done=False
+[mock step=018] object_z=0.995 gripper_z=1.024 reward=0.175 done=False
+[mock step=020] object_z=1.065 gripper_z=1.104 reward=0.245 done=True
 ```
 
 The dedicated `robocasa` Pixi environment installs the real simulator stack.
-Run `pixi run -e robocasa demo-robosuite-web` for a live browser scene. The viewer consumes the
+Run `pixi run --locked -e robocasa demo-robosuite-web` for a live browser scene. The viewer consumes the
 same native `MjModel` and `MjData` that robosuite advances; it does not launch a
 second simulator.
 
@@ -282,9 +286,11 @@ The launcher is the task-level entry point. Each viewer remains bound to one
 task and keeps the run controls, camera presets, and pipeline map close to the
 simulator state they affect.
 
-The optional Gemini planner emits only structured, allow-listed skills. It
-cannot execute code or issue arbitrary MuJoCo actions, and it falls back to the
-offline task manifest when its optional client or credentials are unavailable.
+The locked simulator environment includes the optional Gemini client. Set
+`GEMINI_API_KEY` to request structured, allow-listed skills. The planner cannot
+execute code or issue arbitrary MuJoCo actions; when credentials are absent or
+an operational request fails, the console receives and labels an
+`offline`-sourced fallback plan.
 
 <details>
   <summary>Environment setup (usually handled by an AI coding agent)</summary>
@@ -293,11 +299,11 @@ Install the checked-in environment, initialize upstream macros, and download
 the selected demonstration:
 
 ```bash
-pixi install -e robocasa
-pixi run -e robocasa robosuite-setup-macros
-pixi run -e robocasa robocasa-setup-macros
-pixi run -e robocasa robocasa-download-assets
-pixi run -e robocasa robocasa-download-prepare-coffee
+pixi install --locked -e robocasa
+pixi run --locked -e robocasa robosuite-setup-macros
+pixi run --locked -e robocasa robocasa-setup-macros
+pixi run --locked -e robocasa robocasa-download-assets
+pixi run --locked -e robocasa robocasa-download-prepare-coffee
 ```
 
 GoldenRetriever owns the dependency lock and runnable commands. Large assets,
