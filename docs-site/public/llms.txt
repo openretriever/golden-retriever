@@ -70,8 +70,8 @@ Only start these when the user explicitly asks for the relevant environment:
 - Webcam/Rerun: `pixi run -e torch demo-webcam-rerun`
 - Pipeline topology and HTML graph visualization: use the GoldenRetriever pipeline debugging guide.
 - Robosuite and RoboCasa integration: use the GoldenRetriever simulation and replay guide.
-- Real robosuite Lift: install the locked environment with `pixi install -e robocasa`, then run `pixi run -e robocasa demo-robosuite-lift`.
-- Real RoboCasa replay: follow the simulation guide's asset and dataset setup, then run `pixi run -e robocasa demo-robocasa-replay`.
+- Real robosuite Lift: install the locked environment with `pixi install --locked -e robocasa`, then run `pixi run --locked -e robocasa demo-robosuite-lift`.
+- Real RoboCasa replay: follow the simulation guide's asset and dataset setup, then run `pixi run --locked -e robocasa demo-robocasa-replay`.
 - Headless RoboCasa trace: add `--visualize rerun --rerun-mode record --recording <path>.rrd` and inspect the artifact locally later.
 - Model-backed perception/memory: use the documented optional model-backed examples after the mock path is green.
 
