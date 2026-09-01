@@ -67,7 +67,7 @@ with pipe:
 ```
 
 ```bash
-retriever run demo-robosuite-mock
+pixi run demo-robosuite-mock
 ```
 
 Real output — the mock is deterministic, so `object_z` rises once the gripper
@@ -82,11 +82,8 @@ closes near the block and `reward` tracks the lift:
 [mock step=012] object_z=0.967 gripper_z=1.048 reward=0.147 done=False
 ```
 
-Swap `mode="robosuite"` (after installing the optional dependency) and the same
-graph drives the real simulator; `LiftState.source` reports which backend ran.
-
-For a live browser scene, install `mjviser` in the configured simulation
-environment and run `retriever run demo-robosuite-web`. The viewer consumes the
+The dedicated `robocasa` Pixi environment installs the real simulator stack.
+Run `pixi run -e robocasa demo-robosuite-web` for a live browser scene. The viewer consumes the
 same native `MjModel` and `MjData` that robosuite advances; it does not launch a
 second simulator.
 
@@ -102,7 +99,7 @@ Goal -> Planner -> Skill plan -> Recorded replay -> Task verification
 The full Flow remains inspectable:
 
 ```bash
-retriever run demo-robocasa-mock
+pixi run demo-robocasa-mock
 ```
 
 ```text
@@ -120,22 +117,20 @@ controls, events, and verification. Retriever's standalone
 web console embeds mjviser as a replaceable viewport; mjviser only renders the
 same live `MjModel` and `MjData` in the browser.
 
-After installing RoboCasa from source, downloading its kitchen assets, and
-downloading the `TurnOnMicrowave` human demonstration, run the replay:
+Follow the [locked setup and data steps](https://github.com/openretriever/golden-retriever/tree/main/examples/advanced/robocasa#install-the-simulator-environment),
+then run the replay:
 
 ```bash
-python -m examples.advanced.robocasa.app \
-  --mode robocasa --task TurnOnMicrowave --seconds 45
+pixi run -e robocasa demo-robocasa-replay
 ```
 
 Environment construction completes before the requested replay duration begins.
 The first MJCF and asset initialization can still take roughly 15 seconds on a
 laptop.
 
-Add `--visualize rerun` for MuJoCo camera frames plus Retriever telemetry. On
-macOS, use `mjpython ... --viewer` for the native MuJoCo viewer; native viewer
-and offscreen camera modes remain separate because they create incompatible
-AppKit/GLFW contexts in one process.
+Use `pixi run -e robocasa demo-robocasa-rerun` for MuJoCo camera frames plus
+Retriever telemetry. Only the optional passive native viewer requires
+`mjpython`, and only on macOS; browser and headless modes use ordinary Python.
 
 Remote workers can add `--rerun-mode record --recording <path>.rrd` to save the
 same trace without spawning a viewer, then inspect it later on a local machine.
@@ -152,7 +147,7 @@ The viewer is not a separate animation.
 Start the scene launcher, then open `http://localhost:8084`:
 
 ```bash
-retriever run demo-robocasa-scenes
+pixi run -e robocasa demo-robocasa-scenes
 ```
 
 The launcher lists downloaded human demonstrations and starts one simulator at
@@ -185,7 +180,7 @@ and MuJoCo model.
 To start the composite task directly instead, run:
 
 ```bash
-retriever run demo-robocasa-composite-web
+pixi run -e robocasa demo-robocasa-composite-web
 ```
 
 Or launch the same offline-planned run from Python:
@@ -292,16 +287,20 @@ offline task manifest when its optional client or credentials are unavailable.
 <details>
   <summary>Environment setup (usually handled by an AI coding agent)</summary>
 
-Install RoboCasa, its kitchen assets, and `mjviser` in the same simulation
-environment. Download the selected upstream demonstration once:
+Install the checked-in environment, initialize upstream macros, and download
+the selected demonstration:
 
 ```bash
-python -m robocasa.scripts.download_datasets \
-  --tasks PrepareCoffee --split pretrain --source human
+pixi install -e robocasa
+pixi run -e robocasa robosuite-setup-macros
+pixi run -e robocasa robocasa-setup-macros
+pixi run -e robocasa robocasa-download-assets
+pixi run -e robocasa robocasa-download-prepare-coffee
 ```
 
-Large assets and datasets remain outside version control. The larger kitchen takes longer than `Lift` to publish
-to the browser.
+GoldenRetriever owns the dependency lock and runnable commands. Large assets,
+datasets, and machine caches stay outside version control. The larger kitchen
+takes longer than `Lift` to publish to the browser.
 
 </details>
 
@@ -314,7 +313,7 @@ Choose the view by question:
 | Rerun | Camera frames, Retriever execution, scalars, and saved traces. |
 | MP4 | Compact review artifacts and documentation clips. |
 
-For a compact shareable artifact, `pixi run demo-robocasa-video` writes the
+For a compact shareable artifact, `pixi run -e robocasa demo-robocasa-video` writes the
 offscreen camera stream to `logs/robocasa-replay.mp4`. Use this for run review
 or promote a deliberately selected clip into the documentation media folder;
 routine videos remain generated artifacts and stay out of Git.
@@ -355,10 +354,10 @@ in [`examples/advanced/robocasa/README.md`](https://github.com/openretriever/gol
 Run the simulator lanes from lightest to heaviest so each boundary is verified
 before the next:
 
-1. **Mock robosuite** — `retriever run demo-robosuite-mock` runs the env↔policy loop deterministically, without a robosuite install.
-2. **Mock RoboCasa contract** — `retriever run demo-robocasa-mock` verifies the recorded-action → simulator → observation graph without RoboCasa.
-3. **Real RoboCasa / Rerun** — replay a human demonstration through RoboCasa after the mock trace looks right.
-4. **Real robosuite / Rerun** — swap `mode="robosuite"` (optional dependency) only after the mock trace looks right.
+1. **Mock robosuite** — `pixi run demo-robosuite-mock` runs the env↔policy loop deterministically, without a robosuite install.
+2. **Mock RoboCasa contract** — `pixi run demo-robocasa-mock` verifies the recorded-action → simulator → observation graph without RoboCasa.
+3. **Locked simulator smoke** — `pixi run -e robocasa robocasa-smoke` imports the stack and constructs headless `Lift`.
+4. **Real RoboCasa replay** — `pixi run -e robocasa demo-robocasa-replay` replays the downloaded demonstration.
 
 ## Design notes
 
@@ -368,8 +367,9 @@ runs against either a mock or a real backend, while Retriever recording and
 Rerun expose observations without changing the policy contract.
 
 The ownership boundary is deliberate. GoldenRetriever owns the Flow adapter,
-examples, and public explanation. Large assets, datasets, and machine-specific caches remain outside version control.
-Optional simulator dependencies stay outside the Hub manifest so Hub loading remains lightweight.
+dependency lock, runnable examples, and public explanation. Large assets,
+datasets, recordings, and machine-specific caches remain outside version
+control. Optional simulator dependencies stay outside the Hub manifest so Hub loading remains lightweight.
 
 RoboCasa supplies tasks and demonstrations, robosuite composes environments
 and controllers, demonstration mode restores recorded states, and action-replay
