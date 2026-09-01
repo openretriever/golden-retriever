@@ -72,6 +72,56 @@ class RobosuiteLiftMockTests(unittest.TestCase):
         self.assertGreater(action.dz, 0.0)
         self.assertEqual(action.grip, 1.0)
 
+    def test_policy_slows_descent_near_cube(self) -> None:
+        policy = HeuristicLiftPolicy(target_height=1.05)
+        action = policy.step(
+            LiftState(
+                object_x=0.0,
+                object_y=0.0,
+                object_height=0.82,
+                gripper_x=0.0,
+                gripper_y=0.0,
+                gripper_z=0.85,
+                grasped=False,
+                done=False,
+            )
+        )
+
+        self.assertEqual(action.dz, -0.2)
+        self.assertEqual(action.grip, -1.0)
+
+    def test_policy_closes_at_grasp_height(self) -> None:
+        policy = HeuristicLiftPolicy(target_height=1.05)
+        action = policy.step(
+            LiftState(
+                object_x=0.0,
+                object_y=0.0,
+                object_height=0.82,
+                gripper_x=0.0,
+                gripper_y=0.0,
+                gripper_z=0.824,
+                grasped=False,
+                done=False,
+            )
+        )
+
+        self.assertEqual(action.dz, 0.0)
+        self.assertEqual(action.grip, 1.0)
+
+    def test_policy_continues_to_requested_height_after_task_success(self) -> None:
+        policy = HeuristicLiftPolicy(target_height=1.05)
+        action = policy.step(
+            LiftState(
+                object_height=0.9,
+                gripper_z=0.9,
+                grasped=True,
+                done=True,
+            )
+        )
+
+        self.assertGreater(action.dz, 0.0)
+        self.assertEqual(action.grip, 1.0)
+
 
 if __name__ == "__main__":
     unittest.main()
