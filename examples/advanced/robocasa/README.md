@@ -30,8 +30,8 @@ Use the dedicated Pixi environment for every real simulator command. Do not
 enter a Pixi shell or manually install packages with `pip`:
 
 ```bash
-pixi install -e robocasa
-pixi run -e robocasa robocasa-smoke
+pixi install --locked -e robocasa
+pixi run --locked -e robocasa robocasa-smoke
 ```
 
 The `robocasa` environment installs pinned revisions of
@@ -45,15 +45,15 @@ WSL2 may work but is not part of the verified path.
 
 ## Download RoboCasa assets and data
 
-The source packages are installed by Pixi, but RoboCasa's kitchen assets and
-human demonstrations are separate downloads. Run the upstream setup commands
-through the same environment:
+The lock covers Python and native dependencies. RoboCasa's kitchen assets and
+human demonstrations are separate upstream downloads and are not pinned by
+this repository. Run their setup commands through the same environment:
 
 ```bash
-pixi run -e robocasa robosuite-setup-macros
-pixi run -e robocasa robocasa-setup-macros
-pixi run -e robocasa robocasa-download-assets
-pixi run -e robocasa robocasa-download-turn-on-microwave
+pixi run --locked -e robocasa robosuite-setup-macros
+pixi run --locked -e robocasa robocasa-setup-macros
+pixi run --locked -e robocasa robocasa-download-assets
+pixi run --locked -e robocasa robocasa-download-turn-on-microwave
 ```
 
 The kitchen assets require roughly 10 GB. The final command downloads one
@@ -65,7 +65,7 @@ for upstream details.
 To download another task, keep the command inside the locked environment:
 
 ```bash
-pixi run -e robocasa robocasa-download-prepare-coffee
+pixi run --locked -e robocasa robocasa-download-prepare-coffee
 ```
 
 ## Run the browser console
@@ -73,7 +73,7 @@ pixi run -e robocasa robocasa-download-prepare-coffee
 Launch the task catalog and open `http://localhost:8084`:
 
 ```bash
-pixi run -e robocasa demo-robocasa-scenes
+pixi run --locked -e robocasa demo-robocasa-scenes
 ```
 
 The launcher shows curated atomic tasks such as `CoffeeSetupMug`,
@@ -101,27 +101,27 @@ The console provides four views:
 Run the small real RoboSuite task first:
 
 ```bash
-pixi run -e robocasa demo-robosuite-lift
+pixi run --locked -e robocasa demo-robosuite-lift
 ```
 
 Run a headless RoboCasa replay:
 
 ```bash
-pixi run -e robocasa demo-robocasa-replay
+pixi run --locked -e robocasa demo-robocasa-replay
 ```
 
 Run the same replay in the browser, Rerun, or an MP4 recorder:
 
 ```bash
-pixi run -e robocasa demo-robocasa-web
-pixi run -e robocasa demo-robocasa-rerun
-pixi run -e robocasa demo-robocasa-video
+pixi run --locked -e robocasa demo-robocasa-web
+pixi run --locked -e robocasa demo-robocasa-rerun
+pixi run --locked -e robocasa demo-robocasa-video
 ```
 
 Run the installed composite example:
 
 ```bash
-pixi run -e robocasa demo-robocasa-composite-web
+pixi run --locked -e robocasa demo-robocasa-composite-web
 ```
 
 The default MP4 path is `logs/robocasa-replay.mp4`. Routine recordings remain
@@ -134,7 +134,7 @@ Linux. The inspection task selects `mjpython` for MuJoCo's passive viewer on
 macOS and ordinary Python on Linux:
 
 ```bash
-pixi run -e robocasa robocasa-inspect
+pixi run --locked -e robocasa robocasa-inspect
 ```
 
 The inspection module explicitly imports `mujoco.viewer`; importing `mujoco`
@@ -166,9 +166,11 @@ demonstration and annotates progress with phases such as locate, pick, place,
 activate, and verify. These are curated replay annotations, not independently
 detected skill completions.
 
-Setting `planner="gemini"` changes how the allow-listed `SkillPlan` is proposed.
-Invalid tool calls are rejected, and unavailable credentials fall back to the
-offline plan. The model cannot execute code or send arbitrary MuJoCo controls.
+The simulator environment includes the optional Gemini client. Set
+`GEMINI_API_KEY` and use `planner="gemini"` to propose an allow-listed
+`SkillPlan`. Invalid tool calls are rejected; unavailable credentials or
+operational failures return an `offline`-sourced plan, which the console labels
+accordingly. The model cannot execute code or send arbitrary MuJoCo controls.
 
 ## Execution model
 
@@ -196,13 +198,17 @@ visible as an execution record.
 
 ## What this proves
 
-- The checked-in lock creates one reproducible simulator environment.
+- The checked-in lock creates one reproducible simulator dependency environment.
 - Mock contracts work without RoboCasa, assets, cameras, or a GUI.
 - Real replay, reset, recorded states, images, and success checks remain behind
   typed Retriever Flow boundaries.
 - One simulator owns physics while the console and visualization adapters
   consume its state.
 - Missing datasets and disconnected viewers are explicit UI states.
+
+The cross-platform smoke check constructs RoboSuite `Lift`, starts and stops
+mjviser, and exercises the launcher API. It does not download the roughly 10 GB
+kitchen assets or replay a RoboCasa demonstration in CI.
 
 This is a recorded-demonstration replay, not a learned-policy benchmark.
 
