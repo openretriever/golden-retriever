@@ -36,19 +36,21 @@ class LiftEnvFlow(Flow[LiftAction, LiftState]):
     def step(self, action: LiftAction | None) -> LiftState:
         self.step_idx += 1
         dz   = 0.0 if action is None or action.dz   is None else float(action.dz)
-        grip = 1.0 if action is None or action.grip is None else float(action.grip)
+        grip = -1.0 if action is None or action.grip is None else float(action.grip)
         return self._step_mock(dz=dz, grip=grip)   # or _step_robosuite in real mode
 
 class HeuristicLiftPolicy(Flow[LiftState, LiftAction]):
     """Approach, close the gripper, then lift."""
     def step(self, state: LiftState | None) -> LiftAction:
         if state is None or state.object_height is None:
-            return LiftAction(dz=-0.4, grip=1.0)
-        if state.done or state.object_height >= self.target_height:
-            return LiftAction(dz=0.0, grip=-1.0)
-        if state.gripper_z > state.object_height + 0.08:
-            return LiftAction(dz=-0.5, grip=1.0)
-        return LiftAction(dz=0.6, grip=-1.0)
+            return LiftAction(dz=-0.4, grip=-1.0)
+        if state.object_height >= self.target_height:
+            return LiftAction(dz=0.0, grip=1.0)
+        if state.gripper_z > state.object_height + 0.06:
+            return LiftAction(dz=-0.5, grip=-1.0)
+        if state.gripper_z > state.object_height + 0.005:
+            return LiftAction(dz=-0.2, grip=-1.0)
+        return LiftAction(dz=1.0, grip=1.0)
 ```
 
 The feedback edge is explicit: `env → policy` and `policy → env`. The environment
@@ -366,21 +368,20 @@ visible instead of hiding them in callbacks. The same typed simulator boundary
 runs against either a mock or a real backend, while Retriever recording and
 Rerun expose observations without changing the policy contract.
 
-The ownership boundary is deliberate. GoldenRetriever owns the Flow adapter,
-dependency lock, runnable examples, and public explanation. Large assets,
-datasets, recordings, and machine-specific caches remain outside version
-control. Optional simulator dependencies stay outside the Hub manifest so Hub loading remains lightweight.
+GoldenRetriever owns the Flow adapter, dependency lock, runnable examples, and
+public documentation. Large assets, datasets, recordings, and machine-specific
+caches remain outside version control so the repository and Hub manifest stay
+lightweight.
 
 RoboCasa supplies tasks and demonstrations, robosuite composes environments
 and controllers, demonstration mode restores recorded states, and action-replay
 mode advances MuJoCo. Retriever orchestrates typed policy and simulator Flows,
-and a replaceable renderer adapter projects that run into
-the view needed for debugging. A future TAMP demo can replace `DemoActionSource` with planner
-and executor Flows while preserving the simulator and visualization layers.
+and a replaceable renderer adapter projects that run into the view needed for
+debugging.
 
 The public console has no ROS or Isaac Sim dependency. It is tested
 interactively on macOS; Linux is the intended headless target. WSL2 is
-experimental and currently unverified. 
+experimental and currently unverified.
 
 Source: `examples/advanced/robocasa/robosuite_lift.py`,
 `examples/advanced/robocasa/app.py`,
