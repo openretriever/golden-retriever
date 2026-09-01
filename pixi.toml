@@ -204,9 +204,11 @@ mujoco = "==3.3.1"
 [feature.robocasa.tasks]
 robocasa-smoke = { cmd = "python -m examples.advanced.robocasa.doctor", env = { PYTHONPATH = "." } }
 test-robocasa-launcher = { cmd = "python -m pytest -q tests/examples/test_robocasa_launcher.py", env = { PYTHONPATH = "." } }
+test-robocasa-replay-data = { cmd = "python -m pytest -q tests/examples/test_robocasa_replay_data.py", env = { PYTHONPATH = ".", RUN_ROBOCASA_DATA_TESTS = "1" } }
 robosuite-setup-macros = "python -m robosuite.scripts.setup_macros"
 robocasa-setup-macros = "python -m robocasa.scripts.setup_macros"
 robocasa-download-assets = "python -m robocasa.scripts.download_kitchen_assets"
+robocasa-download-coffee-setup-mug = "python -m robocasa.scripts.download_datasets --tasks CoffeeSetupMug --split pretrain --source human"
 robocasa-download-turn-on-microwave = "python -m robocasa.scripts.download_datasets --tasks TurnOnMicrowave --split pretrain --source human"
 robocasa-download-prepare-coffee = "python -m robocasa.scripts.download_datasets --tasks PrepareCoffee --split pretrain --source human"
 demo-robosuite-lift = { cmd = "python -m examples.advanced.robocasa.robosuite_lift --mode robosuite --steps 80 --dt 0.05", env = { PYTHONPATH = "." } }
