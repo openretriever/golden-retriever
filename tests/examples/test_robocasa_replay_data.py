@@ -28,6 +28,9 @@ def test_recorded_episode_reaches_robocasa_success(task: str) -> None:
             observation = simulator.step(source.step())
 
         assert observation is not None
+        assert observation.source == "robocasa"
+        assert observation.task == task
+        assert observation.episode_step == len(source.actions) - 1
         assert observation.progress == pytest.approx(1.0)
         assert observation.success is True
     finally:
