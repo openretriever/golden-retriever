@@ -196,12 +196,14 @@ viser = ">=1.0.30,<2"
 rerun-sdk = "==0.22.1"
 fastapi = ">=0.116,<1"
 uvicorn = { version = ">=0.35,<1", extras = ["standard"] }
+google-genai = "==1.72.0"
 
 [feature.robocasa.pypi-options.dependency-overrides]
 mujoco = "==3.3.1"
 
 [feature.robocasa.tasks]
 robocasa-smoke = { cmd = "python -m examples.advanced.robocasa.doctor", env = { PYTHONPATH = "." } }
+test-robocasa-launcher = { cmd = "python -m pytest -q tests/examples/test_robocasa_launcher.py", env = { PYTHONPATH = "." } }
 robosuite-setup-macros = "python -m robosuite.scripts.setup_macros"
 robocasa-setup-macros = "python -m robocasa.scripts.setup_macros"
 robocasa-download-assets = "python -m robocasa.scripts.download_kitchen_assets"
@@ -369,7 +371,7 @@ demo-composable-pipelines = { cmd = "python examples/advanced/core_composition/c
 demo-golden-hub-pack = { cmd = "python examples/advanced/core_composition/golden_hub_pack_smoke.py", env = { PYTHONPATH = "." } }
 demo-webcam-rerun = { cmd = "python examples/advanced/webcam_rerun/app.py", env = { PYTHONPATH = "." } }
 demo-pi05-mock = { cmd = "python -m examples.advanced.openpi_policy.app --mode mock --steps 8 --dt 0.1", env = { PYTHONPATH = "." } }
-demo-robosuite-mock = { cmd = "python -m examples.advanced.robocasa.robosuite_lift --mode mock --steps 12 --dt 0.05", env = { PYTHONPATH = "." } }
+demo-robosuite-mock = { cmd = "python -m examples.advanced.robocasa.robosuite_lift --mode mock --steps 20 --dt 0.05", env = { PYTHONPATH = "." } }
 demo-robocasa-mock = { cmd = "python -m examples.advanced.robocasa.app --mode mock --steps 14", env = { PYTHONPATH = "." } }
 demo-pipeline-html-viz = { cmd = "python examples/experimental/visualization/visualize_pipeline.py", env = { PYTHONPATH = "." } }
 public-surface-check = { cmd = "python scripts/release/check_public_surface.py", env = { PYTHONPATH = "." } }
