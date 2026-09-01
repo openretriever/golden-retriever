@@ -30,3 +30,5 @@ jobs:
           cache: true
       - name: Import stack and step headless simulation
         run: pixi run --locked -e robocasa robocasa-smoke
+      - name: Test launcher API and process controls
+        run: pixi run --locked -e robocasa test-robocasa-launcher
