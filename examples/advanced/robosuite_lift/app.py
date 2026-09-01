@@ -15,11 +15,7 @@ from examples.advanced.robocasa.robosuite_lift import (
 
 
 class HeuristicLiftPolicy(_HeuristicLiftPolicy):
-    """Compatibility policy that is ready for direct, non-Pipeline use."""
-
-    def __init__(self, *, target_height: float) -> None:
-        super().__init__(target_height=target_height)
-        self.init()
+    """Backward-compatible import path for the consolidated policy."""
 
 
 __all__ = [
