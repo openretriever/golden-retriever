@@ -943,7 +943,7 @@ def run(
     seconds: float = 120.0,
     hz: float = 20.0,
 ) -> None:
-    """Run one verified RoboCasa demonstration through the embodied console."""
+    """Run one RoboCasa demonstration with task verification in the console."""
 
     args = argparse.Namespace(
         mode="robocasa",
