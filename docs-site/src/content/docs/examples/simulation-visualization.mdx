@@ -1,6 +1,6 @@
 ---
 title: Simulation and Replay
-description: Offline-first embodied plans, verified RoboCasa replay, live mjviser scenes, and Rerun telemetry.
+description: Offline-first embodied plans, RoboCasa replay with task verification, live mjviser scenes, and Rerun telemetry.
 ---
 Start with mock-safe simulator boundaries, then move the same typed Flows to
 real robosuite or RoboCasa. This page focuses on simulator execution, replay,
@@ -127,14 +127,14 @@ Follow the [locked setup and data steps](https://github.com/openretriever/golden
 then run the replay:
 
 ```bash
-pixi run -e robocasa demo-robocasa-replay
+pixi run --locked -e robocasa demo-robocasa-replay
 ```
 
 Environment construction completes before the requested replay duration begins.
 The first MJCF and asset initialization can still take roughly 15 seconds on a
 laptop.
 
-Use `pixi run -e robocasa demo-robocasa-rerun` for MuJoCo camera frames plus
+Use `pixi run --locked -e robocasa demo-robocasa-rerun` for MuJoCo camera frames plus
 Retriever telemetry. Only the optional passive native viewer requires
 `mjpython`, and only on macOS; browser and headless modes use ordinary Python.
 
@@ -153,7 +153,7 @@ The viewer is not a separate animation.
 Start the scene launcher, then open `http://localhost:8084`:
 
 ```bash
-pixi run -e robocasa demo-robocasa-scenes
+pixi run --locked -e robocasa demo-robocasa-scenes
 ```
 
 The launcher lists downloaded human demonstrations and starts one simulator at
@@ -186,7 +186,7 @@ and MuJoCo model.
 To start the composite task directly instead, run:
 
 ```bash
-pixi run -e robocasa demo-robocasa-composite-web
+pixi run --locked -e robocasa demo-robocasa-composite-web
 ```
 
 Or launch the same offline-planned run from Python:
@@ -321,7 +321,7 @@ Choose the view by question:
 | Rerun | Camera frames, Retriever execution, scalars, and saved traces. |
 | MP4 | Compact review artifacts and documentation clips. |
 
-For a compact shareable artifact, `pixi run -e robocasa demo-robocasa-video` writes the
+For a compact shareable artifact, `pixi run --locked -e robocasa demo-robocasa-video` writes the
 offscreen camera stream to `logs/robocasa-replay.mp4`. Use this for run review
 or promote a deliberately selected clip into the documentation media folder;
 routine videos remain generated artifacts and stay out of Git.
@@ -364,8 +364,9 @@ before the next:
 
 1. **Mock robosuite** — `pixi run demo-robosuite-mock` runs the env↔policy loop deterministically, without a robosuite install.
 2. **Mock RoboCasa contract** — `pixi run demo-robocasa-mock` verifies the recorded-action → simulator → observation graph without RoboCasa.
-3. **Locked simulator smoke** — `pixi run -e robocasa robocasa-smoke` imports the stack and constructs headless `Lift`.
-4. **Real RoboCasa replay** — `pixi run -e robocasa demo-robocasa-replay` replays the downloaded demonstration.
+3. **Locked simulator smoke** — `pixi run --locked -e robocasa robocasa-smoke` imports the stack and constructs headless `Lift`.
+4. **Real RoboCasa replay** — `pixi run --locked -e robocasa demo-robocasa-replay` replays the downloaded demonstration.
+5. **Atomic and composite verification** — after downloading `CoffeeSetupMug` and `PrepareCoffee`, `pixi run --locked -e robocasa test-robocasa-replay-data` requires both recorded episodes to reach RoboCasa success.
 
 ## Design notes
 
