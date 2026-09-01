@@ -90,8 +90,8 @@ pixi run -e golden-retriever demo-perception-detection-flow
 pixi run -e golden-retriever demo-memory-belief-flow
 pixi run -e golden-retriever demo-language-caption-plan
 pixi run -e golden-retriever demo-composable-pipelines
-retriever run demo-robosuite-mock
-retriever run demo-robocasa-mock
+pixi run demo-robosuite-mock
+pixi run demo-robocasa-mock
 retriever run demo-pipeline-html-viz
 retriever run demo-robotics-typing-catalog
 ```
