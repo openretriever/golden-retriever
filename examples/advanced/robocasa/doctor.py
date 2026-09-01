@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from importlib import import_module, metadata
+from socket import socket
 
 from .mjviser_bridge import MjviserBridge
 
@@ -24,6 +25,12 @@ def _version(distribution: str) -> str:
         return "unknown"
 
 
+def _available_port() -> int:
+    with socket() as listener:
+        listener.bind(("127.0.0.1", 0))
+        return int(listener.getsockname()[1])
+
+
 def main() -> None:
     for distribution, module in PACKAGES:
         import_module(module)
@@ -38,7 +45,7 @@ def main() -> None:
         has_offscreen_renderer=False,
         use_camera_obs=False,
     )
-    bridge = MjviserBridge(port=0)
+    bridge = MjviserBridge(port=_available_port())
     try:
         env.reset()
         numpy = import_module("numpy")
