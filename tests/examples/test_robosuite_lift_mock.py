@@ -29,7 +29,7 @@ class RobosuiteLiftMockTests(unittest.TestCase):
 
         state = env.step(None)
         reached_target = False
-        for _ in range(200):
+        for _ in range(20):
             action = policy.step(state)
             state = env.step(action)
             if state.object_height is not None and state.object_height >= 1.05:
