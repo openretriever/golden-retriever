@@ -91,9 +91,8 @@ class MjviserBridge:
                 from mjviser import ViserMujocoScene
             except ImportError as exc:
                 raise RuntimeError(
-                    "mjviser is not installed. Install the optional simulation "
-                    "dependencies "
-                    'with `python -m pip install -e ".[robosuite]"`.'
+                    "mjviser is not installed. Run the real simulator through "
+                    "the locked environment with `pixi run -e robocasa ...`."
                 ) from exc
 
             model, data = _native_mujoco_state(sim)
