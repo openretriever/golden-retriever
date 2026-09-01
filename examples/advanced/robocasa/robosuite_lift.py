@@ -4,7 +4,7 @@ Run the mock-safe smoke test:
   pixi run demo-robosuite-mock
 
 Run against robosuite through the locked simulator environment:
-  pixi run -e robocasa demo-robosuite-lift
+  pixi run --locked -e robocasa demo-robosuite-lift
 """
 
 from __future__ import annotations
@@ -84,7 +84,8 @@ class LiftEnvFlow(Flow[LiftAction, LiftState]):
                 import robosuite as suite
             except ImportError as exc:
                 raise RuntimeError(
-                    "robosuite is not installed. Run `pixi install -e robocasa` "
+                    "robosuite is not installed. Run "
+                    "`pixi install --locked -e robocasa` "
                     "for the real simulator or `pixi run demo-robosuite-mock` "
                     "for the mock-safe smoke test."
                 ) from exc
