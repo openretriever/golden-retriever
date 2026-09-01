@@ -92,7 +92,8 @@ class MjviserBridge:
             except ImportError as exc:
                 raise RuntimeError(
                     "mjviser is not installed. Run the real simulator through "
-                    "the locked environment with `pixi run -e robocasa ...`."
+                    "the locked environment with "
+                    "`pixi run --locked -e robocasa ...`."
                 ) from exc
 
             model, data = _native_mujoco_state(sim)
