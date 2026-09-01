@@ -54,19 +54,15 @@ pixi run --locked -e robocasa robosuite-setup-macros
 pixi run --locked -e robocasa robocasa-setup-macros
 pixi run --locked -e robocasa robocasa-download-assets
 pixi run --locked -e robocasa robocasa-download-turn-on-microwave
+pixi run --locked -e robocasa robocasa-download-coffee-setup-mug
+pixi run --locked -e robocasa robocasa-download-prepare-coffee
 ```
 
-The kitchen assets require roughly 10 GB. The final command downloads one
-small, supported demonstration so the first real replay has a known input.
+The kitchen assets require roughly 10 GB. The final three commands download
+the demonstrations used by the direct replay and real-data checks.
 See the official [RoboCasa installation guide](https://robocasa.ai/docs/introduction/installation.html)
 and [dataset guide](https://robocasa.ai/docs/build/html/datasets/using_datasets.html)
 for upstream details.
-
-To download another task, keep the command inside the locked environment:
-
-```bash
-pixi run --locked -e robocasa robocasa-download-prepare-coffee
-```
 
 ## Run the browser console
 
@@ -123,6 +119,17 @@ Run the installed composite example:
 ```bash
 pixi run --locked -e robocasa demo-robocasa-composite-web
 ```
+
+After downloading `CoffeeSetupMug` and `PrepareCoffee`, check episode 0 of an
+atomic and a composite task against RoboCasa's success signal:
+
+```bash
+pixi run --locked -e robocasa test-robocasa-replay-data
+```
+
+This opt-in check restores every recorded state and requires the final state of
+both demonstrations to satisfy RoboCasa's task verifier. CI omits the large
+asset and dataset downloads, so it does not run this task automatically.
 
 The default MP4 path is `logs/robocasa-replay.mp4`. Routine recordings remain
 ignored under `logs/`.
