@@ -43,8 +43,8 @@ Run this sequence from a GoldenRetriever source checkout when you need a safe pu
 ```bash
 retriever run demo-golden-hub-pack
 pixi run -e golden-retriever demo-perception-detection-flow
-retriever run demo-robosuite-mock
-retriever run demo-robocasa-mock
+pixi run demo-robosuite-mock
+pixi run demo-robocasa-mock
 retriever run demo-pipeline-html-viz
 retriever run demo-robotics-typing-catalog
 ```
@@ -57,7 +57,7 @@ Expected artifacts: Hub export/registry/Arrow terminal proof, exit-zero syntheti
 | --- | --- | --- |
 | A safe GoldenRetriever smoke | `retriever run demo-golden-hub-pack` | camera, simulator, model, or network setup |
 | Example behavior | `pixi run -e golden-retriever demo-perception-detection-flow` | optional model-backed lanes |
-| Simulator integration | `retriever run demo-robocasa-mock` | real RoboCasa until the typed mock trace works |
+| Simulator integration | `pixi run demo-robocasa-mock` | real RoboCasa until the typed mock trace works |
 | Graph visualization | `retriever run demo-pipeline-html-viz` | screenshots or stale generated HTML |
 | Robot payload reuse | `retriever run demo-robotics-typing-catalog` | ad hoc dict payloads or source-only imports |
 
@@ -70,8 +70,8 @@ Only start these when the user explicitly asks for the relevant environment:
 - Webcam/Rerun: `pixi run -e torch demo-webcam-rerun`
 - Pipeline topology and HTML graph visualization: use the GoldenRetriever pipeline debugging guide.
 - Robosuite and RoboCasa integration: use the GoldenRetriever simulation and replay guide.
-- Real robosuite Lift: install the optional robosuite dependency first, then run `pixi run demo-robosuite-lift`
-- Real RoboCasa replay: install RoboCasa and assets from source, download the `TurnOnMicrowave` human dataset, then follow the simulation guide for native MuJoCo or Rerun.
+- Real robosuite Lift: install the locked environment with `pixi install -e robocasa`, then run `pixi run -e robocasa demo-robosuite-lift`.
+- Real RoboCasa replay: follow the simulation guide's asset and dataset setup, then run `pixi run -e robocasa demo-robocasa-replay`.
 - Headless RoboCasa trace: add `--visualize rerun --rerun-mode record --recording <path>.rrd` and inspect the artifact locally later.
 - Model-backed perception/memory: use the documented optional model-backed examples after the mock path is green.
 
