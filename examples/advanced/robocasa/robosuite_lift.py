@@ -211,7 +211,7 @@ class HeuristicLiftPolicy(Flow[LiftState, LiftAction]):
     def step(self, state: LiftState | None) -> LiftAction:
         if state is None or state.object_height is None or state.gripper_z is None:
             return LiftAction(dz=-0.4, grip=-1.0)
-        if state.done or state.object_height >= self.target_height:
+        if state.object_height >= self.target_height:
             return LiftAction(dz=0.0, grip=1.0)
         if None not in (
             state.object_x,
@@ -229,9 +229,11 @@ class HeuristicLiftPolicy(Flow[LiftState, LiftAction]):
                     grip=-1.0,
                 )
         if state.grasped:
-            return LiftAction(dz=0.6, grip=1.0)
-        if state.gripper_z > state.object_height + 0.005:
+            return LiftAction(dz=1.0, grip=1.0)
+        if state.gripper_z > state.object_height + 0.06:
             return LiftAction(dz=-0.5, grip=-1.0)
+        if state.gripper_z > state.object_height + 0.005:
+            return LiftAction(dz=-0.2, grip=-1.0)
         return LiftAction(dz=0.0, grip=1.0)
 
 
