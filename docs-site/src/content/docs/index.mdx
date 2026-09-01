@@ -40,7 +40,7 @@ retriever install                    # sets up the example environment (wraps Pi
 retriever run demo-golden-hub-pack   # payload exports + Arrow round-trip
 ```
 
-Perception, memory, and language examples need extra model dependencies, so they run in the `golden-retriever` Pixi environment (`pixi run -e golden-retriever demo-...`). Everything else runs through `retriever run`.
+Most lightweight examples run through `retriever run`. Perception, memory, language, and simulator examples use their named Pixi environments when they need additional dependencies; the RoboCasa guide provides the exact locked commands.
 
 <details class="explain-details">
   <summary>What does this do?</summary>
