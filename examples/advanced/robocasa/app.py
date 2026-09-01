@@ -97,8 +97,9 @@ def _dataset_path(task: str, split: str) -> Path:
     if not path.exists():
         raise FileNotFoundError(
             f"No local human dataset for {task}. Download it with "
-            f"`python -m robocasa.scripts.download_datasets --tasks {task} "
-            f"--split {split} --source human`."
+            f"`pixi run --locked -e robocasa python -m "
+            f"robocasa.scripts.download_datasets --tasks {task} --split {split} "
+            f"--source human`."
         )
     return path
 
