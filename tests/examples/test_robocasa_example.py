@@ -23,6 +23,15 @@ from examples.advanced.robocasa.embodied import (
 from examples.advanced.robocasa.runtime import ReplayControls
 
 
+def test_missing_dataset_error_uses_locked_environment(monkeypatch, tmp_path) -> None:
+    registry = ModuleType("robocasa.utils.dataset_registry_utils")
+    registry.get_ds_meta = lambda **_kwargs: {"path": str(tmp_path / "missing.hdf5")}
+    monkeypatch.setitem(sys.modules, registry.__name__, registry)
+
+    with pytest.raises(FileNotFoundError, match=r"pixi run --locked -e robocasa"):
+        app._dataset_path("PrepareCoffee", "pretrain")
+
+
 def _mock_args(**overrides: object) -> Namespace:
     values = {
         "mode": "mock",
