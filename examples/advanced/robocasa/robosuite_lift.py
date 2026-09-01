@@ -3,9 +3,8 @@
 Run the mock-safe smoke test:
   pixi run demo-robosuite-mock
 
-Run against robosuite after installing the optional dependency:
-  pixi run python -m pip install --no-deps -e ".[robosuite]" robosuite
-  pixi run demo-robosuite-lift
+Run against robosuite through the locked simulator environment:
+  pixi run -e robocasa demo-robosuite-lift
 """
 
 from __future__ import annotations
@@ -21,6 +20,8 @@ from .mjviser_bridge import MjviserBridge
 
 @io
 class LiftAction:
+    dx: float | None = None
+    dy: float | None = None
     dz: float | None = None
     grip: float | None = None
 
@@ -29,8 +30,13 @@ class LiftAction:
 class LiftState:
     step: int | None = None
     source: str | None = None
+    object_x: float | None = None
+    object_y: float | None = None
     object_height: float | None = None
+    gripper_x: float | None = None
+    gripper_y: float | None = None
     gripper_z: float | None = None
+    grasped: bool | None = None
     reward: float | None = None
     done: bool | None = None
 
@@ -78,9 +84,9 @@ class LiftEnvFlow(Flow[LiftAction, LiftState]):
                 import robosuite as suite
             except ImportError as exc:
                 raise RuntimeError(
-                    "robosuite is not installed. Install the optional dependency with "
-                    '`pixi run python -m pip install --no-deps -e ".[robosuite]" robosuite` or run '
-                    "`pixi run demo-robosuite-mock` for the mock-safe smoke test."
+                    "robosuite is not installed. Run `pixi install -e robocasa` "
+                    "for the real simulator or `pixi run demo-robosuite-mock` "
+                    "for the mock-safe smoke test."
                 ) from exc
 
             self._env = suite.make(
@@ -98,16 +104,18 @@ class LiftEnvFlow(Flow[LiftAction, LiftState]):
 
     def step(self, action: LiftAction | None) -> LiftState:
         self.step_idx += 1
+        dx = 0.0 if action is None or action.dx is None else float(action.dx)
+        dy = 0.0 if action is None or action.dy is None else float(action.dy)
         dz = 0.0 if action is None or action.dz is None else float(action.dz)
-        grip = 1.0 if action is None or action.grip is None else float(action.grip)
+        grip = -1.0 if action is None or action.grip is None else float(action.grip)
 
         if self.mode == "robosuite":
-            return self._step_robosuite(dz=dz, grip=grip)
+            return self._step_robosuite(dx=dx, dy=dy, dz=dz, grip=grip)
         return self._step_mock(dz=dz, grip=grip)
 
     def _step_mock(self, *, dz: float, grip: float) -> LiftState:
         near_object = self._mock_gripper_z <= self._mock_object_height + 0.10
-        if grip < -0.2 and near_object:
+        if grip > 0.2 and near_object:
             self._mock_lift_started = True
 
         self._mock_gripper_z = max(0.75, min(1.25, self._mock_gripper_z + dz * 0.04))
@@ -122,11 +130,14 @@ class LiftEnvFlow(Flow[LiftAction, LiftState]):
             source="mock",
             object_height=self._mock_object_height,
             gripper_z=self._mock_gripper_z,
+            grasped=self._mock_lift_started,
             reward=reward,
             done=done,
         )
 
-    def _step_robosuite(self, *, dz: float, grip: float) -> LiftState:
+    def _step_robosuite(
+        self, *, dx: float, dy: float, dz: float, grip: float
+    ) -> LiftState:
         if self._env is None:
             raise RuntimeError("robosuite environment was not initialized")
 
@@ -135,7 +146,7 @@ class LiftEnvFlow(Flow[LiftAction, LiftState]):
         low, high = self._env.action_spec
         control = np.zeros_like(low, dtype=float)
         if control.size >= 3:
-            control[2] = dz
+            control[:3] = (dx, dy, dz)
         if control.size >= 1:
             control[-1] = grip
         control = np.clip(control, low, high)
@@ -146,19 +157,26 @@ class LiftEnvFlow(Flow[LiftAction, LiftState]):
             done = bool(terminated or truncated)
         else:
             obs, reward, done, _info = result
+        done = bool(done or float(reward) > 0.0)
         self._obs = obs
         if self._web_viewer is not None:
             self._web_viewer.update(self._env.sim)
 
-        object_height = _safe_z(obs, "cube_pos")
-        gripper_z = _safe_z(obs, "robot0_eef_pos")
+        object_pos = _safe_xyz(obs, "cube_pos")
+        gripper_pos = _safe_xyz(obs, "robot0_eef_pos")
+        grasped = self._env._check_grasp(self._env.robots[0].gripper, self._env.cube)
         return LiftState(
             step=self.step_idx,
             source="robosuite",
-            object_height=object_height,
-            gripper_z=gripper_z,
+            object_x=_axis(object_pos, 0),
+            object_y=_axis(object_pos, 1),
+            object_height=_axis(object_pos, 2),
+            gripper_x=_axis(gripper_pos, 0),
+            gripper_y=_axis(gripper_pos, 1),
+            gripper_z=_axis(gripper_pos, 2),
+            grasped=bool(grasped),
             reward=float(reward),
-            done=bool(done),
+            done=done,
         )
 
     def finalize(self) -> None:
@@ -168,11 +186,19 @@ class LiftEnvFlow(Flow[LiftAction, LiftState]):
             self._env.close()
 
 
-def _safe_z(obs: dict[str, Any], key: str) -> float | None:
+def _safe_xyz(obs: dict[str, Any], key: str) -> tuple[float, float, float] | None:
     value = obs.get(key)
     if value is None or len(value) < 3:
         return None
-    return float(value[2])
+    return float(value[0]), float(value[1]), float(value[2])
+
+
+def _axis(value: tuple[float, float, float] | None, index: int) -> float | None:
+    return None if value is None else value[index]
+
+
+def _clamp(value: float) -> float:
+    return max(-1.0, min(1.0, value))
 
 
 class HeuristicLiftPolicy(Flow[LiftState, LiftAction]):
@@ -184,12 +210,29 @@ class HeuristicLiftPolicy(Flow[LiftState, LiftAction]):
 
     def step(self, state: LiftState | None) -> LiftAction:
         if state is None or state.object_height is None or state.gripper_z is None:
-            return LiftAction(dz=-0.4, grip=1.0)
+            return LiftAction(dz=-0.4, grip=-1.0)
         if state.done or state.object_height >= self.target_height:
-            return LiftAction(dz=0.0, grip=-1.0)
-        if state.gripper_z > state.object_height + 0.08:
-            return LiftAction(dz=-0.5, grip=1.0)
-        return LiftAction(dz=0.6, grip=-1.0)
+            return LiftAction(dz=0.0, grip=1.0)
+        if None not in (
+            state.object_x,
+            state.object_y,
+            state.gripper_x,
+            state.gripper_y,
+        ):
+            dx = float(state.object_x) - float(state.gripper_x)
+            dy = float(state.object_y) - float(state.gripper_y)
+            if abs(dx) > 0.004 or abs(dy) > 0.004:
+                return LiftAction(
+                    dx=_clamp(dx * 10.0),
+                    dy=_clamp(dy * 10.0),
+                    dz=-0.2,
+                    grip=-1.0,
+                )
+        if state.grasped:
+            return LiftAction(dz=0.6, grip=1.0)
+        if state.gripper_z > state.object_height + 0.005:
+            return LiftAction(dz=-0.5, grip=-1.0)
+        return LiftAction(dz=0.0, grip=1.0)
 
 
 class LiftPrinter(Flow[LiftState, None]):
