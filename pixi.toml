@@ -375,6 +375,9 @@ demo-webcam-rerun = { cmd = "python examples/advanced/webcam_rerun/app.py", env 
 demo-pi05-mock = { cmd = "python -m examples.advanced.openpi_policy.app --mode mock --steps 8 --dt 0.1", env = { PYTHONPATH = "." } }
 demo-robosuite-mock = { cmd = "python -m examples.advanced.robocasa.robosuite_lift --mode mock --steps 20 --dt 0.05", env = { PYTHONPATH = "." } }
 demo-robocasa-mock = { cmd = "python -m examples.advanced.robocasa.app --mode mock --steps 14", env = { PYTHONPATH = "." } }
+demo-kitchen-mjviser = { cmd = "python -m examples.advanced.robocasa_kitchen_mjviser.serve_kitchen --task PickPlaceCounterToDrawer --port 8092", env = { PYTHONPATH = "." } }
+demo-kitchen-render = { cmd = "python -m examples.advanced.robocasa_kitchen_mjviser.render_kitchen --task PickPlaceCounterToDrawer --still", env = { PYTHONPATH = "." } }
+demo-drawer-dash-mjviser = { cmd = "python -m examples.advanced.robocasa_kitchen_mjviser.serve_drawer_dash --port 8090", env = { PYTHONPATH = "." } }
 demo-drawer-dash-mock = { cmd = "python -m examples.advanced.robocasa_drawer_dash.app --mode mock", env = { PYTHONPATH = "." } }
 demo-drawer-dash-scene = { cmd = "python -m examples.advanced.robocasa_drawer_dash.scene", env = { PYTHONPATH = "." } }
 demo-drawer-dash-assets = { cmd = "python -m robocasa.scripts.download_kitchen_assets --type fixtures_lw --type objs_lw" }
