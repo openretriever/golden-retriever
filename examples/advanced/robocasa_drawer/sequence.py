@@ -16,7 +16,7 @@ from __future__ import annotations
 import mujoco
 import numpy as np
 
-from examples.advanced.robocasa_drawer_dash.plan import (
+from examples.advanced.robocasa_drawer.plan import (
     DRAWER_JOINT,
     GRASPING,
     HANDLE_BODY,

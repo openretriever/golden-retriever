@@ -1,4 +1,4 @@
-# Drawer dash: an arm that puts the seasoning away
+# RoboCasa drawer: an arm that puts the seasoning away
 
 A MuJoCo scene built from RoboCasa parts — a three-drawer dresser standing on a
 table, with a seasoning bottle on its worktop and two more lying loose inside
@@ -16,14 +16,14 @@ own textures and convex collision meshes. Nothing holds the two in the drawer,
 so they roll: back against the rear wall as the drawer is pulled out, forward
 again as it is shoved shut.
 
-![four stages of the routine: lining up on the handle, gripping it, the drawer pulled open with the spice jars inside, and shut again with the worktop cleared](../../../docs-site/src/assets/media/drawer-dash/drawer-dash-stages.jpg)
+![four stages of the routine: lining up on the handle, gripping it, the drawer pulled open with the spice jars inside, and shut again with the worktop cleared](../../../docs-site/src/assets/media/robocasa-drawer/robocasa-drawer-stages.jpg)
 
 ## 1. Mock-safe contract
 
 Run this first. It needs no simulator, no assets, no GPU and no network:
 
 ```bash
-pixi run demo-drawer-dash-mock
+pixi run demo-drawer-mock
 ```
 
 Expected output — the nine phases in order, the drawer travelling only while
@@ -51,12 +51,12 @@ Three commands from a fresh clone. The middle one is a ~2.8 GB download and is
 only ever run once:
 
 ```bash
-pixi run python -m pip install -e ".[drawer_dash]"   # + RoboCasa, from source
-pixi run demo-drawer-dash-assets                     # fixtures_lw + objs_lw meshes
-pixi run demo-drawer-dash                            # opens the browser
+pixi run python -m pip install -e ".[robocasa_drawer]"   # + RoboCasa, from source
+pixi run demo-drawer-assets                     # fixtures_lw + objs_lw meshes
+pixi run demo-drawer                            # opens the browser
 ```
 
-`demo-drawer-dash` is the browser demo: it builds `scene.xml` itself on first
+`demo-drawer` is the browser demo: it builds `scene.xml` itself on first
 run, opens the page for you, and streams the live simulation. It runs under
 plain `python` — no `mjpython`, no native window. Pass `-- --no-open` to serve
 without opening a browser, `-- --port 9000` to move it, `-- --hold` to start
@@ -87,9 +87,9 @@ pushes each visual geom once as a triangle mesh and then moves it per frame;
 ## 3. The other simulator lanes
 
 ```bash
-pixi run demo-drawer-dash-flow     # the routine, through Retriever Flows
-pixi run demo-drawer-dash-verify   # the assertions, headless
-pixi run demo-drawer-dash-scene    # rebuild scene.xml explicitly
+pixi run demo-drawer-flow     # the routine, through Retriever Flows
+pixi run demo-drawer-verify   # the assertions, headless
+pixi run demo-drawer-scene    # rebuild scene.xml explicitly
 ```
 
 `scene.xml` is generated, not committed: it references the mesh and texture
@@ -192,7 +192,7 @@ when `--mode mujoco` asks for them.
 that passed rather than a separate take:
 
 ```bash
-pixi run demo-drawer-dash-verify --video drawer-dash.mp4 --sheet drawer-dash.png
+pixi run demo-drawer-verify --video robocasa-drawer.mp4 --sheet robocasa-drawer.png
 ```
 
 Cameras in the scene: `front`, `threequarter` (the default), `overhead`, and

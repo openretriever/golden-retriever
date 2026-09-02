@@ -27,8 +27,8 @@ from pathlib import Path
 import mujoco
 import numpy as np
 
-from examples.advanced.robocasa_drawer_dash.arm_control import Arm
-from examples.advanced.robocasa_drawer_dash.plan import (
+from examples.advanced.robocasa_drawer.arm_control import Arm
+from examples.advanced.robocasa_drawer.plan import (
     GRASPING,
     HANDLE_TO_INTERIOR,
     HOLDING_JAR,
@@ -37,7 +37,7 @@ from examples.advanced.robocasa_drawer_dash.plan import (
     SHUT_MAX,
     STROKE,
 )
-from examples.advanced.robocasa_drawer_dash.sequence import GRASP_ROTATION, Choreography
+from examples.advanced.robocasa_drawer.sequence import GRASP_ROTATION, Choreography
 
 HERE = Path(__file__).resolve().parent
 

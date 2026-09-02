@@ -1,12 +1,12 @@
-"""Serve the drawer-dash scene to a browser, live.
+"""Serve the RoboCasa drawer scene to a browser, live.
 
 Runs under plain `python` — no `mjpython`, no native window — and streams the
 simulation to a viser page:
 
-    pixi run demo-drawer-dash              # opens http://localhost:8087
-    pixi run demo-drawer-dash -- --port 9000
-    pixi run demo-drawer-dash -- --hold    # start with the routine paused
-    pixi run demo-drawer-dash -- --no-open # serve without opening a browser
+    pixi run demo-drawer              # opens http://localhost:8087
+    pixi run demo-drawer -- --port 9000
+    pixi run demo-drawer -- --hold    # start with the routine paused
+    pixi run demo-drawer -- --no-open # serve without opening a browser
 
 The "grasp" panel reports what the arm is doing, how far the drawer has come
 out, and whether a finger pad is touching the handle right now. Nothing drives
@@ -34,10 +34,10 @@ import mujoco
 import numpy as np
 import viser
 
-from examples.advanced.robocasa_drawer_dash.arm_control import Arm
-from examples.advanced.robocasa_drawer_dash.plan import OPEN, PHASES, TOTAL_SECONDS
-from examples.advanced.robocasa_drawer_dash.scene import ensure_scene
-from examples.advanced.robocasa_drawer_dash.sequence import Choreography
+from examples.advanced.robocasa_drawer.arm_control import Arm
+from examples.advanced.robocasa_drawer.plan import OPEN, PHASES, TOTAL_SECONDS
+from examples.advanced.robocasa_drawer.scene import ensure_scene
+from examples.advanced.robocasa_drawer.sequence import Choreography
 
 RENDER_FPS = 30.0
 # RoboSuite convention: group 0 is collision, 1 and 2 are visual. Drawing
@@ -158,7 +158,7 @@ def sync_handles(handles: list, model: mujoco.MjModel, data: mujoco.MjData) -> N
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Serve the drawer-dash scene to a browser via viser.",
+        description="Serve the RoboCasa drawer scene to a browser via viser.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--scene", type=Path, default=None,
@@ -216,7 +216,7 @@ def main() -> None:
     url = f"http://localhost:{port}"
     if port != args.port:
         print(f"port {args.port} was already in use; serving on {port} instead")
-    print(f"drawer dash: {url}")
+    print(f"drawer scene: {url}")
     if args.open_browser:
         # This lane exists to be looked at, so opening the page is the
         # default; `--no-open` is there for headless and CI use.

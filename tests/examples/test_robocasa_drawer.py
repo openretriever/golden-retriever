@@ -1,4 +1,4 @@
-"""Mock-lane tests for the RoboCasa drawer-dash example.
+"""Mock-lane tests for the RoboCasa drawer example.
 
 These run in the default environment, which has neither MuJoCo nor RoboCasa
 installed, so they double as the guard that the example stays import-safe.
@@ -8,11 +8,11 @@ import sys
 from argparse import Namespace
 
 import pytest
-from examples.advanced.robocasa_drawer_dash import plan
-from examples.advanced.robocasa_drawer_dash.app import (
+from examples.advanced.robocasa_drawer import plan
+from examples.advanced.robocasa_drawer.app import (
     ChoreographyPolicy,
-    DrawerDashAction,
-    DrawerDashSimulator,
+    DrawerAction,
+    DrawerSimulator,
     build_pipeline,
 )
 
@@ -31,7 +31,7 @@ def _mock_args(**overrides: object) -> Namespace:
     return Namespace(**values)
 
 
-def _run(args: Namespace) -> DrawerDashSimulator:
+def _run(args: Namespace) -> DrawerSimulator:
     pipeline, simulator = build_pipeline(args)
     try:
         for _ in range(args.steps):
@@ -73,11 +73,11 @@ def test_mock_lane_is_deterministic() -> None:
 def test_drawer_only_moves_while_the_handle_is_grasped() -> None:
     # The whole point of the scene: the slide joint carries no actuator, so a
     # tick that is not holding the handle must not move the drawer.
-    simulator = DrawerDashSimulator(mode="mock", scene=None, camera="threequarter", hz=2.0)
+    simulator = DrawerSimulator(mode="mock", scene=None, camera="threequarter", hz=2.0)
     simulator.reset()
 
     opened = simulator.step(
-        DrawerDashAction(phase="pull drawer open", phase_index=4, blend=1.0,
+        DrawerAction(phase="pull drawer open", phase_index=4, blend=1.0,
                          grip=plan.SQUEEZE, stroke=plan.STROKE, grasping=True,
                          holding_jar=False, elapsed=8.0)
     )
@@ -85,7 +85,7 @@ def test_drawer_only_moves_while_the_handle_is_grasped() -> None:
 
     # Same commanded stroke, but nothing is holding the bar.
     released = simulator.step(
-        DrawerDashAction(phase="line up", phase_index=1, blend=1.0,
+        DrawerAction(phase="line up", phase_index=1, blend=1.0,
                          grip=plan.OPEN, stroke=plan.STROKE, grasping=False,
                          holding_jar=False, elapsed=9.0)
     )
@@ -165,21 +165,21 @@ def test_the_torso_rises_for_the_worktop_and_drops_for_the_drawer() -> None:
 
 
 def test_mujoco_lane_explains_itself_when_the_scene_is_missing() -> None:
-    simulator = DrawerDashSimulator(
+    simulator = DrawerSimulator(
         mode="mujoco", scene="/nonexistent/scene.xml", camera="threequarter", hz=20.0
     )
     with pytest.raises(RuntimeError) as excinfo:
         simulator.reset()
 
     message = str(excinfo.value)
-    assert "demo-drawer-dash-mock" in message or "scene" in message
+    assert "demo-drawer-mock" in message or "scene" in message
 
 
 def test_the_mock_lane_never_reaches_for_the_viewer() -> None:
     # The viewer is an optional lane; importing the example must not pull it,
     # or the mock-safe path would inherit MuJoCo and viser.
-    assert "examples.advanced.robocasa_drawer_dash.viewer" not in sys.modules
-    assert "examples.advanced.robocasa_drawer_dash.scene" not in sys.modules
+    assert "examples.advanced.robocasa_drawer.viewer" not in sys.modules
+    assert "examples.advanced.robocasa_drawer.scene" not in sys.modules
     assert "viser" not in sys.modules
 
 
@@ -194,7 +194,7 @@ class TestViewerGeometry:
     def _viewer():
         pytest.importorskip("mujoco")
         pytest.importorskip("viser")
-        from examples.advanced.robocasa_drawer_dash import viewer
+        from examples.advanced.robocasa_drawer import viewer
 
         return viewer
 

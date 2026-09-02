@@ -401,9 +401,9 @@ def ensure_scene(path: Path | None = None) -> Path:
     except ImportError as exc:
         raise RuntimeError(
             "building the scene needs RoboCasa and RoboSuite. Install them with "
-            '`pixi run python -m pip install -e ".[drawer_dash]"` plus RoboCasa '
+            '`pixi run python -m pip install -e ".[robocasa_drawer]"` plus RoboCasa '
             "from source, then fetch the meshes with `pixi run "
-            "demo-drawer-dash-assets`. See this example's README."
+            "demo-drawer-assets`. See this example's README."
         ) from exc
 
 

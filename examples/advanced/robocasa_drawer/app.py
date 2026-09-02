@@ -6,16 +6,16 @@ grasp, not a scripted joint target, the thing the run actually proves.
 
 Run the mock-safe smoke test (no simulator, no assets, no GPU):
 
-  pixi run demo-drawer-dash-mock
+  pixi run demo-drawer-mock
 
 Run against MuJoCo after installing the optional simulator dependencies and
 building the scene (see this example's README for the RoboCasa asset packs):
 
-  pixi run python -m pip install -e ".[drawer_dash]"
-  pixi run demo-drawer-dash-assets
-  pixi run demo-drawer-dash-flow
+  pixi run python -m pip install -e ".[robocasa_drawer]"
+  pixi run demo-drawer-assets
+  pixi run demo-drawer-flow
 
-`pixi run demo-drawer-dash` is the browser demo rather than this lane; see
+`pixi run demo-drawer` is the browser demo rather than this lane; see
 `viewer.py`.
 
 The mock lane reproduces the choreography's timeline and the drawer travel it
@@ -34,7 +34,7 @@ from retriever.flow import Flow, Latest, Pipeline, Rate, Trigger, io
 
 WORKTOP_JAR = "cinnamon_main"
 
-from examples.advanced.robocasa_drawer_dash.plan import (
+from examples.advanced.robocasa_drawer.plan import (
     GRASPING,
     HOLDING_JAR,
     OPENED_MIN,
@@ -50,7 +50,7 @@ JAR_RELEASED = "let go of jar"
 
 
 @io
-class DrawerDashAction:
+class DrawerAction:
     """One tick of the routine: which phase, and what it commands."""
 
     phase: str | None = None
@@ -64,7 +64,7 @@ class DrawerDashAction:
 
 
 @io
-class DrawerDashState:
+class DrawerState:
     step: int | None = None
     source: str | None = None
     phase: str | None = None
@@ -78,7 +78,7 @@ class DrawerDashState:
     success: bool | None = None
 
 
-class ChoreographyPolicy(Flow[DrawerDashState, DrawerDashAction]):
+class ChoreographyPolicy(Flow[DrawerState, DrawerAction]):
     """Walks the phase schedule on its own clock and commands each tick.
 
     The schedule lives in `plan.py` and is shared with the MuJoCo lane, so the
@@ -92,11 +92,11 @@ class ChoreographyPolicy(Flow[DrawerDashState, DrawerDashAction]):
     def reset(self) -> None:
         self.elapsed = 0.0
 
-    def step(self, state: DrawerDashState | None) -> DrawerDashAction:
+    def step(self, state: DrawerState | None) -> DrawerAction:
         index, phase, blend = phase_at(self.elapsed)
         start, end = phase.stroke
         stroke = start + (end - start) * blend if phase.mode == "carry" else 0.0
-        action = DrawerDashAction(
+        action = DrawerAction(
             phase=phase.label,
             phase_index=index,
             blend=blend,
@@ -110,7 +110,7 @@ class ChoreographyPolicy(Flow[DrawerDashState, DrawerDashAction]):
         return action
 
 
-class DrawerDashSimulator(Flow[DrawerDashAction, DrawerDashState]):
+class DrawerSimulator(Flow[DrawerAction, DrawerState]):
     """Runs the commanded routine against MuJoCo, or a deterministic mock."""
 
     def __init__(self, *, mode: str, scene: str | None, camera: str, hz: float) -> None:
@@ -119,7 +119,7 @@ class DrawerDashSimulator(Flow[DrawerDashAction, DrawerDashState]):
         self.scene = scene
         self.camera = camera
         self.hz = max(1e-6, float(hz))
-        self.latest: DrawerDashState | None = None
+        self.latest: DrawerState | None = None
 
     def reset(self) -> None:
         self.step_idx = 0
@@ -137,21 +137,21 @@ class DrawerDashSimulator(Flow[DrawerDashAction, DrawerDashState]):
         from pathlib import Path
 
         try:
-            from examples.advanced.robocasa_drawer_dash.verify import Rig
+            from examples.advanced.robocasa_drawer.verify import Rig
         except ImportError as exc:  # pragma: no cover - exercised without mujoco
             raise RuntimeError(
                 "MuJoCo is not installed. Install the optional simulator "
-                'dependencies with `pixi run python -m pip install -e ".[drawer_dash]"`, '
-                "or run `pixi run demo-drawer-dash-mock` for the mock-safe smoke test."
+                'dependencies with `pixi run python -m pip install -e ".[robocasa_drawer]"`, '
+                "or run `pixi run demo-drawer-mock` for the mock-safe smoke test."
             ) from exc
 
-        from examples.advanced.robocasa_drawer_dash.scene import ensure_scene
+        from examples.advanced.robocasa_drawer.scene import ensure_scene
 
         # Built on first use rather than demanded up front, so a fresh clone
         # with the asset packs installed can run this lane straight away.
         return Rig(ensure_scene(Path(self.scene) if self.scene else None), camera=self.camera)
 
-    def step(self, action: DrawerDashAction | None) -> DrawerDashState:
+    def step(self, action: DrawerAction | None) -> DrawerState:
         self.step_idx += 1
         if self.mode == "mujoco":
             state = self._step_mujoco(action)
@@ -160,7 +160,7 @@ class DrawerDashSimulator(Flow[DrawerDashAction, DrawerDashState]):
         self.latest = state
         return state
 
-    def _finish(self, *, source: str, action: DrawerDashAction | None) -> DrawerDashState:
+    def _finish(self, *, source: str, action: DrawerAction | None) -> DrawerState:
         elapsed = 0.0 if action is None or action.elapsed is None else action.elapsed
         progress = min(1.0, elapsed / TOTAL_SECONDS)
         done = progress >= 1.0
@@ -169,7 +169,7 @@ class DrawerDashSimulator(Flow[DrawerDashAction, DrawerDashState]):
         # went back shut. Only true once the routine has actually finished.
         success = (done and self.peak_open >= OPENED_MIN
                    and self.drawer_open <= SHUT_MAX and self.jar_stowed)
-        return DrawerDashState(
+        return DrawerState(
             step=self.step_idx,
             source=source,
             phase=phase,
@@ -183,7 +183,7 @@ class DrawerDashSimulator(Flow[DrawerDashAction, DrawerDashState]):
             success=success,
         )
 
-    def _step_mock(self, action: DrawerDashAction | None) -> DrawerDashState:
+    def _step_mock(self, action: DrawerAction | None) -> DrawerState:
         # No contact model: the mock grants the grasp during the phases that
         # ask for it, and lets the drawer follow the commanded stroke. What it
         # does reproduce is the timeline, the travel and the thresholds.
@@ -199,7 +199,7 @@ class DrawerDashSimulator(Flow[DrawerDashAction, DrawerDashState]):
                 self.jar_stowed = True
         return self._finish(source="mock", action=action)
 
-    def _step_mujoco(self, action: DrawerDashAction | None) -> DrawerDashState:
+    def _step_mujoco(self, action: DrawerAction | None) -> DrawerState:
         if self._rig is None:
             raise RuntimeError("the MuJoCo rig was not initialized")
         if action is not None:
@@ -217,12 +217,12 @@ class DrawerDashSimulator(Flow[DrawerDashAction, DrawerDashState]):
             self._rig.close()
 
 
-class DrawerDashPrinter(Flow[DrawerDashState, None]):
+class DrawerPrinter(Flow[DrawerState, None]):
     def __init__(self, *, print_every: int) -> None:
         super().__init__()
         self.print_every = max(1, int(print_every))
 
-    def step(self, state: DrawerDashState) -> None:
+    def step(self, state: DrawerState) -> None:
         if state.step is None or state.step % self.print_every != 0:
             return None
         print(
@@ -247,18 +247,18 @@ def _pad(label: str | None) -> str:
     return f"{label or 'none':<16}"
 
 
-def build_pipeline(args: argparse.Namespace) -> tuple[Pipeline, DrawerDashSimulator]:
-    simulator = DrawerDashSimulator(
+def build_pipeline(args: argparse.Namespace) -> tuple[Pipeline, DrawerSimulator]:
+    simulator = DrawerSimulator(
         mode=args.mode,
         scene=getattr(args, "scene", None),
         camera=getattr(args, "camera", "threequarter"),
         hz=args.hz,
     )
-    pipe = Pipeline("robocasa_drawer_dash")
+    pipe = Pipeline("robocasa_drawer")
     with pipe:
         sim = simulator @ Rate(hz=args.hz)
         policy = ChoreographyPolicy(hz=args.hz) @ Rate(hz=args.hz)
-        printer = DrawerDashPrinter(print_every=args.print_every) @ Trigger("step")
+        printer = DrawerPrinter(print_every=args.print_every) @ Trigger("step")
         pipe.connect(policy, sim, sync=Latest())
         pipe.connect(sim, policy, sync=Latest())
         pipe.connect(sim, printer, sync=Latest())
@@ -267,7 +267,7 @@ def build_pipeline(args: argparse.Namespace) -> tuple[Pipeline, DrawerDashSimula
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Retriever + RoboCasa drawer-dash demo: grasp a handle and work the drawer."
+        description="Retriever + RoboCasa RoboCasa drawer demo: grasp a handle and work the drawer."
     )
     parser.add_argument(
         "--mode",
