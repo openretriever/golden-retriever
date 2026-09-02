@@ -213,6 +213,19 @@ vlm_planning = [
 robosuite = [
     "robosuite",
 ]
+# RoboCasa drawer-dash example. RoboCasa itself is not on PyPI and its fixture
+# and object asset packs are a multi-GB download, so both are installed from
+# source; see examples/advanced/robocasa_drawer_dash/README.md. MuJoCo is
+# pinned because robosuite's controllers do not accept the 3.10 mj_fullM
+# signature change.
+drawer_dash = [
+    "robosuite",
+    "mujoco==3.3.1",
+    # The browser viewer talks to viser directly. `mjviser` would be the
+    # obvious dependency, but it requires mujoco>=3.6 and RoboSuite's
+    # controllers do not survive the 3.10 mj_fullM signature change.
+    "viser>=1.0",
+]
 
 
 dev = [
