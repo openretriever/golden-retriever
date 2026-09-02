@@ -7,6 +7,12 @@ simulation to a viser page:
     pixi run demo-drawer -- --port 9000
     pixi run demo-drawer -- --hold       # start with the routine paused
     pixi run demo-drawer -- --no-open    # serve without opening a browser
+    pixi run demo-drawer -- --flat       # flat colours, no textures
+
+Geoms whose material carries a colour map are sent as textured glTF, so the
+wood, the labelled jars and the food arrive looking like themselves; the rest
+are sent as flat meshes in their material colour. `--flat` skips the textures
+altogether, which starts faster and is the fallback if a scan will not map.
 
 The "routine" panel reports what the arm is doing, how far the drawer has come
 out, and whether a finger pad is touching the handle or the pepper shaker right
@@ -33,7 +39,9 @@ from pathlib import Path
 
 import mujoco
 import numpy as np
+import trimesh
 import viser
+from PIL import Image
 
 from examples.advanced.robocasa_drawer.arm_control import Arm
 from examples.advanced.robocasa_drawer.plan import OPEN, PHASES, TOTAL_SECONDS
@@ -44,6 +52,11 @@ RENDER_FPS = 30.0
 # RoboSuite convention: group 0 is collision, 1 and 2 are visual. Drawing
 # group 0 paints the whole scene in translucent red hulls.
 VISUAL_GROUPS = (1, 2)
+# RoboCasa ships 2048-pixel scans. Each one is re-encoded into a glB and pushed
+# down a websocket at start-up, so cap what actually crosses the wire.
+TEXTURE_MAX_PX = 512
+# What the MuJoCo compiler leaves on a geom that never mentions a colour.
+DEFAULT_RGBA = (0.5, 0.5, 0.5, 1.0)
 
 
 def _box_mesh(size: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
@@ -111,33 +124,196 @@ def _geom_mesh(model: mujoco.MjModel, geom: int):
     return None
 
 
-def _geom_colour(model: mujoco.MjModel, geom: int) -> tuple[int, int, int]:
+def _effective_rgba(model: mujoco.MjModel, geom: int) -> np.ndarray:
     rgba = np.asarray(model.geom_rgba[geom], dtype=float)
     material = model.geom_matid[geom]
-    # A geom that leaves rgba at the default white defers to its material;
-    # most of the scanned RoboCasa meshes are coloured that way.
-    if material >= 0 and np.allclose(rgba[:3], 1.0):
+    # MuJoCo's own renderer lets the material win unless the geom overrides it,
+    # and a geom that never mentions rgba keeps the compiler's default grey.
+    # Deferring only on white left almost the whole kitchen flat grey.
+    if material >= 0 and (np.allclose(rgba[:3], 1.0) or np.allclose(rgba, DEFAULT_RGBA)):
         rgba = np.asarray(model.mat_rgba[material], dtype=float)
-    return tuple(int(round(255 * float(c))) for c in np.clip(rgba[:3], 0.0, 1.0))
+    return np.clip(rgba, 0.0, 1.0)
 
 
-def build_scene_handles(server: viser.ViserServer, model: mujoco.MjModel) -> list:
+def _geom_colour(model: mujoco.MjModel, geom: int) -> tuple[int, int, int]:
+    return tuple(int(round(255 * float(c))) for c in _effective_rgba(model, geom)[:3])
+
+
+def _texture_image(model: mujoco.MjModel, texid: int) -> Image.Image | None:
+    """A material's colour texture as an image, or None if it is not one."""
+    kind = model.tex_type[texid]
+    if kind == mujoco.mjtTexture.mjTEXTURE_SKYBOX:
+        return None
+    width, height = int(model.tex_width[texid]), int(model.tex_height[texid])
+    channels = int(model.tex_nchannel[texid])
+    start = int(model.tex_adr[texid])
+    flat = np.asarray(model.tex_data[start:start + width * height * channels],
+                      dtype=np.uint8)
+    pixels = flat.reshape(height, width, channels)[:, :, :3]
+    if kind == mujoco.mjtTexture.mjTEXTURE_CUBE and height == 6 * width:
+        # Six faces stacked into one column. The browser gets one flat
+        # material per geom, so the first face stands in for the cube.
+        pixels = pixels[:width]
+    picture = Image.fromarray(pixels)
+    picture.thumbnail((TEXTURE_MAX_PX, TEXTURE_MAX_PX))
+    return picture
+
+
+def _geom_texture(model: mujoco.MjModel, geom: int):
+    """(texture id, repeat, uniform) for a geom's colour map, or None."""
+    material = int(model.geom_matid[geom])
+    if material < 0:
+        return None
+    slots = np.atleast_1d(np.asarray(model.mat_texid[material]))
+    role = int(mujoco.mjtTextureRole.mjTEXROLE_RGB)
+    texid = int(slots[role] if slots.size > role else slots[0])
+    if texid < 0:
+        return None
+    return (texid,
+            np.asarray(model.mat_texrepeat[material], dtype=float),
+            bool(model.mat_texuniform[material]))
+
+
+def _mesh_uv(model: mujoco.MjModel, geom: int, verts: np.ndarray, faces: np.ndarray):
+    """Per-vertex texture coordinates, splitting the mesh apart if it needs it."""
+    mesh = int(model.geom_dataid[geom])
+    count = int(model.mesh_texcoordnum[mesh])
+    if count == 0:
+        return None, verts, faces
+    start = int(model.mesh_texcoordadr[mesh])
+    uv = np.asarray(model.mesh_texcoord[start:start + count],
+                    dtype=np.float32).reshape(-1, 2)
+    fa, fn = int(model.mesh_faceadr[mesh]), int(model.mesh_facenum[mesh])
+    corners = np.asarray(model.mesh_facetexcoord[fa:fa + fn]).reshape(-1, 3)
+    if uv.shape[0] != verts.shape[0] or not np.array_equal(corners, faces):
+        # A vertex whose faces read different texcoords cannot carry a single
+        # uv, so hand the browser independent triangles instead.
+        verts = verts[faces.reshape(-1)]
+        uv = uv[corners.reshape(-1)]
+        faces = np.arange(verts.shape[0], dtype=np.uint32).reshape(-1, 3)
+    return uv, verts, faces
+
+
+def _panel_uv(across: np.ndarray, extent: float, repeat: float, uniform: bool):
+    # texuniform means "repeats per metre"; otherwise it is repeats per side.
+    if uniform:
+        return across * repeat
+    return (across / extent + 0.5) * repeat
+
+
+def _box_uv(size: np.ndarray, repeat: np.ndarray, uniform: bool):
+    """An unwelded box: one texture panel per face, so the six can differ."""
+    verts, uvs, faces = [], [], []
+    for axis in range(3):
+        u_axis, v_axis = (axis + 1) % 3, (axis + 2) % 3
+        for sign in (1.0, -1.0):
+            quad = [(-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)]
+            if sign < 0:
+                quad = quad[::-1]
+            base = len(verts)
+            for su, sv in quad:
+                corner = np.zeros(3)
+                corner[axis] = sign * size[axis]
+                corner[u_axis] = su * size[u_axis]
+                corner[v_axis] = sv * size[v_axis]
+                verts.append(corner)
+                uvs.append([
+                    _panel_uv(corner[u_axis], 2.0 * size[u_axis], repeat[0], uniform),
+                    _panel_uv(corner[v_axis], 2.0 * size[v_axis], repeat[1], uniform),
+                ])
+            faces += [[base, base + 1, base + 2], [base, base + 2, base + 3]]
+    return (np.asarray(verts, dtype=np.float32),
+            np.asarray(faces, dtype=np.uint32),
+            np.asarray(uvs, dtype=np.float32))
+
+
+def _plane_uv(size: np.ndarray, repeat: np.ndarray, uniform: bool):
+    verts, faces = _plane_mesh(size)
+    uv = np.column_stack([
+        _panel_uv(verts[:, 0], 2.0 * (float(size[0]) or 8.0), repeat[0], uniform),
+        _panel_uv(verts[:, 1], 2.0 * (float(size[1]) or 8.0), repeat[1], uniform),
+    ]).astype(np.float32)
+    return verts, faces, uv
+
+
+def _textured_mesh(model: mujoco.MjModel, geom: int, images: dict):
+    """A trimesh wearing the geom's texture, or None if it has none to wear."""
+    texture = _geom_texture(model, geom)
+    if texture is None:
+        return None
+    texid, repeat, uniform = texture
+    if texid not in images:
+        images[texid] = _texture_image(model, texid)
+    picture = images[texid]
+    if picture is None:
+        return None
+
+    kind = model.geom_type[geom]
+    size = np.asarray(model.geom_size[geom], dtype=float)
+    if kind == mujoco.mjtGeom.mjGEOM_MESH:
+        verts, faces = _mesh_asset(model, geom)
+        uv, verts, faces = _mesh_uv(model, geom, verts, faces)
+        if uv is None:
+            return None
+    elif kind == mujoco.mjtGeom.mjGEOM_BOX:
+        verts, faces, uv = _box_uv(size, repeat, uniform)
+    elif kind == mujoco.mjtGeom.mjGEOM_PLANE:
+        verts, faces, uv = _plane_uv(size, repeat, uniform)
+    else:
+        return None
+
+    # MuJoCo hands out texcoords in glTF's own top-left convention, but
+    # trimesh flips V as it writes the glB. Pre-flip to cancel that out, or
+    # every label arrives upside down.
+    uv = np.column_stack([uv[:, 0], 1.0 - uv[:, 1]]).astype(np.float32)
+
+    tint = _effective_rgba(model, geom)
+    material = trimesh.visual.material.PBRMaterial(
+        baseColorTexture=picture,
+        baseColorFactor=tint,
+        # glTF ignores alpha unless the material says to blend, so the smoked
+        # glass on the jars would otherwise hide the labels behind it.
+        alphaMode="BLEND" if tint[3] < 1.0 else "OPAQUE",
+        # glTF also defaults to a fully metallic surface, which turns every one
+        # of these scans into a near-black mirror under viser's lighting.
+        metallicFactor=0.0,
+        roughnessFactor=0.8,
+    )
+    return trimesh.Trimesh(
+        vertices=verts, faces=faces, process=False,
+        visual=trimesh.visual.TextureVisuals(uv=uv, material=material),
+    )
+
+
+def build_scene_handles(server: viser.ViserServer, model: mujoco.MjModel,
+                        textured: bool = True) -> list:
     """Push every visual geom to the browser once. Returns (geom id, handle)."""
     handles = []
+    images: dict[int, Image.Image | None] = {}
     for geom in range(model.ngeom):
         if model.geom_group[geom] not in VISUAL_GROUPS:
+            continue
+        rgba = _effective_rgba(model, geom)
+        if rgba[3] == 0.0:
+            continue  # invisible in MuJoCo too; drawing it only adds clutter
+        name = mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_GEOM, geom) or f"geom_{geom}"
+        node = f"/geoms/{geom}_{name}"
+        dressed = _textured_mesh(model, geom, images) if textured else None
+        if dressed is not None:
+            handles.append((geom, server.scene.add_mesh_trimesh(node, dressed)))
             continue
         mesh = _geom_mesh(model, geom)
         if mesh is None:
             continue
         verts, faces = mesh
-        name = mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_GEOM, geom) or f"geom_{geom}"
         handle = server.scene.add_mesh_simple(
-            f"/geoms/{geom}_{name}",
+            node,
             vertices=verts,
             faces=faces,
             color=_geom_colour(model, geom),
-            opacity=float(model.geom_rgba[geom][3]),
+            # The clear hull round a jar carries its transparency on the
+            # material, not the geom; reading the geom alone drew it solid.
+            opacity=float(rgba[3]),
         )
         handles.append((geom, handle))
     return handles
@@ -168,6 +344,8 @@ def parse_args() -> argparse.Namespace:
                         help="Start with the routine paused, arm at its home pose.")
     parser.add_argument("--no-open", dest="open_browser", action="store_false",
                         help="Do not open a browser; just serve and print the URL.")
+    parser.add_argument("--flat", action="store_true",
+                        help="Skip the textures and draw flat material colours.")
     parser.set_defaults(open_browser=True)
     return parser.parse_args()
 
@@ -185,8 +363,11 @@ def main() -> None:
     routine = Choreography(model, data, arm)
 
     server = viser.ViserServer(port=args.port)
-    handles = build_scene_handles(server, model)
+    started = time.time()
+    handles = build_scene_handles(server, model, textured=not args.flat)
     sync_handles(handles, model, data)
+    print(f"pushed {len(handles)} geoms in {time.time() - started:.1f} s"
+          + (" (flat colours)" if args.flat else ""))
 
     with server.gui.add_folder("routine"):
         running = server.gui.add_checkbox("run routine", not args.hold)

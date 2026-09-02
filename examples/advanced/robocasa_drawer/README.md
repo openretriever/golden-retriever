@@ -82,6 +82,12 @@ opens the page for you, and streams the live simulation. It runs under plain
 `python` — no `mjpython`, no native window. Pass `-- --no-open` to serve without
 opening a browser, `-- --port 9000` to move it, `-- --hold` to start paused.
 
+Geoms whose material carries a colour map go over as textured glTF, so the wood,
+the labelled jars and the food arrive looking like themselves; everything else
+goes as a flat mesh in its material colour. Pass `-- --flat` to skip the
+textures altogether — it starts a second or so faster and is the fallback if a
+scan will not map.
+
 Its "routine" panel is the point of the thing: **holding handle** and **holding
 shaker** read `yes` or `no` tick by tick, and when they read `no` nothing moves,
 because nothing else in the scene can move either object. **shaker tipped**
@@ -116,6 +122,13 @@ RoboSuite's controllers do not survive the `mj_fullM` signature change in 3.10,
 and `scene.py` needs RoboSuite to build the robot at all — so this example is
 pinned to `mujoco==3.3.1` and talks to viser directly instead. `viewer.py`
 pushes each visual geom once as a triangle mesh and then moves it per frame.
+
+Two conventions bite when the textures go across. A geom that never mentions
+`rgba` keeps the MuJoCo compiler's default grey, and reading that instead of the
+material painted the whole kitchen grey; the material has to win unless the geom
+actually overrides it. And MuJoCo hands out texcoords in glTF's own top-left
+convention while trimesh flips V as it writes the glB, so `viewer.py` pre-flips
+to cancel that out — without it every label arrives upside down.
 
 ## 3. The other simulator lanes
 

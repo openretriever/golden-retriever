@@ -225,6 +225,9 @@ robocasa_drawer = [
     # obvious dependency, but it requires mujoco>=3.6 and RoboSuite's
     # controllers do not survive the 3.10 mj_fullM signature change.
     "viser>=1.0",
+    # The viewer dresses the geoms in their MuJoCo textures, which means
+    # decoding raw pixel buffers into images the glTF exporter will take.
+    "Pillow",
 ]
 
 
