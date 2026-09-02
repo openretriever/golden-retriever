@@ -1,18 +1,19 @@
-"""Serve the RoboCasa drawer scene to a browser, live.
+"""Serve the drawer scene to a browser, live.
 
 Runs under plain `python` — no `mjpython`, no native window — and streams the
 simulation to a viser page:
 
-    pixi run demo-drawer              # opens http://localhost:8087
+    pixi run demo-drawer                 # opens http://localhost:8087
     pixi run demo-drawer -- --port 9000
-    pixi run demo-drawer -- --hold    # start with the routine paused
-    pixi run demo-drawer -- --no-open # serve without opening a browser
+    pixi run demo-drawer -- --hold       # start with the routine paused
+    pixi run demo-drawer -- --no-open    # serve without opening a browser
 
-The "grasp" panel reports what the arm is doing, how far the drawer has come
-out, and whether a finger pad is touching the handle right now. Nothing drives
-the drawer, so that last readout is the whole story: when it says no, the
-drawer stops moving. The last line counts how far the two loose seasoning
-bottles in the drawer have rolled — they are not attached to anything either.
+The "routine" panel reports what the arm is doing, how far the drawer has come
+out, and whether a finger pad is touching the handle or the pepper shaker right
+now. Nothing drives the drawer or the shaker, so those two readouts are the
+whole story: when they say no, nothing moves. The last line is how far the
+shaker is tipped from upright, which passes 90 degrees only while it is being
+shaken over the plate.
 
 The scene is built on first run if it is not there yet, so a fresh clone with
 the asset packs installed needs only this one command.
@@ -43,7 +44,6 @@ RENDER_FPS = 30.0
 # RoboSuite convention: group 0 is collision, 1 and 2 are visual. Drawing
 # group 0 paints the whole scene in translucent red hulls.
 VISUAL_GROUPS = (1, 2)
-ROLLING_BOTTLES = ("cayenne_main", "paprika_main")
 
 
 def _box_mesh(size: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
@@ -188,19 +188,17 @@ def main() -> None:
     handles = build_scene_handles(server, model)
     sync_handles(handles, model, data)
 
-    spun = 0.0
-    with server.gui.add_folder("grasp"):
+    with server.gui.add_folder("routine"):
         running = server.gui.add_checkbox("run routine", not args.hold)
         stage = server.gui.add_text("step", PHASES[0].label, disabled=True)
         opened = server.gui.add_text("drawer out", "0.000 m", disabled=True)
         holding = server.gui.add_text("holding handle", "no", disabled=True)
-        rolled = server.gui.add_text("bottles rolled", "0.0 rad", disabled=True)
+        carrying = server.gui.add_text("holding shaker", "no", disabled=True)
+        tipped = server.gui.add_text("shaker tipped", "0 deg", disabled=True)
         restart = server.gui.add_button("restart routine")
 
     @restart.on_click
     def _(_event) -> None:
-        nonlocal spun
-        spun = 0.0
         mujoco.mj_resetDataKeyframe(model, data, 0)
         mujoco.mj_forward(model, data)
         routine.reset()
@@ -216,14 +214,12 @@ def main() -> None:
     url = f"http://localhost:{port}"
     if port != args.port:
         print(f"port {args.port} was already in use; serving on {port} instead")
-    print(f"drawer scene: {url}")
+    print(f"drawer + seasoning scene: {url}")
     if args.open_browser:
         # This lane exists to be looked at, so opening the page is the
         # default; `--no-open` is there for headless and CI use.
         webbrowser.open(url)
 
-    bottles = [mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, n)
-               for n in ROLLING_BOTTLES]
     steps_per_frame = max(1, int(round(1.0 / RENDER_FPS / model.opt.timestep)))
     next_frame = time.time()
     phase = PHASES[0]
@@ -237,8 +233,6 @@ def main() -> None:
                 arm.go_home()
                 arm.set_gripper(OPEN)
             mujoco.mj_step(model, data)
-            spun += sum(float(np.linalg.norm(data.cvel[b][:3]))
-                        for b in bottles) * model.opt.timestep
 
         # Refresh the readouts once a frame, not once a physics tick — every
         # assignment is a message to the browser.
@@ -247,7 +241,8 @@ def main() -> None:
             stage.value = label
         opened.value = f"{routine.drawer_open:.3f} m"
         holding.value = "yes" if routine.gripping() else "no"
-        rolled.value = f"{spun:.1f} rad"
+        carrying.value = "yes" if routine.holding() else "no"
+        tipped.value = f"{np.degrees(routine.tip()):.0f} deg"
 
         sync_handles(handles, model, data)
         next_frame += 1.0 / RENDER_FPS

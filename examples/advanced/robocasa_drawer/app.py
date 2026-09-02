@@ -1,15 +1,17 @@
-"""Drawer dash: a Panda grasps a drawer handle and pulls, as Retriever Flows.
+"""A Panda opens a drawer and seasons a plated meal, as Retriever Flows.
 
-The drawer's slide joint carries no actuator. It is passive and damped, so the
-drawer can only move if the gripper has hold of its handle — which makes the
-grasp, not a scripted joint target, the thing the run actually proves.
+The drawer's slide joint carries no actuator, and neither does the pepper
+shaker standing in it. Both are passive — a damped slide and a free body — so
+the drawer can only move while the gripper has hold of its handle, and the
+shaker can only reach the plate if the gripper carries it there. That makes
+the grasps, not a scripted joint target, the thing the run actually proves.
 
 Run the mock-safe smoke test (no simulator, no assets, no GPU):
 
   pixi run demo-drawer-mock
 
 Run against MuJoCo after installing the optional simulator dependencies and
-building the scene (see this example's README for the RoboCasa asset packs):
+the RoboCasa asset packs (see this example's README):
 
   pixi run python -m pip install -e ".[robocasa_drawer]"
   pixi run demo-drawer-assets
@@ -18,35 +20,39 @@ building the scene (see this example's README for the RoboCasa asset packs):
 `pixi run demo-drawer` is the browser demo rather than this lane; see
 `viewer.py`.
 
-The mock lane reproduces the choreography's timeline and the drawer travel it
-commands, so the phase sequence, the grasp window and the open/shut thresholds
-are all exercised without MuJoCo present. It does not reproduce contact
-physics: only the `mujoco` lane can show that the grasp is what moves the
-drawer, and `verify.py` is what asserts it.
+The mock lane reproduces the choreography's timeline, the drawer travel it
+commands and the roll it commands over the plate, so the phase sequence, both
+grasp windows and the pass thresholds are all exercised without MuJoCo
+present. It does not reproduce contact physics: only the `mujoco` lane can
+show that the grasp is what moves the drawer, and `verify.py` is what asserts
+it.
 """
 
 from __future__ import annotations
 
 import argparse
+import math
 from typing import Any
 
 from retriever.flow import Flow, Latest, Pipeline, Rate, Trigger, io
 
-WORKTOP_JAR = "cinnamon_main"
-
 from examples.advanced.robocasa_drawer.plan import (
+    CARRYING,
     GRASPING,
-    HOLDING_JAR,
     OPENED_MIN,
     PHASES,
+    SHAKER_RELEASED,
     SHUT_MAX,
     STROKE,
+    TIP_MIN,
     TOTAL_SECONDS,
     phase_at,
+    tip_at,
 )
 
-# The phase after which the seasoning is in the drawer.
-JAR_RELEASED = "let go of jar"
+# Long enough for the mock to walk the whole routine at the default 0.5 s tick,
+# with a few ticks in hand so the final phase is reported finished.
+MOCK_STEPS = int(TOTAL_SECONDS / 0.5) + 6
 
 
 @io
@@ -58,8 +64,9 @@ class DrawerAction:
     blend: float | None = None
     grip: float | None = None
     stroke: float | None = None
+    tip: float | None = None
     grasping: bool | None = None
-    holding_jar: bool | None = None
+    carrying: bool | None = None
     elapsed: float | None = None
 
 
@@ -71,8 +78,10 @@ class DrawerState:
     drawer_open: float | None = None
     peak_open: float | None = None
     grasped: bool | None = None
-    holding_jar: bool | None = None
-    jar_stowed: bool | None = None
+    carrying: bool | None = None
+    tip: float | None = None
+    seasoned: bool | None = None
+    stowed: bool | None = None
     progress: float | None = None
     done: bool | None = None
     success: bool | None = None
@@ -91,19 +100,31 @@ class ChoreographyPolicy(Flow[DrawerState, DrawerAction]):
 
     def reset(self) -> None:
         self.elapsed = 0.0
+        # Where the plan has asked the drawer to be. A carry phase eases from
+        # wherever the previous one left it to its own `open_to`, so this is
+        # what makes "pull to 0.22" and "push back to shut" one continuous
+        # commanded travel rather than two absolute jumps.
+        self.commanded = 0.0
+        self.carry_index: int | None = None
+        self.carry_from = 0.0
 
     def step(self, state: DrawerState | None) -> DrawerAction:
         index, phase, blend = phase_at(self.elapsed)
-        start, end = phase.stroke
-        stroke = start + (end - start) * blend if phase.mode == "carry" else 0.0
+        if phase.mode == "carry":
+            if index != self.carry_index:
+                self.carry_index = index
+                self.carry_from = self.commanded
+            self.commanded = (self.carry_from
+                              + (phase.open_to - self.carry_from) * blend)
         action = DrawerAction(
             phase=phase.label,
             phase_index=index,
             blend=blend,
             grip=phase.grip,
-            stroke=stroke,
+            stroke=self.commanded,
+            tip=tip_at(phase, blend),
             grasping=phase.label in GRASPING,
-            holding_jar=phase.label in HOLDING_JAR,
+            carrying=phase.label in CARRYING,
             elapsed=self.elapsed,
         )
         self.elapsed += 1.0 / self.hz
@@ -126,8 +147,10 @@ class DrawerSimulator(Flow[DrawerAction, DrawerState]):
         self.peak_open = 0.0
         self.drawer_open = 0.0
         self.grasped = False
-        self.holding_jar = False
-        self.jar_stowed = False
+        self.carrying = False
+        self.tip = 0.0
+        self.seasoned = False
+        self.stowed = False
         self._rig: Any | None = None
 
         if self.mode == "mujoco":
@@ -141,15 +164,17 @@ class DrawerSimulator(Flow[DrawerAction, DrawerState]):
         except ImportError as exc:  # pragma: no cover - exercised without mujoco
             raise RuntimeError(
                 "MuJoCo is not installed. Install the optional simulator "
-                'dependencies with `pixi run python -m pip install -e ".[robocasa_drawer]"`, '
-                "or run `pixi run demo-drawer-mock` for the mock-safe smoke test."
+                'dependencies with `pixi run python -m pip install -e '
+                '".[robocasa_drawer]"`, or run `pixi run demo-drawer-mock` for '
+                "the mock-safe smoke test."
             ) from exc
 
         from examples.advanced.robocasa_drawer.scene import ensure_scene
 
         # Built on first use rather than demanded up front, so a fresh clone
         # with the asset packs installed can run this lane straight away.
-        return Rig(ensure_scene(Path(self.scene) if self.scene else None), camera=self.camera)
+        return Rig(ensure_scene(Path(self.scene) if self.scene else None),
+                   camera=self.camera)
 
     def step(self, action: DrawerAction | None) -> DrawerState:
         self.step_idx += 1
@@ -165,10 +190,12 @@ class DrawerSimulator(Flow[DrawerAction, DrawerState]):
         progress = min(1.0, elapsed / TOTAL_SECONDS)
         done = progress >= 1.0
         phase = None if action is None else action.phase
-        # The same claim `verify.py` asserts: it came far enough out, and it
-        # went back shut. Only true once the routine has actually finished.
+        # The same claims `verify.py` asserts: the drawer came far enough out
+        # and went back shut, the shaker was tipped cap-down over the food, and
+        # it was put back in the drawer. Only true once the routine finished.
         success = (done and self.peak_open >= OPENED_MIN
-                   and self.drawer_open <= SHUT_MAX and self.jar_stowed)
+                   and self.drawer_open <= SHUT_MAX
+                   and self.seasoned and self.stowed)
         return DrawerState(
             step=self.step_idx,
             source=source,
@@ -176,27 +203,35 @@ class DrawerSimulator(Flow[DrawerAction, DrawerState]):
             drawer_open=self.drawer_open,
             peak_open=self.peak_open,
             grasped=self.grasped,
-            holding_jar=self.holding_jar,
-            jar_stowed=self.jar_stowed,
+            carrying=self.carrying,
+            tip=self.tip,
+            seasoned=self.seasoned,
+            stowed=self.stowed,
             progress=progress,
             done=done,
             success=success,
         )
 
     def _step_mock(self, action: DrawerAction | None) -> DrawerState:
-        # No contact model: the mock grants the grasp during the phases that
-        # ask for it, and lets the drawer follow the commanded stroke. What it
-        # does reproduce is the timeline, the travel and the thresholds.
+        # No contact model: the mock grants each grasp during the phases that
+        # ask for it, and lets the drawer and the shaker follow what is
+        # commanded. What it does reproduce is the timeline, the travel, the
+        # roll and the thresholds.
         if action is not None:
             self.grasped = bool(action.grasping)
-            self.holding_jar = bool(action.holding_jar)
+            self.carrying = bool(action.carrying)
+            self.tip = 0.0 if action.tip is None else float(action.tip)
             commanded = 0.0 if action.stroke is None else float(action.stroke)
             if self.grasped:
                 self.drawer_open = min(STROKE, max(0.0, commanded))
             self.peak_open = max(self.peak_open, self.drawer_open)
-            # The jar is in the drawer from the moment the fingers open on it.
-            if action.phase == JAR_RELEASED:
-                self.jar_stowed = True
+            # Seasoning happens only while the shaker is actually held: an
+            # ungrasped shaker cannot be tipped over anything.
+            if self.carrying and self.tip >= TIP_MIN:
+                self.seasoned = True
+            # It is back in the drawer from the moment the fingers open on it.
+            if action.phase == SHAKER_RELEASED:
+                self.stowed = True
         return self._finish(source="mock", action=action)
 
     def _step_mujoco(self, action: DrawerAction | None) -> DrawerState:
@@ -204,11 +239,14 @@ class DrawerSimulator(Flow[DrawerAction, DrawerState]):
             raise RuntimeError("the MuJoCo rig was not initialized")
         if action is not None:
             self._rig.apply(action, seconds=1.0 / self.hz)
-        self.drawer_open = float(self._rig.plan.drawer_open)
-        self.grasped = bool(self._rig.plan.gripping())
-        self.holding_jar = bool(self._rig.plan.holding_jar())
-        if action is not None and action.phase == JAR_RELEASED:
-            self.jar_stowed = bool(self._rig.in_drawer(WORKTOP_JAR))
+        self.drawer_open = float(self._rig.routine.drawer_open)
+        self.grasped = bool(self._rig.routine.gripping())
+        self.carrying = bool(self._rig.routine.holding())
+        self.tip = float(self._rig.routine.tip())
+        if self.carrying and self.tip >= TIP_MIN:
+            self.seasoned = True
+        if action is not None and action.phase == SHAKER_RELEASED:
+            self.stowed = bool(self._rig.shaker_stowed())
         self.peak_open = max(self.peak_open, self.drawer_open)
         return self._finish(source="mujoco", action=action)
 
@@ -225,11 +263,14 @@ class DrawerPrinter(Flow[DrawerState, None]):
     def step(self, state: DrawerState) -> None:
         if state.step is None or state.step % self.print_every != 0:
             return None
+        holding = "handle" if state.grasped else ("shaker" if state.carrying
+                                                  else "nothing")
         print(
             f"[{state.source} step={state.step:04d}] "
             f"phase={_pad(state.phase)} "
             f"drawer={_fmt(state.drawer_open)}m "
-            f"holding={'handle' if state.grasped else ('jar' if state.holding_jar else 'nothing'):7s} "
+            f"holding={holding:7s} "
+            f"tip={_deg(state.tip)} "
             f"progress={_pct(state.progress)} success={bool(state.success)}"
         )
         return None
@@ -243,15 +284,21 @@ def _pct(value: float | None) -> str:
     return "None" if value is None else f"{value * 100:.1f}%"
 
 
+def _deg(value: float | None) -> str:
+    if value is None:
+        return "None"
+    return f"{math.degrees(value):3.0f}deg"
+
+
 def _pad(label: str | None) -> str:
-    return f"{label or 'none':<16}"
+    return f"{label or 'none':<22}"
 
 
 def build_pipeline(args: argparse.Namespace) -> tuple[Pipeline, DrawerSimulator]:
     simulator = DrawerSimulator(
         mode=args.mode,
         scene=getattr(args, "scene", None),
-        camera=getattr(args, "camera", "threequarter"),
+        camera=getattr(args, "camera", "action"),
         hz=args.hz,
     )
     pipe = Pipeline("robocasa_drawer")
@@ -267,7 +314,8 @@ def build_pipeline(args: argparse.Namespace) -> tuple[Pipeline, DrawerSimulator]
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Retriever + RoboCasa RoboCasa drawer demo: grasp a handle and work the drawer."
+        description="Retriever + RoboCasa drawer demo: open a drawer by its "
+                    "handle and season the plate with what is inside it."
     )
     parser.add_argument(
         "--mode",
@@ -276,11 +324,12 @@ def parse_args() -> argparse.Namespace:
         help="mock needs nothing installed; mujoco needs the simulator and a generated scene.xml.",
     )
     parser.add_argument("--scene", default=None, help="Path to a generated scene.xml.")
-    parser.add_argument("--camera", default="threequarter", help="Scene camera for the mujoco lane.")
-    parser.add_argument("--steps", type=int, default=94, help="Pipeline steps to run.")
+    parser.add_argument("--camera", default="action", help="Scene camera for the mujoco lane.")
+    parser.add_argument("--steps", type=int, default=MOCK_STEPS,
+                        help="Pipeline steps to run.")
     parser.add_argument("--dt", type=float, default=0.5, help="Seconds of wall clock per step.")
     parser.add_argument("--hz", type=float, default=2.0, help="Routine clock rate.")
-    parser.add_argument("--print-every", type=int, default=4)
+    parser.add_argument("--print-every", type=int, default=10)
     return parser.parse_args()
 
 
@@ -298,7 +347,8 @@ def main() -> None:
         print(
             f"\nroutine complete: peak drawer travel {_fmt(final.peak_open)} m "
             f"(needs >= {OPENED_MIN}), shut to {_fmt(final.drawer_open)} m "
-            f"(needs <= {SHUT_MAX}), seasoning stowed={bool(final.jar_stowed)}, "
+            f"(needs <= {SHUT_MAX}), seasoned={bool(final.seasoned)}, "
+            f"shaker back in the drawer={bool(final.stowed)}, "
             f"{len(PHASES)} phases over {TOTAL_SECONDS:.1f} s "
             f"-> success={bool(final.success)}"
         )

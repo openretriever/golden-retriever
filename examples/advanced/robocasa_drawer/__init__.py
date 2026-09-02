@@ -1,1 +1,1 @@
-"""RoboCasa drawer example: a Panda grasps a drawer handle and works the drawer."""
+"""RoboCasa drawer example: a Panda opens a drawer and seasons a plated meal."""

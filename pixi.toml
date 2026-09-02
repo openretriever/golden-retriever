@@ -321,9 +321,9 @@ demo-robosuite-mock = { cmd = "python -m examples.advanced.robosuite_lift.app --
 demo-robosuite-lift = { cmd = "python -m examples.advanced.robosuite_lift.app --mode robosuite --steps 80 --dt 0.05", env = { PYTHONPATH = "." } }
 demo-drawer-mock = { cmd = "python -m examples.advanced.robocasa_drawer.app --mode mock", env = { PYTHONPATH = "." } }
 demo-drawer-scene = { cmd = "python -m examples.advanced.robocasa_drawer.scene", env = { PYTHONPATH = "." } }
-demo-drawer-assets = { cmd = "python -m robocasa.scripts.download_kitchen_assets --type fixtures_lw --type objs_lw" }
+demo-drawer-assets = { cmd = "python -m robocasa.scripts.download_kitchen_assets --type fixtures_lw --type objs_lw --type objs_objaverse" }
 demo-drawer = { cmd = "python -u -m examples.advanced.robocasa_drawer.viewer", env = { PYTHONPATH = "." } }
-demo-drawer-flow = { cmd = "python -m examples.advanced.robocasa_drawer.app --mode mujoco --hz 20 --steps 900 --dt 0.05 --print-every 50", env = { PYTHONPATH = "." } }
+demo-drawer-flow = { cmd = "python -m examples.advanced.robocasa_drawer.app --mode mujoco --hz 20 --steps 1060 --dt 0.05 --print-every 50", env = { PYTHONPATH = "." } }
 demo-drawer-verify = { cmd = "python -m examples.advanced.robocasa_drawer.verify", env = { PYTHONPATH = "." } }
 demo-pipeline-html-viz = { cmd = "python examples/experimental/visualization/visualize_pipeline.py", env = { PYTHONPATH = "." } }
 public-surface-check = { cmd = "python scripts/release/check_public_surface.py", env = { PYTHONPATH = "." } }

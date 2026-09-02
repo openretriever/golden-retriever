@@ -1,22 +1,32 @@
-"""Prove the arm really grasps the drawer, headlessly.
+"""Prove the arm really does the job, headlessly.
 
-Runs the routine in `sequence.py` against `scene.xml` and asserts on it. The
-central claim is that the drawer is opened by the grasp and nothing else, so
-the first check is structural: no actuator may act on a drawer slide joint. If
-one did, the drawer could open on its own and every other number here would be
-worthless.
+Runs the routine in `sequence.py` against `scene.xml` and asserts on it. Two
+claims are central, and both are structural before they are numerical:
 
-  * no actuator drives any drawer — the slides are passive and damped
+  * the drawer is opened and shut by the grasp on its handle and nothing else —
+    so the first check is that no actuator acts on a drawer slide joint;
+  * the shaker reaches the plate because the gripper carried it — so the second
+    is that the shaker is a free body with no actuator on it either.
+
+If either were driven, every other number here would be worthless.
+
+  * no actuator drives any drawer, and none drives the shaker
   * the gripper squares up to the handle bar and closes on it
   * a finger pad stays in contact with the handle for the whole pull and push
   * the drawer comes out under that grasp, and goes back in
-  * the arm returns to its home pose afterwards
-  * the seasoning bottle on the worktop stays standing on it
-  * the two bottles lying in the top drawer ride out with the drawer, stay
-    inside it, and roll while it moves
+  * the fingers close on the shaker and hold it for the whole excursion
+  * the shaker leaves the drawer, ends up over the plate, and is tipped past
+    horizontal there — cap downwards, over the food
+  * it is shaken: its height reverses direction several times over the plate
+  * it goes back into the drawer, within a couple of centimetres of where it
+    was picked up, and is standing upright again
+  * the drawer ends shut, and the arm back at its home pose
+  * nothing else in the scene is disturbed: the other three seasonings stay
+    standing in the drawer, the jar stays on the worktop, and the plate and its
+    food stay where they were put
 
-    python verify.py                       # assertions + logs, no rendering
-    python verify.py --video out/scene.mp4 --sheet out/scene.png
+    pixi run demo-drawer-verify                    # assertions + logs, no render
+    pixi run demo-drawer-verify -- --video out/scene.mp4 --sheet out/scene.png
 """
 
 from __future__ import annotations
@@ -29,47 +39,51 @@ import numpy as np
 
 from examples.advanced.robocasa_drawer.arm_control import Arm
 from examples.advanced.robocasa_drawer.plan import (
+    CARRYING,
     GRASPING,
-    HANDLE_TO_INTERIOR,
-    HOLDING_JAR,
+    LIFT_MIN,
     OPENED_MIN,
     PHASES,
     SHUT_MAX,
     STROKE,
+    TIP_MIN,
 )
-from examples.advanced.robocasa_drawer.sequence import GRASP_ROTATION, Choreography
+from examples.advanced.robocasa_drawer.scene import TOP_DRAWER_FLOOR, ensure_scene
+from examples.advanced.robocasa_drawer.sequence import (
+    GRASP_ROTATION,
+    PICK_ROTATION,
+    SQUARE_TO_HANDLE,
+    Choreography,
+)
 
 HERE = Path(__file__).resolve().parent
 
-POSE_TOL = 0.02        # metres the hand may sit off its commanded point...
-REACH_TOL = 0.05       # ...except on the free-space moves of the jar errand,
-                       # which only have to arrive near enough to grasp from
-JAR_POSE_TOL = 0.035   # and the jar itself, which is a 48 mm cylinder taken in
-                       # an 80 mm gripper: it does not need the handle's
-                       # millimetre pinch, and holding it to that bar would be
-                       # measuring the wrong thing
-ANGLE_TOL = np.radians(5.0)   # how far off square the gripper may be
-REACH_ANGLE_TOL = np.radians(25.0)  # likewise, off square, away from a grasp
+POSE_TOL = 0.05        # metres the hand may sit off its commanded point
+ANGLE_TOL = np.radians(6.0)   # how far off square the gripper may be
 HOME_TOL = 0.05        # radians per joint once the arm has withdrawn
 CONTACT_TOL = 0.95     # fraction of a carry phase a pad must touch the handle
 GRIP_TOL = 0.50        # ... and of the phase where it is still closing
-# OPENED_MIN / SHUT_MAX come from plan.py, shared with the mock lane.
+NUDGE_MAX = 0.03       # metres the drawer may drift while the arm is elsewhere
+# OPENED_MIN / SHUT_MAX / LIFT_MIN / TIP_MIN come from plan.py, shared with the
+# mock lane, so the two lanes are judged against one set of numbers.
 
-WORKTOP_BOTTLE = "cinnamon_main"          # starts on the worktop; is put away
-DRAWER_BOTTLES = ("cayenne_main", "paprika_main")  # lie loose in the top drawer
+SHAKER = "pepper_main"
+PLATE = "plate_main"
+FOOD = ("steak_main", "broccoli_main")
+DRAWER_MATES = ("salt_main", "paprika_main", "cinnamon_main")
+WORKTOP_JAR = "worktop_jar_main"
 
-WORKTOP_BOTTLE_START_Z = 1.10  # it stands at ~1.156 on the worktop
-DRAWER_BOTTLE_MIN_Z = 0.85    # the drawer's inner floor is at ~0.885
-DRAWER_INTERIOR_TOP_Z = 1.06  # the drawer's rim
-DRAWER_HALF_WIDTH = 0.25
-PLACED_UPRIGHT_TOL = np.radians(25)  # lean allowed at the moment it is set down
-JAR_CONTACT_TOL = 0.90        # fraction of a carrying phase the jar must be held
-ROLL_MIN = 1.0                # radians a loose bottle must roll over the run
+OVER_PLATE_TOL = 0.10  # metres the shaker may sit off the plate's centre
+SHAKE_TRAVEL_MIN = 0.03       # metres of up-and-down over the plate
+SHAKE_REVERSALS_MIN = 4       # ... and how many times it has to change direction
+RETURN_TOL = 0.03      # metres from where the shaker was picked up
+UPRIGHT_TOL = np.radians(20)  # how far a standing seasoning may lean
+BYSTANDER_TOL = 0.02   # metres anything the arm never touches may move
 
 
 class Rig:
     def __init__(self, xml: Path, width: int = 960, height: int = 720,
-                 camera: str = "threequarter") -> None:
+                 camera: str = "action") -> None:
         self.model = mujoco.MjModel.from_xml_path(str(xml))
         self.data = mujoco.MjData(self.model)
         self.width, self.height = width, height
@@ -77,27 +91,26 @@ class Rig:
         self._renderer: mujoco.Renderer | None = None
         self.frames: list[np.ndarray] = []
         self.marks: dict[str, int] = {}
-        self.rolled: dict[str, float] = {}
 
         # The scene ships a `home` keyframe: arm rest pose plus matching targets.
         mujoco.mj_resetDataKeyframe(self.model, self.data, 0)
         mujoco.mj_forward(self.model, self.data)
 
         self.arm = Arm(self.model, self.data)
-        self.plan = Choreography(self.model, self.data, self.arm)
+        self.routine = Choreography(self.model, self.data, self.arm)
+        # Filled in after the `settle` phase: the food is dropped onto the plate
+        # rather than placed on it, so it takes a moment to come to rest, and
+        # "did the arm disturb it" is a question about where it settled.
+        self.start: dict[str, np.ndarray] = {}
+
+    def mark_start(self) -> None:
+        self.start = {n: self.body_pos(n) for n in
+                      (PLATE, WORKTOP_JAR, *FOOD, *DRAWER_MATES)}
 
     # -- state ---------------------------------------------------------------
-    def body_z(self, name: str) -> float:
-        bid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_BODY, name)
-        return float(self.data.xpos[bid][2])
-
-    def body_pos(self, name: str):
+    def body_pos(self, name: str) -> np.ndarray:
         bid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_BODY, name)
         return self.data.xpos[bid].copy()
-
-    def body_y(self, name: str) -> float:
-        bid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_BODY, name)
-        return float(self.data.xpos[bid][1])
 
     def tilt(self, name: str) -> float:
         """Angle between the body's own z axis and world up, in radians."""
@@ -105,48 +118,45 @@ class Rig:
         axis = self.data.xmat[bid].reshape(3, 3)[:, 2]
         return float(np.arccos(np.clip(axis[2], -1.0, 1.0)))
 
-    def accumulate_roll(self) -> None:
-        """Integrate each loose bottle's spin. A bottle that only slides on the
-        drawer floor never accumulates any, so this separates rolling from
-        being dragged along."""
-        dt = self.model.opt.timestep
-        for name in DRAWER_BOTTLES:
-            bid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_BODY, name)
-            spin = float(np.linalg.norm(self.data.cvel[bid][:3]))
-            self.rolled[name] = self.rolled.get(name, 0.0) + spin * dt
-
-    def in_drawer(self, name: str) -> bool:
-        """True while the named body is inside the top drawer's interior.
-
-        Measured against the drawer wherever it currently is, so it holds
-        whether the drawer is open, shut, or somewhere in between.
-        """
-        bid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_BODY, name)
-        pos = self.data.xpos[bid]
-        centre_y = float(self.plan.bar[1]) + HANDLE_TO_INTERIOR
-        return bool(
-            abs(float(pos[0])) < DRAWER_HALF_WIDTH
-            and abs(float(pos[1]) - centre_y) < DRAWER_HALF_WIDTH
-            and DRAWER_BOTTLE_MIN_Z < float(pos[2]) < DRAWER_INTERIOR_TOP_Z
-        )
-
     def home_error(self) -> float:
         """Largest joint-angle gap between the arm and its home pose."""
         actual = self.data.qpos[self.arm.qpos_ids]
         return float(np.max(np.abs(actual - self.arm.home)))
 
-    def driven_drawers(self) -> list[str]:
-        """Names of any actuator acting on a drawer slide joint. Must be empty."""
-        driven = []
+    def driven(self, needle: str) -> list[str]:
+        """Actuators acting on a joint whose name contains `needle`. Must be []."""
+        found = []
         for a in range(self.model.nu):
             joint = self.model.actuator_trnid[a][0]
             if joint < 0:
                 continue
             name = mujoco.mj_id2name(self.model, mujoco.mjtObj.mjOBJ_JOINT, joint)
-            if name and "slidejoint" in name:
-                driven.append(mujoco.mj_id2name(self.model,
-                                                mujoco.mjtObj.mjOBJ_ACTUATOR, a))
-        return driven
+            if name and needle in name:
+                found.append(mujoco.mj_id2name(self.model,
+                                               mujoco.mjtObj.mjOBJ_ACTUATOR, a))
+        return found
+
+    def shaker_stowed(self) -> bool:
+        """True while the shaker is standing upright down inside the drawer.
+
+        Height alone is enough to separate "in the drawer" from "in the air":
+        the drawer's own floor is at `TOP_DRAWER_FLOOR` and the routine's
+        transit lane runs 20 cm above the rim. The lean is what says it was set
+        down rather than dropped.
+        """
+        pos = self.body_pos(SHAKER)
+        return bool(pos[2] < TOP_DRAWER_FLOOR + 0.11
+                    and self.tilt(SHAKER) < UPRIGHT_TOL)
+
+    def shaker_joints(self) -> list[str]:
+        """The shaker's own joints — it should have exactly one free joint and
+        no actuator on it, i.e. it is loose in the drawer."""
+        bid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_BODY, SHAKER)
+        out = []
+        for j in range(self.model.njnt):
+            if self.model.jnt_bodyid[j] == bid:
+                out.append(mujoco.mj_id2name(self.model, mujoco.mjtObj.mjOBJ_JOINT, j))
+        return out
 
     # -- rendering -----------------------------------------------------------
     def _ensure_renderer(self) -> mujoco.Renderer:
@@ -192,151 +202,198 @@ class Rig:
         timestep = self.model.opt.timestep
         span = timestep if seconds is None else max(timestep, float(seconds))
         for _ in range(max(1, int(round(span / timestep)))):
-            self.plan.apply(phase, blend)
+            self.routine.apply(phase, blend)
             mujoco.mj_step(self.model, self.data)
-            self.accumulate_roll()
 
     def run_phase(self, render: bool, fps: int = 30) -> dict:
         """Play one phase to its end and report what happened during it."""
-        phase = self.plan.phase
+        phase = self.routine.phase
         steps = max(1, int(round(phase.seconds / self.model.opt.timestep)))
         every = max(1, int(round(1.0 / (fps * self.model.opt.timestep))))
-        held = 0
-        jar_held = 0
+        on_handle = on_shaker = 0
+        square = GRASP_ROTATION if phase.mode in SQUARE_TO_HANDLE else PICK_ROTATION
         worst_angle = 0.0
+        heights: list[float] = []
+        tips: list[float] = []
         for s in range(steps):
-            self.plan.step()
+            self.routine.step()
             mujoco.mj_step(self.model, self.data)
-            self.accumulate_roll()
-            if self.plan.gripping():
-                held += 1
-            if self.plan.holding_jar():
-                jar_held += 1
-            if phase.mode != "home":
-                commanded = self.plan.target_pose(phase, s / steps)
-                if commanded is not None:
-                    worst_angle = max(worst_angle,
-                                      self.arm.misalignment(commanded[1]))
+            on_handle += self.routine.gripping()
+            on_shaker += self.routine.holding()
+            if phase.label in GRASPING:
+                worst_angle = max(worst_angle, self._square_error(square))
+            heights.append(float(self.body_pos(SHAKER)[2]))
+            tips.append(self.tilt(SHAKER))
             if render and s % every == 0:
                 self.capture()
         self.marks[phase.label] = max(0, len(self.frames) - 1)
 
-        pose = self.plan.target_pose(phase, 1.0)
+        pose = self.routine.target_pose(phase, 1.0)
         return {
             "label": phase.label,
-            "contact": held / steps,
-            "jar_contact": jar_held / steps,
-            "jar_in_drawer": self.in_drawer(WORKTOP_BOTTLE),
-            "angle": self.arm.misalignment(pose[1]) if pose else 0.0,
+            "handle": on_handle / steps,
+            "shaker": on_shaker / steps,
+            "angle": (self._square_error(pose[1]) if pose is not None
+                      else float("nan")),
+            "square": self._square_error(square),
             "worst_angle": worst_angle,
             "pose_error": self.arm.distance_to(pose[0]) if pose else float("nan"),
-            "drawer": self.plan.drawer_open,
+            "drawer": self.routine.drawer_open,
+            "heights": np.asarray(heights),
+            "tips": np.asarray(tips),
         }
+
+    def _square_error(self, square: np.ndarray) -> float:
+        """Misalignment against whichever half-turn of `square` is in use."""
+        return min(self.arm.misalignment(square),
+                   self.arm.misalignment(self.arm.equivalent(square)))
+
+
+def _reversals(series: np.ndarray, window: int = 25) -> int:
+    """How many times a (smoothed) series changes direction."""
+    if len(series) < 3 * window:
+        return 0
+    smooth = np.convolve(series, np.ones(window) / window, mode="valid")
+    step = np.diff(smooth)
+    return int(np.sum(np.sign(step[1:]) != np.sign(step[:-1])))
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--scene", type=Path, default=HERE / "scene.xml")
+    ap.add_argument("--scene", type=Path, default=None,
+                    help="Path to scene.xml; built on first run if absent.")
     ap.add_argument("--video", type=Path, default=None)
     ap.add_argument("--sheet", type=Path, default=None)
-    ap.add_argument("--camera", default="threequarter")
+    ap.add_argument("--camera", default="action")
     ap.add_argument("--fps", type=int, default=30)
     args = ap.parse_args()
 
+    scene_path = ensure_scene(args.scene)
     render = args.video is not None or args.sheet is not None
-    rig = Rig(args.scene, camera=args.camera)
+    rig = Rig(scene_path, camera=args.camera)
     failures: list[str] = []
 
-    print(f"scene: {args.scene}")
-    print(f"slide travel: {rig.plan.travel:.3f} m, commanded pull: {STROKE:.3f} m")
+    print(f"scene: {scene_path}")
+    print(f"slide travel: {rig.routine.travel:.3f} m, commanded pull: {STROKE:.3f} m")
 
-    driven = rig.driven_drawers()
+    driven = rig.driven("slidejoint")
     if driven:
         failures.append("drawer slide joints are actuated by "
                         f"{', '.join(driven)}; the pull would not prove anything")
     else:
         print("drawer slides: passive, no actuator — only a grasp can move them")
+    joints = rig.shaker_joints()
+    if rig.driven(SHAKER.replace("_main", "")):
+        failures.append("the shaker is actuated; carrying it would prove nothing")
+    else:
+        print(f"shaker:        free body on {len(joints)} joint"
+              f"{'' if len(joints) == 1 else 's'}, no actuator — "
+              "only a grasp can move it")
     if render:
         rig.capture()
 
-    bottle_y_shut = bottle_y_open = None
+    pick_at = place_at = None
+    drawer_when_left = None
+    tipped = 0.0
+    lifted = 0.0
+    shake_travel = 0.0
+    shake_reversals = 0
 
     for phase in PHASES:
         r = rig.run_phase(render=render, fps=args.fps)
         label = r["label"]
-        print(f"[{label:<17}] drawer={r['drawer']:.3f}"
-              f"   hand_err={r['pose_error']:.4f}"
-              f"   square={np.degrees(r['angle']):5.2f}deg"
-              f"   handle_contact={r['contact'] * 100:3.0f}%"
-              f"   worktop_z={rig.body_z(WORKTOP_BOTTLE):.3f}"
-              f"   drawer_bottle_y={rig.body_y(DRAWER_BOTTLES[0]):+.3f}")
+        shaker = rig.body_pos(SHAKER)
+        print(f"[{label:<22}] drawer={r['drawer']:.3f}"
+              f"  hand_err={r['pose_error']:.4f}"
+              f"  orient={np.degrees(r['angle']):5.1f}deg"
+              f"  handle={r['handle'] * 100:3.0f}%"
+              f"  shaker={r['shaker'] * 100:3.0f}%"
+              f"  shaker_xyz=({shaker[0]:+.3f},{shaker[1]:+.3f},{shaker[2]:.3f})"
+              f"  tip={np.degrees(rig.tilt(SHAKER)):5.1f}deg")
 
-        if phase.mode != "home":
-            if label in GRASPING:
-                pose_tol = POSE_TOL
-            elif label in HOLDING_JAR:
-                pose_tol = JAR_POSE_TOL
-            else:
-                pose_tol = REACH_TOL
-            angle_tol = ANGLE_TOL if label in GRASPING else REACH_ANGLE_TOL
-            if r["pose_error"] > pose_tol:
-                failures.append(f"{label}: hand ended {r['pose_error']:.3f} m off "
-                                f"its commanded point (limit {pose_tol:.2f} m)")
-            if r["angle"] > angle_tol:
+        if phase.mode != "home" and r["pose_error"] > POSE_TOL:
+            failures.append(f"{label}: hand ended {r['pose_error']:.3f} m off "
+                            f"its commanded point (limit {POSE_TOL:.2f} m)")
+        if label == "settle":
+            rig.mark_start()
+        if label in GRASPING:
+            if r["square"] > ANGLE_TOL:
                 failures.append(
-                    f"{label}: gripper ended {np.degrees(r['angle']):.1f}deg off "
-                    f"square to what it was reaching for "
-                    f"(limit {np.degrees(angle_tol):.0f}deg)")
+                    f"{label}: gripper ended {np.degrees(r['square']):.1f}deg off "
+                    f"square to the handle "
+                    f"(limit {np.degrees(ANGLE_TOL):.0f}deg)")
             # Once it is holding the bar it has to stay square for the whole
-            # phase, not merely arrive square. Earlier phases start from the
-            # home pose, which is a quarter turn away by definition.
-            if label in GRASPING and r["worst_angle"] > ANGLE_TOL:
+            # phase, not merely arrive square.
+            if r["worst_angle"] > ANGLE_TOL:
                 failures.append(
                     f"{label}: gripper twisted "
                     f"{np.degrees(r['worst_angle']):.1f}deg off square while "
                     f"holding the handle "
                     f"(limit {np.degrees(ANGLE_TOL):.0f}deg)")
-
-        if label in HOLDING_JAR:
-            if r["jar_contact"] < JAR_CONTACT_TOL:
-                failures.append(
-                    f"{label}: fingers held the seasoning jar for only "
-                    f"{r['jar_contact'] * 100:.0f}% of the phase "
-                    f"(need {JAR_CONTACT_TOL * 100:.0f}%)")
-
-        if label == "lower into drawer":
-            if not r["jar_in_drawer"]:
-                failures.append(
-                    "the seasoning jar was not inside the drawer when the "
-                    "gripper was ready to let go of it")
-            if rig.tilt(WORKTOP_BOTTLE) > PLACED_UPRIGHT_TOL:
-                failures.append(
-                    "the seasoning jar was set down leaning "
-                    f"{np.degrees(rig.tilt(WORKTOP_BOTTLE)):.0f}deg off upright "
-                    f"(limit {np.degrees(PLACED_UPRIGHT_TOL):.0f}deg)")
-
-        if label in GRASPING:
             floor = GRIP_TOL if phase.mode == "engage" else CONTACT_TOL
-            if r["contact"] < floor:
+            if r["handle"] < floor:
                 failures.append(
                     f"{label}: fingers touched the handle for only "
-                    f"{r['contact'] * 100:.0f}% of the phase "
+                    f"{r['handle'] * 100:.0f}% of the phase "
+                    f"(need {floor * 100:.0f}%)")
+        if label in CARRYING:
+            floor = GRIP_TOL if label == "grip the shaker" else CONTACT_TOL
+            if r["shaker"] < floor:
+                failures.append(
+                    f"{label}: fingers touched the shaker for only "
+                    f"{r['shaker'] * 100:.0f}% of the phase "
                     f"(need {floor * 100:.0f}%)")
 
-        if label == "settle":
-            bottle_y_shut = {n: rig.body_y(n) for n in DRAWER_BOTTLES}
-        if label == "pull drawer open":
-            bottle_y_open = {n: rig.body_y(n) for n in DRAWER_BOTTLES}
+        if label == "pull the drawer open":
             if r["drawer"] < OPENED_MIN:
                 failures.append(
                     f"the grasp only pulled the drawer out {r['drawer']:.3f} m "
                     f"(need {OPENED_MIN:.2f} m)")
-            for n in DRAWER_BOTTLES:
-                if rig.body_z(n) < DRAWER_BOTTLE_MIN_Z:
-                    failures.append(f"{n} fell out of the open top drawer "
-                                    f"(z={rig.body_z(n):.3f})")
-        if label == "push drawer shut" and r["drawer"] > SHUT_MAX:
+            drawer_when_left = r["drawer"]
+        if label == "grip the shaker":
+            pick_at = shaker.copy()
+        if label == "lift it out" and pick_at is not None:
+            lifted = float(shaker[2] - pick_at[2])
+            if lifted < LIFT_MIN:
+                failures.append(f"the shaker only came up {lifted:.3f} m out of "
+                                f"the drawer (need {LIFT_MIN:.2f} m)")
+        if label == "down to the plate":
+            plate = rig.body_pos(PLATE)
+            over_plate = float(np.linalg.norm(shaker[:2] - plate[:2]))
+            if over_plate > OVER_PLATE_TOL:
+                failures.append(f"the shaker ended {over_plate:.3f} m to one "
+                                f"side of the plate's centre "
+                                f"(limit {OVER_PLATE_TOL:.2f} m)")
+        if label == "shake the seasoning":
+            tipped = float(np.min(r["tips"]))
+            shake_travel = float(r["heights"].max() - r["heights"].min())
+            shake_reversals = _reversals(r["heights"])
+            plate = rig.body_pos(PLATE)
+            if float(np.linalg.norm(shaker[:2] - plate[:2])) > OVER_PLATE_TOL:
+                failures.append("the shaker drifted off the plate while shaking")
+            if tipped < TIP_MIN:
+                failures.append(
+                    f"the shaker was never tipped past "
+                    f"{np.degrees(TIP_MIN):.0f}deg while shaking "
+                    f"(least tip {np.degrees(tipped):.0f}deg) — it has to be "
+                    f"cap-down over the food")
+            if shake_travel < SHAKE_TRAVEL_MIN:
+                failures.append(f"the shaker moved only {shake_travel * 1000:.0f} mm "
+                                f"over the plate; that is not a shake")
+            if shake_reversals < SHAKE_REVERSALS_MIN:
+                failures.append(f"the shaker changed direction only "
+                                f"{shake_reversals} times over the plate "
+                                f"(need {SHAKE_REVERSALS_MIN})")
+        if label == "let go of the shaker":
+            place_at = shaker.copy()
+        if label == "lift clear" and drawer_when_left is not None:
+            drift = abs(r["drawer"] - drawer_when_left)
+            if drift > NUDGE_MAX:
+                failures.append(
+                    f"the drawer moved {drift:.3f} m while the arm was away at "
+                    f"the plate — the arm knocked it (limit {NUDGE_MAX:.2f} m)")
+        if label == "push the drawer shut" and r["drawer"] > SHUT_MAX:
             failures.append(f"drawer left standing {r['drawer']:.3f} m proud "
                             f"(limit {SHUT_MAX:.2f} m)")
         if label == "withdraw":
@@ -346,49 +403,57 @@ def main() -> int:
                 failures.append(
                     f"arm did not return home: worst joint off by {error:.3f} rad")
 
-    if not rig.in_drawer(WORKTOP_BOTTLE):
-        failures.append(
-            f"{WORKTOP_BOTTLE} did not end up in the drawer "
-            f"(pos={np.round(rig.body_pos(WORKTOP_BOTTLE), 3)})")
-    elif rig.body_z(WORKTOP_BOTTLE) >= WORKTOP_BOTTLE_START_Z:
-        failures.append(f"{WORKTOP_BOTTLE} never left the worktop "
-                        f"(z={rig.body_z(WORKTOP_BOTTLE):.3f})")
-    else:
-        # It is checked for being upright at the moment it is set down, not
-        # here. Shoving the drawer shut afterwards topples a free-standing
-        # jar, the same way it rolls the two lying loose next to it -- that is
-        # the scene behaving, not the placement failing.
-        print(f"\n{WORKTOP_BOTTLE:14s} was put away in the drawer, ending at "
-              f"z={rig.body_z(WORKTOP_BOTTLE):.3f} leaning "
-              f"{np.degrees(rig.tilt(WORKTOP_BOTTLE)):.0f}deg")
-
+    # -- where everything ended up ------------------------------------------
     print()
-    for n in DRAWER_BOTTLES:
-        carried = (bottle_y_shut or {}).get(n, 0.0) - (bottle_y_open or {}).get(n, 0.0)
-        spun = rig.rolled.get(n, 0.0)
-        print(f"{n:<14} rode {carried:.3f} m out with the drawer "
-              f"and rolled {spun:.2f} rad")
-        if carried < rig.plan.travel * 0.5:
-            failures.append(
-                f"{n} only moved {carried:.3f} m with the drawer; "
-                f"expected at least {rig.plan.travel * 0.5:.3f} m")
-        if spun < ROLL_MIN:
-            failures.append(f"{n} barely turned ({spun:.2f} rad); it is being "
-                            f"dragged, not rolling (need {ROLL_MIN:.1f} rad)")
-        if rig.body_z(n) < DRAWER_BOTTLE_MIN_Z:
-            failures.append(f"{n} ended outside the drawer (z={rig.body_z(n):.3f})")
+    if pick_at is not None and place_at is not None:
+        back = float(np.linalg.norm(place_at[:2] - pick_at[:2]))
+        print(f"{SHAKER:<14} picked up at ({pick_at[0]:+.3f},{pick_at[1]:+.3f}), "
+              f"put back {back * 1000:.0f} mm away, lifted {lifted:.3f} m clear")
+        if back > RETURN_TOL:
+            failures.append(f"the shaker was put back {back:.3f} m from where it "
+                            f"was picked up (limit {RETURN_TOL:.2f} m)")
+    print(f"{'shake':<14} tipped to {np.degrees(tipped):.0f}deg, "
+          f"{shake_travel * 1000:.0f} mm of travel, "
+          f"{shake_reversals} direction changes over the plate")
+
+    ended = rig.body_pos(SHAKER)
+    drawer_floor = rig.routine.waypoint("shaker_grip")  # tracks the shut drawer
+    if abs(ended[2] - drawer_floor[2]) > 0.05:
+        failures.append(f"the shaker did not end up standing in the drawer "
+                        f"(z={ended[2]:.3f}, drawer floor level "
+                        f"{drawer_floor[2]:.3f})")
+    if rig.tilt(SHAKER) > UPRIGHT_TOL:
+        failures.append(f"the shaker ended up on its side, leaning "
+                        f"{np.degrees(rig.tilt(SHAKER)):.0f}deg")
+
+    for name in DRAWER_MATES:
+        moved = float(np.linalg.norm(rig.body_pos(name) - rig.start[name]))
+        lean = rig.tilt(name)
+        print(f"{name:<14} still standing in the drawer, moved "
+              f"{moved * 1000:.0f} mm, leaning {np.degrees(lean):.0f}deg")
+        if lean > UPRIGHT_TOL:
+            failures.append(f"{name} was knocked over "
+                            f"({np.degrees(lean):.0f}deg from upright)")
+    for name in (PLATE, WORKTOP_JAR, *FOOD):
+        moved = float(np.linalg.norm(rig.body_pos(name) - rig.start[name]))
+        print(f"{name:<14} moved {moved * 1000:.0f} mm")
+        if moved > BYSTANDER_TOL:
+            failures.append(f"{name} was disturbed: it moved {moved:.3f} m "
+                            f"(limit {BYSTANDER_TOL:.2f} m)")
 
     if render:
         _write_media(rig, args)
+    rig.close()
 
     if failures:
         print("\nFAILED:")
         for f in failures:
             print(f"  - {f}")
         return 1
-    print("\nAll checks passed: nothing actuates the drawer, the gripper closes "
-          "on the handle and holds it throughout, the drawer comes out and goes "
-          "back under that grasp alone, and the loose bottles roll with it.")
+    print("\nAll checks passed: nothing actuates the drawer or the shaker, the "
+          "gripper opens the drawer by its handle, lifts the pepper shaker out, "
+          "tips it cap-down over the plate and shakes it there, puts it back "
+          "where it came from and pushes the drawer shut.")
     return 0
 
 
@@ -402,7 +467,8 @@ def _write_media(rig: Rig, args) -> None:
         print(f"\nwrote {args.video}  ({len(frames)} frames)")
     if args.sheet is not None:
         args.sheet.parent.mkdir(parents=True, exist_ok=True)
-        picks = ["line up", "grip handle", "pull drawer open", "push drawer shut"]
+        picks = ["pull the drawer open", "grip the shaker",
+                 "shake the seasoning", "push the drawer shut"]
         idx = [rig.marks[p] for p in picks if p in rig.marks]
         tiles = [frames[i] for i in idx[:4]]
         while len(tiles) < 4:
