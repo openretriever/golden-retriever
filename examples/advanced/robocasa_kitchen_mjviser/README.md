@@ -91,8 +91,20 @@ registries and divides by the total count, so an empty registry gives `Probabili
 
 ## Still open — where to take this next
 
-**The kitchen has no motion.** `serve_kitchen.py` steps physics with a zero action, so it is a
-beautiful static scene. This is the gap between what exists and a demo.
+**The kitchen now has scripted motion, and it half works.** `kitchen_pick_place.py` drives
+`PickPlaceCounterToDrawer` — the env states its own errand ("Pick the whisk from the counter and
+place it in the drawer") and ships the props. The arm reaches the whisk, closes on it and carries
+it 0.27 m to above the drawer, repeatably, peak lift +0.204 m.
+
+**It does not get it in.** A kitchen drawer sits *under* a countertop, which is exactly what the
+standalone dresser avoided. Lowering vertically drives the whisk into the counter underside (it
+settles at z 0.946 — counter height — with x and y correct and z 87 mm high). Opening the drawer
+fully makes it worse: the slot moves out of reach. Approaching from the front under the lip stalls
+the controller, because the base is parked too far away for that pose.
+
+The fix is the mobile base or a planner, not waypoints: action dims 7..9 drive the base and are
+unused here, so repositioning before the place is the cheapest honest route. Details are in the
+module docstring.
 
 **The drawer-dash routine is the obvious donor, but it does not port directly.** `plan.py` and
 `sequence.py` are written against `scene.py`'s own names — `drawer2_slidejoint`,
