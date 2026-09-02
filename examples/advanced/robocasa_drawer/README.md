@@ -1,22 +1,18 @@
-# RoboCasa drawer: an arm that puts the seasoning away
+# RoboCasa drawer: an arm that seasons a plated meal
 
 A MuJoCo scene built from RoboCasa parts — a three-drawer dresser standing on a
-table, with a seasoning bottle on its worktop and two more lying loose inside
-the top drawer — and a Panda on an Omron mobile base, the same robot RoboCasa's
-own kitchen tasks drive.
+table, its top drawer a spice drawer with four scanned seasoning containers
+standing in it, a plate of steak and broccoli on the table in front of it — and
+a Panda on an Omron mobile base, the same robot RoboCasa's own kitchen tasks
+drive.
 
-The robot pulls the top drawer open by its handle, fetches the seasoning jar
-off the worktop, sets it down inside the drawer, and shoves the drawer shut
-again. Nothing is scripted at the joint level and nothing is attached: the
-drawer moves only while the fingers are on its handle, and the jar moves only
-while the fingers are around it.
+The robot opens the top drawer by its handle, takes the pepper shaker out of it,
+brings it down over the plate, tips it cap-down and shakes it over the food,
+puts it back where it came from, and pushes the drawer shut. Nothing is scripted
+at the joint level and nothing is attached: the drawer moves only while the
+fingers are on its handle, and the shaker moves only while they are around it.
 
-The bottles are scanned spice jars from the RoboCasa object library, with their
-own textures and convex collision meshes. Nothing holds the two in the drawer,
-so they roll: back against the rear wall as the drawer is pulled out, forward
-again as it is shoved shut.
-
-![four stages of the routine: lining up on the handle, gripping it, the drawer pulled open with the spice jars inside, and shut again with the worktop cleared](../../../docs-site/src/assets/media/robocasa-drawer/robocasa-drawer-stages.jpg)
+![four stages of the routine: the drawer pulled open, the gripper coming down on the pepper shaker, the shaker tipped over the plate, and the drawer pushed shut again](../../../docs-site/src/assets/media/robocasa-drawer/robocasa-drawer-stages.jpg)
 
 ## 1. Mock-safe contract
 
@@ -26,53 +22,72 @@ Run this first. It needs no simulator, no assets, no GPU and no network:
 pixi run demo-drawer-mock
 ```
 
-Expected output — the nine phases in order, the drawer travelling only while
-the handle is held, and a successful finish:
+Expected output — the thirty phases in order, the drawer travelling only while
+the handle is held, the shaker turning cap-down only while it is held, and a
+successful finish:
 
 ```text
-[mock step=0004] phase=line up          drawer=0.000m grasped=False progress=6.1% success=False
-[mock step=0012] phase=grip handle      drawer=0.000m grasped=True progress=30.5% success=False
-[mock step=0016] phase=pull drawer open drawer=0.144m grasped=True progress=42.7% success=False
-[mock step=0020] phase=pull drawer open drawer=0.409m grasped=True progress=54.9% success=False
-[mock step=0024] phase=push drawer shut drawer=0.115m grasped=True progress=67.1% success=False
-[mock step=0036] phase=withdraw         drawer=0.000m grasped=False progress=100.0% success=True
+[mock step=0010] phase=close in               drawer=0.000m holding=nothing tip=  0deg progress=7.8% success=False
+[mock step=0020] phase=let go of the handle   drawer=0.220m holding=nothing tip=  0deg progress=17.5% success=False
+[mock step=0030] phase=over the shaker        drawer=0.220m holding=nothing tip=  0deg progress=27.3% success=False
+[mock step=0040] phase=out over the plate     drawer=0.220m holding=shaker  tip=  0deg progress=37.0% success=False
+[mock step=0050] phase=tip it over the food   drawer=0.220m holding=shaker  tip=117deg progress=46.8% success=False
+[mock step=0060] phase=bring it upright       drawer=0.220m holding=shaker  tip= 18deg progress=56.5% success=False
+[mock step=0070] phase=back over the drawer   drawer=0.220m holding=shaker  tip=  0deg progress=66.3% success=False
+[mock step=0080] phase=swing to the front     drawer=0.220m holding=nothing tip=  0deg progress=76.0% success=False
+[mock step=0090] phase=grip the handle again  drawer=0.220m holding=handle  tip=  0deg progress=85.8% success=False
+[mock step=0100] phase=back off               drawer=0.000m holding=nothing tip=  0deg progress=95.5% success=False
 
-routine complete: peak drawer travel 0.409 m (needs >= 0.35), shut to 0.000 m
-(needs <= 0.02), 9 phases over 16.4 s -> success=True
+routine complete: peak drawer travel 0.220 m (needs >= 0.18), shut to 0.000 m
+(needs <= 0.02), seasoned=True, shaker back in the drawer=True, 30 phases over
+51.3 s -> success=True
 ```
 
-The mock reproduces the timeline, the commanded travel and the pass thresholds.
-It does not reproduce contact: only the MuJoCo lane can show that the *grasp* is
-what moves the drawer, and `verify.py` is what asserts it.
+The mock reproduces the timeline, the commanded travel, the commanded roll and
+the pass thresholds. It does not reproduce contact: only the MuJoCo lane can
+show that the *grasps* are what move the drawer and the shaker, and `verify.py`
+is what asserts it.
 
 ## 2. The interactive viewer
 
-Three commands from a fresh clone. The middle one is a ~2.8 GB download and is
+Three commands from a fresh clone. The middle one is a ~5 GB download and is
 only ever run once:
 
 ```bash
-pixi run python -m pip install -e ".[robocasa_drawer]"   # + RoboCasa, from source
-pixi run demo-drawer-assets                     # fixtures_lw + objs_lw meshes
-pixi run demo-drawer                            # opens the browser
+pixi run python -m pip install -e ".[robocasa_drawer]"  # + RoboCasa, from source
+pixi run demo-drawer-assets                             # the three asset packs
+pixi run demo-drawer                                    # opens the browser
 ```
 
-`demo-drawer` is the browser demo: it builds `scene.xml` itself on first
-run, opens the page for you, and streams the live simulation. It runs under
-plain `python` — no `mjpython`, no native window. Pass `-- --no-open` to serve
-without opening a browser, `-- --port 9000` to move it, `-- --hold` to start
-paused.
+`demo-drawer` is the browser demo: it builds `scene.xml` itself on first run,
+opens the page for you, and streams the live simulation. It runs under plain
+`python` — no `mjpython`, no native window. Pass `-- --no-open` to serve without
+opening a browser, `-- --port 9000` to move it, `-- --hold` to start paused.
 
-Its "grasp" panel is the point of the thing: **holding handle** reads `yes` or
-`no` tick by tick, and when it reads `no` the drawer stops moving, because
-nothing else in the scene can move it. **bottles rolled** counts how far the
-two loose jars have spun, which separates rolling from being dragged along.
-`restart routine` resets to the home keyframe; unticking `run routine` parks
-the arm at its home pose.
+Its "routine" panel is the point of the thing: **holding handle** and **holding
+shaker** read `yes` or `no` tick by tick, and when they read `no` nothing moves,
+because nothing else in the scene can move either object. **shaker tipped**
+passes 90 degrees only while the seasoning is being shaken over the food.
+`restart routine` resets to the home keyframe; unticking `run routine` parks the
+arm at its home pose.
 
 RoboCasa is not published on PyPI — install it from source. Its assets are
 fetched by the task above, which wraps
 `robocasa.scripts.download_kitchen_assets`; this scene needs `fixtures_lw` for
-the cabinet panels and handles, and `objs_lw` for the spice jars.
+the cabinet panels and handles, `objs_lw` for the seasoning containers, and
+`objs_objaverse` for the plate and the food on it.
+
+If disk is tight, the three objaverse instances this scene actually uses can be
+pulled on their own instead of the whole 2.2 GB pack:
+
+```bash
+A=$(python -c "import robocasa, pathlib; print(pathlib.Path(robocasa.__file__).parent / 'models/assets/objects')")
+curl -sL "https://utexas.box.com/shared/static/03eionyo8fk3a9dsksq9jb8du5lqfw8h.zip" \
+  | bsdtar -xf - -C "$A" \
+    --include='objaverse/plate/plate_0/*' \
+    --include='objaverse/steak/steak_3/*' \
+    --include='objaverse/broccoli/broccoli_0/*'
+```
 
 ### Why not mjviser
 
@@ -81,8 +96,7 @@ what an earlier draft of this scene used. It requires `mujoco>=3.6`, but
 RoboSuite's controllers do not survive the `mj_fullM` signature change in 3.10,
 and `scene.py` needs RoboSuite to build the robot at all — so this example is
 pinned to `mujoco==3.3.1` and talks to viser directly instead. `viewer.py`
-pushes each visual geom once as a triangle mesh and then moves it per frame;
-126 geoms and about 277k triangles for this scene.
+pushes each visual geom once as a triangle mesh and then moves it per frame.
 
 ## 3. The other simulator lanes
 
@@ -98,46 +112,43 @@ machine that built it.
 
 ## What the robot actually does
 
-It grasps the handle and pulls. **The drawer slide joints carry no actuator** —
-they are passive and damped — so the drawer physically cannot open unless
-something takes hold of it. The routine is: square up to the bar, advance until
-the open fingers straddle it, close them, then drive the *hand* out along -y for
-41 cm. The drawer comes because the fingers are on it.
+Two grasps, and neither the thing being grasped is driven.
 
-Then it goes and fetches the seasoning. That errand is why the routine has 24
-phases rather than nine, and three things about the scene force its shape:
+**The drawer slide joints carry no actuator** — they are passive and damped, so
+the drawer physically cannot open unless something takes hold of it. The routine
+squares up to the handle bar, closes the fingers across it, and drives the
+*hand* out along -y for 22 cm. The drawer comes because the fingers are on it.
 
-- **The drawer has to be open first.** Nothing can be put into a shut drawer,
-  so the jar is fetched between the pull and the push, while the drawer stands
-  open with nothing touching it. It stays put because its slides are damped.
-- **The torso moves.** The worktop is out of reach with the Omron torso down,
-  and the inside of the open drawer is out of reach with it up. So the arm
-  raises the torso to 20 cm to take the jar and drops it again to put the jar
-  away. That is the mobile base's lift being used for what it is for.
-- **The arm goes round the drawer, not through it.** The arm's rest pose sits
-  inside the swept volume of the open drawer, so folding home mid-routine
-  shoves the drawer half shut — which is untidy, and is the exact thing this
-  scene claims cannot happen by accident. The errand instead travels up and
-  across in front of the drawer. It has to pass through *something*, because
-  the two grasps want wrists a quarter turn apart: the handle is pinched top
-  to bottom, the jar is taken from above. Driven straight from one to the
-  other the arm arrives 60° off square and knocks the jar over instead of
-  closing on it.
+**The pepper shaker has no actuator either** — it is a free body standing on the
+drawer floor, one of four. It only reaches the plate because the gripper carries
+it there, and it only gets back into the drawer because the gripper puts it
+back.
 
-`verify.py` asserts all of it: that no actuator in the model acts on a slide
-joint; that a finger pad is in contact with the handle for 100% of the pull and
-push; that the fingers are on the jar for at least 90% of every phase that
-carries it; and that the jar is inside the drawer, standing up, at the moment
-it is let go. Take the grasp away and the drawer stays shut and the run fails.
+That is also the check. `verify.py` asserts, first, that no actuator acts on a
+slide joint and none acts on the shaker; then that a finger pad is in contact
+with the handle for 100% of the pull and push and with the shaker for 100% of
+the excursion. Take either grasp away and nothing moves and the run fails.
 
-The handle is a cylinder lying along world x, standing about 8 mm proud of the
-drawer front, so the fingers have to close *vertically* across it. That needs
-orientation control, not just a reach: `arm_control.py` does one damped
-least-squares step per tick against the full 6-row site Jacobian — position and
-orientation together — integrated into position-actuator targets. The jar wants
-the opposite pose, and the same solver gets it there.
+The two grasps need different gripper poses, which is why this needs orientation
+control and not just a reach:
 
-Three things had to be right before any of this worked:
+- The handle is a cylinder lying along world x, standing about 8 mm proud of the
+  drawer front, so the fingers have to close **vertically** across it — the
+  approach axis pointing at the drawer, the closing axis straight up.
+- The shaker stands upright, so the fingers close **horizontally** around it —
+  approach axis straight down. It is gripped at its waist, 30 mm across against
+  48 mm at its base, so the grip is a form fit rather than pure friction.
+
+Tipping the shaker over the plate is then a roll about the closing axis: the
+fingers keep their hold and the shaker turns over with them, cap downwards.
+
+`arm_control.py` does one damped least-squares step per tick against the full
+6-row site Jacobian — position and orientation together — integrated into
+position-actuator targets.
+
+## The five things that had to be right
+
+Three are about driving the robot at all:
 
 - robosuite ships the Panda with direct-torque motors because its own
   controllers compute the torques. Nothing here runs a robosuite controller, so
@@ -147,22 +158,117 @@ Three things had to be right before any of this worked:
   side and the gripper never closes on anything.
 - The fingers have to stall against an 18 mm bar and still hold it, so their
   gain is 8000 with a 100 N force limit. At the default 120 the grip was worth
-  about a newton and the handle slid straight out. The jar is commanded to a
-  gentler 18 mm rather than fully closed: shut against a 48 mm jar the fingers
-  would stall 24 mm inside the glass and drive the actuators to that limit.
+  about a newton and the handle slid straight out. The shaker is commanded to a
+  gentler 12 mm rather than fully closed.
 
-### What it does not do
+Two more that the seasoning task needed:
 
-The jar is set down standing, and then the drawer is shoved shut and it topples
-over — the same way the two jars already lying in there roll around. Nothing
-holds any of them. The upright placement is checked at the moment of release,
-which is the part the robot is responsible for.
+- **Seven joints against a six-row task leaves one spare, and it has to be
+  spent.** `arm_control.py` adds a posture term in the Jacobian's nullspace that
+  backs every joint away from its stop. Without it the arm arrives at the plate
+  with the shoulder pinned at its limit and then cannot tip the shaker over at
+  all — the roll simply stops at 60 degrees. The nullspace projector uses a
+  lighter damping than the solve does, because leakage from the posture term
+  into the commanded pose goes as lambda², and at the solve's damping it leaks
+  about a centimetre — enough to miss the handle.
+- **A parallel jaw grasps the same after a half turn about its approach axis:
+  the two fingers swap places.** `Arm.equivalent` hands the solver whichever of
+  the pair the wrist is already nearer, which is what keeps joint 7 off its stop
+  when the hand has to point backwards. The choice is made once per grasp and
+  then kept — re-picking every phase flips the wrist 180 degrees part way
+  through a roll, and coming back to the handle after the plate the *near* twin
+  is the one the wrist cannot actually reach.
+
+## Two things about the layout that are not arbitrary
+
+**The table is 0.49 m and the torso lift is used.** The Panda cannot cover a
+drawer handle a metre up and a plate on the tabletop from one shoulder height:
+it reaches one or the other. The Omron base carries it on a 0.34 m lift, so the
+routine drives it — up to work the drawer, down again to work over the plate.
+The plan moves it only while the hand is out in front of the dresser; dropping
+the shoulder while the arm still reaches over the open drawer drags the forearm
+through it and pulls the drawer wide open.
+
+**The shaker is tipped one way and not the other.** Rolling the wrist *back*
+towards the robot swings it down and clear of everything. Rolling it the other
+way swings the forearm up and forwards, straight into the drawer the arm has
+just pulled open, and shoves it shut. Both give the same cap-down shaker; only
+one leaves the drawer alone, and `verify.py` checks that the drawer has not
+moved more than 3 cm while the arm was away at the plate.
+
+## What `verify.py` asserts
+
+No actuator drives any drawer and none drives the shaker; the gripper arrives
+square to the handle bar and stays square while holding it; a finger pad touches
+the handle for the whole pull and push, and the shaker for the whole excursion;
+the drawer comes out at least 0.18 m and goes back to within 0.02 m of shut; the
+shaker rises at least 0.10 m clear of the drawer, ends up within 0.10 m of the
+plate's centre, is tipped past 100 degrees from upright while it is there, moves
+at least 30 mm up and down and changes direction at least four times over the
+plate, and is put back within 3 cm of where it was picked up, standing upright;
+the drawer does not drift more than 3 cm while the arm is away at the plate; the
+arm returns to its home pose; and nothing else in the scene moves more than
+2 cm — not the other three seasonings standing in the drawer, not the jar on the
+worktop, not the plate or the food on it.
+
+Current output:
+
+```text
+slide travel: 0.450 m, commanded pull: 0.220 m
+drawer slides: passive, no actuator — only a grasp can move them
+shaker:        free body on 1 joint, no actuator — only a grasp can move it
+[settle                ] drawer=0.000  hand_err=nan  orient=  nandeg  handle=  0%  shaker=  0%  shaker_xyz=(-0.000,-0.110,1.042)  tip=  0.0deg
+[grip the handle       ] drawer=0.000  hand_err=0.0003  orient=  0.0deg  handle= 93%  shaker=  0%  shaker_xyz=(-0.000,-0.110,1.042)  tip=  0.0deg
+[pull the drawer open  ] drawer=0.220  hand_err=0.0007  orient=  0.0deg  handle=100%  shaker=  0%  shaker_xyz=(+0.000,-0.330,1.042)  tip=  0.0deg
+...
+[tip it over the food  ] drawer=0.220  hand_err=0.0341  orient=  6.5deg  handle=  0%  shaker=100%  shaker_xyz=(+0.126,-0.650,0.794)  tip=145.5deg
+[shake the seasoning   ] drawer=0.220  hand_err=0.0303  orient=  8.8deg  handle=  0%  shaker=100%  shaker_xyz=(+0.130,-0.680,0.785)  tip=149.1deg
+[bring it upright      ] drawer=0.220  hand_err=0.0141  orient=  0.1deg  handle=  0%  shaker=100%  shaker_xyz=(+0.128,-0.698,0.737)  tip=  2.5deg
+...
+[push the drawer shut  ] drawer=0.000  hand_err=0.0083  orient=  1.2deg  handle=100%  shaker=  0%  shaker_xyz=(+0.000,-0.111,1.042)  tip=  0.0deg
+    arm back at home to within 0.0048 rad
+
+pepper_main    picked up at (+0.000,-0.329), put back 3 mm away, lifted 0.181 m clear
+shake          tipped to 122deg, 87 mm of travel, 7 direction changes over the plate
+salt_main      still standing in the drawer, moved 2 mm, leaning 0deg
+plate_main     moved 0 mm
+
+All checks passed: nothing actuates the drawer or the shaker, the gripper opens
+the drawer by its handle, lifts the pepper shaker out, tips it cap-down over the
+plate and shakes it there, puts it back where it came from and pushes the drawer
+shut.
+```
+
+`handle` and `shaker` are the fraction of the phase in which a finger pad was
+touching each. `tip` is how far the shaker is from upright — 0 in the drawer,
+past 120 degrees over the plate. `orient` is how far the gripper is off its
+commanded pose.
+
+The routine is a loop — 30 phases, 51 s a cycle — and it repeats. Run it three
+times in a row and the drawer opens to 0.220 m and shuts to 0.000 m every time,
+the shaker is held for 100% of every shake, comes back to within 5 mm of where
+it started, and the arm returns home to within 0.005 rad each time.
+
+## Three robosuite conventions that matter
+
+- **Geom groups.** Group 0 is collision, group 1 is visual. Rendering with the
+  default options paints everything in translucent red collision hulls, so
+  `verify.py` and `viewer.py` both show groups 1 and 2 only.
+- **Inertia comes from group 0 only.** robosuite's `MujocoWorldBase` sets
+  `inertiagrouprange="0 0"`, so a moving body whose only geom is in group 1
+  compiles to zero mass and MuJoCo refuses to load it. The library objects
+  already follow this: a group-0 convex collision mesh carries the mass and the
+  textured group-1 mesh is what you see.
+- **Visualisation sites.** robosuite ships a green grip-axis cylinder, the
+  end-effector frame arrows and a red centre marker as sites. They render as a
+  green line down the middle of every shot, so `scene.py` parks every site in a
+  group the viewers do not draw. Name lookups still work.
 
 ## Layout
 
 | File | What it holds |
 | --- | --- |
-| `plan.py` | the 24-phase choreography as plain data — no MuJoCo, no RoboCasa, so the mock lane and the tests share the simulator's schedule |
+| `plan.py` | the 30-phase choreography as plain data — no MuJoCo, no RoboCasa, no NumPy, so the mock lane and the tests share the simulator's schedule |
 | `app.py` | the Retriever Flows: a policy that walks the schedule, a simulator that runs it against MuJoCo or the mock, a printer |
 | `scene.py` | builds the scene and writes `scene.xml` |
 | `sequence.py` | executes a phase against a real model: phase to gripper pose |
@@ -174,6 +280,10 @@ which is the part the robot is responsible for.
 import-safe with no simulator installed; the MuJoCo modules are pulled in only
 when `--mode mujoco` asks for them.
 
+`scene.xml` carries a `home` keyframe holding the arm's rest pose, the torso
+lift's parked height *and* the matching actuator targets, so every consumer
+starts identically with one `mujoco.mj_resetDataKeyframe(model, data, 0)`.
+
 ## Where the parts came from
 
 | Piece | Source |
@@ -184,7 +294,27 @@ when `--mode mujoco` asks for them.
 | Carcass finish | `textures/wood/light_wood_planks.png` |
 | Robot | `robosuite.models.robots.PandaOmron` + `OmronMobileBase` + `PandaGripper` |
 | Table | built here from a slab and four legs |
-| Seasoning bottles | `objects/lightwheel/cinnamon/Cinnamon001` and `Cinnamon003`, `objects/lightwheel/paprika/Paprika001` — scanned jars with baked labels, same free library |
+| Pepper shaker (the one it picks) | `objects/lightwheel/salt_and_pepper_shaker/PepperShaker007` |
+| The rest of the drawer | `SaltShaker003`, `paprika/Paprika002`, `cinnamon/Cinnamon004` |
+| Jar on the worktop | `objects/lightwheel/paprika/Paprika001` |
+| Plate, steak, broccoli | `objects/objaverse/plate/plate_0`, `steak/steak_3`, `broccoli/broccoli_0` |
+
+Everything standing in the drawer has to be shorter than 0.129 m — the gap
+between the drawer's own floor and the carcass panel above it — or it jams on
+the way back in. That rules out most of the spice jars in the library and is why
+the shakers were picked: they are 0.102 m tall and 0.048 m across, which is also
+a comfortable bite for a Panda gripper that opens to 0.079 m.
+
+The library is free and Apache-2.0, and holds 60 door panels and 51 handles, so
+`PANEL_TYPE` / `HANDLE_TYPE` at the top of `scene.py` can be swapped for any of
+them.
+
+I looked at the usual articulated-object libraries first. PartNet-Mobility and
+AKB-48 both have good drawers but sit behind an account/registration wall and
+ship URDF that would need converting; Objaverse and Google Scanned Objects have
+no articulation at all. The RoboCasa fixture library is free, already MJCF, and
+is the same asset set the RoboCasa tasks themselves use — so a policy trained
+here sees the same drawers it would see in `OpenDrawer`.
 
 ## Recording it
 
@@ -192,8 +322,11 @@ when `--mode mujoco` asks for them.
 that passed rather than a separate take:
 
 ```bash
-pixi run demo-drawer-verify --video robocasa-drawer.mp4 --sheet robocasa-drawer.png
+pixi run demo-drawer-verify -- --video robocasa-drawer.mp4 --sheet stages.png
+pixi run demo-drawer-verify -- --camera plate --video plate.mp4    # close on the food
+pixi run demo-drawer-verify -- --camera drawer --video drawer.mp4  # into the drawer
 ```
 
-Cameras in the scene: `front`, `threequarter` (the default), `overhead`, and
-`bottles`, which closes in on the top drawer and the worktop.
+Cameras in the scene: `action` (the default — high enough to see into the open
+drawer, round enough to see the plate), `drawer`, `plate`, `threequarter`,
+`front` and `overhead`.
