@@ -228,6 +228,9 @@ robocasa_drawer = [
     # The viewer dresses the geoms in their MuJoCo textures, which means
     # decoding raw pixel buffers into images the glTF exporter will take.
     "Pillow",
+    # `verify.py --video` writes an MP4 through imageio, which cannot open one
+    # for writing without an ffmpeg backend.
+    "imageio-ffmpeg",
 ]
 
 

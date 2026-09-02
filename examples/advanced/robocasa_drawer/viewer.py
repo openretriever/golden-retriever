@@ -369,6 +369,22 @@ def main() -> None:
     print(f"pushed {len(handles)} geoms in {time.time() - started:.1f} s"
           + (" (flat colours)" if args.flat else ""))
 
+    @server.on_client_connect
+    def _(client: viser.ClientHandle) -> None:
+        # A fresh page otherwise opens metres out with the cabinet facing away.
+        # Park every arriving browser on the scene's own "action" camera, the
+        # one the recordings use, so the first frame is the one worth seeing.
+        cam = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_CAMERA, "action")
+        if cam < 0:
+            return
+        pos = np.asarray(data.cam_xpos[cam], dtype=float)
+        axes = np.asarray(data.cam_xmat[cam], dtype=float).reshape(3, 3)
+        client.camera.fov = float(np.radians(model.cam_fovy[cam]))
+        client.camera.position = tuple(float(v) for v in pos)
+        client.camera.up_direction = tuple(float(v) for v in axes[:, 1])
+        # A MuJoCo camera looks down its own -Z; viser wants a point to aim at.
+        client.camera.look_at = tuple(float(v) for v in pos - 2.0 * axes[:, 2])
+
     with server.gui.add_folder("routine"):
         running = server.gui.add_checkbox("run routine", not args.hold)
         stage = server.gui.add_text("step", PHASES[0].label, disabled=True)

@@ -68,7 +68,8 @@ pixi run uv pip install -e ../robosuite --no-deps
 git clone https://github.com/robocasa/robocasa.git ../robocasa
 pixi run uv pip install -e ../robocasa --no-deps
 pixi run uv pip install "numpy==2.2.5" numba scipy "mujoco==3.3.1" pygame Pillow \
-  opencv-python pyyaml pynput tqdm termcolor imageio h5py lxml hidapi gymnasium
+  opencv-python pyyaml pynput tqdm termcolor imageio imageio-ffmpeg h5py lxml \
+  hidapi gymnasium
 
 pixi run demo-drawer-assets   # ~5 GB, once; answer `y` at the prompt
 pixi run demo-drawer          # builds scene.xml, opens the browser
@@ -78,7 +79,8 @@ Clone RoboSuite and RoboCasa as siblings of the repo, not inside it, or they
 turn up in `git status`.
 
 `demo-drawer` is the browser demo: it builds `scene.xml` itself on first run,
-opens the page for you, and streams the live simulation. It runs under plain
+opens the page for you, parks the camera on the scene's own `action` view, and
+streams the live simulation. It runs under plain
 `python` — no `mjpython`, no native window. Pass `-- --no-open` to serve without
 opening a browser, `-- --port 9000` to move it, `-- --hold` to start paused.
 
