@@ -288,8 +288,8 @@ benchmark_cpp_components = "ros2 launch benchmark_cpp intra_process.launch.py"
 platforms = ["linux-64", "osx-arm64"]
 
 [feature.roboplan.dependencies]
-roboplan-python = "*"
-pinocchio = ">=3.9.0"
+roboplan-all-python = ">=0.6.0,<0.7.0"
+pinocchio = ">=4.1.0"
 
 [feature.roboplan.pypi-dependencies]
 xacro = "*"

@@ -13,8 +13,8 @@ The current `pixi.toml` exposes the `roboplan` environment on both `linux-64` an
 You can then run the examples.
 
 ```bash
-pixi run -e roboplan python examples/advanced/motion_planning/ik_example.py
-pixi run -e roboplan python examples/advanced/motion_planning/motion_tracking_example.py
+pixi run -e roboplan demo-ik
+pixi run -e roboplan demo-motion-track
 ```
 
 NOTE: The first time you run these examples, the [Viser](https://github.com/nerfstudio-project/viser) visualizer may take a while to load.

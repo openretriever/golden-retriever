@@ -73,7 +73,7 @@ class IkSolver(Flow[CartesianTarget, JointTarget]):
             package_paths=[get_package_share_dir()],
             yaml_config_path=models_dir / "franka_robot_model" / "fr3_config.yaml",
         )
-        self._scene.setJointPositions(np.array([0.0, -0.785, 0.0, -2.356, 0.0, 1.571, 0.785, 0.01, 0.01]))
+        self._scene.setJointPositions(np.array([0.0, -0.785, 0.0, -2.356, 0.0, 1.571, 0.785, 0.01]))
         self._joint_names = self._scene.getJointNames()
         self._q_indices = self._scene.getJointGroupInfo("fr3_arm").q_indices
 
@@ -124,7 +124,7 @@ class ViserSink(Flow[JointTarget, None]):
         package_paths = [get_package_share_dir()]
         urdf_xml = xacro.process_file(models_dir / "franka_robot_model" / "fr3.urdf").toxml()
 
-        model = pin.buildModelFromXML(urdf_xml)
+        model = pin.buildModelFromXML(urdf_xml, mimic=True)
         collision_model = pin.buildGeomFromUrdfString(
             model, urdf_xml, pin.GeometryType.COLLISION, package_dirs=package_paths
         )
@@ -134,7 +134,7 @@ class ViserSink(Flow[JointTarget, None]):
 
         self._viz = ViserVisualizer(model, collision_model, visual_model)
         self._viz.initViewer(open=True, loadModel=True)
-        self._viz.display(np.array([0.0, -0.785, 0.0, -2.356, 0.0, 1.571, 0.785, 0.01, 0.01]))
+        self._viz.display(np.array([0.0, -0.785, 0.0, -2.356, 0.0, 1.571, 0.785, 0.01]))
         time.sleep(0.1)  # To render
 
     def run(self, input: JointTarget):

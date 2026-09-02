@@ -19,7 +19,7 @@ from retriever.flow.clock import Trigger
 from roboplan.core import Scene, JointConfiguration
 from roboplan.example_models import get_package_models_dir, get_package_share_dir
 from roboplan.rrt import RRTOptions, RRT
-from roboplan.toppra import PathParameterizerTOPPRA
+from roboplan.toppra import PathParameterizerTOPPRA, SplineFittingMode, TOPPRAOptions
 
 ## Dataclasses for communication
 
@@ -64,7 +64,7 @@ class MotionPlanner(Flow[JointTarget, JointTrajectory]):
             yaml_config_path=models_dir / "franka_robot_model" / "fr3_config.yaml",
         )
 
-        self._joint_positions = np.array([0.0, -0.785, 0.0, -2.356, 0.0, 1.571, 0.785, 0.01, 0.01])
+        self._joint_positions = np.array([0.0, -0.785, 0.0, -2.356, 0.0, 1.571, 0.785, 0.01])
         self._scene.setJointPositions(self._joint_positions)
         self._joint_group = "fr3_arm"
         self._joint_names = self._scene.getJointNames()
@@ -109,7 +109,7 @@ class MotionPlanner(Flow[JointTarget, JointTrajectory]):
 
         # Trajectory timing
         traj_dt = 0.01  # Match the rate configured for the flow, is there an easier way to get this info?
-        traj = self._toppra.generate(path, traj_dt)
+        traj = self._toppra.generate(path, TOPPRAOptions(dt=traj_dt, mode=SplineFittingMode.Adaptive))
         return JointTrajectory(
             joint_names=traj.joint_names,
             joint_positions=traj.positions,
@@ -121,7 +121,7 @@ class TrajTracker(Flow[JointTrajectory, JointTarget]):
     def init(self):
         self._last_traj_start_time = None
         self._waypoint_idx = 0
-        self._q = np.array([0.0, -0.785, 0.0, -2.356, 0.0, 1.571, 0.785, 0.01, 0.01])
+        self._q = np.array([0.0, -0.785, 0.0, -2.356, 0.0, 1.571, 0.785, 0.01])
 
     def run(self, input: JointTrajectory):
         if input.joint_positions is None or input.times is None:
@@ -179,7 +179,7 @@ class ViserSink(Flow[VisualizationInput, None]):
         package_paths = [get_package_share_dir()]
         urdf_xml = xacro.process_file(models_dir / "franka_robot_model" / "fr3.urdf").toxml()
 
-        self._model = pin.buildModelFromXML(urdf_xml)
+        self._model = pin.buildModelFromXML(urdf_xml, mimic=True)
         collision_model = pin.buildGeomFromUrdfString(
             self._model, urdf_xml, pin.GeometryType.COLLISION, package_dirs=package_paths
         )
@@ -187,7 +187,7 @@ class ViserSink(Flow[VisualizationInput, None]):
             self._model, urdf_xml, pin.GeometryType.VISUAL, package_dirs=package_paths
         )
         self._data = self._model.createData()
-        self._q = np.array([0.0, -0.785, 0.0, -2.356, 0.0, 1.571, 0.785, 0.01, 0.01])
+        self._q = np.array([0.0, -0.785, 0.0, -2.356, 0.0, 1.571, 0.785, 0.01])
 
         self._viz = ViserVisualizer(self._model, collision_model, visual_model)
         self._viz.initViewer(open=True, loadModel=True)
