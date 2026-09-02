@@ -50,14 +50,32 @@ is what asserts it.
 
 ## 2. The interactive viewer
 
-Three commands from a fresh clone. The middle one is a ~5 GB download and is
-only ever run once:
+From a fresh clone. The asset download is ~5 GB and is only ever run once:
 
 ```bash
-pixi run python -m pip install -e ".[robocasa_drawer]"  # + RoboCasa, from source
-pixi run demo-drawer-assets                             # the three asset packs
-pixi run demo-drawer                                    # opens the browser
+# The Pixi environment ships `uv`, not `pip`.
+pixi run uv pip install -e ".[robocasa_drawer]"
+
+# RoboCasa is not on PyPI, and RoboSuite has to come from source too: RoboCasa
+# calls `mjcf_utils.get_elements`, which landed after the 1.5.1 release on PyPI.
+# Install the extra first, so these two only swap the code and keep the deps.
+git clone --depth 1 https://github.com/ARISE-Initiative/robosuite.git ../robosuite
+pixi run uv pip install -e ../robosuite --no-deps
+
+# `--no-deps` on RoboCasa as well: its pinned tianshou drags in an old gym, and
+# `requirements.txt` is only `-e .`, so it re-triggers the same pins. These are
+# its real dependencies for this scene.
+git clone https://github.com/robocasa/robocasa.git ../robocasa
+pixi run uv pip install -e ../robocasa --no-deps
+pixi run uv pip install "numpy==2.2.5" numba scipy "mujoco==3.3.1" pygame Pillow \
+  opencv-python pyyaml pynput tqdm termcolor imageio h5py lxml hidapi gymnasium
+
+pixi run demo-drawer-assets   # ~5 GB, once; answer `y` at the prompt
+pixi run demo-drawer          # builds scene.xml, opens the browser
 ```
+
+Clone RoboSuite and RoboCasa as siblings of the repo, not inside it, or they
+turn up in `git status`.
 
 `demo-drawer` is the browser demo: it builds `scene.xml` itself on first run,
 opens the page for you, and streams the live simulation. It runs under plain
@@ -71,11 +89,12 @@ passes 90 degrees only while the seasoning is being shaken over the food.
 `restart routine` resets to the home keyframe; unticking `run routine` parks the
 arm at its home pose.
 
-RoboCasa is not published on PyPI — install it from source. Its assets are
-fetched by the task above, which wraps
-`robocasa.scripts.download_kitchen_assets`; this scene needs `fixtures_lw` for
-the cabinet panels and handles, `objs_lw` for the seasoning containers, and
-`objs_objaverse` for the plate and the food on it.
+The assets are fetched by the task above, which wraps
+`robocasa.scripts.download_kitchen_assets`; this scene needs `tex` for the
+carcass finish, `fixtures_lw` for the cabinet panels and handles, `objs_lw` for
+the seasoning containers, and `objs_objaverse` for the plate and the food on it.
+It does not need `tex_generative` or `objs_aigen`, which is most of the rest of
+the ~19 GB asset set.
 
 If disk is tight, the three objaverse instances this scene actually uses can be
 pulled on their own instead of the whole 2.2 GB pack:
