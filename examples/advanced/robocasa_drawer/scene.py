@@ -3,7 +3,9 @@
 The drawers are real RoboCasa `Drawer` fixtures: a procedurally sized carcass with
 a prismatic (slide) joint, fronted by a scanned mesh door panel and a scanned mesh
 handle from the RoboCasa / Lightwheel fixture library (free, Apache-2.0, downloaded
-with `robocasa.scripts.download_kitchen_assets --type fixtures_lw`).
+with `robocasa.scripts.download_kitchen_assets --type fixtures_lw`; note that
+repeating `--type` overwrites rather than appends, so several packs go after one
+flag).
 
 The dresser stands on a table. The top drawer is a spice drawer: four scanned
 seasoning containers stand upright in it, the front-centre one a pepper shaker.
