@@ -93,6 +93,23 @@ Run `pixi run --locked -e robocasa demo-robosuite-web` for a live browser scene.
 same native `MjModel` and `MjData` that robosuite advances; it does not launch a
 second simulator.
 
+For a live browser scene, install `mjviser` in the configured simulation
+environment and run `retriever run demo-robosuite-web`. The viewer consumes the
+same native `MjModel` and `MjData` that robosuite advances; it does not launch a
+second simulator.
+
+### Compare methods through one bounded harness
+
+`MethodHarness` keeps method evaluation separate from the dashboard and
+simulator implementation. It accepts GoldenRetriever's existing
+`PolicyObservation -> ActionChunk` contract, checks action shape, horizon,
+finite values, magnitude, and source, and emits ordered events plus native task
+verification. The catalog's **Scripted privileged cube lift** is a deterministic
+integration smoke, not a learned-policy result. It does not execute generated
+Python or accept arbitrary simulator commands. See the
+[reproduced-results report](https://github.com/openretriever/golden-retriever/blob/main/examples/advanced/robocasa/REPRODUCED_RESULTS.md)
+for the measured run.
+
 ## Connect Retriever to RoboCasa
 
 The Retriever Embodied Demo Console makes the simulator boundary concrete. Its

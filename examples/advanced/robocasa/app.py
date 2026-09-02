@@ -684,6 +684,30 @@ class VideoRecorder(Flow[RoboCasaObservation, None]):
             print(f"Saved {self._frames} camera frames to {self.path}.")
 
 
+def _run_paced_pipeline(
+    pipeline: Pipeline,
+    simulator: RoboCasaSimulator,
+    *,
+    seconds: float,
+    hz: float,
+    clock: Any = time.monotonic,
+    sleep: Any = time.sleep,
+) -> None:
+    """Run against wall time so paused and terminal consoles remain responsive."""
+
+    if hz <= 0:
+        raise ValueError("Replay frequency must be positive")
+    period = 1.0 / hz
+    deadline = clock() + max(0.0, seconds)
+    while clock() < deadline:
+        tick_started = clock()
+        pipeline.step(dt=period)
+        simulator.refresh_controls()
+        remaining = period - (clock() - tick_started)
+        if remaining > 0:
+            sleep(remaining)
+
+
 def build_pipeline(args: argparse.Namespace) -> tuple[Pipeline, RoboCasaSimulator]:
     video_path = getattr(args, "video", None)
     emit_images = (

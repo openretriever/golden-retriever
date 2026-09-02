@@ -681,6 +681,7 @@ def test_bridge_streams_native_robosuite_state(monkeypatch) -> None:
             self.model = model
             self.num_envs = num_envs
             self.geom_groups_visible = [True] * 6
+            self.site_groups_visible = [True] * 6
             self.synced = False
             self.gui_created = False
             self.gui_kwargs = {}
@@ -724,6 +725,11 @@ def test_bridge_streams_native_robosuite_state(monkeypatch) -> None:
     assert scenes[0].model is model
     assert scenes[0].num_envs == 1
     assert scenes[0].geom_groups_visible[0] is False
+    assert scenes[0].geom_groups_visible[1] is True
+    assert scenes[0].geom_groups_visible[2] is False
+    assert scenes[0].site_groups_visible[0] is False
+    assert scenes[0].site_groups_visible[1] is True
+    assert scenes[0].site_groups_visible[2] is False
     assert scenes[0].synced is True
     assert scenes[0].gui_created is True
     assert scenes[0].gui_kwargs == {"camera_distance": 3.0}

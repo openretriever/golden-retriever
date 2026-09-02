@@ -19,6 +19,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 
 REQUIRED_PATHS = (
+    "AGENTS.md",
+    "CLAUDE.md",
     "README.md",
     "examples/advanced/robocasa/robosuite_lift.py",
     "examples/advanced/robocasa/app.py",
@@ -65,6 +67,14 @@ REQUIRED_TASKS = (
 )
 
 DOC_MARKERS = {
+    "AGENTS.md": (
+        "Do not commit conversation transcripts",
+        "Keep these rules canonical in `AGENTS.md`",
+    ),
+    "CLAUDE.md": (
+        "[`AGENTS.md`](AGENTS.md)",
+        "single source of truth",
+    ),
     "README.md": (
         "GoldenRetriever is the applied reference layer",
         "Start Here",
@@ -219,17 +229,26 @@ SMOKE_CHECKS = (
     ),
     (
         "smoke:demo-robotics-data-eventstream",
-        [sys.executable, "examples/advanced/robotics_typing_standard/data_spec_eventstream_demo.py"],
+        [
+            sys.executable,
+            "examples/advanced/robotics_typing_standard/data_spec_eventstream_demo.py",
+        ],
         ("Deterministic merged order:", "Processing-time profile:"),
     ),
     (
         "smoke:demo-robotics-data-join",
-        [sys.executable, "examples/advanced/robotics_typing_standard/multi_stream_join_demo.py"],
+        [
+            sys.executable,
+            "examples/advanced/robotics_typing_standard/multi_stream_join_demo.py",
+        ],
         ("Exact join:", "Latest-before join", "Window join"),
     ),
     (
         "smoke:demo-robotics-lerobot-bridge",
-        [sys.executable, "examples/advanced/robotics_typing_standard/lerobot_bridge_demo.py"],
+        [
+            sys.executable,
+            "examples/advanced/robotics_typing_standard/lerobot_bridge_demo.py",
+        ],
         ("Canonical rows:", "LeRobot records:", "Roundtrip rows:"),
     ),
 )
@@ -250,7 +269,9 @@ def check_required_paths() -> list[Result]:
     results: list[Result] = []
     for path in REQUIRED_PATHS:
         exists = (ROOT / path).exists()
-        results.append(Result(f"path:{path}", exists, "exists" if exists else "missing"))
+        results.append(
+            Result(f"path:{path}", exists, "exists" if exists else "missing")
+        )
     return results
 
 
@@ -282,7 +303,13 @@ def check_tasks() -> list[Result]:
     results: list[Result] = []
     for task in REQUIRED_TASKS:
         marker = f"{task} ="
-        results.append(Result(f"task:{task}", marker in pixi, "declared" if marker in pixi else "missing"))
+        results.append(
+            Result(
+                f"task:{task}",
+                marker in pixi,
+                "declared" if marker in pixi else "missing",
+            )
+        )
     return results
 
 
@@ -292,7 +319,9 @@ def check_doc_markers() -> list[Result]:
         text = read(path)
         for marker in markers:
             ok = marker in text
-            results.append(Result(f"doc:{path}:{marker}", ok, "present" if ok else "missing"))
+            results.append(
+                Result(f"doc:{path}:{marker}", ok, "present" if ok else "missing")
+            )
     return results
 
 
