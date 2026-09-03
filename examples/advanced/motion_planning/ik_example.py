@@ -4,47 +4,42 @@ Inverse kinematics (IK) example using RoboPlan.
 The flow here is:
     - Cartesian pose target generator
     - IK solver
-    - Display flow
+    - Display flow (``ViserSink``)
+
+The payloads and the display flow live in ``flows.py``.
 """
 
-from dataclasses import dataclass
 import time
 import numpy as np
 import xacro
 
-import pinocchio as pin
-from pinocchio.visualize import ViserVisualizer
-from retriever.flow import Flow, io, Rate, Pipeline
+from retriever.flow import Flow, Rate, Pipeline
 from retriever.flow.clock import Trigger
 from roboplan.core import Scene, CartesianConfiguration, JointConfiguration
 from roboplan.example_models import get_package_models_dir, get_package_share_dir
 from roboplan.simple_ik import SimpleIk, SimpleIkOptions
 
-## Dataclasses for communication
-
-@io
-@dataclass
-class CartesianTarget:
-    base_frame: str
-    tip_frame: str
-    tform: np.ndarray | None = None
-
-@io
-@dataclass
-class JointTarget:
-    joint_names: list[str]
-    joint_positions: list[float]
+from examples.advanced.motion_planning.flows import (
+    ARM_GROUP,
+    BASE_FRAME,
+    HOME_POSITIONS,
+    MODEL_DIR,
+    TIP_FRAME,
+    CartesianTarget,
+    JointTarget,
+    ViserSink,
+)
 
 
 ## Flow classes for pipeline components
 
 class PoseGenerator(Flow[None, CartesianTarget]):
-    def init(self):
+    def reset(self):
         self._start_tform = np.array([
             [1.0, 0.0, 0.0, 0.307],
             [0.0, -1.0, 0.0, 0.0],
             [0.0, 0.0, -1.0, 0.59],
-            [0.0, 0.0, 0.0, 1.0],    
+            [0.0, 0.0, 0.0, 1.0],
         ])
         self._counter = 0
         self._step = 0.05
@@ -57,28 +52,28 @@ class PoseGenerator(Flow[None, CartesianTarget]):
         self._counter += 1
 
         return CartesianTarget(
-            base_frame="fr3_link0",
-            tip_frame="fr3_hand",
+            base_frame=BASE_FRAME,
+            tip_frame=TIP_FRAME,
             tform=target_tform,
         )
 
 class IkSolver(Flow[CartesianTarget, JointTarget]):
-    def init(self):
+    def reset(self):
         # Load model into RoboPlan scene and make an IK solver
-        models_dir = get_package_models_dir()
+        models_dir = get_package_models_dir() / MODEL_DIR
         self._scene = Scene(
             "retriever_scene",
-            urdf=xacro.process_file(models_dir / "franka_robot_model" / "fr3.urdf").toxml(),
-            srdf=xacro.process_file(models_dir / "franka_robot_model" / "fr3.srdf").toxml(),
+            urdf=xacro.process_file(models_dir / "fr3.urdf").toxml(),
+            srdf=xacro.process_file(models_dir / "fr3.srdf").toxml(),
             package_paths=[get_package_share_dir()],
-            yaml_config_path=models_dir / "franka_robot_model" / "fr3_config.yaml",
+            yaml_config_path=models_dir / "fr3_config.yaml",
         )
-        self._scene.setJointPositions(np.array([0.0, -0.785, 0.0, -2.356, 0.0, 1.571, 0.785, 0.01]))
+        self._scene.setJointPositions(np.array(HOME_POSITIONS))
         self._joint_names = self._scene.getJointNames()
-        self._q_indices = self._scene.getJointGroupInfo("fr3_arm").q_indices
+        self._q_indices = self._scene.getJointGroupInfo(ARM_GROUP).q_indices
 
         self._ik_options = SimpleIkOptions()
-        self._ik_options.group_name = "fr3_arm"
+        self._ik_options.group_name = ARM_GROUP
         self._ik_options.max_iters = 50
         self._ik_options.step_size = 0.2
         self._ik_options.check_collisions = True
@@ -105,7 +100,7 @@ class IkSolver(Flow[CartesianTarget, JointTarget]):
         result = self._ik_solver.solveIk(goal, start, solution)
         dt = time.time() - t_start
         if result:
-            print(f"IK solved in {dt * 1.0e6} ns, solution: {solution.positions}")
+            print(f"IK solved in {dt * 1.0e6} us, solution: {solution.positions}")
             q_full[self._q_indices] = solution.positions
             self._scene.setJointPositions(q_full)
             return JointTarget(
@@ -115,32 +110,6 @@ class IkSolver(Flow[CartesianTarget, JointTarget]):
         else:
             print("Failed to solve IK.")
             return JointTarget()
-
-
-class ViserSink(Flow[JointTarget, None]):
-    def init(self):
-        # Create Pinocchio model for visualization
-        models_dir = get_package_models_dir()
-        package_paths = [get_package_share_dir()]
-        urdf_xml = xacro.process_file(models_dir / "franka_robot_model" / "fr3.urdf").toxml()
-
-        model = pin.buildModelFromXML(urdf_xml, mimic=True)
-        collision_model = pin.buildGeomFromUrdfString(
-            model, urdf_xml, pin.GeometryType.COLLISION, package_dirs=package_paths
-        )
-        visual_model = pin.buildGeomFromUrdfString(
-            model, urdf_xml, pin.GeometryType.VISUAL, package_dirs=package_paths
-        )
-
-        self._viz = ViserVisualizer(model, collision_model, visual_model)
-        self._viz.initViewer(open=True, loadModel=True)
-        self._viz.display(np.array([0.0, -0.785, 0.0, -2.356, 0.0, 1.571, 0.785, 0.01]))
-        time.sleep(0.1)  # To render
-
-    def run(self, input: JointTarget):
-        if not input.joint_names:
-            return
-        self._viz.display(input.joint_positions)
 
 
 ## Assembling the pipeline
