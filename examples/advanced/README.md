@@ -74,6 +74,9 @@ pixi run -e twist2 demo-twist2-rerun
 - `twist2_simulation/`: MuJoCo/TWIST2 simulator integration with Rerun and optional native viewer.
 - `robocasa/`: mock-safe contracts, a bounded action-chunk methods harness,
   verified RoboSuite/RoboCasa execution, browser consoles, and Rerun recording.
+- `robocasa_drawer/`: a Panda opens a drawer, seasons a plated meal with the
+  shaker inside it, and puts both back; mock-safe lane plus optional
+  MuJoCo/RoboCasa lanes and a browser viewer.
 - `mujoco_manipulation/`: MuJoCo manipulation with Rerun logging.
 - `hierarchical_physics_demo/`: Rerun plus HTML pipeline visualization for physics demos.
 - `../experimental/visualization/`: deterministic IR/HTML pipeline visualization utility.
@@ -90,6 +93,8 @@ pixi run -e twist2 demo-twist2-rerun
 - `closed_loop_planning/README.md`: extracted belief, monitoring, and replanning patterns from the old prototype.
 - `robocasa/README.md`: pinned simulator setup, reproduced results, task
   verification, browser controls, platform status, and media provenance.
+- `robocasa_drawer/README.md`: the season-the-plate routine, the
+  passive-slide-joint and free-body claims, and the optional asset setup.
 - `robotics_typing_standard/README.md`: typed payload and data-spec demos.
 - `../../notebooks/README.md` (repo root): git-friendly notebook workflow for a small mechanics demo; keep the main runnable progression in the advanced example families above.
 

@@ -381,6 +381,114 @@ console has no ROS or Isaac Sim dependency. The
 (MIT) informed benchmark axes. Neither repository is a runtime dependency and
 no source code was copied from either reference.
 
+## RoboCasa drawer: the grasp is the proof
+
+`demo-drawer-mock` runs a second simulation lane: a Panda on an Omron mobile
+base pulls a drawer open by its handle, takes the pepper shaker out of the spice
+drawer, tips it cap-down over a plate of steak and broccoli and shakes it there,
+puts the shaker back where it came from, and shoves the drawer shut again.
+
+<figure>
+  <img
+    src="/media/robocasa-drawer/robocasa-drawer-stages.jpg"
+    alt="Four stages of the routine: the drawer pulled open, the gripper coming down on the pepper shaker, the shaker tipped over the plate, and the drawer pushed shut again"
+    loading="lazy"
+    decoding="async"
+    style="display: block; width: 100%; max-width: 64rem; height: auto; margin-inline: auto; border-radius: 0.25rem;"
+  />
+  <figcaption>
+    The drawer opened by its handle, the shaker lifted out, tipped over the
+    plate, and the drawer pushed shut again.
+  </figcaption>
+</figure>
+
+What makes it worth running is what the scene leaves out. The drawer's slide
+joint carries **no actuator** — it is passive and damped — so the drawer cannot
+open unless something is physically holding it, and the shaker is a free body
+standing on the drawer floor with no actuator either. Both move only while the
+fingers are on them.
+
+```bash
+pixi run demo-drawer-mock
+```
+
+```text
+[mock step=0020] phase=let go of the handle   drawer=0.220m holding=nothing tip=  0deg progress=17.5% success=False
+[mock step=0040] phase=out over the plate     drawer=0.220m holding=shaker  tip=  0deg progress=37.0% success=False
+[mock step=0050] phase=tip it over the food   drawer=0.220m holding=shaker  tip=117deg progress=46.8% success=False
+[mock step=0090] phase=grip the handle again  drawer=0.220m holding=handle  tip=  0deg progress=85.8% success=False
+[mock step=0100] phase=back off               drawer=0.000m holding=nothing tip=  0deg progress=95.5% success=False
+```
+
+The 30-phase choreography lives in `plan.py` as plain data with no MuJoCo,
+RoboCasa or NumPy import, so the mock lane, the tests and the simulator all
+replay one schedule rather than three that have to be kept in step. Its shape is
+dictated by the scene: the drawer has to be open before anything can come out of
+it, the Omron torso has to rise for the handle a metre up and drop again for the
+plate on the tabletop, and the shaker has to be rolled back towards the robot
+rather than forwards, or the forearm swings into the open drawer and shuts it.
+
+The mock reproduces the timeline, the commanded travel, the commanded roll and
+the pass thresholds; it does not reproduce contact. For that, the MuJoCo lane
+needs the optional simulator dependencies and RoboCasa's fixture and object
+asset packs, and `demo-drawer-verify` is what actually asserts the claim — no
+actuator on any slide joint and none on the shaker, a finger pad touching the
+handle for 100% of the pull and push and the shaker for 100% of the excursion,
+the shaker tipped past 100° over the plate and shaken there, and put back within
+3 cm of where it was picked up, standing upright, with nothing else in the scene
+moved more than 2 cm.
+
+<figure>
+  <img
+    src="/media/robocasa-drawer/robocasa-drawer-routine.gif"
+    alt="The full routine: the drawer pulled open, the pepper shaker lifted out and tipped over the plate, and the drawer pushed shut again"
+    loading="lazy"
+    decoding="async"
+    style="display: block; width: 100%; max-width: 64rem; height: auto; margin-inline: auto; border-radius: 0.25rem;"
+  />
+  <figcaption>
+    The run that passed, rendered by <code>demo-drawer-verify</code> rather than
+    recorded separately. The same run is tracked as
+    <a href="/media/robocasa-drawer/robocasa-drawer-routine.mp4">MP4</a>.
+  </figcaption>
+</figure>
+
+There is a browser viewer for it too. From a clone, with the optional simulator
+dependencies and RoboCasa's `fixtures_lw`, `objs_lw` and `objs_objaverse` asset
+packs installed:
+
+```bash
+pixi run demo-drawer   # builds the scene, opens the browser
+```
+
+That is the default lane for this example: it builds the scene on first run,
+opens the page itself, streams the live simulation to a viser page under plain
+`python`, and reports **holding handle**, **holding shaker** and **shaker
+tipped** tick by tick — which is the claim made watchable: when the first two
+read `no`, nothing moves.
+
+<figure>
+  <img
+    src="/media/robocasa-drawer/robocasa-drawer-browser.jpg"
+    alt="The routine in the browser: the drawer open, the shaker tipped over the plate, and the routine panel reading holding shaker yes at 105 degrees"
+    loading="lazy"
+    decoding="async"
+    style="display: block; width: 100%; max-width: 64rem; height: auto; margin-inline: auto; border-radius: 0.25rem;"
+  />
+  <figcaption>
+    The viser page reports the contact state tick by tick beside the live scene.
+  </figcaption>
+</figure>
+
+The terminal lane, which runs the same routine through Retriever Flows and
+prints its state, is `demo-drawer-flow`.
+
+The viewer talks to viser directly rather than through `mjviser`, which needs
+`mujoco>=3.6`; RoboSuite's controllers do not survive the 3.10 `mj_fullM`
+signature change, so this lane stays pinned to 3.3.1.
+
+Source: `examples/advanced/robocasa_drawer/`.
+
 ## Run these in order
 
 Run the simulator lanes from lightest to heaviest so each boundary is verified
@@ -391,6 +499,7 @@ before the next:
 3. **Locked simulator smoke** — `pixi run --locked -e robocasa robocasa-smoke` imports the stack and constructs headless `Lift`.
 4. **Real RoboCasa replay** — `pixi run --locked -e robocasa demo-robocasa-replay` replays the downloaded demonstration.
 5. **Atomic and composite verification** — after downloading `CoffeeSetupMug` and `PrepareCoffee`, `pixi run --locked -e robocasa test-robocasa-replay-data` requires both recorded episodes to reach RoboCasa success.
+6. **RoboCasa drawer** — `pixi run demo-drawer-mock` for the routine, then `pixi run demo-drawer` and `pixi run demo-drawer-verify` once the optional simulator dependencies and RoboCasa assets are in place.
 
 ## Design notes
 
