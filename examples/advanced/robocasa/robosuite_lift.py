@@ -94,8 +94,8 @@ class LiftEnvFlow(Flow[LiftAction, LiftState]):
         self._mock_object_x = 0.0
         self._mock_object_y = 0.0
         self._mock_gripper_z = 0.96
-        self._mock_gripper_x = 0.10
-        self._mock_gripper_y = 0.10
+        self._mock_gripper_x = 0.0
+        self._mock_gripper_y = 0.0
         self._mock_lift_started = False
 
         if self.mode == "robosuite":
@@ -234,57 +234,44 @@ def _safe_position(obs: dict[str, Any], key: str) -> tuple[float, float, float] 
     return float(value[0]), float(value[1]), float(value[2])
 
 
+def _clamp(value: float) -> float:
+    return max(-1.0, min(1.0, value))
+
+
 class HeuristicLiftPolicy(Flow[LiftState, LiftAction]):
-    """Bounded scripted policy: align, descend, grasp, then lift."""
+    """Tiny scripted policy: approach, close gripper, then lift."""
 
     def __init__(self, *, target_height: float) -> None:
         super().__init__()
         self.target_height = target_height
 
-    def init(self) -> None:
-        self.phase = "approach"
-        self.grasp_ticks = 0
-        self.grasp_offset = 0.015
-
     def step(self, state: LiftState | None) -> LiftAction:
-        if (
-            state is None
-            or state.object_x is None
-            or state.object_y is None
-            or state.object_height is None
-            or state.gripper_x is None
-            or state.gripper_y is None
-            or state.gripper_z is None
-        ):
+        if state is None or state.object_height is None or state.gripper_z is None:
             return LiftAction(dz=-0.4, grip=-1.0)
-        if state.done or state.object_height >= self.target_height:
+        if state.object_height >= self.target_height:
             return LiftAction(dz=0.0, grip=1.0)
-
-        dx = max(-0.6, min(0.6, (state.object_x - state.gripper_x) * 8.0))
-        dy = max(-0.6, min(0.6, (state.object_y - state.gripper_y) * 8.0))
-        xy_error = max(
-            abs(state.object_x - state.gripper_x),
-            abs(state.object_y - state.gripper_y),
-        )
-        if self.phase == "approach":
-            target_z = state.object_height + (
-                0.12 if xy_error > 0.02 else self.grasp_offset
-            )
-            dz = max(-0.5, min(0.5, (target_z - state.gripper_z) * 8.0))
-            if xy_error <= 0.02 and abs(target_z - state.gripper_z) <= 0.015:
-                self.phase = "grasp"
-            return LiftAction(dx=dx, dy=dy, dz=dz, grip=-1.0)
-        if self.phase == "grasp":
-            self.grasp_ticks += 1
-            if state.grasped:
-                self.phase = "lift"
-            elif self.grasp_ticks >= 8:
-                self.phase = "approach"
-                self.grasp_ticks = 0
-                self.grasp_offset = max(-0.015, self.grasp_offset - 0.005)
-                return LiftAction(dx=dx, dy=dy, dz=0.0, grip=-1.0)
-            return LiftAction(dx=dx, dy=dy, dz=0.0, grip=1.0)
-        return LiftAction(dx=dx, dy=dy, dz=0.65, grip=1.0)
+        if None not in (
+            state.object_x,
+            state.object_y,
+            state.gripper_x,
+            state.gripper_y,
+        ):
+            dx = float(state.object_x) - float(state.gripper_x)
+            dy = float(state.object_y) - float(state.gripper_y)
+            if abs(dx) > 0.004 or abs(dy) > 0.004:
+                return LiftAction(
+                    dx=_clamp(dx * 10.0),
+                    dy=_clamp(dy * 10.0),
+                    dz=-0.2,
+                    grip=-1.0,
+                )
+        if state.grasped:
+            return LiftAction(dz=1.0, grip=1.0)
+        if state.gripper_z > state.object_height + 0.06:
+            return LiftAction(dz=-0.5, grip=-1.0)
+        if state.gripper_z > state.object_height + 0.005:
+            return LiftAction(dz=-0.2, grip=-1.0)
+        return LiftAction(dz=0.0, grip=1.0)
 
 
 class LiftPrinter(Flow[LiftState, None]):
