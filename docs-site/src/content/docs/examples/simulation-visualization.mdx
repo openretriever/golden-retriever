@@ -1,11 +1,11 @@
 ---
-title: Simulation and Visualization
-description: Rerun, mock-safe simulation, and HTML graph visualization lanes.
+title: Simulation and Replay
+description: Offline-first embodied plans, RoboCasa replay with task verification, live mjviser scenes, and Rerun telemetry.
 ---
-Two runnable lanes with visible artifacts: a **closed-loop simulator** where the
-environment and policy are both Flows, and a **graph renderer** that validates
-the runtime IR and writes an inspectable HTML view. Both run without a real
-simulator or GPU.
+Start with mock-safe simulator boundaries, then move the same typed Flows to
+real robosuite or RoboCasa. This page focuses on simulator execution, replay,
+and captured observations; use [Pipeline Debugging](/examples/pipeline-debugging/)
+to inspect generic graph topology, clocks, ports, and feedback edges.
 
 ## Simulator and policy as Flows
 
@@ -36,19 +36,21 @@ class LiftEnvFlow(Flow[LiftAction, LiftState]):
     def step(self, action: LiftAction | None) -> LiftState:
         self.step_idx += 1
         dz   = 0.0 if action is None or action.dz   is None else float(action.dz)
-        grip = 1.0 if action is None or action.grip is None else float(action.grip)
+        grip = -1.0 if action is None or action.grip is None else float(action.grip)
         return self._step_mock(dz=dz, grip=grip)   # or _step_robosuite in real mode
 
 class HeuristicLiftPolicy(Flow[LiftState, LiftAction]):
     """Approach, close the gripper, then lift."""
     def step(self, state: LiftState | None) -> LiftAction:
         if state is None or state.object_height is None:
-            return LiftAction(dz=-0.4, grip=1.0)
-        if state.done or state.object_height >= self.target_height:
-            return LiftAction(dz=0.0, grip=-1.0)
-        if state.gripper_z > state.object_height + 0.08:
-            return LiftAction(dz=-0.5, grip=1.0)
-        return LiftAction(dz=0.6, grip=-1.0)
+            return LiftAction(dz=-0.4, grip=-1.0)
+        if state.object_height >= self.target_height:
+            return LiftAction(dz=0.0, grip=1.0)
+        if state.gripper_z > state.object_height + 0.06:
+            return LiftAction(dz=-0.5, grip=-1.0)
+        if state.gripper_z > state.object_height + 0.005:
+            return LiftAction(dz=-0.2, grip=-1.0)
+        return LiftAction(dz=1.0, grip=1.0)
 ```
 
 The feedback edge is explicit: `env → policy` and `policy → env`. The environment
@@ -67,7 +69,7 @@ with pipe:
 ```
 
 ```bash
-retriever run demo-robosuite-mock
+pixi run demo-robosuite-mock
 ```
 
 Real output — the mock is deterministic, so `object_z` rises once the gripper
@@ -76,97 +78,320 @@ closes near the block and `reward` tracks the lift:
 ```text
 [mock step=002] object_z=0.820 gripper_z=0.940 reward=0.000 done=False
 [mock step=004] object_z=0.820 gripper_z=0.900 reward=0.000 done=False
-[mock step=006] object_z=0.841 gripper_z=0.904 reward=0.021 done=False
-[mock step=008] object_z=0.883 gripper_z=0.952 reward=0.063 done=False
-[mock step=010] object_z=0.925 gripper_z=1.000 reward=0.105 done=False
-[mock step=012] object_z=0.967 gripper_z=1.048 reward=0.147 done=False
+[mock step=006] object_z=0.820 gripper_z=0.872 reward=0.000 done=False
+[mock step=008] object_z=0.820 gripper_z=0.856 reward=0.000 done=False
+[mock step=010] object_z=0.820 gripper_z=0.840 reward=0.000 done=False
+[mock step=012] object_z=0.820 gripper_z=0.824 reward=0.000 done=False
+[mock step=014] object_z=0.855 gripper_z=0.864 reward=0.035 done=False
+[mock step=016] object_z=0.925 gripper_z=0.944 reward=0.105 done=False
+[mock step=018] object_z=0.995 gripper_z=1.024 reward=0.175 done=False
+[mock step=020] object_z=1.065 gripper_z=1.104 reward=0.245 done=True
 ```
 
-Swap `mode="robosuite"` (after installing the optional dependency) and the same
-graph drives the real simulator; `LiftState.source` reports which backend ran.
+The dedicated `robocasa` Pixi environment installs the real simulator stack.
+Run `pixi run --locked -e robocasa demo-robosuite-web` for a live browser scene. The viewer consumes the
+same native `MjModel` and `MjData` that robosuite advances; it does not launch a
+second simulator.
 
-## Render the graph to HTML
+## Connect Retriever to RoboCasa
 
-`pipe.validate()` returns the runtime IR; `generate_ascii_graph` and
-`save_interactive_html` turn it into an inspectable graph — including feedback
-edges, clocks, and sync policies.
-
-```python
-from retriever.flow import Latest, Pipeline, Rate, Trigger, io
-from retriever.ir.viz import generate_ascii_graph, save_interactive_html
-
-pipe = Pipeline("visualization_demo")
-env       = DummyNode() @ Rate(hz=10.0)
-perception = DummyNode() @ Trigger("obs")
-planner    = DummyNode() @ Trigger("state")
-executor   = DummyNode() @ Trigger("plan", "state")
-pipe.connect(env, perception, map={"data": "data"}, sync=Latest())
-pipe.connect(perception, planner, map={"data": "data"}, sync=Latest())
-pipe.connect(planner, executor, map={"data": "data"}, sync=Latest())
-pipe.connect(perception, executor, map={"data": "data"}, sync=Latest())
-pipe.connect(executor, env, map={"data": "data"}, sync=Latest())   # closes the loop
-
-ir = pipe.validate()
-print(generate_ascii_graph(ir))
-save_interactive_html(ir, "out/golden_retriever_closed_loop_viz.html")
-```
-
-```bash
-retriever run demo-pipeline-html-viz
-```
-
-Real output — the ASCII graph shows each node's clock and the detected cycle, and
-the command writes a self-contained HTML artifact:
+The Retriever Embodied Demo Console makes the simulator boundary concrete. Its
+offline-first path needs no model credentials:
 
 ```text
-Pipeline: visualization_demo
-============================
-NOTE: Cycle detected in graph topology (expected for closed-loop systems).
-[DummyNode] <Rate(10.0 Hz)>
-   --(data -> data: Latest)--> [DummyNode]
-
-[DummyNode] <Trigger(on ['obs'])>
-   --(data -> data: Latest)--> [DummyNode]
-   --(data -> _fanin/DummyNode__2/data: Latest)--> [DummyNode]
-
-[DummyNode] <Trigger(on ['state'])>
-   --(data -> _fanin/DummyNode__3/data: Latest)--> [DummyNode]
-
-[DummyNode] <Trigger(on ['plan', 'state'])>
-   --(data -> data: Latest)--> [DummyNode] (feedback/cycle)
-
-HTML visualization written to out/golden_retriever_closed_loop_viz.html
+Goal -> Planner -> Skill plan -> Recorded replay -> Task verification
 ```
 
-The generated graph, embedded from the artifact:
+The full Flow remains inspectable:
 
-<iframe
-  class="artifact-frame"
-  src="/artifacts/golden_retriever_closed_loop_viz.html"
-  title="Interactive GoldenRetriever closed-loop graph visualization"
-  loading="lazy"
-></iframe>
+```bash
+pixi run demo-robocasa-mock
+```
+
+```text
+GoalSource -> EmbodiedPlanner -> SkillDispatcher -> DemoActionSource
+                                                        |
+                                                      Latest
+                                                        v
+                         EventSink <- TaskVerifier <- RoboCasaSimulator
+```
+
+RoboCasa owns tasks, demonstrations, and success signals. RoboSuite composes
+the environment and controller. Demonstration mode restores recorded states;
+action-replay mode advances MuJoCo. Retriever owns goals, plans, dispatch,
+controls, events, and verification. Retriever's standalone
+web console embeds mjviser as a replaceable viewport; mjviser only renders the
+same live `MjModel` and `MjData` in the browser.
+
+Follow the [locked setup and data steps](https://github.com/openretriever/golden-retriever/tree/main/examples/advanced/robocasa#install-the-simulator-environment),
+then run the replay:
+
+```bash
+pixi run --locked -e robocasa demo-robocasa-replay
+```
+
+Environment construction completes before the requested replay duration begins.
+The first MJCF and asset initialization can still take roughly 15 seconds on a
+laptop.
+
+Use `pixi run --locked -e robocasa demo-robocasa-rerun` for MuJoCo camera frames plus
+Retriever telemetry. Only the optional passive native viewer requires
+`mjpython`, and only on macOS; browser and headless modes use ordinary Python.
+
+Remote workers can add `--rerun-mode record --recording <path>.rrd` to save the
+same trace without spawning a viewer, then inspect it later on a local machine.
+This uses Retriever's deterministic step recorder and stops after the final
+recorded action unless `--repeat` is set.
+
+### Live browser replay
+
+This is the shortest visual proof that Retriever is connected to a real
+manipulation stack: recorded data passes through typed Flows, RoboCasa
+evaluates the task, and the browser shows the same in-process simulator state.
+The viewer is not a separate animation.
+
+Start the scene launcher, then open `http://localhost:8084`:
+
+```bash
+pixi run --locked -e robocasa demo-robocasa-scenes
+```
+
+The launcher lists downloaded human demonstrations and starts one simulator at
+a time. Choose **Retriever console** to open `http://localhost:8086` with the
+mjviser renderer embedded from `http://localhost:8085`, or **Viser native** for
+the original dockable local-debug workspace. Curated entries include atomic
+tasks (`CoffeeSetupMug`, `StartCoffeeMachine`, `TurnOnMicrowave`) and composite
+tasks (`PrepareCoffee`, `PackIdenticalLunches`, `LoadDishwasher`,
+`OrganizeCondiments`, `StackBowlsCabinet`, `RestockPantry`). Other compatible
+installed datasets remain selectable. Unavailable datasets stay visible with a
+setup reason. `CoffeeSetupMug` is the initial atomic pick-place example and
+`PrepareCoffee` is the installed composite reference run. Task switching lives
+here because each selection replaces the RoboCasa environment, demonstration,
+and MuJoCo model.
+
+<figure>
+  <img
+    src="/media/robocasa/retriever-robocasa-scene-launcher.jpg"
+    alt="Retriever RoboCasa scene launcher with TurnOnMicrowave and PrepareCoffee"
+    loading="lazy"
+    decoding="async"
+    style="display: block; width: 100%; max-width: 64rem; height: auto; margin-inline: auto; border-radius: 0.25rem;"
+  />
+  <figcaption>
+    The launcher marks installed datasets as ready, explains unavailable
+    curated tasks, and keeps one task-specific viewer alive at a time.
+  </figcaption>
+</figure>
+
+To start the composite task directly instead, run:
+
+```bash
+pixi run --locked -e robocasa demo-robocasa-composite-web
+```
+
+Or launch the same offline-planned run from Python:
+
+```python
+from examples.advanced.robocasa.app import run
+
+run(
+    task="PrepareCoffee",
+    episode=0,
+    planner="offline",
+    visualize="mjviser",
+    open_browser=True,
+)
+```
+
+The console reads the recorded step count and final success signal from the
+installed `PrepareCoffee` episode. The same simulator Flow can later accept a
+learned policy, memory-backed skill, or TAMP executor instead of the recorded
+demonstration source.
+
+### Execution modes and composite plans
+
+The current public example executes **demonstrated trajectory replay**, which
+is available now. The offline or optional Gemini planner produces an
+allow-listed `SkillPlan`, but `DemoActionSource` supplies recorded states and
+actions from the selected RoboCasa demonstration. Choosing Gemini therefore
+changes the proposed plan structure; it does not turn the replay into a live
+model-generated trajectory.
+
+Composite manifests organize that plan into ordered **subplans**, with one or
+more dependency-ordered **skills** inside each subplan. The dashboard advances
+both levels using curated normalized-progress annotations and preserves passed
+items alongside the current phase. Those phase boundaries are readable replay
+annotations, not independently detected skill-completion events. RoboCasa
+reward and success remain the explicit final verifier.
+For `PrepareCoffee`, the subplans are inspect workspace, position the mug, brew
+coffee, and verify outcome. The curated catalog also names genuine RoboCasa
+composites such as `PackIdenticalLunches`, `LoadDishwasher`,
+`OrganizeCondiments`, `StackBowlsCabinet`, and `RestockPantry`. These entries
+remain visible when their datasets are absent, with the missing requirement
+shown explicitly instead of allowing a launch that will fail.
+
+**Dynamic planner execution is an extension point.** A policy, DMP, TAMP executor,
+or remote planner can replace `DemoActionSource` while preserving the typed
+simulator, event, console, and verification boundaries. The interfaces are
+ready for that integration, but the current public demo does not claim that
+this low-level live-control path is implemented.
+
+The left Retriever panel is a standalone experiment console, not a Viser
+overlay. It communicates with Retriever through a small JSON API and treats the
+renderer as an iframe URL, so another local or remote renderer can replace
+mjviser without changing planning or experiment controls.
+**Run** controls the recorded replay Flow and reports current progress, reward,
+success, and the dataset action norm from `RoboCasaObservation`. **Plan** shows ordered
+subplans and advances their nested skills with the trajectory. **Graph** shows
+the seven typed Retriever stages, and **Events** gives a compact execution and
+verification log. Run also provides a compact planner conversation for text
+goals, planner selection, plan acceptance, and the final verified result. The
+transcript is derived from the same typed Retriever state and events rather
+than owning a parallel command path. The embedded viewport remains dedicated to mjviser's scene
+controls. Use the console **Camera** control for agent-facing, tracked robot,
+and overhead views; disable **Track camera** inside the viewport for a static
+world frame. The optional `--native-viser-controls` panel remains a supported
+Viser-native frontend over the same Retriever state; the standalone console is
+the renderer-independent boundary for portable and remote use.
+
+<figure>
+  <img
+    src="/media/robocasa/retriever-robocasa-web-console.jpg"
+    alt="Retriever replay controls beside a live RoboCasa PrepareCoffee scene in mjviser"
+    loading="lazy"
+    decoding="async"
+  style="display: block; width: 100%; max-width: 64rem; height: auto; margin-inline: auto; border-radius: 0.25rem;"
+  />
+  <figcaption>
+    The pipeline map shows the current Retriever stages while mjviser renders
+    the same RoboCasa state.
+  </figcaption>
+</figure>
+
+<figure>
+  <img
+    src="/media/robocasa/retriever-robocasa-rerun.jpg"
+    alt="Rerun showing Retriever events, simulation metrics, and a RoboCasa camera stream"
+    loading="lazy"
+    decoding="async"
+    style="display: block; width: 100%; max-width: 64rem; height: auto; margin-inline: auto; border-radius: 0.25rem;"
+  />
+  <figcaption>
+    Rerun aligns Retriever events and metrics with the simulator camera stream
+    for debugging and saved-run review.
+  </figcaption>
+</figure>
+
+The launcher is the task-level entry point. Each viewer remains bound to one
+task and keeps the run controls, camera presets, and pipeline map close to the
+simulator state they affect.
+
+The locked simulator environment includes the optional Gemini client. Set
+`GEMINI_API_KEY` to request structured, allow-listed skills. The planner cannot
+execute code or issue arbitrary MuJoCo actions; when credentials are absent or
+an operational request fails, the console receives and labels an
+`offline`-sourced fallback plan.
+
+<details>
+  <summary>Environment setup (usually handled by an AI coding agent)</summary>
+
+Install the checked-in environment, initialize upstream macros, and download
+the selected demonstration:
+
+```bash
+pixi install --locked -e robocasa
+pixi run --locked -e robocasa robosuite-setup-macros
+pixi run --locked -e robocasa robocasa-setup-macros
+pixi run --locked -e robocasa robocasa-download-assets
+pixi run --locked -e robocasa robocasa-download-prepare-coffee
+```
+
+GoldenRetriever owns the dependency lock and runnable commands. Large assets,
+datasets, and machine caches stay outside version control. The larger kitchen
+takes longer than `Lift` to publish to the browser.
+
+</details>
+
+Choose the view by question:
+
+| View | Best for |
+| --- | --- |
+| Native MuJoCo | Fast local interaction on the simulator host. |
+| mjviser | Browser-based inspection of the live 3D MuJoCo scene. |
+| Rerun | Camera frames, Retriever execution, scalars, and saved traces. |
+| MP4 | Compact review artifacts and documentation clips. |
+
+For a compact shareable artifact, `pixi run --locked -e robocasa demo-robocasa-video` writes the
+offscreen camera stream to `logs/robocasa-replay.mp4`. Use this for run review
+or promote a deliberately selected clip into the documentation media folder;
+routine videos remain generated artifacts and stay out of Git.
+
+<figure>
+  <video
+    controls
+    playsInline
+    preload="metadata"
+    poster="/media/robocasa/turn-on-microwave-replay.jpg"
+    style="display: block; width: 100%; max-width: 64rem; height: auto; max-height: 72vh; margin-inline: auto; background: #000; border-radius: 0.5rem;"
+  >
+    <source
+      src="/media/robocasa/turn-on-microwave-replay.mp4"
+      type="video/mp4"
+    />
+    <a href="/media/robocasa/turn-on-microwave-replay.mp4">
+      Download the RoboCasa replay video.
+    </a>
+  </video>
+  <figcaption>
+    Retriever replaying the <code>TurnOnMicrowave</code> demonstration through
+    RoboCasa, captured from the offscreen MuJoCo camera stream.
+  </figcaption>
+</figure>
+
+The recorded action source is intentionally replaceable. A learned policy,
+planner, or memory-backed skill system can emit the same `RoboCasaAction`
+payload without changing the simulator Flow. The existing
+[`openpi_policy`](https://github.com/openretriever/golden-retriever/tree/main/examples/advanced/openpi_policy)
+lane already owns GoldenRetriever's `PolicyObservation -> ActionChunk`
+contract; future policy wiring should add a small action-chunk adapter instead
+of defining another policy interface. See the full setup and expected output
+in [`examples/advanced/robocasa/README.md`](https://github.com/openretriever/golden-retriever/tree/main/examples/advanced/robocasa).
 
 ## Run these in order
 
-Run the visual lane from lightest to heaviest so each layer is verified before the next:
+Run the simulator lanes from lightest to heaviest so each boundary is verified
+before the next:
 
-1. **Render the graph to HTML** — `retriever run demo-pipeline-html-viz` renders the graph structure with no simulator or model.
-2. **Mock robosuite** — `retriever run demo-robosuite-mock` runs the env↔policy loop deterministically, without a robosuite install.
-3. **Real robosuite / Rerun** — swap `mode="robosuite"` (optional dependency) only after the mock trace looks right.
+1. **Mock robosuite** — `pixi run demo-robosuite-mock` runs the env↔policy loop deterministically, without a robosuite install.
+2. **Mock RoboCasa contract** — `pixi run demo-robocasa-mock` verifies the recorded-action → simulator → observation graph without RoboCasa.
+3. **Locked simulator smoke** — `pixi run --locked -e robocasa robocasa-smoke` imports the stack and constructs headless `Lift`.
+4. **Real RoboCasa replay** — `pixi run --locked -e robocasa demo-robocasa-replay` replays the downloaded demonstration.
+5. **Atomic and composite verification** — after downloading `CoffeeSetupMug` and `PrepareCoffee`, `pixi run --locked -e robocasa test-robocasa-replay-data` requires both recorded episodes to reach RoboCasa success.
 
 ## Design notes
 
 Making the environment and policy ordinary Flows keeps timing and handoffs
-visible in the graph instead of hidden in callbacks: the feedback edge, the two
-clock rates, and the sync policies are all inspectable IR. That is why the same
-graph renders to ASCII/HTML *and* runs against either a mock or a real backend.
+visible instead of hiding them in callbacks. The same typed simulator boundary
+runs against either a mock or a real backend, while Retriever recording and
+Rerun expose observations without changing the policy contract.
 
-Heavier visual lanes reuse the same runtime once their dependencies are present:
+GoldenRetriever owns the Flow adapter, dependency lock, runnable examples, and
+public documentation. Large assets, datasets, recordings, and machine-specific
+caches remain outside version control so the repository and Hub manifest stay
+lightweight.
 
-```bash
-pixi run -e twist2 demo-twist2-rerun   # MuJoCo + Rerun viewer (optional, heavy)
-```
+RoboCasa supplies tasks and demonstrations, robosuite composes environments
+and controllers, demonstration mode restores recorded states, and action-replay
+mode advances MuJoCo. Retriever orchestrates typed policy and simulator Flows,
+and a replaceable renderer adapter projects that run into the view needed for
+debugging.
 
-Source: `examples/advanced/robosuite_lift/app.py` and
-`examples/experimental/visualization/visualize_pipeline.py`.
+The public console has no ROS or Isaac Sim dependency. It is tested
+interactively on macOS; Linux is the intended headless target. WSL2 is
+experimental and currently unverified.
+
+Source: `examples/advanced/robocasa/robosuite_lift.py`,
+`examples/advanced/robocasa/app.py`,
+`examples/advanced/robocasa/launcher.py`,
+`examples/advanced/robocasa/web_console.py`, and
+`examples/advanced/robocasa/mjviser_bridge.py`.

@@ -96,10 +96,10 @@ class MockPolicyMLP(nn.Module):
 # FLOWS
 # ============================================================================
 
-class RobotSimFlow(Flow[None, RobotState]):
+class RobotStateSource(Flow[None, RobotState]):
     def init(self):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        print(f"[RobotSim] Running on {self.device}")
+        print(f"[Robot] Running on {self.device}")
         
     def run(self, _):
         q = torch.randn(7, device=self.device)
@@ -180,7 +180,7 @@ def main():
     
     print("Creating flows...")
     # Sources
-    robot = RobotSimFlow() @ Rate(hz=100)
+    robot = RobotStateSource() @ Rate(hz=100)
     camera = CameraSimFlow() @ Rate(hz=10)
     
     # Compute

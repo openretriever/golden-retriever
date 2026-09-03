@@ -155,10 +155,13 @@ dora-rs-cli = "==0.3.13"
 onnxruntime = "*"
 mujoco = "*"
 rerun-sdk = "*"
+fastapi = ">=0.100.0"
+uvicorn = { version = "*", extras = ["standard"] }
 
 [feature.twist2.tasks]
 demo-twist2 = { cmd = "mjpython examples/advanced/twist2_simulation/app.py", env = { PYTHONPATH = "." } }
 demo-twist2-rerun = { cmd = "python examples/advanced/twist2_simulation/app.py --no-viewer", env = { PYTHONPATH = "." } }
+demo-twist2-web = { cmd = "python -m examples.advanced.twist2_web_simulation.app", env = { PYTHONPATH = "." } }
 
 # -----------------------------------------------------------------------------
 # Optional: Simulation test stack (lean, CI-gating)
@@ -171,6 +174,58 @@ mujoco = "*"
 
 [feature.simulation_test.tasks]
 test-simulation = { cmd = "python -m pytest tests/examples/test_mujoco_manipulation_convergence.py", env = { PYTHONPATH = "." } }
+
+# -----------------------------------------------------------------------------
+# Optional: RoboCasa replay and browser console
+# -----------------------------------------------------------------------------
+[feature.robocasa]
+system-requirements = { libc = "2.31" }
+
+[feature.robocasa.dependencies]
+numpy = "2.2.5.*"
+av = "15.1.*"
+ffmpeg = "7.1.1.*"
+opencv = "4.12.*"
+
+[feature.robocasa.pypi-dependencies]
+robosuite = { git = "https://github.com/ARISE-Initiative/robosuite.git", rev = "5ce6643f3092639d08f7b0f90ed1c6a84f50552c" }
+robocasa = { git = "https://github.com/robocasa/robocasa.git", rev = "921c9a5736a8d0ea5589657898aadcfa55a6a195" }
+mujoco = "==3.3.1"
+mjviser = "==0.0.14"
+viser = ">=1.0.30,<2"
+rerun-sdk = "==0.22.1"
+fastapi = ">=0.116,<1"
+uvicorn = { version = ">=0.35,<1", extras = ["standard"] }
+google-genai = "==1.72.0"
+
+[feature.robocasa.pypi-options.dependency-overrides]
+mujoco = "==3.3.1"
+
+[feature.robocasa.tasks]
+robocasa-smoke = { cmd = "python -m examples.advanced.robocasa.doctor", env = { PYTHONPATH = "." } }
+test-robocasa-launcher = { cmd = "python -m pytest -q tests/examples/test_robocasa_launcher.py", env = { PYTHONPATH = "." } }
+test-robocasa-replay-data = { cmd = "python -m pytest -q tests/examples/test_robocasa_replay_data.py", env = { PYTHONPATH = ".", RUN_ROBOCASA_DATA_TESTS = "1" } }
+robosuite-setup-macros = "python -m robosuite.scripts.setup_macros"
+robocasa-setup-macros = "python -m robocasa.scripts.setup_macros"
+robocasa-download-assets = "python -m robocasa.scripts.download_kitchen_assets"
+robocasa-download-coffee-setup-mug = "python -m robocasa.scripts.download_datasets --tasks CoffeeSetupMug --split pretrain --source human"
+robocasa-download-turn-on-microwave = "python -m robocasa.scripts.download_datasets --tasks TurnOnMicrowave --split pretrain --source human"
+robocasa-download-prepare-coffee = "python -m robocasa.scripts.download_datasets --tasks PrepareCoffee --split pretrain --source human"
+demo-robosuite-lift = { cmd = "python -m examples.advanced.robocasa.robosuite_lift --mode robosuite --steps 80 --dt 0.05", env = { PYTHONPATH = "." } }
+demo-robosuite-web = { cmd = "python -m examples.advanced.robocasa.robosuite_lift --mode robosuite --visualize mjviser --steps 1200 --dt 0.05", env = { PYTHONPATH = "." } }
+demo-robocasa-replay = { cmd = "python -m examples.advanced.robocasa.app --mode robocasa --task TurnOnMicrowave --seconds 45", env = { PYTHONPATH = "." } }
+demo-robocasa-web = { cmd = "python -m examples.advanced.robocasa.app --mode robocasa --task TurnOnMicrowave --seconds 60 --visualize mjviser", env = { PYTHONPATH = "." } }
+demo-robocasa-composite-web = { cmd = "python -m examples.advanced.robocasa.app --mode robocasa --task PrepareCoffee --seconds 120 --visualize mjviser", env = { PYTHONPATH = "." } }
+demo-robocasa-scenes = { cmd = "python -m examples.advanced.robocasa.launcher", env = { PYTHONPATH = "." } }
+demo-robocasa-rerun = { cmd = "python -m examples.advanced.robocasa.app --mode robocasa --task TurnOnMicrowave --seconds 45 --visualize rerun", env = { PYTHONPATH = "." } }
+demo-robocasa-record = { cmd = "python -m examples.advanced.robocasa.app --mode robocasa --task TurnOnMicrowave --seconds 45 --visualize rerun --rerun-mode record --recording logs/robocasa-replay.rrd", env = { PYTHONPATH = "." } }
+demo-robocasa-video = { cmd = "python -m examples.advanced.robocasa.app --mode robocasa --task TurnOnMicrowave --seconds 45 --video logs/robocasa-replay.mp4", env = { PYTHONPATH = "." } }
+
+[feature.robocasa.target.osx-arm64.tasks]
+robocasa-inspect = { cmd = "mjpython -m examples.advanced.robocasa.robosuite_inspection", env = { PYTHONPATH = "." } }
+
+[feature.robocasa.target.linux-64.tasks]
+robocasa-inspect = { cmd = "python -m examples.advanced.robocasa.robosuite_inspection", env = { PYTHONPATH = "." } }
 
 # -----------------------------------------------------------------------------
 # Optional: VLM planning stack
@@ -259,6 +314,7 @@ llm = { features = ["py311", "bundled_core", "golden_retriever", "vlm_planning"]
 torch = { features = ["py311", "bundled_core", "golden_retriever", "cpu"] }
 twist2 = { features = ["py311", "bundled_core", "twist2"] }
 simulation-test = { features = ["py311", "bundled_core", "simulation_test"] }
+robocasa = { features = ["py311", "bundled_core", "cpu", "robocasa"] }
 cpu = { features = ["py311", "bundled_core", "cpu"] }
 gpu = { features = ["py311", "bundled_core", "gpu"] }
 ros = { features = ["bundled_core", "ros"] }
@@ -317,8 +373,8 @@ demo-composable-pipelines = { cmd = "python examples/advanced/core_composition/c
 demo-golden-hub-pack = { cmd = "python examples/advanced/core_composition/golden_hub_pack_smoke.py", env = { PYTHONPATH = "." } }
 demo-webcam-rerun = { cmd = "python examples/advanced/webcam_rerun/app.py", env = { PYTHONPATH = "." } }
 demo-pi05-mock = { cmd = "python -m examples.advanced.openpi_policy.app --mode mock --steps 8 --dt 0.1", env = { PYTHONPATH = "." } }
-demo-robosuite-mock = { cmd = "python -m examples.advanced.robosuite_lift.app --mode mock --steps 12 --dt 0.05", env = { PYTHONPATH = "." } }
-demo-robosuite-lift = { cmd = "python -m examples.advanced.robosuite_lift.app --mode robosuite --steps 80 --dt 0.05", env = { PYTHONPATH = "." } }
+demo-robosuite-mock = { cmd = "python -m examples.advanced.robocasa.robosuite_lift --mode mock --steps 20 --dt 0.05", env = { PYTHONPATH = "." } }
+demo-robocasa-mock = { cmd = "python -m examples.advanced.robocasa.app --mode mock --steps 14", env = { PYTHONPATH = "." } }
 demo-pipeline-html-viz = { cmd = "python examples/experimental/visualization/visualize_pipeline.py", env = { PYTHONPATH = "." } }
 public-surface-check = { cmd = "python scripts/release/check_public_surface.py", env = { PYTHONPATH = "." } }
 demo-hierarchical-vla = { cmd = "python examples/advanced/hierarchical_vla/app.py --backend multiprocessing", env = { PYTHONPATH = "." } }

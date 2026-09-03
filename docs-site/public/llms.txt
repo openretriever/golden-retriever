@@ -8,7 +8,8 @@ GoldenRetriever is the maintained applied reference layer for Retriever: robot-f
 - GoldenRetriever overview: https://golden.retriever.build/
 - GoldenRetriever Hub proof: https://golden.retriever.build/examples/golden-hub-proof/
 - GoldenRetriever example catalog: https://golden.retriever.build/examples/
-- GoldenRetriever simulation and visualization guide: https://golden.retriever.build/examples/simulation-visualization/
+- GoldenRetriever pipeline debugging guide: https://golden.retriever.build/examples/pipeline-debugging/
+- GoldenRetriever simulation and replay guide: https://golden.retriever.build/examples/simulation-visualization/
 - GoldenRetriever Hub reference: https://golden.retriever.build/hub/
 - GoldenRetriever export catalog: https://golden.retriever.build/hub/export-catalog/
 - GoldenRetriever pack roadmap: https://golden.retriever.build/hub/pack-roadmap/
@@ -21,7 +22,7 @@ GoldenRetriever is not a second runtime package. GoldenRetriever maintains robot
 ## Canonical Path
 
 1. Run `pixi run demo-golden-hub-pack` to prove the GoldenRetriever Hub extension boundary.
-2. Continue to the example catalog for perception, memory, language, composition, simulation, visualization, and robot payload and Hub pack examples.
+2. Continue to the example catalog for perception, memory, language, composition, pipeline debugging, simulation, robot payload, and Hub pack examples.
 3. Use the core Retriever docs only when Flow, Pipeline, clocks, sync, replay, or Hub-loader mechanics are the question.
 4. Promote source examples into Hub packs only when they are import-safe, versioned, smoke-tested, documented, and useful outside this repository.
 
@@ -40,24 +41,25 @@ WorldState = hub.use("openretriever/golden-retriever:WorldState")
 Run this sequence from a GoldenRetriever source checkout when you need a safe public smoke pass:
 
 ```bash
-pixi run demo-golden-hub-pack
+retriever run demo-golden-hub-pack
 pixi run -e golden-retriever demo-perception-detection-flow
 pixi run demo-robosuite-mock
-pixi run demo-pipeline-html-viz
-pixi run demo-robotics-typing-catalog
+pixi run demo-robocasa-mock
+retriever run demo-pipeline-html-viz
+retriever run demo-robotics-typing-catalog
 ```
 
-Expected artifacts: Hub export/registry/Arrow terminal proof, exit-zero synthetic perception flow, `[mock step=...]` robosuite trace lines, `out/golden_retriever_closed_loop_viz.html`, and robot payload catalog output.
+Expected artifacts: Hub export/registry/Arrow terminal proof, exit-zero synthetic perception flow, `[mock step=...]` robosuite and RoboCasa trace lines, `out/golden_retriever_closed_loop_viz.html`, and robot payload catalog output.
 
 ## Agent Decision Table
 
 | If the user asks for... | Start with | Do not start with |
 | --- | --- | --- |
-| A safe GoldenRetriever smoke | `pixi run demo-golden-hub-pack` | camera, simulator, model, or network setup |
+| A safe GoldenRetriever smoke | `retriever run demo-golden-hub-pack` | camera, simulator, model, or network setup |
 | Example behavior | `pixi run -e golden-retriever demo-perception-detection-flow` | optional model-backed lanes |
-| Simulator integration | `pixi run demo-robosuite-mock` | real robosuite until the mock trace works |
-| Graph visualization | `pixi run demo-pipeline-html-viz` | screenshots or stale generated HTML |
-| Robot payload reuse | `pixi run demo-robotics-typing-catalog` | ad hoc dict payloads or source-only imports |
+| Simulator integration | `pixi run demo-robocasa-mock` | real RoboCasa until the typed mock trace works |
+| Graph visualization | `retriever run demo-pipeline-html-viz` | screenshots or stale generated HTML |
+| Robot payload reuse | `retriever run demo-robotics-typing-catalog` | ad hoc dict payloads or source-only imports |
 
 If a safe command fails, keep the example, task, docs, and expected output aligned before promoting a new command.
 
@@ -66,9 +68,11 @@ If a safe command fails, keep the example, task, docs, and expected output align
 Only start these when the user explicitly asks for the relevant environment:
 
 - Webcam/Rerun: `pixi run -e torch demo-webcam-rerun`
-- TWIST2/MuJoCo: `pixi run -e twist2 demo-twist2-rerun`
-- Robosuite mock + HTML graph visualization: use the GoldenRetriever simulation and visualization guide.
-- Real robosuite Lift: install the optional robosuite dependency first, then run `pixi run demo-robosuite-lift`
+- Pipeline topology and HTML graph visualization: use the GoldenRetriever pipeline debugging guide.
+- Robosuite and RoboCasa integration: use the GoldenRetriever simulation and replay guide.
+- Real robosuite Lift: install the locked environment with `pixi install --locked -e robocasa`, then run `pixi run --locked -e robocasa demo-robosuite-lift`.
+- Real RoboCasa replay: follow the simulation guide's asset and dataset setup, then run `pixi run --locked -e robocasa demo-robocasa-replay`.
+- Headless RoboCasa trace: add `--visualize rerun --rerun-mode record --recording <path>.rrd` and inspect the artifact locally later.
 - Model-backed perception/memory: use the documented optional model-backed examples after the mock path is green.
 
 ## Agent Guidance

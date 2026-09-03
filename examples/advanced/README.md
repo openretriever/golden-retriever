@@ -72,7 +72,7 @@ pixi run -e twist2 demo-twist2-rerun
 
 - `webcam_rerun/`: webcam or mock perception with Rerun visualization and record/replay helpers.
 - `twist2_simulation/`: MuJoCo/TWIST2 simulator integration with Rerun and optional native viewer.
-- `robosuite_lift/`: mock-safe robosuite Lift smoke path plus optional real robosuite mode.
+- `robocasa/`: self-contained mock-safe RoboSuite Lift smoke, real RoboCasa replay, and Rerun recording paths.
 - `mujoco_manipulation/`: MuJoCo manipulation with Rerun logging.
 - `hierarchical_physics_demo/`: Rerun plus HTML pipeline visualization for physics demos.
 - `../experimental/visualization/`: deterministic IR/HTML pipeline visualization utility.
@@ -87,7 +87,7 @@ pixi run -e twist2 demo-twist2-rerun
 - `functional_wiring/README.md`: composition, fan-in/fan-out, and surfaced builders.
 - `core_composition/README.md`: registry-backed pipeline composition surfaces (`pixi run -e golden-retriever demo-composable-pipelines`).
 - `closed_loop_planning/README.md`: extracted belief, monitoring, and replanning patterns from the old prototype.
-- `robosuite_lift/README.md`: mock-safe robosuite smoke demo and optional real-mode setup.
+- `robocasa/README.md`: mock-safe RoboSuite prerequisite plus real RoboCasa and Rerun setup.
 - `robotics_typing_standard/README.md`: typed payload and data-spec demos.
 - `../../notebooks/README.md` (repo root): git-friendly notebook workflow for a small mechanics demo; keep the main runnable progression in the advanced example families above.
 

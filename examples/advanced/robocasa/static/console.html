@@ -1,0 +1,1243 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Retriever Embodied Demo Console</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family:
+          Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        color: #172033;
+        background: #e9edf1;
+        font-synthesis: none;
+        letter-spacing: 0;
+        --ink: #172033;
+        --muted: #687386;
+        --line: #d9dfe6;
+        --line-strong: #bdc7d2;
+        --panel: #ffffff;
+        --surface: #f5f7f9;
+        --blue: #246fba;
+        --blue-soft: #e8f2fc;
+        --green: #21864a;
+        --green-soft: #e9f6ed;
+        --amber: #a66a07;
+        --amber-soft: #fff5dc;
+        --red: #b0443d;
+        --red-soft: #fcecea;
+        --rail-width: 360px;
+      }
+
+      * { box-sizing: border-box; }
+      html, body { width: 100%; min-width: 320px; min-height: 100%; }
+      body { margin: 0; overflow: hidden; }
+      button, input, select { font: inherit; letter-spacing: 0; }
+      button, select { cursor: pointer; }
+      button:disabled, select:disabled { cursor: default; opacity: 0.48; }
+      button:focus-visible, input:focus-visible, select:focus-visible, [role="tab"]:focus-visible {
+        outline: 2px solid #2f82d3;
+        outline-offset: 2px;
+      }
+
+      .app {
+        width: 100vw;
+        height: 100vh;
+        display: grid;
+        grid-template-columns: var(--rail-width) minmax(0, 1fr);
+        background: #111820;
+      }
+
+      .rail {
+        min-width: 0;
+        height: 100vh;
+        display: grid;
+        grid-template-rows: auto auto minmax(0, 1fr);
+        background: var(--panel);
+        border-right: 1px solid var(--line);
+        z-index: 5;
+      }
+
+      .rail-header { padding: 18px 18px 14px; }
+      .brand-row { display: flex; align-items: center; gap: 10px; min-width: 0; }
+      .brand-mark { width: 11px; height: 11px; flex: 0 0 auto; border-radius: 2px; background: #d5a61f; }
+      .brand { min-width: 0; font-size: 15px; font-weight: 760; color: var(--ink); }
+      .brand-subtitle { margin-left: auto; color: var(--muted); font-size: 11px; font-weight: 700; text-transform: uppercase; }
+      .task-name {
+        margin: 16px 0 0;
+        min-height: 24px;
+        overflow-wrap: anywhere;
+        color: var(--ink);
+        font-size: 20px;
+        line-height: 1.2;
+        font-weight: 720;
+      }
+      .episode-line { display: flex; align-items: center; gap: 8px; min-width: 0; margin-top: 7px; color: var(--muted); font-size: 12px; }
+      .connection-dot { width: 7px; height: 7px; flex: 0 0 auto; border-radius: 50%; background: #909aa7; }
+      .connection-dot[data-state="connected"] { background: var(--green); }
+      .connection-dot[data-state="connecting"] { background: var(--amber); }
+      .connection-dot[data-state="disconnected"] { background: var(--red); }
+      #connection-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+      .tabs {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        padding: 0 12px;
+        border-bottom: 1px solid var(--line);
+      }
+      .tab {
+        min-width: 0;
+        height: 42px;
+        padding: 0 5px;
+        border: 0;
+        border-bottom: 2px solid transparent;
+        background: transparent;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .tab:hover { color: var(--ink); }
+      .tab[aria-selected="true"] { border-bottom-color: var(--blue); color: var(--blue); }
+
+      .panels { min-height: 0; overflow: hidden; }
+      .panel { display: none; height: 100%; overflow-y: auto; overscroll-behavior: contain; padding: 16px 18px 24px; }
+      .panel[aria-hidden="false"] { display: block; }
+      .section { padding: 0 0 18px; margin: 0 0 18px; border-bottom: 1px solid var(--line); }
+      .section:last-child { margin-bottom: 0; border-bottom: 0; }
+      .section-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin: 0 0 11px;
+        color: #4f5d70;
+        font-size: 11px;
+        font-weight: 760;
+        text-transform: uppercase;
+      }
+
+      .status-row { display: flex; align-items: center; gap: 10px; min-width: 0; margin-bottom: 14px; }
+      .status-badge {
+        max-width: 100%;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 5px 8px;
+        border-radius: 4px;
+        background: var(--surface);
+        color: #49576a;
+        font-size: 12px;
+        font-weight: 760;
+        text-transform: capitalize;
+      }
+      .status-badge::before { content: ""; width: 7px; height: 7px; flex: 0 0 auto; border-radius: 50%; background: #8994a2; }
+      .status-badge[data-tone="running"] { background: var(--blue-soft); color: #155f9f; }
+      .status-badge[data-tone="running"]::before { background: var(--blue); }
+      .status-badge[data-tone="paused"] { background: var(--amber-soft); color: var(--amber); }
+      .status-badge[data-tone="paused"]::before { background: #cc850f; }
+      .status-badge[data-tone="success"] { background: var(--green-soft); color: var(--green); }
+      .status-badge[data-tone="success"]::before { background: var(--green); }
+      .status-badge[data-tone="error"] { background: var(--red-soft); color: var(--red); }
+      .status-badge[data-tone="error"]::before { background: var(--red); }
+
+      .metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 5px; }
+      .metric { min-width: 0; padding: 10px 9px; border-right: 1px solid var(--line); }
+      .metric:nth-child(3n) { border-right: 0; }
+      .metric:nth-child(n + 4) { border-top: 1px solid var(--line); }
+      .metric-label { display: block; margin-bottom: 4px; color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; }
+      .metric-value { display: block; overflow: hidden; color: var(--ink); font-size: 15px; line-height: 1.2; font-variant-numeric: tabular-nums; text-overflow: ellipsis; white-space: nowrap; }
+      .metric-value.success { color: var(--green); }
+
+      .progress-head { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 7px; color: var(--muted); font-size: 11px; }
+      .progress-head strong { color: var(--ink); font-variant-numeric: tabular-nums; }
+      .progress-track { width: 100%; height: 6px; overflow: hidden; border-radius: 3px; background: #e5eaf0; }
+      .progress-fill { width: 0; height: 100%; border-radius: inherit; background: var(--blue); transition: width 160ms linear; }
+
+      .segmented { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--line-strong); border-radius: 5px; overflow: hidden; }
+      .segment { min-width: 0; height: 34px; padding: 0 5px; border: 0; border-right: 1px solid var(--line-strong); background: #fff; color: #4a586a; font-size: 11px; font-weight: 700; }
+      .segment:last-child { border-right: 0; }
+      .segment:hover { background: var(--surface); }
+      .segment[aria-pressed="true"] { background: #e9f2fb; color: #175f9e; box-shadow: inset 0 0 0 1px var(--blue); }
+
+      .command-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+      .command {
+        min-width: 0;
+        height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 0 8px;
+        border: 1px solid var(--line-strong);
+        border-radius: 5px;
+        background: #fff;
+        color: #334155;
+        font-size: 11px;
+        font-weight: 720;
+        white-space: nowrap;
+      }
+      .command:hover { background: var(--surface); border-color: #99a8b8; }
+      .command svg { width: 15px; height: 15px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+      .command.primary { border-color: var(--blue); background: var(--blue); color: #fff; }
+      .command.primary:hover { background: #1e62a3; }
+      .command.danger { color: #98433d; }
+      .run-settings { display: grid; grid-template-columns: minmax(0, 1fr) 108px; gap: 8px; align-items: end; }
+
+      label { display: grid; min-width: 0; gap: 6px; color: var(--muted); font-size: 11px; font-weight: 700; }
+      input, select {
+        width: 100%;
+        height: 37px;
+        min-width: 0;
+        border: 1px solid var(--line-strong);
+        border-radius: 5px;
+        background: #fff;
+        color: var(--ink);
+        padding: 0 10px;
+      }
+      input::placeholder { color: #98a2ae; }
+      .conversation-log {
+        max-height: 190px;
+        display: grid;
+        gap: 8px;
+        margin-bottom: 10px;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-gutter: stable;
+      }
+      .message {
+        width: fit-content;
+        max-width: 92%;
+        padding: 8px 10px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--surface);
+        color: #334155;
+        font-size: 11px;
+        line-height: 1.45;
+        overflow-wrap: anywhere;
+      }
+      .message[data-role="user"] {
+        justify-self: end;
+        border-color: #b8d1e9;
+        background: var(--blue-soft);
+        color: #174f83;
+      }
+      .message[data-tone="error"] {
+        border-color: #e4b9b5;
+        background: var(--red-soft);
+        color: #8c3933;
+      }
+      .message-meta {
+        display: block;
+        margin-bottom: 3px;
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 760;
+        text-transform: uppercase;
+      }
+      .goal-form { display: grid; gap: 8px; }
+      .goal-composer { display: grid; grid-template-columns: minmax(0, 1fr) 40px; gap: 7px; }
+      .goal-composer .command { width: 40px; padding: 0; }
+      .goal-form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .goal-submit { width: 100%; }
+
+      .plan-summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 15px; }
+      .plan-source { color: var(--muted); font-size: 11px; }
+      .plan-source strong { color: var(--ink); text-transform: capitalize; }
+      .plan-list { position: relative; display: grid; gap: 18px; }
+      .plan-stage { min-width: 0; }
+      .stage-header {
+        display: grid;
+        grid-template-columns: 22px minmax(0, 1fr) auto;
+        gap: 8px;
+        align-items: center;
+        min-width: 0;
+        margin-bottom: 9px;
+        color: #526174;
+      }
+      .stage-index {
+        width: 22px;
+        height: 22px;
+        display: grid;
+        place-items: center;
+        border: 1px solid var(--line-strong);
+        border-radius: 4px;
+        background: var(--surface);
+        font-size: 10px;
+        font-weight: 780;
+      }
+      .plan-stage[data-state="active"] .stage-index { border-color: var(--blue); background: var(--blue-soft); color: var(--blue); }
+      .plan-stage[data-state="complete"] .stage-index { border-color: #86b997; background: var(--green-soft); color: var(--green); }
+      .plan-stage[data-state="failed"] .stage-index { border-color: #d88a82; background: #fff1ef; color: var(--red); }
+      .stage-title { min-width: 0; overflow-wrap: anywhere; color: var(--ink); font-size: 12px; font-weight: 760; }
+      .stage-state { color: var(--muted); font-size: 9px; font-weight: 760; text-transform: uppercase; }
+      .plan-stage[data-state="active"] .stage-state { color: var(--blue); }
+      .plan-stage[data-state="complete"] .stage-state { color: var(--green); }
+      .plan-stage[data-state="failed"] .stage-state { color: var(--red); }
+      .stage-list { position: relative; display: grid; gap: 0; margin-left: 10px; padding-left: 11px; border-left: 1px solid var(--line); }
+      .plan-step { position: relative; display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 10px; min-width: 0; padding-bottom: 16px; }
+      .plan-step:last-child { padding-bottom: 0; }
+      .plan-step:not(:last-child)::before { content: ""; position: absolute; left: 11px; top: 23px; bottom: 0; width: 2px; background: var(--line); }
+      .plan-step[data-state="complete"]:not(:last-child)::before { background: #78bd91; }
+      .step-index {
+        position: relative;
+        z-index: 1;
+        width: 24px;
+        height: 24px;
+        display: grid;
+        place-items: center;
+        border: 1px solid var(--line-strong);
+        border-radius: 50%;
+        background: #fff;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 780;
+      }
+      .plan-step[data-state="active"] .step-index { border-color: var(--blue); background: var(--blue); color: #fff; }
+      .plan-step[data-state="complete"] .step-index { border-color: var(--green); background: var(--green-soft); color: var(--green); }
+      .plan-step[data-state="failed"] .step-index { border-color: var(--red); background: #fff1ef; color: var(--red); }
+      .step-body { min-width: 0; padding-top: 1px; }
+      .step-label { margin: 0 0 4px; overflow-wrap: anywhere; color: var(--ink); font-size: 12px; line-height: 1.35; font-weight: 700; }
+      .plan-step[data-state="pending"] .step-label { color: #6d7887; font-weight: 620; }
+      .step-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 9px; color: var(--muted); font-size: 10px; }
+      .skill-tag { padding: 2px 5px; border-radius: 3px; background: #edf1f5; color: #465468; font-weight: 740; }
+
+      .graph { display: grid; justify-items: stretch; padding: 2px 0; }
+      .graph-node {
+        min-width: 0;
+        padding: 9px 10px;
+        border: 1px solid var(--line-strong);
+        border-radius: 5px;
+        background: #fff;
+      }
+      .graph-node[data-state="active"] { border-color: var(--blue); box-shadow: inset 3px 0 var(--blue); background: #f5f9fd; }
+      .graph-node[data-state="complete"] { border-color: #92bea1; box-shadow: inset 3px 0 var(--green); }
+      .graph-node[data-state="failed"] { border-color: #d88a82; box-shadow: inset 3px 0 var(--red); background: #fff8f7; }
+      .graph-name { display: block; min-width: 0; overflow-wrap: anywhere; color: var(--ink); font-size: 12px; font-weight: 740; }
+      .graph-role { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; }
+      .graph-arrow { height: 18px; display: grid; place-items: center; color: #8c98a7; font-size: 14px; line-height: 1; }
+
+      .events-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; }
+      .events-head h2 { margin: 0; font-size: 14px; }
+      .event-count { color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+      .event-list { display: grid; }
+      .event { min-width: 0; display: grid; grid-template-columns: 8px minmax(0, 1fr) auto; gap: 8px; padding: 9px 0; border-bottom: 1px solid #e7ebef; }
+      .event:last-child { border-bottom: 0; }
+      .event-dot { width: 7px; height: 7px; margin-top: 4px; border-radius: 50%; background: #8d98a6; }
+      .event[data-tone="running"] .event-dot { background: var(--blue); }
+      .event[data-tone="success"] .event-dot { background: var(--green); }
+      .event[data-tone="error"] .event-dot { background: var(--red); }
+      .event[data-tone="paused"] .event-dot { background: var(--amber); }
+      .event-body { min-width: 0; }
+      .event-message { margin: 0; overflow-wrap: anywhere; color: #334155; font-size: 11px; line-height: 1.4; }
+      .event-meta { display: flex; flex-wrap: wrap; gap: 5px 8px; margin-top: 3px; color: var(--muted); font-size: 9px; text-transform: uppercase; }
+      .event-time { padding-top: 1px; color: var(--muted); font-size: 10px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+      .empty { padding: 24px 8px; color: var(--muted); font-size: 12px; line-height: 1.5; text-align: center; }
+
+      .viewer { position: relative; min-width: 0; min-height: 0; overflow: hidden; background: #111820; }
+      .viewer iframe { width: 100%; height: 100%; display: block; border: 0; background: #111820; }
+      .viewer-overlay {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        padding: 28px;
+        background: #161e27;
+        color: #e8edf2;
+        transition: opacity 180ms ease;
+      }
+      .viewer-overlay[hidden] { display: none; }
+      .viewer-state { max-width: 430px; text-align: center; }
+      .viewer-spinner { width: 24px; height: 24px; margin: 0 auto 14px; border: 2px solid #4c5968; border-top-color: #d5a61f; border-radius: 50%; animation: spin 900ms linear infinite; }
+      .viewer-overlay[data-state="disconnected"] .viewer-spinner { animation: none; border-color: #6f3d3d; background: #bd5149; }
+      .viewer-overlay[data-state="waiting"] .viewer-spinner { animation: none; border-color: #697686; border-top-color: #697686; }
+      .viewer-title { margin: 0 0 6px; font-size: 15px; font-weight: 720; }
+      .viewer-detail { margin: 0; color: #aab4bf; font-size: 12px; line-height: 1.5; }
+      .viewer-topbar {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        right: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        pointer-events: none;
+      }
+      .viewer-label, .viewer-live {
+        min-width: 0;
+        padding: 6px 8px;
+        border: 1px solid rgba(255, 255, 255, 0.13);
+        border-radius: 4px;
+        background: rgba(17, 24, 32, 0.84);
+        color: #e6ebf0;
+        font-size: 10px;
+        font-weight: 700;
+        backdrop-filter: blur(6px);
+      }
+      .viewer-label { max-width: 65%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .viewer-live { display: inline-flex; align-items: center; gap: 6px; text-transform: uppercase; }
+      .viewer-live::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #8b96a4; }
+      .viewer-live[data-state="connected"]::before { background: #4fc274; }
+      .viewer-live[data-state="disconnected"]::before { background: #e2665f; }
+      .toast {
+        position: absolute;
+        left: 50%;
+        bottom: 18px;
+        max-width: min(420px, calc(100% - 32px));
+        transform: translate(-50%, 10px);
+        padding: 9px 12px;
+        border-radius: 5px;
+        background: rgba(17, 24, 32, 0.94);
+        color: #fff;
+        font-size: 11px;
+        line-height: 1.4;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 140ms ease, transform 140ms ease;
+      }
+      .toast.visible { opacity: 1; transform: translate(-50%, 0); }
+      .toast.error { background: rgba(139, 48, 43, 0.96); }
+      .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      @media (max-width: 760px) {
+        body { overflow: auto; }
+        .app { width: 100%; height: auto; min-height: 100vh; grid-template-columns: 1fr; grid-template-rows: minmax(360px, 54vh) minmax(430px, 46vh); }
+        .viewer { grid-row: 1; }
+        .rail { grid-row: 2; width: 100%; height: auto; min-height: 430px; max-height: none; border-right: 0; border-top: 1px solid var(--line); }
+        .rail-header { padding: 13px 16px 10px; }
+        .task-name { margin-top: 10px; min-height: 21px; font-size: 17px; }
+        .panel { padding: 14px 16px 24px; }
+        .tabs { position: sticky; top: 0; z-index: 3; background: #fff; }
+      }
+
+      @media (max-width: 420px) {
+        .app { grid-template-rows: minmax(300px, 48vh) minmax(480px, 52vh); }
+        .brand-subtitle { display: none; }
+        .run-settings, .goal-form-row { grid-template-columns: 1fr; }
+        .command { gap: 4px; padding: 0 5px; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="rail" aria-label="Retriever demo controls">
+        <header class="rail-header">
+          <div class="brand-row">
+            <span class="brand-mark" aria-hidden="true"></span>
+            <span class="brand">Retriever</span>
+            <span class="brand-subtitle">Embodied Demo</span>
+          </div>
+          <h1 class="task-name" id="task-name">Loading task...</h1>
+          <div class="episode-line">
+            <span class="connection-dot" id="connection-dot" data-state="connecting" aria-hidden="true"></span>
+            <span id="connection-text">Connecting to console</span>
+          </div>
+        </header>
+
+        <div class="tabs" role="tablist" aria-label="Console views">
+          <button class="tab" id="tab-run" role="tab" aria-selected="true" aria-controls="panel-run" tabindex="0">Run</button>
+          <button class="tab" id="tab-plan" role="tab" aria-selected="false" aria-controls="panel-plan" tabindex="-1">Plan</button>
+          <button class="tab" id="tab-graph" role="tab" aria-selected="false" aria-controls="panel-graph" tabindex="-1">Graph</button>
+          <button class="tab" id="tab-events" role="tab" aria-selected="false" aria-controls="panel-events" tabindex="-1">Events</button>
+        </div>
+
+        <div class="panels">
+          <section class="panel" id="panel-run" role="tabpanel" aria-labelledby="tab-run" aria-hidden="false">
+            <div class="section">
+              <div class="section-title"><span>Execution</span><span id="current-skill">No active skill</span></div>
+              <div class="status-row">
+                <span class="status-badge" id="status-badge" data-tone="idle">Connecting</span>
+              </div>
+              <div class="metrics" aria-label="Run metrics">
+                <div class="metric"><span class="metric-label">Step</span><span class="metric-value" id="metric-step">-- / --</span></div>
+                <div class="metric"><span class="metric-label">Cycle</span><span class="metric-value" id="metric-cycle">--</span></div>
+                <div class="metric"><span class="metric-label">Speed</span><span class="metric-value" id="metric-speed">--</span></div>
+                <div class="metric"><span class="metric-label">Reward</span><span class="metric-value" id="metric-reward">--</span></div>
+                <div class="metric"><span class="metric-label">Dataset action norm</span><span class="metric-value" id="metric-action">--</span></div>
+                <div class="metric"><span class="metric-label">Success</span><span class="metric-value" id="metric-success">--</span></div>
+              </div>
+            </div>
+
+            <div class="section">
+              <div class="progress-head"><span>Episode progress</span><strong id="progress-value">0%</strong></div>
+              <div class="progress-track" role="progressbar" id="progress-track" aria-label="Episode progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                <div class="progress-fill" id="progress-fill"></div>
+              </div>
+            </div>
+
+            <div class="section" id="camera-section">
+              <h2 class="section-title">Camera</h2>
+              <div class="segmented" role="group" aria-label="Camera preset">
+                <button class="segment" type="button" data-camera="Robot" aria-pressed="true" title="Use the robot camera">Robot</button>
+                <button class="segment" type="button" data-camera="Agent" aria-pressed="false" title="Use the agent camera">Agent</button>
+                <button class="segment" type="button" data-camera="Overview" aria-pressed="false" title="Use the overview camera">Overview</button>
+              </div>
+            </div>
+
+            <div class="section">
+              <h2 class="section-title">Commands</h2>
+              <div class="command-grid">
+                <button class="command primary" type="button" id="pause-resume" title="Pause execution">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path id="pause-resume-icon" d="M8 5v14M16 5v14" /></svg>
+                  <span id="pause-resume-label">Pause</span>
+                </button>
+                <button class="command" type="button" id="step-command" title="Advance one action while paused">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 5 10 7L7 19V5Z" /><path d="M19 5v14" /></svg>
+                  <span>Step</span>
+                </button>
+                <button class="command danger" type="button" id="restart-command" title="Restart the current episode">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" /></svg>
+                  <span>Restart</span>
+                </button>
+              </div>
+              <div class="run-settings" style="margin-top: 10px">
+                <div></div>
+                <label>Playback speed
+                  <select id="speed-select" aria-label="Playback speed">
+                    <option value="0.25">0.25x</option>
+                    <option value="0.5">0.5x</option>
+                    <option value="1" selected>1x</option>
+                    <option value="2">2x</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div class="section">
+              <div class="section-title"><span>Planner conversation</span><span id="conversation-planner">Offline</span></div>
+              <div class="conversation-log" id="conversation-log" role="log" aria-live="polite" aria-label="Planner conversation">
+                <div class="message" data-role="assistant">
+                  <span class="message-meta">Retriever</span>
+                  Ready for an embodied goal. Offline planning is available without credentials.
+                </div>
+              </div>
+              <form class="goal-form" id="goal-form">
+                <div class="goal-composer">
+                  <input id="goal-input" type="text" autocomplete="off" aria-label="Embodied goal" placeholder="Describe the embodied goal" />
+                  <button class="command primary" type="submit" id="goal-submit" title="Send goal to the selected planner" aria-label="Send goal">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                  </button>
+                </div>
+                <div class="goal-form-row">
+                  <label>Planner
+                    <select id="planner-select">
+                      <option value="offline">Offline</option>
+                      <option value="gemini">Gemini</option>
+                    </select>
+                  </label>
+                  <label>Execution
+                    <select id="execution-mode-select">
+                      <option value="demonstration">Demonstration replay</option>
+                      <option value="live_planning">Dynamic skill plan + action replay</option>
+                    </select>
+                  </label>
+                </div>
+              </form>
+            </div>
+          </section>
+
+          <section class="panel" id="panel-plan" role="tabpanel" aria-labelledby="tab-plan" aria-hidden="true">
+            <div class="plan-summary">
+              <span class="plan-source">Source: <strong id="plan-source">--</strong></span>
+              <span class="plan-source" id="plan-count">0 phases</span>
+            </div>
+            <div class="plan-list" id="plan-list"><div class="empty">Waiting for a plan.</div></div>
+          </section>
+
+          <section class="panel" id="panel-graph" role="tabpanel" aria-labelledby="tab-graph" aria-hidden="true">
+            <div class="section-title"><span>Retriever flow</span><span id="graph-state">Waiting</span></div>
+            <div class="graph" id="graph" aria-label="Retriever embodied execution flow"></div>
+          </section>
+
+          <section class="panel" id="panel-events" role="tabpanel" aria-labelledby="tab-events" aria-hidden="true">
+            <div class="events-head"><h2>Execution log</h2><span class="event-count" id="event-count">0 events</span></div>
+            <div class="event-list" id="event-list" aria-live="polite"><div class="empty">No execution events yet.</div></div>
+          </section>
+        </div>
+      </aside>
+
+      <main class="viewer" aria-label="RoboCasa simulator viewport">
+        <iframe id="viewer-frame" title="RoboCasa mjviser viewport" allow="fullscreen" referrerpolicy="same-origin"></iframe>
+        <div class="viewer-topbar" aria-hidden="true">
+          <span class="viewer-label" id="viewer-label">RoboCasa simulator</span>
+          <span class="viewer-live" id="viewer-live" data-state="connecting">Connecting</span>
+        </div>
+        <div class="viewer-overlay" id="viewer-overlay" data-state="loading">
+          <div class="viewer-state">
+            <div class="viewer-spinner" aria-hidden="true"></div>
+            <p class="viewer-title" id="viewer-title">Connecting to simulator</p>
+            <p class="viewer-detail" id="viewer-detail">Waiting for the console configuration.</p>
+          </div>
+        </div>
+        <div class="toast" id="toast" role="status" aria-live="polite"></div>
+      </main>
+    </div>
+
+    <div class="sr-only" id="announcer" aria-live="polite"></div>
+
+    <script>
+      (() => {
+        "use strict";
+
+        const $ = (selector, root = document) => root.querySelector(selector);
+        const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+        const pollIntervalMs = 200;
+        const graphNodes = [
+          ["GoalSource", "Goal input"],
+          ["EmbodiedPlanner", "Plan generation"],
+          ["SkillDispatcher", "Skill routing"],
+          ["DemoActionSource", "Action replay"],
+          ["RoboCasaSimulator", "Environment"],
+          ["TaskVerifier", "Outcome check"],
+          ["EventSink", "Lifecycle events"],
+        ];
+        const flowNodeIndexes = {
+          goal_source: 0,
+          embodied_planner: 1,
+          skill_dispatcher: 2,
+          demo_actions: 3,
+          robocasa_simulator: 4,
+          task_verifier: 5,
+          event_sink: 6,
+        };
+
+        const elements = {
+          taskName: $("#task-name"),
+          connectionDot: $("#connection-dot"),
+          connectionText: $("#connection-text"),
+          statusBadge: $("#status-badge"),
+          currentSkill: $("#current-skill"),
+          progressTrack: $("#progress-track"),
+          progressFill: $("#progress-fill"),
+          progressValue: $("#progress-value"),
+          speedSelect: $("#speed-select"),
+          goalInput: $("#goal-input"),
+          plannerSelect: $("#planner-select"),
+          executionModeSelect: $("#execution-mode-select"),
+          conversationLog: $("#conversation-log"),
+          conversationPlanner: $("#conversation-planner"),
+          pauseResume: $("#pause-resume"),
+          pauseResumeIcon: $("#pause-resume-icon"),
+          pauseResumeLabel: $("#pause-resume-label"),
+          stepCommand: $("#step-command"),
+          restartCommand: $("#restart-command"),
+          goalForm: $("#goal-form"),
+          goalSubmit: $("#goal-submit"),
+          planSource: $("#plan-source"),
+          planCount: $("#plan-count"),
+          planList: $("#plan-list"),
+          graph: $("#graph"),
+          graphState: $("#graph-state"),
+          eventCount: $("#event-count"),
+          eventList: $("#event-list"),
+          viewerFrame: $("#viewer-frame"),
+          viewerOverlay: $("#viewer-overlay"),
+          viewerTitle: $("#viewer-title"),
+          viewerDetail: $("#viewer-detail"),
+          viewerLabel: $("#viewer-label"),
+          viewerLive: $("#viewer-live"),
+          toast: $("#toast"),
+          announcer: $("#announcer"),
+          metricStep: $("#metric-step"),
+          metricCycle: $("#metric-cycle"),
+          metricSpeed: $("#metric-speed"),
+          metricReward: $("#metric-reward"),
+          metricAction: $("#metric-action"),
+          metricSuccess: $("#metric-success"),
+          cameraSection: $("#camera-section"),
+        };
+
+        let latestState = null;
+        let viewerUrl = "";
+        let iframeReady = false;
+        let pollBusy = false;
+        let stateEpoch = 0;
+        let failedPolls = 0;
+        let pendingCommands = 0;
+        let toastTimer = 0;
+        let lastPlanSignature = "";
+        let lastEventsSignature = "";
+        let lastConversationOutcome = "";
+
+        function appendConversationMessage(role, text, tone = "") {
+          const message = document.createElement("div");
+          message.className = "message";
+          message.dataset.role = role;
+          if (tone) message.dataset.tone = tone;
+          const meta = document.createElement("span");
+          meta.className = "message-meta";
+          meta.textContent = role === "user" ? "You" : "Retriever";
+          message.append(meta, document.createTextNode(text));
+          elements.conversationLog.append(message);
+          elements.conversationLog.scrollTop = elements.conversationLog.scrollHeight;
+        }
+
+        function clamp(value, min, max) {
+          return Math.min(max, Math.max(min, Number(value) || 0));
+        }
+
+        function finite(value, fallback = 0) {
+          const number = Number(value);
+          return Number.isFinite(number) ? number : fallback;
+        }
+
+        function formatNumber(value, digits = 2) {
+          return finite(value).toLocaleString(undefined, {
+            maximumFractionDigits: digits,
+            minimumFractionDigits: digits,
+          });
+        }
+
+        function toneForStatus(status, paused, success) {
+          const normalized = String(status || "").toLowerCase();
+          if (success || ["success", "verified"].includes(normalized)) return "success";
+          if (["error", "failed", "failure", "disconnected"].includes(normalized)) return "error";
+          if (paused || ["paused", "verifying"].includes(normalized)) return "paused";
+          if (["running", "active", "executing", "ready"].includes(normalized)) return "running";
+          return "idle";
+        }
+
+        function displayStatusFor(state) {
+          return String(state?.presentation?.status || state?.status || "Ready");
+        }
+
+        function toneForEventStatus(status) {
+          const normalized = String(status || "").toLowerCase();
+          if (["completed", "success", "verified"].includes(normalized)) return "success";
+          return toneForStatus(normalized, normalized === "paused", false);
+        }
+
+        function showToast(message, isError = false) {
+          window.clearTimeout(toastTimer);
+          elements.toast.textContent = message;
+          elements.toast.classList.toggle("error", isError);
+          elements.toast.classList.add("visible");
+          elements.announcer.textContent = message;
+          toastTimer = window.setTimeout(() => elements.toast.classList.remove("visible"), 2600);
+        }
+
+        function setConnection(state, text) {
+          elements.connectionDot.dataset.state = state;
+          elements.connectionText.textContent = text;
+          elements.viewerLive.dataset.state = state;
+          elements.viewerLive.textContent = state === "connected" ? "Connected" : state === "disconnected" ? "Offline" : "Connecting";
+        }
+
+        function setViewerOverlay(state, title, detail) {
+          elements.viewerOverlay.dataset.state = state;
+          elements.viewerTitle.textContent = title;
+          elements.viewerDetail.textContent = detail;
+          elements.viewerOverlay.hidden = state === "ready";
+        }
+
+        function setControlsDisabled(disabled) {
+          const status = String(latestState?.status || "").toLowerCase();
+          const terminal = Boolean(latestState?.terminal || latestState?.success)
+            || ["success", "verified", "failed"].includes(status);
+          const transitioning = Boolean(latestState?.planning)
+            || ["loading", "restarting"].includes(status);
+          elements.pauseResume.disabled = disabled || terminal || transitioning;
+          elements.stepCommand.disabled = disabled || terminal || transitioning || !latestState?.paused;
+          elements.restartCommand.disabled = disabled || transitioning;
+          elements.speedSelect.disabled = disabled || terminal || transitioning;
+          elements.goalInput.disabled = disabled || transitioning;
+          elements.plannerSelect.disabled = disabled || transitioning;
+          elements.executionModeSelect.disabled = disabled || transitioning;
+          elements.goalSubmit.disabled = disabled || transitioning;
+          $$("[data-camera]").forEach((button) => { button.disabled = disabled; });
+        }
+
+        function activateTab(tab) {
+          const tabs = $$("[role='tab']");
+          tabs.forEach((candidate) => {
+            const selected = candidate === tab;
+            candidate.setAttribute("aria-selected", String(selected));
+            candidate.tabIndex = selected ? 0 : -1;
+            const panel = document.getElementById(candidate.getAttribute("aria-controls"));
+            panel.setAttribute("aria-hidden", String(!selected));
+          });
+        }
+
+        function setupTabs() {
+          const tabs = $$("[role='tab']");
+          tabs.forEach((tab, index) => {
+            tab.addEventListener("click", () => activateTab(tab));
+            tab.addEventListener("keydown", (event) => {
+              if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+              event.preventDefault();
+              let nextIndex = index;
+              if (event.key === "ArrowLeft") nextIndex = (index - 1 + tabs.length) % tabs.length;
+              if (event.key === "ArrowRight") nextIndex = (index + 1) % tabs.length;
+              if (event.key === "Home") nextIndex = 0;
+              if (event.key === "End") nextIndex = tabs.length - 1;
+              activateTab(tabs[nextIndex]);
+              tabs[nextIndex].focus();
+            });
+          });
+        }
+
+        function renderGraph() {
+          graphNodes[3][1] = latestState?.execution_mode === "live_planning"
+            ? "Recorded actions after dynamic plan"
+            : "Demonstration replay";
+          const tone = latestState
+            ? (latestState.presentation?.tone || toneForStatus(latestState.status, latestState.paused, latestState.success))
+            : "idle";
+          const failed = tone === "error";
+          const activeIndex = latestState
+            ? (flowNodeIndexes[latestState.active_flow_node] ?? 0)
+            : 0;
+          elements.graph.replaceChildren();
+          graphNodes.forEach(([name, role], index) => {
+            const node = document.createElement("div");
+            node.className = "graph-node";
+            node.dataset.state = index < activeIndex
+              ? "complete"
+              : index === activeIndex && latestState
+                ? (failed ? "failed" : "active")
+                : "pending";
+            const nodeName = document.createElement("span");
+            nodeName.className = "graph-name";
+            nodeName.textContent = name;
+            const nodeRole = document.createElement("span");
+            nodeRole.className = "graph-role";
+            nodeRole.textContent = role;
+            node.append(nodeName, nodeRole);
+            elements.graph.append(node);
+            if (index < graphNodes.length - 1) {
+              const arrow = document.createElement("div");
+              arrow.className = "graph-arrow";
+              arrow.setAttribute("aria-hidden", "true");
+              arrow.textContent = "↓";
+              elements.graph.append(arrow);
+            }
+          });
+          elements.graphState.textContent = latestState
+            ? (tone === "success" ? "Verified" : tone === "paused" ? "Paused" : failed ? "Failed" : "Current")
+            : "Waiting";
+        }
+
+        function renderPlan(plan, progress, currentStepId, events) {
+          const steps = Array.isArray(plan?.steps) ? plan.steps : [];
+          const lifecycleEvents = Array.isArray(events) ? events : [];
+          const signature = JSON.stringify([plan?.source, steps, currentStepId, Math.round(progress * 1000), lifecycleEvents]);
+          if (signature === lastPlanSignature) return;
+          lastPlanSignature = signature;
+          elements.planSource.textContent = plan?.source || "--";
+          elements.planList.replaceChildren();
+          if (!steps.length) {
+            const empty = document.createElement("div");
+            empty.className = "empty";
+            empty.textContent = "Waiting for a plan.";
+            elements.planList.append(empty);
+            return;
+          }
+
+          const staged = [];
+          steps.forEach((step, index) => {
+            const stageId = step.stage_id || "execution";
+            let stage = staged[staged.length - 1];
+            if (!stage || stage.id !== stageId) {
+              stage = { id: stageId, label: step.stage_label || "Execution", steps: [] };
+              staged.push(stage);
+            }
+            stage.steps.push({ step, index });
+          });
+          elements.planCount.textContent = `${staged.length} ${staged.length === 1 ? "subplan" : "subplans"} · ${steps.length} skills`;
+
+          const completedSteps = new Set(
+            lifecycleEvents
+              .filter((event) => event.status === "completed" && event.step_id)
+              .map((event) => event.step_id),
+          );
+          const failedSteps = new Set(
+            lifecycleEvents
+              .filter((event) => event.status === "failed" && event.step_id)
+              .map((event) => event.step_id),
+          );
+          const hasLifecycleState = lifecycleEvents.some(
+            (event) => event.step_id && ["running", "completed", "failed"].includes(event.status),
+          );
+          const stepState = (step) => {
+            const start = clamp(step.start_fraction, 0, 1);
+            const end = clamp(step.end_fraction, start, 1);
+            let state = "pending";
+            if (failedSteps.has(step.step_id)) state = "failed";
+            else if (currentStepId === step.step_id) state = "active";
+            else if (completedSteps.has(step.step_id)) state = "complete";
+            else if (!hasLifecycleState) {
+              if (progress >= end) state = "complete";
+              else if (progress >= start) state = "active";
+            }
+            return { state, start, end };
+          };
+
+          staged.forEach((stage, stageIndex) => {
+            const states = stage.steps.map(({ step }) => stepState(step).state);
+            const stageState = states.every((state) => state === "complete")
+              ? "complete"
+              : states.includes("failed")
+                ? "failed"
+                : states.includes("active")
+                ? "active"
+                : "pending";
+            const section = document.createElement("section");
+            section.className = "plan-stage";
+            section.dataset.state = stageState;
+            const header = document.createElement("div");
+            header.className = "stage-header";
+            const stageMarker = document.createElement("span");
+            stageMarker.className = "stage-index";
+            stageMarker.textContent = stageState === "complete" ? "✓" : stageState === "failed" ? "!" : String(stageIndex + 1);
+            const stageTitle = document.createElement("span");
+            stageTitle.className = "stage-title";
+            stageTitle.textContent = stage.label;
+            const stageStatus = document.createElement("span");
+            stageStatus.className = "stage-state";
+            stageStatus.textContent = stageState === "active" ? "Current" : stageState === "complete" ? "Passed" : stageState === "failed" ? "Failed" : "Queued";
+            header.append(stageMarker, stageTitle, stageStatus);
+            const list = document.createElement("div");
+            list.className = "stage-list";
+
+            stage.steps.forEach(({ step, index }) => {
+              const { state, start, end } = stepState(step);
+
+              const row = document.createElement("div");
+              row.className = "plan-step";
+              row.dataset.state = state;
+              const marker = document.createElement("span");
+              marker.className = "step-index";
+              marker.textContent = state === "complete" ? "✓" : state === "failed" ? "!" : String(index + 1);
+              const body = document.createElement("div");
+              body.className = "step-body";
+              const label = document.createElement("p");
+              label.className = "step-label";
+              label.textContent = step.label || step.step_id || `Skill ${index + 1}`;
+              const meta = document.createElement("div");
+              meta.className = "step-meta";
+              const skill = document.createElement("span");
+              skill.className = "skill-tag";
+              skill.textContent = step.skill || "skill";
+              const robot = document.createElement("span");
+              robot.textContent = step.lane || "robot0";
+              const range = document.createElement("span");
+              range.textContent = `${Math.round(start * 100)}-${Math.round(end * 100)}%`;
+              meta.append(skill, robot, range);
+              body.append(label, meta);
+              row.append(marker, body);
+              list.append(row);
+            });
+            section.append(header, list);
+            elements.planList.append(section);
+          });
+        }
+
+        function renderEvents(events, cycle) {
+          const rows = Array.isArray(events) ? events : [];
+          const signature = JSON.stringify(rows);
+          if (signature === lastEventsSignature) return;
+          lastEventsSignature = signature;
+          elements.eventCount.textContent = `${rows.length} ${rows.length === 1 ? "event" : "events"}`;
+          elements.eventList.replaceChildren();
+          if (!rows.length) {
+            const empty = document.createElement("div");
+            empty.className = "empty";
+            empty.textContent = "No execution events yet.";
+            elements.eventList.append(empty);
+            return;
+          }
+
+          [...rows].reverse().forEach((event) => {
+            const row = document.createElement("article");
+            row.className = "event";
+            row.dataset.tone = toneForEventStatus(event.status);
+            const dot = document.createElement("span");
+            dot.className = "event-dot";
+            dot.setAttribute("aria-hidden", "true");
+            const body = document.createElement("div");
+            body.className = "event-body";
+            const message = document.createElement("p");
+            message.className = "event-message";
+            message.textContent = event.message || event.kind || "Execution event";
+            const meta = document.createElement("div");
+            meta.className = "event-meta";
+            [event.kind, event.status, event.step_id].filter(Boolean).forEach((value) => {
+              const item = document.createElement("span");
+              item.textContent = value;
+              meta.append(item);
+            });
+            const time = document.createElement("span");
+            time.className = "event-time";
+            time.textContent = `${formatNumber(event.elapsed_seconds, 1)}s`;
+            body.append(message, meta);
+            row.append(dot, body, time);
+            elements.eventList.append(row);
+          });
+
+          const outcome = [...rows].reverse().find((event) => ["verified", "failed"].includes(event.status));
+          if (outcome) {
+            const outcomeSignature = JSON.stringify([cycle, outcome.sequence, outcome.status, outcome.message]);
+            if (outcomeSignature !== lastConversationOutcome) {
+              lastConversationOutcome = outcomeSignature;
+              appendConversationMessage(
+                "assistant",
+                outcome.status === "verified" ? `Verified: ${outcome.message}` : `Execution failed: ${outcome.message}`,
+                outcome.status === "failed" ? "error" : "",
+              );
+            }
+          }
+        }
+
+        function renderState(state) {
+          latestState = state;
+          const progress = clamp(state.progress, 0, 1);
+          const status = displayStatusFor(state);
+          const tone = state.presentation?.tone || toneForStatus(status, state.paused, state.success);
+          const task = state.task || "RoboCasa task";
+          const episode = state.episode ?? "--";
+          const speed = finite(state.speed, 1);
+
+          elements.taskName.textContent = task;
+          elements.viewerLabel.textContent = task;
+          elements.connectionText.textContent = `Episode ${episode} · ${status}`;
+          elements.statusBadge.textContent = status;
+          elements.statusBadge.dataset.tone = tone;
+          elements.metricStep.textContent = `${finite(state.episode_step, 0)} / ${finite(state.total_steps, 0)}`;
+          elements.metricCycle.textContent = String(finite(state.cycle, 0));
+          elements.metricSpeed.textContent = `${speed}x`;
+          elements.metricReward.textContent = formatNumber(state.reward, 2);
+          elements.metricAction.textContent = formatNumber(state.action_norm, 3);
+          elements.metricSuccess.textContent = state.success ? "Yes" : "No";
+          elements.metricSuccess.classList.toggle("success", Boolean(state.success));
+          elements.progressValue.textContent = `${Math.round(progress * 100)}%`;
+          elements.progressFill.style.width = `${progress * 100}%`;
+          elements.progressTrack.setAttribute("aria-valuenow", String(Math.round(progress * 100)));
+          if (state.camera_preset) {
+            $$('[data-camera]').forEach((button) => {
+              button.setAttribute("aria-pressed", String(button.dataset.camera === state.camera_preset));
+            });
+          }
+
+          if (document.activeElement !== elements.speedSelect) {
+            const matchingSpeed = $$(`option`, elements.speedSelect).find((option) => Number(option.value) === speed);
+            if (matchingSpeed) elements.speedSelect.value = matchingSpeed.value;
+          }
+          if (document.activeElement !== elements.plannerSelect && state.planner) elements.plannerSelect.value = state.planner;
+          if (document.activeElement !== elements.executionModeSelect && state.execution_mode) elements.executionModeSelect.value = state.execution_mode;
+          const modeLabel = state.execution_mode === "live_planning" ? "Dynamic skill plan" : "Demonstration replay";
+          elements.conversationPlanner.textContent = `${state.planner || "offline"} · ${modeLabel}`;
+
+          elements.pauseResumeLabel.textContent = state.paused ? "Resume" : "Pause";
+          elements.pauseResume.title = state.paused ? "Resume execution" : "Pause execution";
+          elements.pauseResumeIcon.setAttribute("d", state.paused ? "m8 5 11 7-11 7V5Z" : "M8 5v14M16 5v14");
+          elements.currentSkill.textContent = state.current_step_id || "No active skill";
+          setControlsDisabled(failedPolls >= 3 || pendingCommands > 0 || state.planning);
+          renderPlan(state.plan, progress, state.current_step_id, state.events);
+          renderEvents(state.events, state.cycle);
+          renderGraph();
+        }
+
+        async function requestJson(url, options = {}, timeoutMs = 5000) {
+          const controller = new AbortController();
+          const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+          let response;
+          try {
+            response = await fetch(url, { cache: "no-store", ...options, signal: controller.signal });
+          } finally {
+            window.clearTimeout(timeout);
+          }
+          if (!response.ok) {
+            const responseText = await response.text();
+            let detail = responseText;
+            try {
+              const payload = JSON.parse(responseText);
+              detail = payload.error || payload.detail || payload.message || responseText;
+            } catch (_error) {}
+            throw new Error(detail || `${response.status} ${response.statusText}`);
+          }
+          return response.json();
+        }
+
+        function fetchJson(url) {
+          return requestJson(url);
+        }
+
+        async function postJson(url, body, timeoutMs = 5000) {
+          return requestJson(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body || {}),
+          }, timeoutMs);
+        }
+
+        async function loadConfig() {
+          try {
+            const config = await fetchJson("/api/config");
+            const nextUrl = String(config.viewer_url || "").trim();
+            if (config.task && !latestState) {
+              elements.taskName.textContent = config.task;
+              elements.viewerLabel.textContent = config.task;
+            }
+            if (config.camera_preset && !latestState) {
+              $$('[data-camera]').forEach((button) => {
+                button.setAttribute("aria-pressed", String(button.dataset.camera === config.camera_preset));
+              });
+            }
+            const cameraPresets = Array.isArray(config.capabilities?.camera_presets)
+              ? new Set(config.capabilities.camera_presets)
+              : null;
+            if (cameraPresets) {
+              let visibleCameras = 0;
+              $$('[data-camera]').forEach((button) => {
+                const visible = cameraPresets.has(button.dataset.camera);
+                button.hidden = !visible;
+                if (visible) visibleCameras += 1;
+              });
+              elements.cameraSection.hidden = visibleCameras === 0;
+            }
+            if (!nextUrl) {
+              setViewerOverlay("waiting", "Simulator not available", "The server has not supplied a viewer URL yet.");
+              return;
+            }
+            if (nextUrl !== viewerUrl) {
+              viewerUrl = nextUrl;
+              iframeReady = false;
+              setViewerOverlay("loading", "Loading simulator", "Connecting to the mjviser viewport.");
+              elements.viewerFrame.src = viewerUrl;
+            }
+          } catch (error) {
+            setViewerOverlay("disconnected", "Console unavailable", `Could not load configuration: ${error.message}`);
+          }
+        }
+
+        async function pollState() {
+          if (pollBusy) return;
+          pollBusy = true;
+          const requestEpoch = stateEpoch;
+          try {
+            const state = await fetchJson("/api/state");
+            if (requestEpoch !== stateEpoch) return;
+            failedPolls = 0;
+            setConnection("connected", `Episode ${state.episode ?? "--"} · ${displayStatusFor(state)}`);
+            if (iframeReady) setViewerOverlay("ready", "", "");
+            renderState(state);
+          } catch (error) {
+            failedPolls += 1;
+            if (failedPolls >= 3) {
+              setConnection("disconnected", "Console connection lost");
+              setControlsDisabled(true);
+              setViewerOverlay("disconnected", "Simulator disconnected", "The console server is not responding. Reconnecting automatically.");
+              elements.statusBadge.textContent = "Disconnected";
+              elements.statusBadge.dataset.tone = "error";
+            }
+          } finally {
+            pollBusy = false;
+          }
+        }
+
+        async function postCommand(path, body, successMessage) {
+          pendingCommands += 1;
+          stateEpoch += 1;
+          setControlsDisabled(true);
+          try {
+            const result = await postJson(path, body);
+            stateEpoch += 1;
+            if (result.state) renderState(result.state);
+            if (successMessage) showToast(successMessage);
+            await pollState();
+            return result;
+          } catch (error) {
+            showToast(error.message || "Command failed", true);
+            return null;
+          } finally {
+            pendingCommands = Math.max(0, pendingCommands - 1);
+            setControlsDisabled(failedPolls >= 3 || pendingCommands > 0);
+          }
+        }
+
+        elements.viewerFrame.addEventListener("load", () => {
+          iframeReady = true;
+          if (failedPolls < 3) setViewerOverlay("ready", "", "");
+        });
+
+        elements.viewerFrame.addEventListener("error", () => {
+          iframeReady = false;
+          setViewerOverlay("disconnected", "Viewer failed to load", "Check that the mjviser server is running at the configured URL.");
+        });
+
+        elements.pauseResume.addEventListener("click", () => {
+          const paused = Boolean(latestState?.paused);
+          postCommand(paused ? "/api/resume" : "/api/pause", {}, paused ? "Execution resumed" : "Execution paused");
+        });
+        elements.stepCommand.addEventListener("click", () => postCommand("/api/step", {}, "Advanced one action"));
+        elements.restartCommand.addEventListener("click", () => postCommand("/api/restart", {}, "Restart requested"));
+        elements.speedSelect.addEventListener("change", (event) => {
+          postCommand("/api/speed", { speed: Number(event.target.value) }, `Playback set to ${event.target.value}x`);
+        });
+        elements.goalForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const text = elements.goalInput.value.trim();
+          if (!text) {
+            elements.goalInput.focus();
+            showToast("Enter a goal before applying it", true);
+            return;
+          }
+          const planner = elements.plannerSelect.value;
+          const executionMode = elements.executionModeSelect.value;
+          appendConversationMessage("user", text);
+          lastConversationOutcome = "";
+          elements.goalInput.value = "";
+          pendingCommands += 1;
+          stateEpoch += 1;
+          setControlsDisabled(true);
+          try {
+            const result = await postJson(
+              "/api/goal",
+              { text, planner, execution_mode: executionMode },
+              35000,
+            );
+            stateEpoch += 1;
+            appendConversationMessage("assistant", result.reply || "The plan was accepted and the episode is restarting.");
+            if (result.state) renderState(result.state);
+            showToast("Plan accepted");
+            await pollState();
+          } catch (error) {
+            showToast(error.message || "Goal planning failed", true);
+            appendConversationMessage("assistant", "The goal could not be planned. Check the execution log and try again.", "error");
+          } finally {
+            pendingCommands = Math.max(0, pendingCommands - 1);
+            setControlsDisabled(failedPolls >= 3 || pendingCommands > 0);
+          }
+        });
+        $$("[data-camera]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            const preset = button.dataset.camera;
+            const result = await postCommand("/api/camera", { preset }, `${preset} camera selected`);
+            if (result) {
+              $$("[data-camera]").forEach((candidate) => candidate.setAttribute("aria-pressed", String(candidate === button)));
+            }
+          });
+        });
+
+        setupTabs();
+        renderGraph();
+        setControlsDisabled(true);
+        loadConfig();
+        pollState();
+        window.setInterval(pollState, pollIntervalMs);
+        window.setInterval(() => {
+          if (!viewerUrl || failedPolls >= 3) loadConfig();
+        }, 3000);
+      })();
+    </script>
+  </body>
+</html>

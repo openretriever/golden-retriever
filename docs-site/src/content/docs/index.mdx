@@ -12,14 +12,14 @@ template: splash
   <div class="action-grid">
     <a class="action-card" href="/examples/golden-hub-proof/"><strong>Run the first GoldenRetriever proof</strong><span>Load GoldenRetriever robot payloads through Retriever Hub with no robot, camera, model, simulator, or network dependency.</span></a>
     <a class="action-card" href="/examples/"><strong>Browse example results</strong><span>Pick an applied lane by expected output, artifact type, and dependency level.</span></a>
-    <a class="action-card" href="/examples/simulation-visualization/"><strong>Open visual artifacts</strong><span>Inspect generated HTML graphs, mock simulator traces, and optional Rerun lanes.</span></a>
+    <a class="action-card" href="/examples/pipeline-debugging/"><strong>Debug a pipeline</strong><span>Inspect runtime IR, clocks, ports, feedback edges, and the generated interactive graph.</span></a>
   </div>
 </div>
 
 <div class="cta-row">
   <a href="/examples/golden-hub-proof/">First GoldenRetriever proof</a>
   <a href="/examples/">Example catalog</a>
-  <a href="/examples/simulation-visualization/">Visual artifacts</a>
+  <a href="/examples/pipeline-debugging/">Pipeline debugging</a>
   <a href="/hub/">Reusable packs</a>
   <a href="/robot-payloads/">Robot payloads</a>
 </div>
@@ -40,7 +40,7 @@ retriever install                    # sets up the example environment (wraps Pi
 retriever run demo-golden-hub-pack   # payload exports + Arrow round-trip
 ```
 
-Perception, memory, and language examples need extra model dependencies, so they run in the `golden-retriever` Pixi environment (`pixi run -e golden-retriever demo-...`). Everything else runs through `retriever run`.
+Most lightweight examples run through `retriever run`. Perception, memory, language, and simulator examples use their named Pixi environments when they need additional dependencies; the RoboCasa guide provides the exact locked commands.
 
 <details class="explain-details">
   <summary>What does this do?</summary>
@@ -68,7 +68,7 @@ Perception, memory, and language examples need extra model dependencies, so they
 <div class="path-grid">
   <a class="path-card" href="/examples/golden-hub-proof/"><span>01</span><strong>First proof</strong><p>Validate the Hub extension boundary and payload exports.</p></a>
   <a class="path-card" href="/examples/"><span>02</span><strong>Example catalog</strong><p>Choose a runnable lane by output, artifact, and dependency level.</p></a>
-  <a class="path-card" href="/examples/simulation-visualization/"><span>03</span><strong>Visual artifacts</strong><p>Inspect HTML graphs and mock-safe simulator traces before heavier integrations.</p></a>
+  <a class="path-card" href="/examples/pipeline-debugging/"><span>03</span><strong>Debug pipelines</strong><p>Inspect topology, clocks, ports, and feedback edges before heavier integrations.</p></a>
   <a class="path-card" href="/hub/"><span>04</span><strong>Promote to Hub</strong><p>Promote stable payloads and helpers only after the boundary is lightweight and smoke-tested.</p></a>
 </div>
 
@@ -87,7 +87,7 @@ Perception, memory, and language examples need extra model dependencies, so they
 | --- | --- | --- |
 | Safe GoldenRetriever smoke | `retriever run demo-golden-hub-pack` | Camera, simulator, model, or network setup. |
 | Example behavior | `pixi run -e golden-retriever demo-perception-detection-flow` | Optional model-backed lanes. |
-| Simulator integration | `retriever run demo-robosuite-mock` | Real robosuite before the mock trace works. |
+| Simulator integration | `pixi run demo-robosuite-mock` | Real robosuite before the mock trace works. |
 | Graph visualization | `retriever run demo-pipeline-html-viz` | Screenshots or stale generated HTML. |
 | Robot payload reuse | `retriever run demo-robotics-typing-catalog` | Ad hoc dict payloads or source-only imports. |
 
@@ -97,7 +97,7 @@ Perception, memory, and language examples need extra model dependencies, so they
   <a class="info-card" href="/examples/golden-hub-proof/"><strong>First GoldenRetriever proof</strong><span>Load the GoldenRetriever Hub exports through Retriever Hub.</span></a>
   <a class="info-card" href="/examples/"><strong>Example catalog</strong><span>Pick a lane by expected artifact and dependency level.</span></a>
   <a class="info-card" href="/robot-payloads/"><strong>Robot payload types</strong><span>Choose payloads for world state, belief, plans, trajectories, and events.</span></a>
-  <a class="info-card" href="/examples/simulation-visualization/"><strong>Visualization lanes</strong><span>Inspect HTML graphs, mock simulator traces, and optional Rerun streams.</span></a>
+  <a class="info-card" href="/examples/pipeline-debugging/"><strong>Pipeline debugging</strong><span>Inspect HTML graphs, clocks, mapped ports, and feedback loops.</span></a>
 </div>
 
 <p class="external-note"><strong>For AI agents:</strong> <a href="/llms.txt">llms.txt</a> mirrors the same GoldenRetriever path for agents and audits.</p>

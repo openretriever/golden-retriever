@@ -82,14 +82,28 @@ one.
 
 - Do not introduce references to private infrastructure, internal
   hostnames, or unpublished project names into this repository.
+- Treat projects, repositories, datasets, features, workspaces, hosts, and
+  research directions learned only from conversations or the local environment
+  as confidential unless they are already public here or the user explicitly
+  approves disclosure.
+- Never describe confidential work merely to say that it is excluded, private,
+  downstream, or owned elsewhere. Omit the reference entirely and describe only
+  the public interface that exists in this repository.
 - Do not commit conversation transcripts, prompt or tool logs, agent names or
-  identities, model or provider metadata, session links, or agent scratch files.
-  Public code, documentation, artifacts, and commit messages describe project
-  behavior and source provenance, not which assistant produced them.
+  identities, model or provider metadata, session links, task or worktree IDs,
+  or agent scratch files. Public code, documentation, artifacts, and commit
+  messages describe project behavior and source provenance, not which assistant
+  produced them.
 - Before pushing or opening a pull request, scan the complete introduced commit
-  range as well as the final tree. CI enforces common attribution and session
-  markers, but maintainers remain responsible for disclosures a pattern cannot
-  recognize.
+  range as well as the final tree for confidential names and descriptions. CI
+  enforces common attribution and session markers, but maintainers remain
+  responsible for disclosures a pattern cannot recognize.
+- Do not commit machine-specific absolute paths, local account names,
+  temporary-file locations, credentials, access codes, or private dataset
+  locations. Use documented environment variables and repository-relative
+  paths instead.
+- Keep these rules canonical in `AGENTS.md`. Files for other coding tools may
+  point here, but must not maintain a separate copy that can drift.
 
 ## Forbidden actions
 

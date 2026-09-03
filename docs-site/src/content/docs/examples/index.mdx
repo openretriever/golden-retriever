@@ -28,7 +28,8 @@ retriever run demo-golden-hub-pack
 pixi run -e golden-retriever demo-composable-pipelines
 # policy output after replacement: ProcOut(value=104)
 
-retriever run demo-robosuite-mock
+pixi run demo-robosuite-mock
+pixi run demo-robocasa-mock
 # [mock step=002] object_z=0.820 gripper_z=0.940 reward=0.000 done=False
 
 retriever run demo-pipeline-html-viz
@@ -40,7 +41,8 @@ retriever run demo-pipeline-html-viz
 | `demo-golden-hub-pack` | GoldenRetriever extends Retriever through a Hub manifest: exports load, registry resolves, Arrow round-trips. | [Hub proof](/examples/golden-hub-proof/) |
 | `demo-composable-pipelines` | A registered pipeline can be extended and wrapped as a Flow, payloads staying typed. | [Composition](/examples/pipeline-composition/) |
 | `demo-robosuite-mock` | Environment-as-Flow and policy-as-Flow close a feedback loop with no simulator install. | [Simulation](/examples/simulation-visualization/) |
-| `demo-pipeline-html-viz` | The runtime IR validates and renders to ASCII plus an inspectable HTML graph. | [Visualization](/examples/simulation-visualization/) |
+| `demo-robocasa-mock` | A recorded-action source connects to a typed RoboCasa simulator boundary without requiring the simulator install. | [Simulation](/examples/simulation-visualization/) |
+| `demo-pipeline-html-viz` | The runtime IR validates and renders to ASCII plus an inspectable HTML graph. | [Debugging](/examples/pipeline-debugging/) |
 
 ## Find an example
 
@@ -56,7 +58,8 @@ pixi run -e golden-retriever demo-language-caption-plan       # caption -> primi
 - [Perception and memory](/examples/perception-memory/) — synthetic detections, belief tracking, and pointing over standard `retriever.types.perception` payloads.
 - [Language and grounding](/examples/language-grounding/) — captions and grounded references turned into primitive plans, no LLM required.
 - [Pipeline composition](/examples/pipeline-composition/) — registry-backed graphs you can extend and nest.
-- [Simulation and visualization](/examples/simulation-visualization/) — mock-safe robosuite, optional Rerun lanes, and HTML graph rendering.
+- [Pipeline debugging](/examples/pipeline-debugging/) — IR validation, terminal topology summaries, and interactive HTML graph inspection.
+- [Simulation and replay](/examples/simulation-visualization/) — mock-safe robosuite and RoboCasa contracts, a real RoboCasa demonstration replay, optional Rerun lanes, and MP4 capture.
 - [Robot payloads](/robot-payloads/) — world state, belief, plans, trajectories, and dataset/export profiles reused across examples.
 
 ## Suggested order
