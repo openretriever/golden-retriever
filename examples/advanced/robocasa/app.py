@@ -28,6 +28,16 @@ from .mjviser_bridge import MjviserBridge, ReplayControls
 from .web_console import RetrieverWebConsole
 
 
+def _prepare_rerun_compat() -> None:
+    """Expose the plural scalar archetype expected by Retriever on Rerun 0.22."""
+    import rerun as rr
+    from rerun import archetypes
+
+    if not hasattr(rr, "Scalars"):
+        rr.Scalars = rr.Scalar
+        archetypes.Scalars = archetypes.Scalar
+
+
 def _rerun_scalar(value: float) -> Any:
     import rerun as rr
 
@@ -906,6 +916,7 @@ def _execute(args: argparse.Namespace) -> None:
             "use headless mode for Rerun camera frames."
         )
     if args.visualize == "rerun":
+        _prepare_rerun_compat()
         pipeline.run(
             backend="in-process",
             duration=args.seconds,
@@ -913,8 +924,8 @@ def _execute(args: argparse.Namespace) -> None:
             blocking=True,
             backend_config={
                 "rerun_config": {
-                    "spawn": args.rerun_mode == "spawn",
-                    "connect_addr": args.rerun_address,
+                    "mode": args.rerun_mode,
+                    "address": args.rerun_address,
                 }
             },
         )

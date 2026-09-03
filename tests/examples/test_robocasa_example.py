@@ -625,3 +625,51 @@ def test_run_builds_concise_offline_console_entrypoint(monkeypatch) -> None:
     assert args.execution_mode == "demonstration"
     assert args.visualize == "mjviser"
     assert args.open_browser is False
+
+
+def test_old_rerun_sdk_gets_plural_scalar_alias(monkeypatch) -> None:
+    rerun = ModuleType("rerun")
+    archetypes = ModuleType("rerun.archetypes")
+
+    class Scalar:
+        pass
+
+    rerun.Scalar = Scalar
+    rerun.archetypes = archetypes
+    archetypes.Scalar = Scalar
+    monkeypatch.setitem(sys.modules, "rerun", rerun)
+    monkeypatch.setitem(sys.modules, "rerun.archetypes", archetypes)
+
+    app._prepare_rerun_compat()
+
+    assert rerun.Scalars is Scalar
+    assert archetypes.Scalars is Scalar
+
+
+def test_rerun_execution_uses_runtime_config_fields(monkeypatch) -> None:
+    calls = []
+
+    class PipelineStub:
+        def run(self, **kwargs) -> None:
+            calls.append(kwargs)
+
+    args = _mock_args(
+        mode="robocasa",
+        visualize="rerun",
+        video=None,
+        seconds=0.1,
+        rerun_mode="connect",
+        rerun_address="127.0.0.1:9876",
+    )
+    monkeypatch.setattr(app.retriever, "init", lambda **_kwargs: None)
+    monkeypatch.setattr(app, "build_pipeline", lambda _args: (PipelineStub(), object()))
+    monkeypatch.setattr(app, "_prepare_rerun_compat", lambda: None)
+
+    app._execute(args)
+
+    assert calls[0]["backend_config"] == {
+        "rerun_config": {
+            "mode": "connect",
+            "address": "127.0.0.1:9876",
+        }
+    }
