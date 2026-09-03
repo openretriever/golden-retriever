@@ -39,7 +39,9 @@ def test_console_plan_uses_lifecycle_events_as_authoritative_state() -> None:
     assert "function renderPlan(plan, progress, currentStepId, events)" in html
     assert 'event.status === "completed" && event.step_id' in html
     assert 'event.status === "failed" && event.step_id' in html
-    assert "renderPlan(state.plan, progress, state.current_step_id, state.events)" in html
+    assert (
+        "renderPlan(state.plan, progress, state.current_step_id, state.events)" in html
+    )
 
 
 def test_snapshot_payload_serializes_nested_plan_events_and_control_state() -> None:
@@ -87,9 +89,7 @@ def test_snapshot_payload_serializes_nested_plan_events_and_control_state() -> N
 def test_snapshot_payload_uses_canonical_planning_presentation() -> None:
     controls = _planned_controls()
 
-    payload = web_console.snapshot_payload(
-        replace(controls.snapshot(), planning=True)
-    )
+    payload = web_console.snapshot_payload(replace(controls.snapshot(), planning=True))
 
     assert payload["status"] == "Planning"
     assert payload["presentation"]["tone"] == "running"
@@ -251,6 +251,15 @@ def test_goal_command_rejects_unknown_execution_mode() -> None:
         )
 
 
+def test_goal_command_rejects_oversized_text() -> None:
+    controls = ReplayControls(task="PrepareCoffee", episode=1)
+    controls.set_goal_handler(OfflineEmbodiedPlanner().plan)
+    console = web_console.RetrieverWebConsole(controls, "http://viewer.test")
+
+    with pytest.raises(ValueError, match="at most 2000"):
+        console.handle_command("/api/goal", {"text": "x" * 2_001})
+
+
 def test_goal_command_classifies_planner_availability_without_string_matching() -> None:
     controls = ReplayControls(task="PrepareCoffee", episode=1)
     console = web_console.RetrieverWebConsole(controls, "http://viewer.test")
@@ -302,6 +311,36 @@ def test_lifecycle_uses_server_without_binding_a_port(monkeypatch) -> None:
     assert servers[0].close_called is True
 
 
+def test_viewer_readiness_requires_a_healthy_http_response(monkeypatch) -> None:
+    class Response:
+        status = 200
+
+        def read(self, _size: int) -> bytes:
+            return b"x"
+
+    class Connection:
+        def __init__(self, host: str, port: int, timeout: float) -> None:
+            assert (host, port, timeout) == ("viewer.test", 8085, 0.25)
+
+        def request(self, method: str, path: str) -> None:
+            assert (method, path) == ("GET", "/scene")
+
+        def getresponse(self) -> Response:
+            return Response()
+
+        def close(self) -> None:
+            return None
+
+    monkeypatch.setattr(web_console, "HTTPConnection", Connection)
+    controls = ReplayControls(task="PrepareCoffee", episode=0)
+    console = web_console.RetrieverWebConsole(
+        controls,
+        "http://viewer.test:8085/scene",
+    )
+
+    assert console.viewer_is_ready() is True
+
+
 def test_http_rejects_non_object_json_with_structured_error() -> None:
     controls = ReplayControls(task="TurnOnMicrowave", episode=0)
     console = web_console.RetrieverWebConsole(
@@ -314,7 +353,11 @@ def test_http_rejects_non_object_json_with_structured_error() -> None:
     request = Request(
         f"{console.url}/api/goal",
         data=b"[]",
-        headers={"Content-Type": "application/json"},
+        headers={
+            "Content-Type": "application/json",
+            "X-Retriever-Token": console.control_token,
+            "X-Retriever-Launch-ID": console.launch_id,
+        },
         method="POST",
     )
     try:
@@ -330,6 +373,80 @@ def test_http_rejects_non_object_json_with_structured_error() -> None:
         console.close()
 
 
+def test_http_page_binds_commands_to_this_console_run() -> None:
+    controls = ReplayControls(task="TurnOnMicrowave", episode=0)
+    console = web_console.RetrieverWebConsole(
+        controls,
+        "http://viewer.test",
+        host="127.0.0.1",
+        port=0,
+        launch_id="run-123",
+    )
+    console.start()
+    try:
+        html = urlopen(console.url, timeout=2.0).read().decode()
+        assert "__RETRIEVER_CONTROL_TOKEN__" not in html
+        assert "__RETRIEVER_LAUNCH_ID__" not in html
+        assert console.control_token in html
+        assert 'const pageLaunchId = "run-123"' in html
+    finally:
+        console.close()
+
+
+def test_http_rejects_missing_token_and_stale_launch() -> None:
+    controls = ReplayControls(task="TurnOnMicrowave", episode=0)
+    console = web_console.RetrieverWebConsole(
+        controls,
+        "http://viewer.test",
+        host="127.0.0.1",
+        port=0,
+        launch_id="run-current",
+    )
+    console.start()
+    try:
+        missing = Request(
+            f"{console.url}/api/pause",
+            data=b"{}",
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with pytest.raises(HTTPError) as error:
+            urlopen(missing, timeout=2.0)
+        assert error.value.code == 403
+
+        status, payload = _post_error(
+            console,
+            "/api/pause",
+            headers={
+                "Content-Type": "application/json",
+                "X-Retriever-Launch-ID": "run-old",
+            },
+        )
+        assert (status, payload["code"]) == (409, "stale_launch")
+    finally:
+        console.close()
+
+
+def test_http_rejects_oversized_request_body() -> None:
+    controls = ReplayControls(task="TurnOnMicrowave", episode=0)
+    console = web_console.RetrieverWebConsole(
+        controls,
+        "http://viewer.test",
+        host="127.0.0.1",
+        port=0,
+    )
+    console.start()
+    try:
+        status, payload = _post_error(
+            console,
+            "/api/goal",
+            data=b"x" * (64 * 1024 + 1),
+        )
+        assert (status, payload["code"]) == (413, "request_too_large")
+    finally:
+        console.close()
+
+
 def _post_error(
     console: web_console.RetrieverWebConsole,
     path: str,
@@ -337,14 +454,18 @@ def _post_error(
     data: bytes = b"{}",
     headers: dict[str, str] | None = None,
 ) -> tuple[int, dict[str, Any]]:
+    request_headers = {
+        "X-Retriever-Token": console.control_token,
+        "X-Retriever-Launch-ID": console.launch_id,
+    }
+    if headers is None:
+        request_headers["Content-Type"] = "application/json"
+    else:
+        request_headers.update(headers)
     request = Request(
         f"{console.url}{path}",
         data=data,
-        headers=(
-            headers
-            if headers is not None
-            else {"Content-Type": "application/json"}
-        ),
+        headers=request_headers,
         method="POST",
     )
     with pytest.raises(HTTPError) as error:
@@ -379,6 +500,8 @@ def test_http_post_requires_same_origin_when_origin_is_present() -> None:
             headers={
                 "Content-Type": "application/json; charset=utf-8",
                 "Origin": console.url,
+                "X-Retriever-Token": console.control_token,
+                "X-Retriever-Launch-ID": console.launch_id,
             },
             method="POST",
         )
@@ -401,7 +524,11 @@ def test_http_post_allows_programmatic_client_without_origin() -> None:
         request = Request(
             f"{console.url}/api/pause",
             data=b"{}",
-            headers={"Content-Type": "application/json"},
+            headers={
+                "Content-Type": "application/json",
+                "X-Retriever-Token": console.control_token,
+                "X-Retriever-Launch-ID": console.launch_id,
+            },
             method="POST",
         )
         response = json.loads(urlopen(request, timeout=2.0).read())
