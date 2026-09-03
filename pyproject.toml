@@ -215,6 +215,25 @@ robosuite = [
     "mujoco>=3.3,<3.4",
     "mjviser==0.0.14",
 ]
+# RoboCasa drawer example. RoboCasa itself is not on PyPI and its fixture
+# and object asset packs are a multi-GB download, so both are installed from
+# source; see examples/advanced/robocasa_drawer/README.md. MuJoCo is
+# pinned because robosuite's controllers do not accept the 3.10 mj_fullM
+# signature change.
+robocasa_drawer = [
+    "robosuite>=1.5,<1.6",
+    "mujoco==3.3.1",
+    # The browser viewer talks to viser directly. `mjviser` would be the
+    # obvious dependency, but it requires mujoco>=3.6 and RoboSuite's
+    # controllers do not survive the 3.10 mj_fullM signature change.
+    "viser>=1.0",
+    # The viewer dresses the geoms in their MuJoCo textures, which means
+    # decoding raw pixel buffers into images the glTF exporter will take.
+    "Pillow",
+    # `verify.py --video` writes an MP4 through imageio, which cannot open one
+    # for writing without an ffmpeg backend.
+    "imageio-ffmpeg",
+]
 
 
 dev = [
