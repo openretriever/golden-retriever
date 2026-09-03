@@ -19,6 +19,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 
 REQUIRED_PATHS = (
+    "AGENTS.md",
+    "CLAUDE.md",
     "README.md",
     "examples/advanced/robosuite_lift/app.py",
     "examples/advanced/robosuite_lift/README.md",
@@ -57,6 +59,14 @@ REQUIRED_TASKS = (
 )
 
 DOC_MARKERS = {
+    "AGENTS.md": (
+        "Do not commit conversation transcripts",
+        "complete introduced commit",
+    ),
+    "CLAUDE.md": (
+        "[`AGENTS.md`](AGENTS.md)",
+        "single source of truth",
+    ),
     "README.md": (
         "GoldenRetriever is the applied reference layer",
         "Start Here",

@@ -11,5 +11,6 @@
 ## Public-Release Checklist
 
 - [ ] No credentials, private paths, private endpoints, or unpublished artifacts
+- [ ] No agent attribution, generation markers, or session links in commits or public content
 - [ ] Optional hardware/model/data dependencies are documented
 - [ ] Core runtime changes are kept in the main `retriever` repo, not Golden

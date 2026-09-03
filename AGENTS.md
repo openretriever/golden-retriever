@@ -82,6 +82,14 @@ one.
 
 - Do not introduce references to private infrastructure, internal
   hostnames, or unpublished project names into this repository.
+- Do not commit conversation transcripts, prompt or tool logs, agent names or
+  identities, model or provider metadata, session links, or agent scratch files.
+  Public code, documentation, artifacts, and commit messages describe project
+  behavior and source provenance, not which assistant produced them.
+- Before pushing or opening a pull request, scan the complete introduced commit
+  range as well as the final tree. CI enforces common attribution and session
+  markers, but maintainers remain responsible for disclosures a pattern cannot
+  recognize.
 
 ## Forbidden actions
 
