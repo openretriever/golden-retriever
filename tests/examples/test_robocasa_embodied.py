@@ -170,6 +170,7 @@ def test_skill_plan_uses_unique_optional_verification_semantics() -> None:
             ),
         ).validate()
 
+
 @pytest.mark.parametrize(
     "task, expected_stages",
     [
@@ -363,7 +364,9 @@ def test_goal_source_and_planner_flow_accept_browser_goal_updates() -> None:
 
 def test_skill_dispatcher_deduplicates_only_identical_execution_plans() -> None:
     dispatched: list[SkillPlan] = []
-    dispatcher = SkillDispatcher(on_dispatch=lambda _goal, plan: dispatched.append(plan))
+    dispatcher = SkillDispatcher(
+        on_dispatch=lambda _goal, plan: dispatched.append(plan)
+    )
     base = _plan_from_payload(
         EmbodiedGoal(
             text="Move the mug",

@@ -134,6 +134,19 @@ asset and dataset downloads, so it does not run this task automatically.
 The default MP4 path is `logs/robocasa-replay.mp4`. Routine recordings remain
 ignored under `logs/`.
 
+### Bounded methods harness
+
+The scene catalog also exposes a small methods harness for comparing embodied
+execution approaches without coupling the dashboard to one simulator or model.
+`MethodHarness` accepts the existing `PolicyObservation -> ActionChunk`
+boundary, validates horizon, shape, finite values, magnitude, and source, then
+records ordered events and native task verification. The included scripted
+privileged cube lift is a deterministic integration smoke, not a learned-policy
+result. Generated Python and arbitrary simulator commands are not accepted.
+
+See [`REPRODUCED_RESULTS.md`](REPRODUCED_RESULTS.md) for the tested environment,
+exact command, and current result.
+
 ## Native MuJoCo viewer
 
 The browser and headless commands above use ordinary Python on macOS and

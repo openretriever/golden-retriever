@@ -591,6 +591,8 @@
         const $ = (selector, root = document) => root.querySelector(selector);
         const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
         const pollIntervalMs = 200;
+        const controlToken = __RETRIEVER_CONTROL_TOKEN__;
+        const pageLaunchId = __RETRIEVER_LAUNCH_ID__;
         const graphNodes = [
           ["GoalSource", "Goal input"],
           ["EmbodiedPlanner", "Plan generation"],
@@ -659,6 +661,8 @@
         let latestState = null;
         let viewerUrl = "";
         let iframeReady = false;
+        let viewerHealthy = false;
+        let staleLaunch = false;
         let pollBusy = false;
         let stateEpoch = 0;
         let failedPolls = 0;
@@ -1074,7 +1078,11 @@
         async function postJson(url, body, timeoutMs = 5000) {
           return requestJson(url, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "X-Retriever-Token": controlToken,
+              "X-Retriever-Launch-ID": pageLaunchId,
+            },
             body: JSON.stringify(body || {}),
           }, timeoutMs);
         }
@@ -1082,7 +1090,16 @@
         async function loadConfig() {
           try {
             const config = await fetchJson("/api/config");
+            if (config.launch_id && config.launch_id !== pageLaunchId) {
+              staleLaunch = true;
+              setControlsDisabled(true);
+              setConnection("disconnected", "A newer simulator run is active");
+              setViewerOverlay("disconnected", "Run replaced", "Reloading this console for the active task.");
+              window.location.reload();
+              return;
+            }
             const nextUrl = String(config.viewer_url || "").trim();
+            viewerHealthy = Boolean(config.viewer_ready);
             if (config.task && !latestState) {
               elements.taskName.textContent = config.task;
               elements.viewerLabel.textContent = config.task;
@@ -1114,6 +1131,11 @@
               setViewerOverlay("loading", "Loading simulator", "Connecting to the mjviser viewport.");
               elements.viewerFrame.src = viewerUrl;
             }
+            if (!viewerHealthy) {
+              setViewerOverlay("loading", "Starting simulator", "Waiting for the mjviser viewport to become ready.");
+            } else if (iframeReady) {
+              setViewerOverlay("ready", "", "");
+            }
           } catch (error) {
             setViewerOverlay("disconnected", "Console unavailable", `Could not load configuration: ${error.message}`);
           }
@@ -1128,7 +1150,7 @@
             if (requestEpoch !== stateEpoch) return;
             failedPolls = 0;
             setConnection("connected", `Episode ${state.episode ?? "--"} · ${displayStatusFor(state)}`);
-            if (iframeReady) setViewerOverlay("ready", "", "");
+            if (iframeReady && viewerHealthy && !staleLaunch) setViewerOverlay("ready", "", "");
             renderState(state);
           } catch (error) {
             failedPolls += 1;
@@ -1166,7 +1188,7 @@
 
         elements.viewerFrame.addEventListener("load", () => {
           iframeReady = true;
-          if (failedPolls < 3) setViewerOverlay("ready", "", "");
+          if (failedPolls < 3 && viewerHealthy && !staleLaunch) setViewerOverlay("ready", "", "");
         });
 
         elements.viewerFrame.addEventListener("error", () => {
@@ -1235,7 +1257,7 @@
         pollState();
         window.setInterval(pollState, pollIntervalMs);
         window.setInterval(() => {
-          if (!viewerUrl || failedPolls >= 3) loadConfig();
+          loadConfig();
         }, 3000);
       })();
     </script>

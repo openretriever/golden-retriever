@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import hmac
+import ipaddress
 import json
+import logging
 import os
 import signal
 import subprocess
@@ -19,6 +22,8 @@ from time import monotonic, sleep
 from typing import Any, Literal
 from urllib.parse import urlsplit
 from uuid import uuid4
+
+from .baselines import BaselineSpec, discover_method_baselines
 
 try:
     from pydantic import BaseModel, Field
@@ -35,6 +40,11 @@ class Scene:
     episodes: int
     horizon: int
     preview: str
+    label: str = ""
+    provider: str = "RoboCasa"
+    runner: str = "robocasa"
+    description: str = ""
+    source_url: str = ""
     available: bool = True
     unavailable_reason: str | None = None
 
@@ -83,6 +93,8 @@ _CURATED_TASKS = (
 _CURATED_ORDER = {task: index for index, (task, _kind) in enumerate(_CURATED_TASKS)}
 _DEFAULT_PREVIEW = "/media/turn-on-microwave-replay.jpg"
 _MISSING_DATASET = "Human demonstration dataset is not installed."
+_MAX_REQUEST_BYTES = 64 * 1024
+_LOGGER = logging.getLogger(__name__)
 
 
 def discover_scenes() -> list[Scene]:
@@ -141,6 +153,32 @@ def discover_scenes() -> list[Scene]:
             scene.kind != "Atomic",
             scene.task,
         ),
+    )
+
+
+def discover_baseline_scenes(*, horizon: int = 1200) -> list[Scene]:
+    """Project typed baseline manifests into the shared launcher catalog."""
+
+    return [
+        _baseline_scene(spec, horizon=horizon) for spec in discover_method_baselines()
+    ]
+
+
+def _baseline_scene(spec: BaselineSpec, *, horizon: int) -> Scene:
+    return Scene(
+        task=spec.baseline_id,
+        kind=spec.tier,
+        split=spec.environment,
+        episodes=1,
+        horizon=horizon,
+        preview="",
+        label=spec.label,
+        provider=spec.family,
+        runner=spec.runner,
+        description=spec.description,
+        source_url=spec.reference_url,
+        available=spec.available,
+        unavailable_reason=spec.unavailable_reason,
     )
 
 
@@ -208,6 +246,7 @@ class ViewerManager:
         self._planner = "offline"
         self._execution_mode = "demonstration"
         self._interface: Literal["console", "viser"] = "console"
+        self._runner = "robocasa"
         self._launch_id = ""
         self._last_error: str | None = None
 
@@ -236,7 +275,34 @@ class ViewerManager:
         execution_mode: Literal["demonstration", "live_planning"] = "demonstration",
         interface: Literal["console", "viser"] = "console",
         launch_id: str = "",
+        runner: str = "robocasa",
     ) -> list[str]:
+        if runner == "robosuite_lift":
+            steps = max(1, int(self.duration / 0.05))
+            return [
+                sys.executable,
+                "-m",
+                "examples.advanced.robocasa.robosuite_lift",
+                "--mode",
+                "robosuite",
+                "--env",
+                "Lift",
+                "--visualize",
+                "mjviser",
+                "--viser-host",
+                self.host,
+                "--viser-port",
+                str(self.port),
+                "--steps",
+                str(steps),
+                "--dt",
+                "0.05",
+                "--print-every",
+                "100",
+                "--harness",
+            ]
+        if runner != "robocasa":
+            raise ValueError(f"Unknown simulator runner: {runner}")
         command = [
             sys.executable,
             "-m",
@@ -302,7 +368,8 @@ class ViewerManager:
             self._goal = goal.strip() or scene.task
             self._planner = planner
             self._execution_mode = execution_mode
-            self._interface = interface
+            self._interface = "viser" if scene.runner != "robocasa" else interface
+            self._runner = scene.runner
             self._launch_id = uuid4().hex
             try:
                 self._process = subprocess.Popen(
@@ -315,6 +382,7 @@ class ViewerManager:
                         execution_mode=execution_mode,
                         interface=interface,
                         launch_id=self._launch_id,
+                        runner=scene.runner,
                     ),
                     cwd=Path(__file__).resolve().parents[3],
                     start_new_session=os.name == "posix",
@@ -324,12 +392,15 @@ class ViewerManager:
             except OSError as exc:
                 self._process_group_id = None
                 self._last_error = str(exc)
-                raise RuntimeError(f"Could not start RoboCasa: {exc}") from exc
+                raise RuntimeError(f"Could not start simulator: {exc}") from exc
         return self.status()
 
     def stop(self) -> dict[str, Any]:
         with self._lock:
-            self._stop_locked()
+            if not self._stop_locked():
+                raise RuntimeError(
+                    self._last_error or "Could not stop the active simulator"
+                )
         return self.status()
 
     def status(self) -> dict[str, Any]:
@@ -345,11 +416,14 @@ class ViewerManager:
                 "planner": self._planner,
                 "execution_mode": self._execution_mode,
                 "interface": self._interface,
+                "runner": self._runner,
                 "launch_id": self._launch_id,
                 "viewer_url": self.viewer_url,
                 "console_url": self.console_url,
                 "open_url": (
-                    self.viewer_url if self._interface == "viser" else self.console_url
+                    self.viewer_url
+                    if self._interface == "viser" or self._runner != "robocasa"
+                    else self.console_url
                 ),
                 "error": self._last_error,
             }
@@ -359,15 +433,17 @@ class ViewerManager:
             state = "failed"
         elif returncode is not None:
             state = "stopped"
-        elif _console_matches_run(
-            self.host,
-            self.console_port,
-            task=status["task"],
-            episode=status["episode"],
-            launch_id=status["launch_id"],
-        ) and (
-            status["interface"] == "console"
-            or (status["interface"] == "viser" and _port_is_open(self.host, self.port))
+        elif (
+            status["runner"] != "robocasa"
+            and _port_is_open(self.host, self.port)
+            or _console_matches_run(
+                self.host,
+                self.console_port,
+                task=status["task"],
+                episode=status["episode"],
+                launch_id=status["launch_id"],
+            )
+            and _port_is_open(self.host, self.port)
         ):
             state = "ready"
         else:
@@ -417,6 +493,7 @@ class ViewerManager:
         self._planner = "offline"
         self._execution_mode = "demonstration"
         self._interface = "console"
+        self._runner = "robocasa"
         self._launch_id = ""
         self._last_error = None
         return True
@@ -534,6 +611,19 @@ def _header_origin(value: str) -> tuple[str, str, int | None] | None:
         return None
 
 
+def _host_is_allowed(value: str, configured_host: str) -> bool:
+    parsed = urlsplit(f"http://{value}")
+    hostname = (parsed.hostname or "").lower()
+    if hostname in {"localhost", "127.0.0.1", "::1"}:
+        return True
+    configured = configured_host.lower().strip("[]")
+    try:
+        address = ipaddress.ip_address(hostname)
+        return address.is_loopback or hostname == configured
+    except ValueError:
+        return configured not in {"", "0.0.0.0", "::"} and hostname == configured
+
+
 def _post_has_body(request: Any) -> bool:
     content_length = request.headers.get("content-length")
     if content_length is not None:
@@ -550,6 +640,7 @@ def create_app(
     viewer_port: int,
     duration: float,
     console_port: int | None = None,
+    launcher_host: str = "127.0.0.1",
 ):
     from fastapi import FastAPI, HTTPException, Request
     from fastapi.responses import HTMLResponse, JSONResponse
@@ -558,7 +649,11 @@ def create_app(
     if LaunchRequest is None:
         raise RuntimeError("The RoboCasa launcher requires the web extra.")
 
-    scenes = discover_scenes()
+    baseline_horizon = max(1, int(duration / 0.05))
+    scenes = [
+        *discover_baseline_scenes(horizon=baseline_horizon),
+        *discover_scenes(),
+    ]
     manager = ViewerManager(
         host=viewer_host,
         port=viewer_port,
@@ -569,9 +664,16 @@ def create_app(
     @asynccontextmanager
     async def lifespan(_app):
         yield
-        await asyncio.to_thread(manager.stop)
+        try:
+            await asyncio.to_thread(manager.stop)
+        except RuntimeError as exc:
+            _LOGGER.warning(
+                "Simulator cleanup failed during launcher shutdown: %s", exc
+            )
 
-    app = FastAPI(title="Retriever RoboCasa Scenes", lifespan=lifespan)
+    app = FastAPI(title="Retriever Embodied Scenes", lifespan=lifespan)
+    control_token = uuid4().hex
+    app.state.control_token = control_token
     static_dir = Path(__file__).with_name("static")
     media_dir = Path(__file__).resolve().parents[3] / "docs-site/public/media/robocasa"
     if media_dir.is_dir():
@@ -583,6 +685,13 @@ def create_app(
     @app.middleware("http")
     async def protect_local_mutations(request: Request, call_next):
         if request.method == "POST":
+            if not _host_is_allowed(request.headers.get("host", ""), launcher_host):
+                return JSONResponse(
+                    status_code=HTTPStatus.FORBIDDEN,
+                    content={
+                        "detail": "Launcher commands require a local or explicitly configured host."
+                    },
+                )
             origin = request.headers.get("origin")
             if origin is not None:
                 supplied_origin = _header_origin(origin)
@@ -595,6 +704,33 @@ def create_app(
                             "detail": "Cross-origin launcher requests are not allowed."
                         },
                     )
+            supplied_token = request.headers.get("x-retriever-token", "")
+            if not hmac.compare_digest(supplied_token, control_token):
+                return JSONResponse(
+                    status_code=HTTPStatus.FORBIDDEN,
+                    content={"detail": "Launcher control token is missing or invalid."},
+                )
+            content_length = request.headers.get("content-length")
+            if content_length is not None:
+                try:
+                    request_bytes = int(content_length)
+                except ValueError:
+                    request_bytes = _MAX_REQUEST_BYTES + 1
+                if request_bytes < 0 or request_bytes > _MAX_REQUEST_BYTES:
+                    return JSONResponse(
+                        status_code=HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
+                        content={
+                            "detail": f"Request body must be at most {_MAX_REQUEST_BYTES} bytes."
+                        },
+                    )
+            body = await request.body()
+            if len(body) > _MAX_REQUEST_BYTES:
+                return JSONResponse(
+                    status_code=HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
+                    content={
+                        "detail": f"Request body must be at most {_MAX_REQUEST_BYTES} bytes."
+                    },
+                )
             if _post_has_body(request):
                 media_type = request.headers.get("content-type", "").split(";", 1)[0]
                 if media_type.strip().lower() != "application/json":
@@ -608,7 +744,8 @@ def create_app(
 
     @app.get("/", response_class=HTMLResponse)
     async def index() -> str:
-        return (static_dir / "launcher.html").read_text(encoding="utf-8")
+        html = (static_dir / "launcher.html").read_text(encoding="utf-8")
+        return html.replace("__RETRIEVER_CONTROL_TOKEN__", json.dumps(control_token))
 
     @app.get("/api/scenes")
     async def list_scenes() -> list[dict[str, Any]]:
@@ -622,7 +759,7 @@ def create_app(
     async def launch(request: LaunchRequest) -> dict[str, Any]:
         scene = by_task.get(request.task)
         if scene is None:
-            raise HTTPException(status_code=404, detail="Unknown RoboCasa task")
+            raise HTTPException(status_code=404, detail="Unknown embodied task")
         if not scene.available:
             raise HTTPException(
                 status_code=409,
@@ -645,7 +782,10 @@ def create_app(
 
     @app.post("/api/stop")
     async def stop() -> dict[str, Any]:
-        return await asyncio.to_thread(manager.stop)
+        try:
+            return await asyncio.to_thread(manager.stop)
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     return app
 
@@ -670,6 +810,7 @@ def main() -> None:
         viewer_port=args.viewer_port,
         duration=args.duration,
         console_port=args.console_port,
+        launcher_host=args.host,
     )
     print(f"Retriever RoboCasa scenes: http://localhost:{args.port}")
     uvicorn.run(app, host=args.host, port=args.port, log_level="warning")

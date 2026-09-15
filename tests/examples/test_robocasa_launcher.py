@@ -13,6 +13,7 @@ if FASTAPI_AVAILABLE:
     from fastapi.testclient import TestClient
 
 from examples.advanced.robocasa import launcher
+from examples.advanced.robocasa.baselines import discover_method_baselines
 from examples.advanced.robocasa.launcher import Scene, ViewerManager
 
 SCENE = Scene(
@@ -25,14 +26,59 @@ SCENE = Scene(
 )
 
 
+def _control_headers(app, **extra: str) -> dict[str, str]:
+    return {"X-Retriever-Token": app.state.control_token, **extra}
+
+
 def test_launcher_template_clamps_episode_and_announces_status() -> None:
-    template = (
-        Path(launcher.__file__).parent / "static" / "launcher.html"
-    ).read_text(encoding="utf-8")
+    template = (Path(launcher.__file__).parent / "static" / "launcher.html").read_text(
+        encoding="utf-8"
+    )
 
     assert 'role="status" aria-live="polite"' in template
     assert "const maxEpisode = Math.max(0, scene.episodes - 1);" in template
     assert "Math.min(Math.max(0, Number(episode.value) || 0), maxEpisode)" in template
+    assert 'id="live-viewer"' in template
+    assert 'let mountedViewerUrl = "";' in template
+    assert "mountedViewerUrl !== currentStatus.viewer_url" in template
+    assert "Task & baseline catalog" in template
+    assert 'scene.provider || "RoboCasa"' in template
+
+
+def test_method_manifest_is_explicit_about_capabilities() -> None:
+    baselines = discover_method_baselines(lambda name: name in {"robosuite", "mjviser"})
+
+    assert [baseline.tier for baseline in baselines] == ["S1", "S2", "M3"]
+    assert baselines[0].available is True
+    assert baselines[0].runner == "robosuite_lift"
+    assert baselines[0].grounding == "privileged state"
+    assert baselines[1].available is False
+    assert baselines[1].unavailable_reason
+    assert all(baseline.reference_url.endswith("/cap-x") for baseline in baselines)
+
+
+def test_cap_method_requires_both_local_simulator_modules() -> None:
+    baselines = discover_method_baselines(lambda name: name == "robosuite")
+
+    assert baselines[0].available is False
+    assert "mjviser" in (baselines[0].unavailable_reason or "")
+
+
+def test_baseline_scene_preserves_reference_metadata(monkeypatch) -> None:
+    monkeypatch.setattr(
+        launcher,
+        "discover_method_baselines",
+        lambda: discover_method_baselines(lambda _name: True),
+    )
+
+    scenes = launcher.discover_baseline_scenes(horizon=200)
+
+    assert scenes[0].task == "method-s1-privileged-lift"
+    assert scenes[0].label == "Scripted privileged cube lift"
+    assert scenes[0].provider == "Code-as-Policy"
+    assert scenes[0].runner == "robosuite_lift"
+    assert scenes[0].horizon == 200
+    assert scenes[0].available is True
 
 
 def test_discovery_always_includes_curated_tasks(monkeypatch, tmp_path: Path) -> None:
@@ -131,6 +177,38 @@ def test_viewer_command_runs_existing_retriever_robocasa_app() -> None:
     assert command[0] == sys.executable
 
 
+def test_viewer_command_runs_method_preview_through_existing_robosuite_flow() -> None:
+    manager = ViewerManager(host="127.0.0.1", port=8085, duration=10)
+
+    command = manager.command(
+        task="method-s1-privileged-lift",
+        split="robosuite",
+        episode=0,
+        runner="robosuite_lift",
+    )
+
+    assert command[1:3] == [
+        "-m",
+        "examples.advanced.robocasa.robosuite_lift",
+    ]
+    assert command[command.index("--mode") + 1] == "robosuite"
+    assert command[command.index("--visualize") + 1] == "mjviser"
+    assert command[command.index("--steps") + 1] == "200"
+    assert "--harness" in command
+
+
+def test_viewer_command_rejects_unknown_runner() -> None:
+    manager = ViewerManager(host="127.0.0.1", port=8085, duration=10)
+
+    with pytest.raises(ValueError, match="Unknown simulator runner"):
+        manager.command(
+            task="unknown",
+            split="external",
+            episode=0,
+            runner="typo",
+        )
+
+
 def test_viewer_manager_replaces_and_stops_child(monkeypatch) -> None:
     processes = []
 
@@ -189,7 +267,9 @@ def test_viewer_manager_retains_child_when_it_cannot_be_reaped() -> None:
     manager._process = StuckProcess()
     manager._task = "PrepareCoffee"
 
-    status = manager.stop()
+    with pytest.raises(RuntimeError, match="could not be stopped"):
+        manager.stop()
+    status = manager.status()
 
     assert manager._process is not None
     assert status["state"] == "failed"
@@ -232,7 +312,7 @@ def test_viewer_manager_checks_selected_interface_port(monkeypatch) -> None:
     manager._interface = "console"
     assert manager.status()["state"] == "ready"
 
-    assert checked_ports == [8085]
+    assert checked_ports == [8085, 8085]
     assert matched_runs == [
         ("127.0.0.1", 8086, None, 0, ""),
         ("127.0.0.1", 8086, None, 0, ""),
@@ -305,7 +385,9 @@ def test_viewer_manager_retains_process_group_when_cleanup_times_out(
     manager._process = parent
     manager._process_group_id = parent.pid
 
-    status = manager.stop()
+    with pytest.raises(RuntimeError, match="could not be stopped"):
+        manager.stop()
+    status = manager.status()
 
     assert status["state"] == "failed"
     assert status["error"] == "Simulator process group could not be stopped"
@@ -462,20 +544,31 @@ def test_launcher_lists_installed_scenes(monkeypatch) -> None:
             launch=lambda *_args, **_kwargs: {},
         ),
     )
-    app = launcher.create_app(viewer_host="127.0.0.1", viewer_port=8085, duration=180)
+    app = launcher.create_app(
+        viewer_host="127.0.0.1",
+        viewer_port=8085,
+        duration=180,
+        launcher_host="testserver",
+    )
 
     with TestClient(app) as client:
         response = client.get("/api/scenes")
         index = client.get("/")
-        missing = client.post("/api/launch", json={"task": "Missing", "episode": 0})
+        missing = client.post(
+            "/api/launch",
+            json={"task": "Missing", "episode": 0},
+            headers=_control_headers(app),
+        )
 
     assert response.status_code == 200
-    assert response.json()[0]["task"] == "TurnOnMicrowave"
+    assert any(scene["task"] == "TurnOnMicrowave" for scene in response.json())
     assert "Task catalog" in index.text
     assert 'id="goal"' in index.text
     assert 'id="planner"' in index.text
     assert "function applyStatus" in index.text
     assert "expectedGeneration === requestGeneration" in index.text
+    assert "__RETRIEVER_CONTROL_TOKEN__" not in index.text
+    assert app.state.control_token in index.text
     assert missing.status_code == 404
     assert stops == [True]
 
@@ -504,17 +597,26 @@ def test_launcher_reports_unavailable_dataset_without_launching(monkeypatch) -> 
             ),
         ),
     )
-    app = launcher.create_app(viewer_host="127.0.0.1", viewer_port=8085, duration=180)
+    app = launcher.create_app(
+        viewer_host="127.0.0.1",
+        viewer_port=8085,
+        duration=180,
+        launcher_host="testserver",
+    )
 
     with TestClient(app) as client:
         scenes = client.get("/api/scenes")
         response = client.post(
             "/api/launch",
             json={"task": "PrepareCoffee", "goal": "Make coffee", "planner": "offline"},
+            headers=_control_headers(app),
         )
 
-    assert scenes.json()[0]["available"] is False
-    assert scenes.json()[0]["unavailable_reason"]
+    prepare_coffee = next(
+        scene for scene in scenes.json() if scene["task"] == "PrepareCoffee"
+    )
+    assert prepare_coffee["available"] is False
+    assert prepare_coffee["unavailable_reason"]
     assert response.status_code == 409
 
 
@@ -530,7 +632,12 @@ def test_launcher_forwards_goal_and_planner(monkeypatch) -> None:
     )
     monkeypatch.setattr(launcher, "discover_scenes", lambda: [SCENE])
     monkeypatch.setattr(launcher, "ViewerManager", lambda **_kwargs: manager)
-    app = launcher.create_app(viewer_host="127.0.0.1", viewer_port=8085, duration=180)
+    app = launcher.create_app(
+        viewer_host="127.0.0.1",
+        viewer_port=8085,
+        duration=180,
+        launcher_host="testserver",
+    )
 
     with TestClient(app) as client:
         response = client.post(
@@ -543,6 +650,7 @@ def test_launcher_forwards_goal_and_planner(monkeypatch) -> None:
                 "execution_mode": "live_planning",
                 "interface": "viser",
             },
+            headers=_control_headers(app),
         )
 
     assert response.status_code == 200
@@ -578,9 +686,9 @@ def test_launcher_allows_same_origin_and_originless_posts(monkeypatch) -> None:
     with TestClient(app, base_url="http://localhost:8084") as client:
         same_origin = client.post(
             "/api/stop",
-            headers={"Origin": "http://localhost:8084"},
+            headers=_control_headers(app, Origin="http://localhost:8084"),
         )
-        originless = client.post("/api/stop")
+        originless = client.post("/api/stop", headers=_control_headers(app))
 
     assert same_origin.status_code == 200
     assert originless.status_code == 200
@@ -609,7 +717,7 @@ def test_launcher_rejects_cross_origin_posts(monkeypatch, origin: str) -> None:
     with TestClient(app, base_url="http://localhost:8084") as client:
         response = client.post(
             "/api/stop",
-            headers={"Origin": origin},
+            headers=_control_headers(app, Origin=origin),
         )
 
     assert response.status_code == 403
@@ -638,9 +746,61 @@ def test_launcher_requires_json_for_post_bodies(monkeypatch) -> None:
         response = client.post(
             "/api/stop",
             content="stop",
-            headers={"Content-Type": "text/plain"},
+            headers=_control_headers(app, **{"Content-Type": "text/plain"}),
         )
 
     assert response.status_code == 415
     assert response.json()["detail"] == "POST request bodies must use application/json."
     assert stops == [True]
+
+
+@pytest.mark.skipif(not FASTAPI_AVAILABLE, reason="FastAPI extra is not installed")
+def test_launcher_rejects_missing_token_and_untrusted_host(monkeypatch) -> None:
+    monkeypatch.setattr(launcher, "discover_scenes", lambda: [SCENE])
+    monkeypatch.setattr(
+        launcher,
+        "ViewerManager",
+        lambda **_kwargs: SimpleNamespace(
+            status=dict,
+            stop=lambda: {"state": "idle"},
+            launch=lambda *_args, **_kwargs: {"state": "starting"},
+        ),
+    )
+    app = launcher.create_app(viewer_host="127.0.0.1", viewer_port=8085, duration=180)
+
+    with TestClient(app, base_url="http://localhost:8084") as client:
+        missing = client.post("/api/stop")
+    with TestClient(app, base_url="http://attacker.example") as client:
+        untrusted = client.post("/api/stop", headers=_control_headers(app))
+
+    assert missing.status_code == 403
+    assert untrusted.status_code == 403
+
+
+@pytest.mark.skipif(not FASTAPI_AVAILABLE, reason="FastAPI extra is not installed")
+def test_launcher_reports_cleanup_failure_and_rejects_oversized_body(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(launcher, "discover_scenes", lambda: [SCENE])
+    monkeypatch.setattr(
+        launcher,
+        "ViewerManager",
+        lambda **_kwargs: SimpleNamespace(
+            status=dict,
+            stop=lambda: (_ for _ in ()).throw(RuntimeError("cleanup timed out")),
+            launch=lambda *_args, **_kwargs: {"state": "starting"},
+        ),
+    )
+    app = launcher.create_app(viewer_host="127.0.0.1", viewer_port=8085, duration=180)
+
+    with TestClient(app, base_url="http://localhost:8084") as client:
+        failed_stop = client.post("/api/stop", headers=_control_headers(app))
+        oversized = client.post(
+            "/api/launch",
+            content=b"x" * (64 * 1024 + 1),
+            headers=_control_headers(app, **{"Content-Type": "application/json"}),
+        )
+
+    assert failed_stop.status_code == 503
+    assert failed_stop.json()["detail"] == "cleanup timed out"
+    assert oversized.status_code == 413
