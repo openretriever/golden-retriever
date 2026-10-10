@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Retriever — animated pipeline graph</title>
+
+<!-- Export inlines the Cytoscape/dagre assets bundled with retriever.ir. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dagre/0.8.5/dagre.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cytoscape-dagre@2.5.0/cytoscape-dagre.min.js"></script>
+
+<style>
+  :root{--ink:#20252b;--dim:#59636e;--line:#dce1e5;--ground:#fafbfc;--panel:#fff}
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{display:grid;grid-template-rows:auto minmax(0,1fr) auto;background:var(--ground);
+       color:var(--ink);font:13px/1.4 system-ui,sans-serif;letter-spacing:0}
+  #bar{display:flex;gap:8px;align-items:center;padding:8px 12px;flex-wrap:wrap;
+       background:var(--panel);border-bottom:1px solid var(--line);z-index:5}
+  .group{display:flex;gap:4px;align-items:center;min-width:0}
+  button,select{font:inherit;min-height:34px;border:1px solid var(--line);
+       border-radius:4px;background:#fff;color:var(--ink);cursor:pointer;padding:4px 10px}
+  button.icon{width:36px;padding:0;font-size:19px}
+  button:hover{background:#edf2f5}
+  button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #007c91;outline-offset:2px}
+  #bar label{color:var(--dim)}
+  #bar label.toggle{display:inline-flex;align-items:center;gap:4px;min-height:34px}
+  #rate{width:96px;min-width:50px}
+  #rateval{font:12px ui-monospace,monospace;min-width:44px;text-align:right}
+  #cy{position:relative;min-width:0;min-height:0;width:100%;height:100%}
+  #status{display:flex;gap:6px 16px;flex-wrap:wrap;padding:7px 12px;
+       border-top:1px solid var(--line);color:var(--dim);font-size:11px}
+  #notice{margin-left:auto}
+  #edge-detail{position:fixed;z-index:10;pointer-events:none;max-width:min(320px,calc(100vw - 16px));
+       padding:8px 10px;border:1px solid var(--line);border-radius:4px;background:#fff;
+       box-shadow:0 2px 8px #0002;white-space:pre-line;overflow-wrap:anywhere;font-size:12px}
+  @media(max-width:480px){#bar{gap:6px;padding:6px}#rate{width:70px}#status{padding:6px}}
+</style>
+</head>
+<body>
+<div id="bar" role="toolbar" aria-label="Graph controls">
+  <div class="group" role="group" aria-label="Layout">
+    <button id="loops" class="on" aria-pressed="true">Loops</button>
+    <button id="rows" aria-pressed="false">Layers</button>
+    <select id="direction" aria-label="Layer direction" title="Layer direction">
+      <option value="auto">Auto</option><option value="LR">Horizontal</option><option value="TB">Vertical</option>
+    </select>
+  </div>
+  <div class="group">
+    <button id="fit" class="icon" title="Fit graph" aria-label="Fit graph">&#x26F6;</button>
+    <button id="pause" class="icon" title="Pause animation" aria-label="Pause animation" aria-pressed="false">&#x23F8;</button>
+    <label for="rate">Speed</label>
+    <input id="rate" type="range" min="0.1" max="3" step="0.05" value="1">
+    <output id="rateval" for="rate">1.00x</output>
+  </div>
+  <div class="group">
+    <label class="toggle" title="Show all port labels"><input id="portlabels" type="checkbox">Port labels</label>
+    <button id="copy" class="icon" title="Copy graph and layout JSON" aria-label="Copy graph and layout JSON">&#x29C9;</button>
+    <button id="png" class="icon" title="Export PNG" aria-label="Export PNG">&#x2193;</button>
+  </div>
+</div>
+<div id="cy" role="img" aria-label="Pipeline graph"></div>
+<footer id="status">
+  <span>Configured clocks only; not execution replay.</span>
+  <span>Trigger pulses are illustrative, not measured frequency.</span>
+  <span id="notice" role="status" aria-live="polite"></span>
+</footer>
+<div id="edge-detail" role="status" hidden></div>
+
+<!-- ===================================================================
+     THE GRAPH.  This is the only part you edit, and the only part
+     animated_graph.py rewrites.  Contract: README_animated_graph.md
+     =================================================================== -->
+<script id="retriever-graph" type="application/json">
+{
+  "nodes": [
+    {"id":"source","type":"SourceFlow","rate":30},
+    {"id":"processor","type":"ProcessorFlow","rate":"trigger(sample)"},
+    {"id":"sink","type":"SinkFlow","rate":2}
+  ],
+  "edges": [
+    {"from":"source","to":"processor","label":"sample","sync":"Latest"},
+    {"from":"processor","to":"sink","label":"result","sync":"Latest"},
+    {"from":"sink","to":"source","label":"feedback","sync":"Latest"}
+  ]
+}
+</script>
+
+<script>
+// Canonical types are never replaced by presentation annotations.
+const GRAPH = JSON.parse(document.getElementById("retriever-graph").textContent);
+GRAPH.nodes.forEach(n => {
+  const canonical = typeof n.type === "string" && n.type ? n.type : String(n.id);
+  if (n.label && n.label !== canonical && !n.annotation) n.annotation = String(n.label);
+  n.type = canonical; n.label = canonical;
+  if (!["flow", "env", "major"].includes(n.kind)) n.kind = "flow";
+});
+/* ── colour ────────────────────────────────────────────────────────────────
+   Palette is authored in oklch (even lightness across hues, which sRGB HSL
+   will not give you) and converted here, because Cytoscape parses colours
+   itself and does not understand oklch(). */
+function oklch(L, C, H){
+  const h = H * Math.PI / 180, a = C * Math.cos(h), bb = C * Math.sin(h);
+  const l_ = L + .3963377774*a + .2158037573*bb,
+        m_ = L - .1055613458*a - .0638541728*bb,
+        s_ = L - .0894841775*a - 1.2914855480*bb;
+  const l = l_**3, m = m_**3, s = s_**3;
+  const lin = [
+    +4.0767416621*l - 3.3077115913*m + 0.2309699292*s,
+    -1.2684380046*l + 2.6097574011*m - 0.3413193965*s,
+    -0.0041960863*l - 0.7034186147*m + 1.7076147010*s ];
+  const g = v => { v = v <= .0031308 ? 12.92*v : 1.055*Math.pow(v, 1/2.4) - .055;
+                   return Math.round(Math.min(1, Math.max(0, v)) * 255); };
+  return "#" + lin.map(v => g(v).toString(16).padStart(2, "0")).join("");
+}
+
+// Hues spread around the wheel; assigned in declaration order so a graph
+// re-export keeps its colours stable.
+const HUES = [185, 75, 25, 145, 300, 230, 345, 55, 265, 165];
+const hueOf = (() => {
+  const seen = Object.create(null); let i = 0;
+  return n => (n.hue !== undefined ? n.hue
+             : seen[n.id] ?? (seen[n.id] = HUES[i++ % HUES.length]));
+})();
+
+/* ── speed law ─────────────────────────────────────────────────────────────
+   Rate spans three decades (0.5 Hz planning to 200 Hz control), so a linear
+   px/s mapping makes everything below 5 Hz look identically frozen. Piecewise:
+     >= 5 Hz   logarithmic  — fast lanes stay distinguishable without blurring
+     0.5-5 Hz  near-linear  — this is the band the figure is actually about
+     <  0.5 Hz compressed   — slow, but never so slow it reads as broken       */
+const S05 = 8, S5 = 60, SMAX = 150;
+const SLOPE = (S5 - S05) / 4.5, KLOG = (SMAX - S5) / Math.log10(200 / 5);
+const hz = r => typeof r === "number" && Number.isFinite(r) && r > 0 ? r : null;
+const speedOf = r => {
+  const v = hz(r);
+  if (v === null) return 0;
+  return v >= 5 ? S5 + KLOG * Math.log10(v / 5)
+       : v >= .5 ? S05 + SLOPE * (v - .5) : S05 * Math.sqrt(v / .5);
+};
+const gapOf = r => hz(r) === null ? 28 : 26 * Math.pow(Math.max(hz(r), .05), -.10);
+const clockOf = n => {
+  if (n.clock && typeof n.clock === "object") return n.clock;
+  if (hz(n.rate) !== null) return {kind:"rate", hz:n.rate};
+  if (typeof n.rate === "string" && (n.rate.toLowerCase() === "trigger" || n.rate.toLowerCase().startsWith("trigger(")))
+    return {kind:"trigger", description:n.rate};
+  return {kind:"unknown"};
+};
+const clockLabel = n => {
+  const c = clockOf(n), periodic = hz(c.hz);
+  const fields = Array.isArray(c.fields) && c.fields.length ? " (" + c.fields.join(", ") + ")" : "";
+  if (c.kind === "trigger") return c.description || "Trigger" + fields;
+  if (c.kind === "hybrid") return "Hybrid: " + (periodic === null ? "unspecified rate" : periodic + " Hz") + " + trigger" + fields;
+  if (c.kind === "rate" && periodic !== null) return periodic + " Hz configured";
+  return "Clock unspecified";
+};
+
+/* ── node rendering ────────────────────────────────────────────────────────
+   Each box is drawn as an SVG data URI used as the node's background image,
+   rather than a Cytoscape label. Cytoscape allows one label per node with one
+   style; the boxes use separate class, instance and clock text styles.
+   Cytoscape handles layout and hit testing. */
+const SANS = 'Arial,Helvetica,sans-serif';
+const MONO = 'ui-monospace,SFMono-Regular,Menlo,monospace';
+const _m = document.createElement("canvas").getContext("2d");
+const textW = (t, font) => { _m.font = font; return _m.measureText(String(t)).width; };
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;")
+  .replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&apos;");
+function wrapText(text, font, width){
+  const lines = [];
+  for (const paragraph of String(text).split("\n")){
+    let rest = paragraph;
+    while (rest && textW(rest, font) > width){
+      const chars = Array.from(rest);
+      let fit = 0, boundary = 0;
+      for (let i = 1; i < chars.length; i++){
+        if (textW(chars.slice(0,i).join(""), font) > width) break;
+        fit = i;
+        const prev = chars[i-1], next = chars[i], after = chars[i+1] || "";
+        const wordEnd = /[\s_,;:/-]/.test(prev);
+        const camelCase = /[a-z0-9]/.test(prev) && /[A-Z]/.test(next);
+        const acronymEnd = /[A-Z]/.test(prev) && /[A-Z]/.test(next) && /[a-z]/.test(after);
+        if ((wordEnd || camelCase || acronymEnd) && !/^[\s)\]},.;:!?]+$/.test(chars.slice(i).join(""))) boundary = i;
+      }
+      // Prefer semantic boundaries; only split an oversized token as a fallback.
+      let cut = boundary || Math.max(1,fit);
+      if (!boundary && chars.length - cut < 3 && cut > 3) cut -= 3 - (chars.length-cut);
+      lines.push(chars.slice(0,cut).join(""));
+      rest = chars.slice(cut).join("");
+    }
+    lines.push(rest);
+  }
+  return lines;
+}
+const boxes = new Map();
+function boxOf(n){
+  if (boxes.has(n.id)) return boxes.get(n.id);
+  const major = n.kind === "major", tf = "600 14px " + SANS, sf = "11px " + MONO;
+  const details = [...new Set([n.id !== n.type ? n.id : "", n.annotation, n.sub].filter(Boolean))];
+  const badge = clockLabel(n), bf = "500 11px " + SANS;
+  const w = Math.ceil(Math.min(310, Math.max(168, textW(n.label, tf) + 34,
+    textW(badge, bf) + 34, ...details.map(t => textW(t, sf) + 34))));
+  const titleLines = wrapText(n.label, tf, w - 28);
+  const detailLines = details.flatMap(t => wrapText(t, sf, w - 28));
+  const badgeLines = wrapText(badge, bf, w - 28);
+  const h = 24 + titleLines.length * 18 + detailLines.length * 15 + 10 + badgeLines.length * 15;
+  const box = {w,h,major,tf,sf,bf,badge,titleLines,detailLines,badgeLines};
+  boxes.set(n.id, box);
+  return box;
+}
+function svgOf(n){
+  const b = boxOf(n), H = hueOf(n), env = n.kind === "env";
+  const stroke = env ? "#9aa4ad" : oklch(.58,.12,H);
+  const fill = env ? "#f5f6f7" : oklch(.975,.025,H);
+  let y = 23;
+  const lines = (items, size, color, weight, family, height) => items.map(t => {
+    const line = '<text x="14" y="' + y + '" font-family="' + family + '" font-size="' +
+      size + '" font-weight="' + weight + '" fill="' + color + '">' + esc(t) + '</text>';
+    y += height; return line;
+  }).join("");
+  let body = lines(b.titleLines,14,"#20252b",600,SANS,18);
+  body += lines(b.detailLines,11,"#59636e",400,MONO,15);
+  y += 8;
+  body += lines(b.badgeLines,11,stroke,500,SANS,15);
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + b.w + '" height="' + b.h +
+    '" viewBox="0 0 ' + b.w + ' ' + b.h + '">' +
+    '<rect x="1" y="1" width="' + (b.w-2) + '" height="' + (b.h-2) + '" rx="6" fill="' +
+    fill + '" stroke="' + stroke + '" stroke-width="' + (b.major ? 2 : 1.4) + '"' +
+    (env ? ' stroke-dasharray="6 4"' : '') + '/>' + body + '</svg>';
+  return {uri:"data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg),w:b.w,h:b.h};
+}
+
+/* ── build ─────────────────────────────────────────────────────────────── */
+const byId = Object.create(null);
+GRAPH.nodes.forEach(n => byId[n.id] = n);
+
+const elements = [];
+GRAPH.nodes.forEach(n => {
+  const s = svgOf(n);
+  const el = { group:"nodes",
+    data:{ id:n.id, img:s.uri, w:s.w, h:s.h, kind:n.kind || "flow" } };
+  if (n.x !== undefined && n.y !== undefined) el.position = { x:n.x, y:n.y };
+  elements.push(el);
+});
+const usedIds = new Set(GRAPH.nodes.map(n => n.id));
+const edgeIds = GRAPH.edges.map((_, i) => {
+  let id = "__edge_" + i;
+  while (usedIds.has(id)) id = "_" + id;
+  usedIds.add(id); return id;
+});
+GRAPH.edges.forEach((e, i) => {
+  const src = byId[e.from];
+  if (!src || !byId[e.to]) return;                 // skip dangling refs
+  const H = hueOf(src), clock = clockOf(src);
+  const r = ["rate", "hybrid"].includes(clock.kind) ? clock.hz : null;
+  const triggered = clock.kind === "trigger" || clock.kind === "hybrid";
+  const gap = gapOf(r), dash = Math.max(2.2, gap * 0.16);
+  elements.push({ group:"edges", data:{
+    id:edgeIds[i], source:e.from, target:e.to,
+    label:e.label || "", sync:e.sync || "",
+    color: src.kind === "env" ? "#a8a29e" : oklch(.62, .13, H),
+    dash: [dash, gap - dash],
+    speed: speedOf(r), triggered,
+    period: gap,
+    cpd: [0], cpw: [0.5], sep: [0, 0], tep: [0, 0], tmy: 0, tmx: 0 },
+    classes: e.from === e.to ? "selfloop" : "" });
+});
+
+cytoscape.use(cytoscapeDagre);
+
+const cy = cytoscape({
+  container: document.getElementById("cy"),
+  elements,
+  minZoom: .005, maxZoom: 3,
+  layout: {name:"preset"},
+  style: [
+    { selector:"node", style:{
+        "shape":"round-rectangle",
+        "width":"data(w)", "height":"data(h)",
+        "background-opacity":0, "border-width":0,
+        "background-image":"data(img)",
+        "background-fit":"none",
+        "background-width":"100%", "background-height":"100%",
+        "background-clip":"none",
+        "label":"" } },
+    { selector:"node:selected", style:{
+        "underlay-color":"#0ea5e9", "underlay-opacity":.12,
+        "underlay-padding":6 } },
+    { selector:"edge", style:{
+        "width":2.2,
+        "curve-style":"unbundled-bezier",
+        "edge-distances":"node-position",
+        "control-point-distances":"data(cpd)",
+        "control-point-weights":"data(cpw)",
+        "source-endpoint":"data(sep)",
+        "target-endpoint":"data(tep)",
+        "line-color":"data(color)",
+        "line-style":"dashed",
+        "line-cap":"round",
+        "line-dash-pattern":"data(dash)",
+        "target-arrow-shape":"triangle",
+        "target-arrow-color":"data(color)",
+        "arrow-scale":.85,
+        "label":"",
+        "font-family":"ui-sans-serif,-apple-system,sans-serif",
+        "font-size":10.5,
+        "color":"#57534e",
+        "text-rotation":"none",
+        "text-margin-y":"data(tmy)",
+        "text-margin-x":"data(tmx)",
+        "text-wrap":"wrap", "text-max-width":170, "text-overflow-wrap":"anywhere",
+        "text-background-color":"#fdfcfb",
+        "text-background-opacity":.95,
+        "text-background-padding":3,
+        "text-background-shape":"roundrectangle" } },
+    { selector:"edge.labels-visible", style:{"label":"data(label)"} },
+    { selector:"edge.selfloop", style:{
+        "curve-style":"bezier", "loop-direction":"-90deg", "loop-sweep":"65deg",
+        "source-endpoint":"outside-to-node", "target-endpoint":"outside-to-node" } },
+  ]
+});
+
+/* Existing spine placement and position-driven nested feedback router. */
+let activeMode = "loops", vertical = false;
+const GUT_MIN = 72, LANE = 18, PORTGAP_H = 18, PORTGAP_V = 14,
+      CHAN_PITCH = 64, CHAN_CLEAR = 64, R_CORNER = 26, ROW_GAP = 52,
+      BLOCK_PAD = 14, COL_EPS = 24;
+
+function spineLayout(){
+  const ids = GRAPH.nodes.map(n => n.id);
+  if (!ids.length) return null;
+
+  const adj = Object.create(null); ids.forEach(i => adj[i] = []);
+  GRAPH.edges.forEach(e => {
+    if (byId[e.from] && byId[e.to] && e.from !== e.to) adj[e.from].push(e.to);
+  });
+
+  // Back-edges by DFS, seeded from the sources in declaration order so the
+  // result is deterministic for a given graph.
+  const state = Object.create(null), back = new Set();
+  const key = (u, v) => JSON.stringify([u, v]);
+  const dfs = v => {
+    state[v] = 1;
+    for (const w of adj[v]){
+      if (state[w] === 1) back.add(key(v, w));
+      else if (!state[w]) dfs(w);
+    }
+    state[v] = 2;
+  };
+  const src = Object.create(null); ids.forEach(i => src[i] = 0);
+  ids.forEach(i => adj[i].forEach(w => src[w]++));
+  ids.forEach(i => { if (src[i] === 0 && !state[i]) dfs(i); });
+  ids.forEach(i => { if (!state[i]) dfs(i); });
+
+  // Longest-path ranks on what is left, which is a DAG.
+  const fwd = i => adj[i].filter(w => !back.has(key(i, w)));
+  const indeg = Object.create(null); ids.forEach(i => indeg[i] = 0);
+  ids.forEach(i => fwd(i).forEach(w => indeg[w]++));
+  const rank = Object.create(null); ids.forEach(i => rank[i] = 0);
+  const roots = ids.filter(i => indeg[i] === 0);
+  const queue = roots.length ? roots.slice() : [ids[0]];
+  while (queue.length){
+    const v = queue.shift();
+    for (const w of fwd(v)){
+      rank[w] = Math.max(rank[w], rank[v] + 1);
+      if (--indeg[w] === 0) queue.push(w);
+    }
+  }
+
+  // Stack same-rank nodes above the spine, reserving space below for feedback.
+  const row = Object.create(null), byRank = Object.create(null);
+  ids.forEach(i => (byRank[rank[i]] = byRank[rank[i]] || []).push(i));
+  Object.keys(byRank).forEach(r => {
+    byRank[r].forEach((i, k) => row[i] = -k);
+  });
+
+  const box = Object.create(null); ids.forEach(i => box[i] = boxOf(byId[i]));
+  const ranks = Object.keys(byRank).map(Number).sort((a, b) => a - b);
+  const colW = {};
+  ranks.forEach(r => colW[r] = Math.max.apply(null, byRank[r].map(i => box[i].w)));
+
+  // Gutters must be wide enough for the widest edge label, or a Z-route's
+  // label lands on top of a box.
+  const LF = "600 10.5px ui-sans-serif,-apple-system,sans-serif";
+  const maxLabel = GRAPH.edges.reduce((m, e) => {
+    if (!e.label || !byId[e.from] || !byId[e.to]) return m;
+    if (rank[e.to] - rank[e.from] !== 1) return m;   // only spine labels sit in a gutter
+    return Math.max(m, Math.min(170, textW(e.label, LF)));
+  }, 0);
+  const GUT = Math.max(GUT_MIN, maxLabel + 30);
+
+  const X = {}; let x = 0;
+  ranks.forEach((r, k) => {
+    if (k) x += colW[ranks[k - 1]] / 2 + GUT + colW[r] / 2;
+    X[r] = x;
+  });
+  const HMAX = Math.max.apply(null, ids.map(i => box[i].h));
+
+  const pos = Object.create(null);
+  ids.forEach(i => pos[i] = { x: Math.round(X[rank[i]]),
+                              y: Math.round(row[i] * (HMAX + ROW_GAP)) });
+  return { pos, rank };
+}
+
+/* -- the router -----------------------------------------------------------
+   Purely position-driven: it re-derives columns from where the nodes actually
+   are, so it runs identically after the spine layout, after dagre, on a
+   hand-placed graph, and after a drag.
+
+   Rounded corners are EMULATED. The vendored Cytoscape 3.26 has no
+   round-segments / segment-radii / taxi-radius -- verified absent from the
+   bundle, not assumed -- so `segments` gives hard corners and `taxi` cannot
+   put both ends of a feedback edge on the same face. Instead we emit
+   unbundled-bezier control points three per corner: (C - a*r), C, (C + b*r).
+   Cytoscape's multibezier chain strokes quadratics between successive
+   midpoints, which renders as exact straight runs joined by a fillet.       */
+
+const uv = (a, b) => {
+  const dx = b.x - a.x, dy = b.y - a.y, l = Math.hypot(dx, dy) || 1;
+  return { x: dx / l, y: dy / l, l };
+};
+
+// Absolute points -> cytoscape's (weight along chord, perpendicular distance)
+// frame. Requires edge-distances:node-position so the chord is centre-to-centre.
+function toFrame(S, T, cps){
+  const dx = T.x - S.x, dy = T.y - S.y, L = Math.hypot(dx, dy);
+  if (L < 1 || !cps.length) return { w: [0.5], d: [0] };
+  const ux = dx / L, uy = dy / L, nx = -uy, ny = ux;
+  return {
+    w: cps.map(p => +(((p.x - S.x) * ux + (p.y - S.y) * uy) / L).toFixed(5)),
+    d: cps.map(p => +((p.x - S.x) * nx + (p.y - S.y) * ny).toFixed(3)),
+  };
+}
+
+// Never return an empty control-point list: cytoscape renders nothing at all
+// for a multibezier with zero control points.
+function cornerCps(pts){
+  if (pts.length < 3)
+    return [{ x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 }];
+  const out = [];
+  for (let i = 1; i < pts.length - 1; i++){
+    const C = pts[i], a = uv(pts[i - 1], C), b = uv(C, pts[i + 1]);
+    const r = Math.min(R_CORNER, a.l / 2, b.l / 2);
+    out.push({ x: C.x - a.x * r, y: C.y - a.y * r },
+             { x: C.x, y: C.y },
+             { x: C.x + b.x * r, y: C.y + b.y * r });
+  }
+  return out;
+}
+
+function route(){
+  if (vertical) return;
+  const ns = cy.nodes().toArray();
+  if (!ns.length) return;
+
+  const P  = id => cy.getElementById(id).position();
+  const BW = id => boxOf(byId[id]).w;
+  const BH = id => boxOf(byId[id]).h;
+
+  // Columns straight off the x positions.
+  const sorted = ns.slice().sort((a, b) => a.position().x - b.position().x);
+  const col = Object.create(null), colNodes = [];
+  let c = -1, prev = null;
+  sorted.forEach(n => {
+    const x = n.position().x;
+    if (prev === null || x - prev > COL_EPS){ c++; colNodes[c] = []; }
+    col[n.id()] = c; colNodes[c].push(n); prev = x;
+  });
+  const Lc = colNodes.map(a => Math.min.apply(null, a.map(n => n.position().x - BW(n.id()) / 2)));
+  const Rc = colNodes.map(a => Math.max.apply(null, a.map(n => n.position().x + BW(n.id()) / 2)));
+  const GX = i => (i >= 0 && i + 1 < colNodes.length)
+    ? (Rc[i] + Lc[i + 1]) / 2
+    : Rc[Math.max(0, Math.min(i, colNodes.length - 1))] + 40;
+
+  // Classify. A forward edge only leaves the spine if a box is actually in the
+  // way -- testing geometry rather than rank is what lets an off-spine node
+  // sail over the boxes between it and its target at its own row height.
+  const below = [], above = [], spine = [], selfs = [];
+  cy.edges().toArray().forEach((e, i) => {
+    const s = e.source().id(), t = e.target().id();
+    const r = { e: e, i: i, s: s, t: t, cs: col[s], ct: col[t] };
+    if (s === t){ selfs.push(r); return; }
+    if (r.cs > r.ct){ r.lo = r.ct; r.hi = r.cs; below.push(r); return; }
+    if (r.ct - r.cs >= 2){
+      const ys = P(s).y;
+      const blocked = ns.some(n => {
+        const cc = col[n.id()];
+        return cc > r.cs && cc < r.ct &&
+               Math.abs(ys - n.position().y) < BH(n.id()) / 2 + BLOCK_PAD;
+      });
+      if (blocked){ r.lo = r.cs; r.hi = r.ct; above.push(r); return; }
+    }
+    spine.push(r);
+  });
+
+  // Channels by containment depth, then bumped apart where intervals merely
+  // cross. Containment implies a strictly outer channel, which is the nesting
+  // guarantee: the longest loop cannot land anywhere but outermost.
+  function channels(list){
+    const placed = [];
+    list.slice().sort((a,b) => (a.hi-a.lo)-(b.hi-b.lo) || a.lo-b.lo || a.i-b.i).forEach(e => {
+      let channel = 1;
+      for (const f of placed){
+        if (e.lo <= f.lo && f.hi <= e.hi) channel = Math.max(channel, f.ch + 1);
+      }
+      while (placed.some(f => f.ch === channel && !(f.hi < e.lo || e.hi < f.lo))) channel++;
+      e.ch = channel; placed.push(e);
+    });
+  }
+  channels(below); channels(above);
+
+  // Channel depth: clear of whatever boxes actually sit over that x range, and
+  // monotone so channels can never swap order.
+  function chanY(list, dir){
+    const maxCh = list.reduce((m, e) => Math.max(m, e.ch), 0);
+    const Y = [0];
+    for (let j = 1; j <= maxCh; j++){
+      const mem = list.filter(e => e.ch === j);
+      if (!mem.length){ Y[j] = Y[j - 1]; continue; }
+      let x1 = Infinity, x2 = -Infinity;
+      mem.forEach(e => {
+        x1 = Math.min(x1, P(e.s).x, P(e.t).x);
+        x2 = Math.max(x2, P(e.s).x, P(e.t).x);
+      });
+      x1 -= 40; x2 += 40;
+      let ext = dir > 0 ? -Infinity : Infinity;
+      ns.forEach(n => {
+        const x = n.position().x, hw = BW(n.id()) / 2;
+        if (x + hw >= x1 && x - hw <= x2){
+          const v = n.position().y + dir * BH(n.id()) / 2;
+          ext = dir > 0 ? Math.max(ext, v) : Math.min(ext, v);
+        }
+      });
+      if (!isFinite(ext)) ext = 0;
+      const want = ext + dir * CHAN_CLEAR;
+      Y[j] = j === 1 ? want
+        : (dir > 0 ? Math.max(want, Y[j - 1] + CHAN_PITCH)
+                   : Math.min(want, Y[j - 1] - CHAN_PITCH));
+    }
+    return Y;
+  }
+  const BY = chanY(below, +1), FY = chanY(above, -1);
+
+  // Ports. A deeper channel's vertical drop has to stay clear of a shallower
+  // one's horizontal run, or the two cross right under the box. Ordering each
+  // face by channel in the direction its run travels is what prevents that.
+  const face = Object.create(null); ns.forEach(n => face[n.id()] = { bottom: [], top: [] });
+  const sgn = (a, b) => Math.sign(P(b).x - P(a).x) || -1;
+  below.forEach(r => {
+    face[r.s].bottom.push({ r: r, end: "s", ch: r.ch, dir: sgn(r.s, r.t) });
+    face[r.t].bottom.push({ r: r, end: "t", ch: r.ch, dir: sgn(r.t, r.s) });
+  });
+  above.forEach(r => {
+    face[r.s].top.push({ r: r, end: "s", ch: r.ch, dir: sgn(r.s, r.t) });
+    face[r.t].top.push({ r: r, end: "t", ch: r.ch, dir: sgn(r.t, r.s) });
+  });
+  Object.keys(face).forEach(id => {
+    ["bottom", "top"].forEach(f => {
+      const arr = face[id][f];
+      if (!arr.length) return;
+      arr.sort((a, b) => (a.dir - b.dir) ||
+                         (a.dir < 0 ? a.ch - b.ch : b.ch - a.ch) ||
+                         (a.r.i - b.r.i));
+      const g = arr.length, w = BW(id), lim = w / 2 - 14;
+      const step = g <= 1 ? 0 : Math.min(PORTGAP_H, (w - 28) / (g - 1));
+      arr.forEach((it, k) => {
+        const dx = Math.max(-lim, Math.min(lim, Math.round((k - (g - 1) / 2) * step)));
+        const dy = (f === "bottom" ? 1 : -1) * BH(id) / 2;
+        if (it.end === "s") it.r.sp = [dx, dy]; else it.r.tp = [dx, dy];
+      });
+    });
+  });
+
+  // Spine edges leave the right face and enter the left face, spread
+  // vertically when several share one.
+  const vf = Object.create(null); ns.forEach(n => vf[n.id()] = { right: [], left: [] });
+  spine.forEach(r => {
+    vf[r.s].right.push({ r: r, end: "s", oy: P(r.t).y });
+    vf[r.t].left.push({ r: r, end: "t", oy: P(r.s).y });
+  });
+  Object.keys(vf).forEach(id => {
+    ["right", "left"].forEach(f => {
+      const arr = vf[id][f];
+      if (!arr.length) return;
+      arr.sort((a, b) => a.oy - b.oy || a.r.i - b.r.i);
+      const g = arr.length, h = BH(id), lim = h / 2 - 8;
+      const step = g <= 1 ? 0 : Math.min(PORTGAP_V, (h - 16) / (g - 1));
+      arr.forEach((it, k) => {
+        const dy = Math.max(-lim, Math.min(lim, Math.round((k - (g - 1) / 2) * step)));
+        const dx = (f === "right" ? 1 : -1) * BW(id) / 2;
+        if (it.end === "s") it.r.sp = [dx, dy]; else it.r.tp = [dx, dy];
+      });
+    });
+  });
+
+  // Z-routes sharing a gutter each get their own vertical lane.
+  const gut = {};
+  spine.forEach(r => {
+    const a = P(r.s).y + (r.sp ? r.sp[1] : 0), b = P(r.t).y + (r.tp ? r.tp[1] : 0);
+    if (Math.abs(a - b) < 1.5) return;
+    r.gi = Math.max(0, r.ct - 1);
+    (gut[r.gi] = gut[r.gi] || []).push(r);
+  });
+  Object.keys(gut).forEach(gi => {
+    const arr = gut[gi].sort((a, b) => P(a.t).y - P(b.t).y || a.i - b.i);
+    arr.forEach((r, k) => r.lane = (k - (arr.length - 1) / 2) * LANE);
+  });
+
+  const anchors = [];
+  const put = (r, pts, tmy) => {
+    const F = toFrame(P(r.s), P(r.t), cornerCps(pts));
+    r.e.data("cpd", F.d); r.e.data("cpw", F.w);
+    r.e.data("sep", r.sp || [0, 0]); r.e.data("tep", r.tp || [0, 0]);
+    r.e.data("tmy", 0); r.e.data("tmx", 0);
+    const segments = pts.slice(1).map((p,i) => ({a:pts[i],b:p}));
+    const horizontal = segments.filter(s => Math.abs(s.a.y-s.b.y) < 1);
+    const candidates = horizontal.length ? horizontal : segments;
+    candidates.sort((a,b) => Math.hypot(b.b.x-b.a.x,b.b.y-b.a.y)-Math.hypot(a.b.x-a.a.x,a.b.y-a.a.y));
+    const best = candidates[0];
+    anchors.push({edge:r.e,x:(best.a.x+best.b.x)/2,y:(best.a.y+best.b.y)/2+(tmy || -10)});
+  };
+  const ends = r => [
+    { x: P(r.s).x + r.sp[0], y: P(r.s).y + r.sp[1] },
+    { x: P(r.t).x + r.tp[0], y: P(r.t).y + r.tp[1] },
+  ];
+
+  cy.batch(() => {
+    spine.forEach(r => {
+      const e = ends(r);
+      if (r.lane === undefined){ put(r, e, -9); return; }
+      const jx = GX(r.gi) + r.lane;
+      put(r, [e[0], { x: jx, y: e[0].y }, { x: jx, y: e[1].y }, e[1]], 0);
+    });
+    [[below, BY], [above, FY]].forEach(pair => {
+      pair[0].forEach(r => {
+        const e = ends(r), ly = pair[1][r.ch];
+        put(r, [e[0], { x: e[0].x, y: ly }, { x: e[1].x, y: ly }, e[1]], -9);
+      });
+    });
+    selfs.forEach(r => {
+      r.e.data("cpd", [0]); r.e.data("cpw", [0.5]);
+      r.e.data("sep", [0, 0]); r.e.data("tep", [0, 0]); r.e.data("tmy", 0); r.e.data("tmx", 0);
+    });
+  });
+  cy.batch(() => anchors.forEach(a => {
+    const mid = a.edge.midpoint();
+    a.edge.data("tmx", a.x-mid.x);
+    a.edge.data("tmy", a.y-mid.y);
+  }));
+}
+
+const ROWS = {name:"dagre",rankDir:"LR",nodeSep:36,rankSep:100,
+              edgeSep:24,ranker:"network-simplex",animate:false,fit:false,padding:24};
+function fitGraph(){
+  cy.resize();
+  if (cy.elements().length) cy.fit(cy.elements(), Math.min(36, cy.width() / 12, cy.height() / 12));
+}
+function setDirection(isVertical){
+  vertical = isVertical;
+  cy.edges().removeStyle();
+  if (vertical){
+    cy.edges().style({"curve-style":"bezier","source-endpoint":"outside-to-node",
+      "target-endpoint":"outside-to-node","text-margin-x":0,"text-margin-y":-10});
+  }
+}
+function applyLoops(){
+  activeMode = "loops"; setDirection(false);
+  const L = spineLayout();
+  if (!L) return false;
+  cy.layout({name:"preset",positions:n => L.pos[n.id()] || {x:0,y:0},fit:false,animate:false}).run();
+  route(); fitGraph(); return true;
+}
+function applyRows(){
+  activeMode = "rows";
+  const direction = document.getElementById("direction").value;
+  const candidates = direction === "auto" ? ["LR","TB"] : [direction];
+  let best = null;
+  for (const rankDir of candidates){
+    setDirection(rankDir === "TB");
+    cy.layout({...ROWS,rankDir}).run();
+    route();
+    const bounds = cy.elements().boundingBox();
+    const scale = Math.min((cy.width()-48)/Math.max(1,bounds.w),
+                           (cy.height()-48)/Math.max(1,bounds.h));
+    if (!best || scale > best.scale){
+      const positions = Object.create(null);
+      cy.nodes().forEach(n => positions[n.id()] = {...n.position()});
+      best = {scale,rankDir,positions};
+    }
+  }
+  if (best){
+    setDirection(best.rankDir === "TB");
+    cy.nodes().positions(n => best.positions[n.id()]);
+    route();
+  }
+  fitGraph();
+}
+const placed = GRAPH.nodes.filter(n => Number.isFinite(n.x) && Number.isFinite(n.y));
+if (placed.length === GRAPH.nodes.length){
+  route(); fitGraph();
+} else {
+  if (cy.width() < 700 || GRAPH.nodes.length > 10) applyRows();
+  else applyLoops();
+  if (placed.length){
+    cy.batch(() => placed.forEach(n => cy.getElementById(n.id).position({x:n.x,y:n.y})));
+    route(); fitGraph();
+  }
+}
+
+// A drag moves boxes, so the routes have to be recomputed against them.
+let rerouting = 0;
+let userMoved = false;
+cy.on("dragfree", "node", () => { userMoved = true; });
+cy.on("position drag free", "node", () => {
+  if (rerouting) return;
+  rerouting = requestAnimationFrame(() => { rerouting = 0; route(); });
+});
+
+/* ── motion ────────────────────────────────────────────────────────────────
+   Marching-ants: advance each edge's dash offset every frame at its own
+   px/s. One batched write per frame keeps ~15 edges cheap. */
+let running = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+let mult = 1, last = performance.now(), elapsed = 0, phase = new Map();
+cy.edges().forEach(e => phase.set(e.id(), 0));
+
+function frame(now){
+  const dt = Math.min(.05, (now - last) / 1000); last = now;
+  if (running && !document.hidden){
+    elapsed += dt * mult;
+    cy.batch(() => {
+      cy.edges().forEach(e => {
+        const p = (phase.get(e.id()) + dt * e.data("speed") * mult) % e.data("period");
+        phase.set(e.id(), p);
+        e.style("line-dash-offset", -p);
+        // Trigger styling is an illustrative pulse, never a nominal rate.
+        if (e.data("triggered")) e.style("opacity", .55 + .45 * Math.pow(Math.sin(elapsed * 1.3), 2));
+      });
+    });
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* ── controls ──────────────────────────────────────────────────────────── */
+const $ = id => document.getElementById(id);
+$("portlabels").onchange = e => {
+  cy.edges().toggleClass("labels-visible",e.target.checked);
+};
+const detail = $("edge-detail");
+let detailEdge = null;
+const hideDetail = () => { detail.hidden = true; detailEdge = null; };
+cy.on("mouseover tap", "edge", event => {
+  const edge = event.target;
+  detailEdge = edge.id();
+  detail.textContent = (edge.data("label") || "Connection") +
+    (edge.data("sync") ? " [" + edge.data("sync") + "]" : "") + "\n" +
+    edge.source().id() + " -> " + edge.target().id();
+  detail.hidden = false;
+  const rect = $("cy").getBoundingClientRect();
+  const p = event.renderedPosition || edge.renderedMidpoint();
+  detail.style.left = Math.max(8,Math.min(innerWidth-detail.offsetWidth-8,rect.left+p.x+12)) + "px";
+  detail.style.top = Math.max(8,Math.min(innerHeight-detail.offsetHeight-8,rect.top+p.y+12)) + "px";
+});
+cy.on("mouseout", "edge", event => {
+  if (!event.target.selected()) hideDetail();
+});
+cy.on("unselect", "edge", event => { if (detailEdge === event.target.id()) hideDetail(); });
+cy.on("pan zoom layoutstart", hideDetail);
+cy.on("tap", event => { if (!event.target.isEdge || !event.target.isEdge()) hideDetail(); });
+const mode = m => {
+  for (const id of ["loops","rows"]){
+    $(id).classList.toggle("on",m === id); $(id).setAttribute("aria-pressed",String(m === id));
+  }
+  $("direction").disabled = m !== "rows";
+};
+mode(activeMode);
+$("loops").onclick = () => { applyLoops(); mode("loops"); };
+$("rows").onclick = () => { applyRows(); mode("rows"); };
+$("direction").onchange = () => { applyRows(); mode("rows"); };
+$("fit").onclick = fitGraph;
+const pauseLabel = () => {
+  $("pause").textContent = running ? "\u23f8" : "\u25b6";
+  $("pause").title = running ? "Pause animation" : "Play animation";
+  $("pause").setAttribute("aria-label",$("pause").title);
+  $("pause").setAttribute("aria-pressed",String(!running));
+};
+pauseLabel();
+$("pause").onclick = () => { running = !running; pauseLabel(); };
+$("rate").oninput = e => { mult = +e.target.value; $("rateval").textContent = mult.toFixed(2) + "x"; };
+const download = (href,name) => {
+  const a = document.createElement("a"); a.href = href; a.download = name; a.click();
+};
+$("copy").onclick = async () => {
+  const out = {...GRAPH,nodes:GRAPH.nodes.map(n => ({...n,...cy.getElementById(n.id).position()}))};
+  const json = JSON.stringify(out,null,2);
+  try {
+    await navigator.clipboard.writeText(json); $("notice").textContent = "Layout copied";
+  } catch {
+    const url = URL.createObjectURL(new Blob([json],{type:"application/json"}));
+    download(url,"retriever_graph.json"); setTimeout(() => URL.revokeObjectURL(url),1000);
+    $("notice").textContent = "Layout downloaded";
+  }
+};
+$("png").onclick = () => {
+  download(cy.png({full:true,scale:2,maxWidth:8192,maxHeight:8192,bg:"#ffffff"}),"retriever_graph.png");
+};
+let resizeFrame;
+new ResizeObserver(() => {
+  cancelAnimationFrame(resizeFrame);
+  resizeFrame = requestAnimationFrame(() => {
+    if (activeMode === "rows" && $("direction").value === "auto" && !placed.length && !userMoved) applyRows();
+    else fitGraph();
+  });
+}).observe($("cy"));
+if (!GRAPH.nodes.length) $("notice").textContent = "Empty graph";
+</script>
+
+</body>
+</html>
