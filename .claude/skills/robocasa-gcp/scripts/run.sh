@@ -16,16 +16,25 @@ require_project
 vm_exists "$RC_VM" || die "$RC_VM does not exist; run provision.sh"
 
 WORKERS=6
+RESUME=""
 PASSTHROUGH=()
 while [ $# -gt 0 ]; do
   case "$1" in
     --workers) WORKERS="$2"; shift 2;;
+    --resume)  RESUME="$2"; shift 2;;
     *) PASSTHROUGH+=("$1"); shift;;
   esac
 done
 [ "${#PASSTHROUGH[@]}" -gt 0 ] || die "pass the study_app arguments, e.g. --atomic-seen --methods model --seeds 0"
 
-RUN_ID="$(date -u +%Y%m%dT%H%M%SZ)"
+# Resuming reuses the run id, which is what makes the mirrored checkpoints
+# findable. Without this the mirror preserved data that nothing restored, and
+# a lost VM meant a lost run rather than a lost episode.
+if [ -n "$RESUME" ]; then
+  RUN_ID="$RESUME"
+else
+  RUN_ID="$(date -u +%Y%m%dT%H%M%SZ)"
+fi
 step "run $RUN_ID: $WORKERS workers, args: ${PASSTHROUGH[*]}"
 ensure_bucket
 
@@ -62,6 +71,14 @@ MIRROR
 gcloud compute scp /tmp/rc_worker.sh /tmp/rc_mirror.sh "$RC_VM":~/ \
   --zone="$RC_ZONE" --quiet
 rm -f /tmp/rc_worker.sh /tmp/rc_mirror.sh
+
+if [ -n "$RESUME" ]; then
+  step "restoring checkpoints for $RUN_ID from $RC_BUCKET"
+  on_vm "cd ~/golden-retriever && mkdir -p 'out/$RUN_ID' && \
+    gcloud storage rsync -q '$RC_BUCKET/$RUN_ID' 'out/$RUN_ID' 2>/dev/null || true; \
+    echo \"  episodes already complete: \$(cat out/$RUN_ID/w*.jsonl 2>/dev/null | grep -c . || echo 0)\""
+  say "the sweep skips any cell already in a checkpoint, so only the rest runs"
+fi
 
 # Tasks are split longest-first so the workers finish together rather than one
 # trailing by half an hour.
