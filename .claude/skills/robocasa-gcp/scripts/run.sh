@@ -80,18 +80,29 @@ json.dump(groups, open('/tmp/groups.json','w'))
 PY"
 
 step "launching"
-on_vm "cd ~/golden-retriever && \
-  python3 -c \"
-import json, subprocess
+# Arguments go to the VM in a file rather than through nested shell quoting,
+# which is the kind of thing that silently drops a flag.
+printf '%s\n' "${PASSTHROUGH[@]}" > /tmp/rc_args.txt
+gcloud compute scp /tmp/rc_args.txt "$RC_VM":~/rc_args.txt --zone="$RC_ZONE" --quiet
+rm -f /tmp/rc_args.txt
+
+on_vm "cd ~/golden-retriever && python3 - <<'PYEOF'
+import json, pathlib, subprocess
 groups = json.load(open('/tmp/groups.json'))
-args = ${PASSTHROUGH[*]@Q}.split() if False else $(printf '%s' "\"${PASSTHROUGH[*]}\"").split()
-for i, g in enumerate(groups):
-    cmd = ['nohup','bash','\$HOME/rc_worker.sh',str(i)] + args
-    for t in g: cmd += ['--task', t]
-    subprocess.Popen(cmd, stdout=open(f'/tmp/w{i}.log','w'),
+args = [l for l in pathlib.Path.home().joinpath('rc_args.txt').read_text().splitlines() if l]
+launched = 0
+for i, group in enumerate(groups):
+    if not group:
+        continue
+    cmd = ['nohup', 'bash', str(pathlib.Path.home() / 'rc_worker.sh'), str(i)] + args
+    for task in group:
+        cmd += ['--task', task]
+    subprocess.Popen(cmd, stdout=open(f'/tmp/w{i}.log', 'w'),
                      stderr=subprocess.STDOUT, start_new_session=True)
-print('  launched', len(groups), 'workers')
-\" ; nohup bash ~/rc_mirror.sh >/dev/null 2>&1 & echo '  mirror started'"
+    launched += 1
+print('  launched', launched, 'workers with args:', ' '.join(args))
+PYEOF
+nohup bash ~/rc_mirror.sh >/dev/null 2>&1 & echo '  mirror started'"
 
 say "run id: $RUN_ID"
 say "results mirror to $RC_BUCKET/$RUN_ID every 60s"
