@@ -24,7 +24,10 @@ venv/
 .pixi/
 
 # Agent
-.claude/
+# Contents, not the directory: a negation cannot re-include anything inside an
+# excluded directory, and skills are shared tooling that belongs in the repo.
+.claude/*
+!.claude/skills/
 .specify/
 
 # Artifacts
