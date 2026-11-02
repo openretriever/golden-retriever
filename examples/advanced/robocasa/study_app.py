@@ -52,7 +52,7 @@ def reference_specs(horizon: int) -> tuple:
     )
 
 
-def vla_specs(horizon: int, *, take: int | None = None) -> tuple:
+def vla_specs(horizon: int, *, take: int | None = None, device: str = "cpu") -> tuple:
     """A released RoboCasa VLA checkpoint, in its own representation.
 
     Its observation and action spaces are fixed by the checkpoint — three views
@@ -67,7 +67,7 @@ def vla_specs(horizon: int, *, take: int | None = None) -> tuple:
     return (
         MethodSpec(method_id="smolvla", horizon=chosen, representation="lerobot_12",
                    label="lerobot/smolvla_robocasa as a Flow; trained, not privileged",
-                   build=lambda env, t=chosen: smolvla_arm(take=t)),
+                   build=lambda env, t=chosen, d=device: smolvla_arm(take=t, device=d)),
     )
 
 
@@ -178,6 +178,12 @@ def main(argv=None) -> int:
                              "and stop unless every interface check passes. Every "
                              "expensive mistake in this study was an interface "
                              "disagreement that produced valid, useless behaviour.")
+    parser.add_argument("--device", default="cpu",
+                        help="Torch device for a checkpoint-backed policy. "
+                             "SmolVLA inference is 98%% of an episode's cost on "
+                             "CPU (2.58 s of 2.63 s per control step, measured), "
+                             "so this is the single setting that decides whether "
+                             "a full-protocol sweep is affordable.")
     parser.add_argument("--summary-only", action="store_true")
     args = parser.parse_args(argv)
 
@@ -224,7 +230,7 @@ def main(argv=None) -> int:
         if args.methods in ("reference", "both"):
             specs += reference_specs(args.horizon)
         if args.methods == "vla":
-            specs += vla_specs(args.horizon, take=args.take)
+            specs += vla_specs(args.horizon, take=args.take, device=args.device)
         if args.methods == "model":
             specs += model_specs(model_id=args.model_id, memory=args.memory, dof=10)
         # A model's output is admitted only when a model arm is actually in

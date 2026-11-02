@@ -472,13 +472,21 @@ class SmolVlaPolicy:
         if state.shape != (LEROBOT_STATE_DOF,):
             raise ValueError(f"the policy needs a {LEROBOT_STATE_DOF}-wide state, "
                              f"got {state.shape}; is the environment in lerobot mode?")
-        batch = {"observation.state": torch.from_numpy(state).unsqueeze(0),
+        # Every tensor goes to the policy's device. `load` moves the module and
+        # its normaliser buffers there, so leaving the inputs on the host raises
+        # "Expected all tensors to be on the same device" from inside the
+        # normaliser's subtraction — the first thing the forward pass does, and
+        # a failure that reads as a lerobot bug rather than as a missing `.to()`
+        # here. Harmless when the device is cpu, which is why running only on
+        # CPU never revealed it.
+        device = torch.device(self.device)
+        batch = {"observation.state": torch.from_numpy(state).unsqueeze(0).to(device),
                  "task": [observation.prompt]}
         for key, view in zip(LEROBOT_IMAGE_KEYS, views):
             # Channels-first float in [0, 1], which is what the normaliser's
             # IDENTITY mapping for visual features assumes.
             image = torch.from_numpy(view.astype(np.float32) / 255.0)
-            batch[key] = image.permute(2, 0, 1).unsqueeze(0)
+            batch[key] = image.permute(2, 0, 1).unsqueeze(0).to(device)
         return batch
 
     def describe(self) -> dict:
