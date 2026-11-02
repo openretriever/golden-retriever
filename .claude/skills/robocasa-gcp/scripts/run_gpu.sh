@@ -8,6 +8,20 @@
 # to keep the GPU fed, not to spread inference, and the limit is vCPU for
 # rendering rather than the accelerator.
 #
+# Two limits bound the worker count, and neither is the GPU's throughput.
+#
+# vCPU, because each worker renders. Four workers on a four-vCPU box, alongside
+# the mirror, starved the kernel until DHCP timed out and ssh stopped answering;
+# the machine had to be reset and produced no episodes. Hence the vCPU-2 cap.
+#
+# VRAM, because each worker holds its own copy of the checkpoint: measured at
+# ~2.2 GiB resident, so nine workers took 19.9 GiB of an L4's 23.0 GiB. Eight is
+# about 76% and leaves room for a worker loading while others are mid-inference.
+#
+# Measured throughput, 16 vCPU + one L4: 4 workers 11.6 steps/s, 8 workers 27.8,
+# 12 workers 37.9, with the GPU at 36-42% throughout. So scaling is real but the
+# accelerator is never the thing that saturates.
+#
 # Measured on g2-standard-4 + L4, 3 views at 256px, replan every 5 steps:
 #
 #   device / GL              s/step   inference   render+physics
@@ -46,7 +60,18 @@ case "$TASKS" in
   *) die "--tasks must be vla or atomic";;
 esac
 
-step "GPU sweep $RUN_ID ($TASKS, seeds '$SEEDS', $WORKERS workers)"
+VCPU="$(on_vm 'nproc' 2>/dev/null | tr -d ' \r' | head -1)"
+if [ -n "$VCPU" ] && [ "$VCPU" -gt 0 ] 2>/dev/null; then
+  SAFE=$(( VCPU - 2 ))
+  [ "$SAFE" -lt 1 ] && SAFE=1
+  if [ "$WORKERS" -gt "$SAFE" ]; then
+    say "capping workers at $SAFE for ${VCPU} vCPU (asked for $WORKERS)"
+    say "  each worker renders on CPU, and the OS and the GCS mirror need a core"
+    WORKERS="$SAFE"
+  fi
+fi
+
+step "GPU sweep $RUN_ID ($TASKS, seeds '$SEEDS', $WORKERS workers on ${VCPU:-?} vCPU)"
 [ -n "$RESUME" ] && say "resuming $RUN_ID: completed episodes are skipped"
 
 # One worker per shard. Each loads its own copy of the checkpoint — measured at
@@ -58,7 +83,8 @@ set -uo pipefail
 cd "\$HOME/golden-retriever"
 export MUJOCO_GL=egl PYOPENGL_PLATFORM=egl PYTHONPATH=. KMP_DUPLICATE_LIB_OK=TRUE
 export PATH="\$HOME/.pixi/bin:\$PATH"
-i="\$1"
+i="\$1"; shift
+SEEDS_FOR_WORKER="\$*"
 mkdir -p "out/$RUN_ID"
 # --checkpoint is what makes a lost VM cost one episode rather than the run:
 # finished cells are read back and skipped on resume.
@@ -74,12 +100,13 @@ WORKER
 # across the suite, so splitting on tasks leaves workers idle at the tail while
 # one grinds through the longest. Seeds are interchangeable in cost.
 say "sharding seeds across $WORKERS workers"
+rm -f /tmp/rcg_launch.txt
 SEED_ARR=($SEEDS)
 for i in $(seq 0 $((WORKERS-1))); do
   mine=""
   for j in $(seq $i $WORKERS $((${#SEED_ARR[@]}-1))); do mine="$mine ${SEED_ARR[$j]}"; done
   [ -z "$mine" ] && continue
-  echo "SEEDS_FOR_WORKER='${mine# }' bash /tmp/rcg_worker.sh $i" >> /tmp/rcg_launch.txt
+  echo "bash \$HOME/rcg_worker.sh $i ${mine# }" >> /tmp/rcg_launch.txt
   say "  worker $i: seeds${mine}"
 done
 
@@ -88,13 +115,13 @@ cat > /tmp/rcg_mirror.sh <<MIRROR
 set -uo pipefail
 cd "\$HOME/golden-retriever"
 expected=$WORKERS
-for _ in \$(seq 1 960); do
+for _ in \$(seq 1 480); do
   gcloud storage rsync -q "out/$RUN_ID" "$RC_BUCKET/$RUN_ID" 2>/dev/null || true
   # Counting finished workers, not matching a process name: pgrep -f matches its
   # own command line and so never reports zero.
   done_count=\$(grep -c . "out/$RUN_ID/status" 2>/dev/null || echo 0)
   [ "\$done_count" -ge "\$expected" ] && break
-  sleep 60
+  sleep 300
 done
 gcloud storage rsync -q "out/$RUN_ID" "$RC_BUCKET/$RUN_ID" 2>/dev/null || true
 echo done > "out/$RUN_ID/mirrored"
@@ -115,7 +142,10 @@ fi
 step "starting workers"
 on_vm "cd ~/golden-retriever && mkdir -p out/$RUN_ID && rm -f out/$RUN_ID/status && \
        while read -r line; do eval \"nohup \$line >/dev/null 2>&1 &\"; done < ~/rcg_launch.txt; \
-       sleep 2; echo '  workers started:' \$(pgrep -fc rcg_worker.sh || echo 0); \
-       nohup bash ~/rcg_mirror.sh >/dev/null 2>&1 & echo '  mirror started'"
+       sleep 5; opened=\$(ls out/$RUN_ID/w*.json 2>/dev/null | wc -l); \
+       echo \"  worker outputs opened: \$opened of $WORKERS\"; \
+       [ \"\$opened\" -ge 1 ] || { echo '  NO WORKER STARTED'; exit 3; }; \
+       nohup bash ~/rcg_mirror.sh >/dev/null 2>&1 & echo '  mirror started'" \
+  || die "workers did not start; nothing is running and no results will appear"
 say "run id $RUN_ID; results mirror to $RC_BUCKET/$RUN_ID every 60s"
 say "resume after a preemption with: run_gpu.sh --resume $RUN_ID"
