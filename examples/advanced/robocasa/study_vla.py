@@ -355,6 +355,17 @@ class SmolVlaPolicy:
     #: Which released statistic went into which normaliser buffer, recorded so
     #: a run shows the normaliser was populated rather than assumed.
     normalization: dict = field(default_factory=dict)
+    #: Seed for the sampling this policy does at inference time.
+    #:
+    #: SmolVLA is a flow-matching policy: `predict_action_chunk` integrates from
+    #: sampled noise, so two calls on one observation return *different* chunks.
+    #: Measured on a fixed observation, the same build on the same machine gave
+    #: chunk sums of -108.6 and -115.5 on consecutive calls. Nothing seeded it,
+    #: so the episode seed reached the simulator's scene but not the policy, and
+    #: an episode was not reproducible even though the environment was. That also
+    #: makes a port impossible to validate: a CPU and a GPU run would differ for
+    #: two reasons at once, with no way to tell which.
+    seed: int = 0
 
     def __post_init__(self) -> None:
         if not isinstance(self.checkpoint, str) or not self.checkpoint.strip():
@@ -365,7 +376,7 @@ class SmolVlaPolicy:
     def init_config(self) -> dict:
         """Enough to rebuild this policy from a serialised run record."""
         return {"checkpoint": self.checkpoint, "device": self.device,
-                "flip_images": self.flip_images}
+                "flip_images": self.flip_images, "seed": self.seed}
 
     def load(self) -> None:
         """Build the policy. Separate from `__init__` so import stays cheap."""
@@ -396,7 +407,25 @@ class SmolVlaPolicy:
             policy, prepare_checkpoint(self.checkpoint))
         self.policy = policy
 
-    def reset(self) -> None:
+    def reset(self, seed: int | None = None) -> None:
+        """Clear the policy's own state and re-seed its sampling.
+
+        Takes an optional seed so a sweep can tie an episode's sampling to the
+        episode, matching the scripted methods' `reset(seed)` convention. Seeds
+        the global torch generator rather than threading a `Generator` through,
+        because the sampling happens inside lerobot's own forward pass where
+        there is nowhere to pass one.
+        """
+        if seed is not None:
+            self.seed = int(seed)
+        try:
+            import torch
+        except ImportError:  # pragma: no cover - environment-dependent
+            pass
+        else:
+            torch.manual_seed(self.seed)
+            if torch.cuda.is_available():  # pragma: no cover - device-dependent
+                torch.cuda.manual_seed_all(self.seed)
         if self.policy is not None and hasattr(self.policy, "reset"):
             self.policy.reset()
 

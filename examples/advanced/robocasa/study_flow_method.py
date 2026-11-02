@@ -101,6 +101,23 @@ class FlowMethod:
                 hook()
                 break
 
+    def reset(self, seed: int | None = None) -> None:
+        """Re-seed the wrapped policy for one episode, when it accepts a seed.
+
+        A sampling policy — SmolVLA integrates from sampled noise — returns a
+        different chunk for the same observation on every call, so without this
+        an episode is not reproducible and a port cannot be validated against
+        the run it is meant to reproduce. Policies that take no seed are left
+        alone rather than reset with an argument they never declared.
+        """
+        hook = getattr(self.policy, "reset", None)
+        if not callable(hook):
+            return
+        try:
+            hook(seed)
+        except TypeError:
+            hook()
+
     # --- the harness contract ------------------------------------------
 
     def predict(self, observation: PolicyObservation) -> ActionChunk:

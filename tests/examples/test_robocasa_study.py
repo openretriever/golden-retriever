@@ -1821,7 +1821,36 @@ def test_the_vla_policy_can_describe_itself_for_reconstruction():
 
     config = SmolVlaPolicy().init_config()
     assert config == {"checkpoint": DEFAULT_CHECKPOINT, "device": "cpu",
-                      "flip_images": True}
+                      "flip_images": True, "seed": 0}
+    # The seed belongs in the config because this policy samples: the chunk it
+    # returns for one observation depends on it, so a record that omitted the
+    # seed would name a policy that cannot be made to produce the run again.
+    assert SmolVlaPolicy(seed=7).init_config()["seed"] == 7
+
+
+def test_the_vla_policy_samples_reproducibly_once_seeded():
+    """Two seeded resets must leave the sampler in the same state.
+
+    Unseeded, this policy returned chunk sums of -108.6 and -115.5 for one
+    fixed observation on consecutive calls, because flow matching integrates
+    from sampled noise. That made an episode unreproducible even though the
+    simulator's scene was pinned, and it made validating a port impossible —
+    a CPU and a GPU run would differ for two reasons with no way to separate
+    them. Asserted on the torch generator rather than on a forward pass so the
+    check needs no checkpoint, no network and no GPU.
+    """
+    torch = pytest.importorskip("torch")
+    from examples.advanced.robocasa.study_vla import SmolVlaPolicy
+
+    policy = SmolVlaPolicy(seed=7)
+    policy.reset()
+    first = torch.randn(4)
+    policy.reset()
+    assert torch.equal(torch.randn(4), first)
+    # And a different seed must actually move it, or the seeding is inert.
+    policy.reset(8)
+    assert not torch.equal(torch.randn(4), first)
+    assert policy.seed == 8
 
 
 def test_a_model_source_needs_the_envelope_widened_deliberately():

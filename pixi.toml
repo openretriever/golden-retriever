@@ -264,6 +264,18 @@ system-requirements = { cuda = "12.0" }
 torch = { version = ">=2.5.1", index = "https://download.pytorch.org/whl/cu124" }
 torchvision = { version = ">=0.20.1", index = "https://download.pytorch.org/whl/cu124" }
 
+[feature.robocasa_gpu]
+platforms = ["linux-64"]
+system-requirements = { cuda = "12.0", libc = "2.31" }
+
+# cu126, not the `gpu` feature's cu124: the cu124 index stops at torch 2.6.0 and
+# the CPU robocasa env resolves 2.7.1. Holding the two envs at one torch version
+# leaves the device as the only difference between them, so if a GPU run and a
+# CPU run disagree, the cause is not the library.
+[feature.robocasa_gpu.pypi-dependencies]
+torch = { version = "==2.7.1", index = "https://download.pytorch.org/whl/cu126" }
+torchvision = { version = "==0.22.1", index = "https://download.pytorch.org/whl/cu126" }
+
 [feature.cpu.pypi-dependencies]
 torch = { version = ">=2.5.1", index = "https://download.pytorch.org/whl/cpu" }
 torchvision = { version = ">=0.20.1", index = "https://download.pytorch.org/whl/cpu" }
@@ -329,6 +341,11 @@ torch = { features = ["py311", "bundled_core", "golden_retriever", "cpu"] }
 twist2 = { features = ["py311", "bundled_core", "twist2"] }
 simulation-test = { features = ["py311", "bundled_core", "simulation_test"] }
 robocasa = { features = ["py311", "bundled_core", "cpu", "robocasa"] }
+# The same stack on CUDA. SmolVLA inference is 98% of a study episode's cost
+# on CPU (2.58 s of 2.63 s per control step, measured), so the GPU variant
+# exists to make a full-protocol sweep affordable rather than to speed up
+# the simulator, which is already nearly free.
+robocasa-gpu = { features = ["py311", "bundled_core", "robocasa_gpu", "robocasa"] }
 cpu = { features = ["py311", "bundled_core", "cpu"] }
 gpu = { features = ["py311", "bundled_core", "gpu"] }
 ros = { features = ["bundled_core", "ros"] }

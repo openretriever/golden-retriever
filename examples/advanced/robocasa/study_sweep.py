@@ -174,6 +174,17 @@ class Sweep:
     def _cell(self, harness, task, seed, spec, TrialRequest):
         environment = self.build_environment(task=task, representation=spec.representation)
         method = spec.build(environment)
+        # Tie the method's own randomness to the episode. The environment already
+        # receives `seed` and so lays out an identical scene, but a sampling
+        # policy draws fresh noise per call, so without this the policy half of
+        # the episode is unreproducible while the simulator half is not. Only
+        # methods that declare a seeded reset are touched.
+        reset = getattr(method, "reset", None)
+        if callable(reset):
+            try:
+                reset(seed)
+            except TypeError:
+                pass
         started = perf_counter()
         report = harness.run(
             TrialRequest(method_id=spec.method_id, task=task, episode=seed, seed=seed,
