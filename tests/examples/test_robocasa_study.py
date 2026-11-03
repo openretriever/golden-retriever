@@ -2649,3 +2649,61 @@ def test_preflight_finds_the_call_count_wherever_it_lives():
     on_ledger = Preflight()
     check_calls(on_ledger, method=_OnLedger(), steps=12)
     assert on_ledger.ok, on_ledger.to_dict()["failed"]
+
+
+def test_a_commanded_delta_reaches_the_arm_in_controller_units():
+    """A metre delta must be scaled into the controller's normalised range.
+
+    The operational-space controller takes [-1, 1] and multiplies by its own
+    `output_max`, which is 0.05 m per step here. Writing the codec's metre value
+    straight into the action vector therefore understated every command fifty
+    times over: forty steps of a full-cap 0.02 m — 0.800 m asked for — moved the
+    end-effector 0.009 m, and every end-effector-representation arm was scored
+    against a robot that could not reach anything. The regression is silent in
+    the records, because an episode of ineffective actions and an episode of
+    bad actions both end with the predicate unmet and no rung credited.
+
+    Asserted on the scaling rather than on a displacement, so it needs no
+    simulator step budget and cannot flake on contact dynamics.
+    """
+    pytest.importorskip("robocasa")
+    import numpy as np
+
+    from examples.advanced.robocasa.study_app import model_observation
+    from examples.advanced.robocasa.study_representations import (
+        MAX_ROTATION_PER_STEP, MAX_TRANSLATION_PER_STEP)
+    from examples.advanced.robocasa.study_robocasa_env import RoboCasaPnPEnvironment
+
+    class Request:
+        task = "PickPlaceCounterToStove"
+        seed = 0
+        episode = 0
+        max_steps = 5
+        method_id = "scaling"
+
+    environment = RoboCasaPnPEnvironment(
+        task=Request.task, representation="eef_delta_base", command_base=True,
+        observation=model_observation())
+    try:
+        environment.reset(Request())
+        scale = environment._arm_output_max()
+        assert scale.shape == (6,) and np.all(scale > 0)
+
+        # A full-cap translation must arrive as a sizeable fraction of the
+        # controller's range, not as the raw metre value.
+        delta = np.zeros(6, dtype=np.float32)
+        delta[0] = MAX_TRANSLATION_PER_STEP
+        normalised = environment._normalise_arm(delta)
+        assert normalised[0] == pytest.approx(MAX_TRANSLATION_PER_STEP / scale[0])
+        assert normalised[0] > 10 * MAX_TRANSLATION_PER_STEP, (
+            "the metre value is reaching the controller unscaled")
+
+        rotation = np.zeros(6, dtype=np.float32)
+        rotation[3] = MAX_ROTATION_PER_STEP
+        assert environment._normalise_arm(rotation)[3] == pytest.approx(
+            MAX_ROTATION_PER_STEP / scale[3])
+
+        # And nothing may leave the controller's admissible range.
+        assert np.all(np.abs(environment._normalise_arm(np.full(6, 10.0))) <= 1.0)
+    finally:
+        environment.close()

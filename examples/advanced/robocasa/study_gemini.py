@@ -37,12 +37,27 @@ from .study_model import ModelCallStatus, ModelConfig, ModelResponse
 #: would be the apt choice — it is Google's embodied-reasoning model — but it is
 #: listed in the Vertex catalog and returns 404 without an allowlist, so it is
 #: recorded here as the access to request rather than silently unavailable.
-PREFERRED_MODELS = ("gemini-2.5-pro", "gemini-2.5-flash")
+PREFERRED_MODELS = ("gemini-robotics-er-2-preview", "gemini-2.5-pro", "gemini-2.5-flash")
 #: Listed in the catalog but not callable without allowlisting. Kept so a run
 #: can report what it would have used.
 GATED_MODELS = ("gemini-robotics-er-2-preview", "gemini-3-pro-preview",
                 "gemini-3-flash-preview", "gemini-4-argon")
 DEFAULT_LOCATION = "us-central1"
+#: Models that are only served from the multi-region endpoint. Probed rather
+#: than assumed: `gemini-robotics-er-2-preview` returns 429 "Quota exceeded for
+#: generate_content_requests_per_minute_per_project_per_base_model" in
+#: us-central1 — persistently, across 20-second gaps, which is a zero quota
+#: rather than a rate limit — and answers normally from `global`. Reading that
+#: 429 as "no access" would have been wrong, the same way reading the 404s below
+#: as "model does not exist" would be: every Gemini 3.x and 4 name the model
+#: garden lists is 404 on this project in us-central1, global and us-east4, so
+#: they are unavailable here while plainly existing elsewhere.
+GLOBAL_ONLY_MODELS = ("gemini-robotics-er-2-preview",)
+#: Gemini Robotics-ER 2 is an embodied-reasoning model: spatial grounding and
+#: robot control rather than general chat, which is the slot the Astranomy study
+#: fills with a frontier general model. It is first in PREFERRED_MODELS because
+#: on this task that specialisation matters more than a newer general model's
+#: headline capability — and because the newer general models are not reachable.
 #: Retries for a rate-limited or briefly unavailable call, and the base of the
 #: exponential backoff between them.
 #:
@@ -132,7 +147,10 @@ class GeminiClient:
         if not project:
             raise GeminiUnavailable(
                 "no GCP project; set `project=` or run `gcloud config set project`")
-        self.client = genai.Client(vertexai=True, project=project, location=self.location)
+        location = "global" if self.model_id in GLOBAL_ONLY_MODELS else self.location
+        if location != self.location:
+            self.location = location
+        self.client = genai.Client(vertexai=True, project=project, location=location)
         return self.client
 
     @staticmethod

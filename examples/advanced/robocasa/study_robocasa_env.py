@@ -166,6 +166,8 @@ class RoboCasaPnPEnvironment:
     specification: dict = field(default_factory=dict)
     _frames: list = field(default_factory=list)
     _last_success: bool = False
+    #: Cached arm-controller output range, read once per episode on first use.
+    _arm_scale: object = None
     _scored: object = None
     _last_raw: dict = field(default_factory=dict)
 
@@ -229,6 +231,7 @@ class RoboCasaPnPEnvironment:
         else:
             self.arm, self.codec = None, EefDeltaCodec(self.representation)
         self.progress = ProgressTracker()
+        self._arm_scale = None
         self._scored = None
         self._frames = []
         self._last_success = False
@@ -258,7 +261,16 @@ class RoboCasaPnPEnvironment:
             current_rotation=self._eef_rotation(),
         )
         full = np.zeros(self.env.action_dim, dtype=np.float32)
-        full[_ARM] = row[:6]
+        # The codec speaks metres and radians; the operational-space controller
+        # speaks a normalised [-1, 1] that it scales by its own `output_max`.
+        # Writing the metre value straight in understates every command by the
+        # ratio between them: with output_max 0.05 m, the codec's 0.02 m cap
+        # arrives as 0.02 normalised and moves the arm 0.001 m per step. Measured
+        # before the fix, forty steps commanding a full-cap 0.02 m each — 0.800 m
+        # asked for — moved the end-effector 0.009 m. A policy whose actions do
+        # not reach the robot is indistinguishable from one that cannot act, and
+        # every end-effector-representation arm was being scored that way.
+        full[_ARM] = self._normalise_arm(row[:6])
         full[_GRIPPER] = row[6]
         if self.command_base:
             full[_BASE] = row[7:10]
@@ -275,6 +287,30 @@ class RoboCasaPnPEnvironment:
 
         return Transition(observation=self._observation(raw), reward=float(reward),
                           terminated=bool(done) or self._last_success)
+
+    def _normalise_arm(self, delta):
+        """Scale a metre/radian delta into the arm controller's own units.
+
+        Read from the live controller rather than hard-coded, because the ratio
+        is a property of the controller configuration and a different robot or
+        config would silently reintroduce the mismatch. Values outside the range
+        are clipped: the controller clips them anyway, and clipping here keeps
+        the ledger's account of what was commanded honest.
+        """
+        scale = self._arm_output_max()
+        return np.clip(np.asarray(delta, dtype=np.float32) / scale, -1.0, 1.0)
+
+    def _arm_output_max(self):
+        """Per-step maxima the arm controller maps an input of 1.0 onto."""
+        if self._arm_scale is None:
+            controller = self.env.robots[0].composite_controller.part_controllers["right"]
+            scale = np.asarray(controller.output_max, dtype=np.float32).ravel()[:6]
+            if scale.shape != (6,) or not np.all(scale > 0):
+                raise ValueError(
+                    f"the arm controller reports an unusable output_max {scale!r}; "
+                    "without it a delta cannot be put into controller units")
+            self._arm_scale = scale
+        return self._arm_scale
 
     def _step_passthrough(self, action):
         """Apply a 12-wide LeRobot row by permuting it into native order.
