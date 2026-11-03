@@ -128,6 +128,20 @@ def layout_text(dof: int) -> str:
     """
     from .study_representations import MAX_ROTATION_PER_STEP, MAX_TRANSLATION_PER_STEP
 
+    # The frame the position deltas are expressed in. The prompt named the three
+    # values and never said which way any of them pointed, so a model that could
+    # see the object still had to guess the convention — and a guessed frame
+    # turns a correct intention into motion in an arbitrary direction. Measured
+    # on this robot by commanding each axis alone for sixty steps and expressing
+    # the end-effector displacement in the base frame: +x moved 0.179 m forward,
+    # +y moved 0.308 m left, +z moved 0.282 m up, each with under 0.01 m on the
+    # other two axes. Stated for the start pose, which is where the mapping was
+    # measured; whether the frame follows a rotating base was not established,
+    # because the base did not turn under a yaw command in that test.
+    frame = ("The three position deltas are relative to the robot: +x moves the "
+             "gripper forward, away from the robot's base; +y moves it to the "
+             "robot's left; +z moves it up. Negative values move the opposite "
+             "way.")
     scale = (f"Position values are metres and the total position change in one row "
              f"must be at most {MAX_TRANSLATION_PER_STEP} m. Rotation values are "
              f"radians and at most {MAX_ROTATION_PER_STEP} rad per row. Anything "
@@ -136,14 +150,14 @@ def layout_text(dof: int) -> str:
     layouts = {
         7: ("Each row is 7 values: 3 end-effector position deltas, 3 end-effector "
             "rotation deltas, then 1 gripper command where -1 is open and +1 is "
-            f"closed. {scale}"),
+            f"closed. {frame} {scale}"),
         8: ("Each row is 8 values: 7 arm joint deltas in radians, then 1 gripper "
             "command where -1 is open and +1 is closed."),
         10: ("Each row is 10 values: 3 end-effector position deltas, 3 end-effector "
              "rotation deltas, 1 gripper command where -1 is open and +1 is closed, "
              "then 3 mobile-base values as forward, lateral and yaw. Use the base "
              "values to drive toward something out of the arm's reach, and leave "
-             f"them at 0 while manipulating. {scale}"),
+             f"them at 0 while manipulating. {frame} {scale}"),
     }
     if dof not in layouts:
         raise ValueError(
