@@ -106,6 +106,8 @@ class GeminiClient:
     model_id: str = PREFERRED_MODELS[0]
     project: str = ""
     location: str = DEFAULT_LOCATION
+    #: Constrain the provider to JSON output. See `_request_config`.
+    json_mode: bool = True
     usd_per_1m_input: float | None = None
     usd_per_1m_output: float | None = None
     max_retries: int = MAX_RETRIES
@@ -229,13 +231,22 @@ class GeminiClient:
     def _request_config(self, config: ModelConfig):
         from google.genai import types
 
-        return types.GenerateContentConfig(
+        request = types.GenerateContentConfig(
             temperature=config.temperature,
             max_output_tokens=config.max_output_tokens,
             # The provider's own deadline, so a hung call ends as a timeout
             # status rather than stalling an episode.
             http_options=types.HttpOptions(timeout=int(config.timeout_seconds * 1000)),
         )
+        # Ask the provider to emit JSON rather than hoping the prompt is obeyed.
+        # Without it roughly a third of answers arrived wrapped in prose or a
+        # markdown fence and parsed as "response contains no JSON array" — and a
+        # refusal holds the previous action, so a third of the policy's
+        # decisions were "do again whatever you last did". That is a harness
+        # property being measured as a model property.
+        if self.json_mode:
+            request.response_mime_type = "application/json"
+        return request
 
     def _classify(self, error: Exception, started: float) -> ModelResponse:
         text = str(error)
