@@ -60,15 +60,32 @@ case "$TASKS" in
   *) die "--tasks must be vla or atomic";;
 esac
 
+# VRAM is the binding limit, not vCPU, and it is easy to measure wrong. A probe
+# 30 seconds into an eight-worker start read 19.9 GiB and looked fine; the steady
+# state is ~2.9 GiB per worker, so eight need 23.2 GiB on a card with 22.11 GiB
+# usable and the last allocation fails with "CUDA out of memory. Tried to
+# allocate 20.00 MiB". The failure is not reported as a resource problem either:
+# the policy's loader tries the published checkpoint, fails on config fields,
+# retries against the rewritten copy, and surfaces *that* message with the OOM
+# appended after it — so it reads as a checkpoint-compatibility bug. It cost 19
+# of 900 episodes before being understood.
+VRAM_PER_WORKER_MIB=3000
+VRAM_MIB="$(on_vm 'nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits' 2>/dev/null | tr -d ' \r' | head -1)"
 VCPU="$(on_vm 'nproc' 2>/dev/null | tr -d ' \r' | head -1)"
+SAFE=""
 if [ -n "$VCPU" ] && [ "$VCPU" -gt 0 ] 2>/dev/null; then
   SAFE=$(( VCPU - 2 ))
   [ "$SAFE" -lt 1 ] && SAFE=1
-  if [ "$WORKERS" -gt "$SAFE" ]; then
-    say "capping workers at $SAFE for ${VCPU} vCPU (asked for $WORKERS)"
-    say "  each worker renders on CPU, and the OS and the GCS mirror need a core"
-    WORKERS="$SAFE"
-  fi
+fi
+if [ -n "$VRAM_MIB" ] && [ "$VRAM_MIB" -gt 0 ] 2>/dev/null; then
+  BY_VRAM=$(( VRAM_MIB / VRAM_PER_WORKER_MIB ))
+  [ "$BY_VRAM" -lt 1 ] && BY_VRAM=1
+  say "limits: ${VCPU:-?} vCPU allows ${SAFE:-?}, ${VRAM_MIB} MiB VRAM allows ${BY_VRAM}"
+  if [ -z "$SAFE" ] || [ "$BY_VRAM" -lt "$SAFE" ]; then SAFE="$BY_VRAM"; fi
+fi
+if [ -n "$SAFE" ] && [ "$WORKERS" -gt "$SAFE" ]; then
+  say "capping workers at $SAFE (asked for $WORKERS)"
+  WORKERS="$SAFE"
 fi
 
 step "GPU sweep $RUN_ID ($TASKS, seeds '$SEEDS', $WORKERS workers on ${VCPU:-?} vCPU)"

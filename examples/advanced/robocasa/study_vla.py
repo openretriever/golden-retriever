@@ -200,22 +200,50 @@ def prepare_checkpoint(checkpoint: str = DEFAULT_CHECKPOINT, *, cache_dir=None) 
     recorded in the returned directory so a run can show what was changed.
     """
     import json
+    import os
     import shutil
+    import tempfile
     from pathlib import Path
 
     from huggingface_hub import snapshot_download
 
     source = Path(snapshot_download(checkpoint))
     target = Path(cache_dir) if cache_dir else source.parent / f"{source.name}-compat"
-    target.mkdir(parents=True, exist_ok=True)
-    for item in source.iterdir():
-        if item.is_file() and not (target / item.name).exists():
-            shutil.copy2(item, target / item.name)
-    config = json.loads((source / "config.json").read_text())
-    dropped = {key: config.pop(key) for key in INERT_CONFIG_FIELDS if key in config}
-    (target / "config.json").write_text(json.dumps(config, indent=2))
-    (target / "retriever_compat.json").write_text(
-        json.dumps({"checkpoint": checkpoint, "dropped": dropped}, indent=2, sort_keys=True))
+    # `retriever_compat.json` is written last and so means "this directory is
+    # finished", which is what makes the check below safe against a crash that
+    # left a half-built directory behind.
+    marker = target / "retriever_compat.json"
+    if marker.exists():
+        return str(target)
+
+    # Built in a private directory and moved into place, because the previous
+    # version wrote `config.json` into the shared target non-atomically. With
+    # eight workers starting together, some copied the original config and read
+    # it before the rewrite landed, so the load failed on exactly the fields
+    # this function exists to drop. That cost 19 of 900 episodes in one sweep —
+    # intermittent, concentrated at startup, and invisible in a single-worker
+    # run.
+    staging = Path(tempfile.mkdtemp(dir=target.parent, prefix=f".{source.name}-compat-"))
+    try:
+        for item in source.iterdir():
+            if item.is_file():
+                shutil.copy2(item, staging / item.name)
+        config = json.loads((source / "config.json").read_text())
+        dropped = {key: config.pop(key) for key in INERT_CONFIG_FIELDS if key in config}
+        (staging / "config.json").write_text(json.dumps(config, indent=2))
+        (staging / "retriever_compat.json").write_text(
+            json.dumps({"checkpoint": checkpoint, "dropped": dropped}, indent=2, sort_keys=True))
+        try:
+            os.rename(staging, target)
+        except OSError:
+            # Another process finished first, or left a directory in the way.
+            # Theirs is as good as ours provided it carries the marker.
+            shutil.rmtree(staging, ignore_errors=True)
+            if not marker.exists():
+                raise
+    except BaseException:
+        shutil.rmtree(staging, ignore_errors=True)
+        raise
     return str(target)
 
 

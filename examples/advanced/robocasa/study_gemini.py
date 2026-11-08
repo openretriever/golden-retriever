@@ -52,7 +52,16 @@ DEFAULT_LOCATION = "us-central1"
 #: as "model does not exist" would be: every Gemini 3.x and 4 name the model
 #: garden lists is 404 on this project in us-central1, global and us-east4, so
 #: they are unavailable here while plainly existing elsewhere.
-GLOBAL_ONLY_MODELS = ("gemini-robotics-er-2-preview",)
+# Reachable only from the multi-region endpoint. The newer general models are
+# 404 in us-central1 and answer from `global`, which is the same
+# endpoint-specific answer that first made er-2 look gated — a 404 from one
+# location is not evidence a model is unavailable.
+GLOBAL_ONLY_MODELS = (
+    "gemini-robotics-er-2-preview", "gemini-4-argon",
+    "gemini-3-flash-preview", "gemini-3.1-flash-lite", "gemini-3.1-pro-preview",
+    "gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.6-flash",
+    "gemini-3.7-flash", "gemini-3.8-flash",
+)
 #: Gemini Robotics-ER 2 is an embodied-reasoning model: spatial grounding and
 #: robot control rather than general chat, which is the slot the Astranomy study
 #: fills with a frontier general model. It is first in PREFERRED_MODELS because
